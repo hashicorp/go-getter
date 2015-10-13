@@ -7,12 +7,9 @@ import (
 	"net/url"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"regexp"
 	"strings"
 	"syscall"
-
-	urlhelper "github.com/hashicorp/terraform/helper/url"
 )
 
 // Getter defines the interface that schemes must implement to download
@@ -53,60 +50,12 @@ func init() {
 // src is a URL, whereas dst is always just a file path to a folder. This
 // folder doesn't need to exist. It will be created if it doesn't exist.
 func Get(dst, src string) error {
-	var force string
-	force, src = getForcedGetter(src)
-
-	// If there is a subdir component, then we download the root separately
-	// and then copy over the proper subdir.
-	var realDst string
-	src, subDir := getDirSubdir(src)
-	if subDir != "" {
-		tmpDir, err := ioutil.TempDir("", "tf")
-		if err != nil {
-			return err
-		}
-		if err := os.RemoveAll(tmpDir); err != nil {
-			return err
-		}
-		defer os.RemoveAll(tmpDir)
-
-		realDst = dst
-		dst = tmpDir
-	}
-
-	u, err := urlhelper.Parse(src)
-	if err != nil {
-		return err
-	}
-	if force == "" {
-		force = u.Scheme
-	}
-
-	g, ok := Getters[force]
-	if !ok {
-		return fmt.Errorf(
-			"module download not supported for scheme '%s'", force)
-	}
-
-	err = g.Get(dst, u)
-	if err != nil {
-		err = fmt.Errorf("error downloading module '%s': %s", src, err)
-		return err
-	}
-
-	// If we have a subdir, copy that over
-	if subDir != "" {
-		if err := os.RemoveAll(realDst); err != nil {
-			return err
-		}
-		if err := os.MkdirAll(realDst, 0755); err != nil {
-			return err
-		}
-
-		return copyDir(realDst, filepath.Join(dst, subDir))
-	}
-
-	return nil
+	return (&Client{
+		Src:     src,
+		Dst:     dst,
+		Dir:     true,
+		Getters: Getters,
+	}).Get()
 }
 
 // GetCopy is the same as Get except that it downloads a copy of the
