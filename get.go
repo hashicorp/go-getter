@@ -22,7 +22,7 @@ import (
 )
 
 // Getter defines the interface that schemes must implement to download
-// and update modules.
+// things.
 type Getter interface {
 	// Get downloads the given URL into the given directory. This always
 	// assumes that we're updating and gets the latest version that it can.
@@ -58,7 +58,7 @@ func init() {
 	}
 }
 
-// Get downloads the module specified by src into the folder specified by
+// Get downloads the directory specified by src into the folder specified by
 // dst. If dst already exists, Get will attempt to update it.
 //
 // src is a URL, whereas dst is always just a file path to a folder. This
@@ -68,6 +68,17 @@ func Get(dst, src string) error {
 		Src:     src,
 		Dst:     dst,
 		Dir:     true,
+		Getters: Getters,
+	}).Get()
+}
+
+// GetFile downloads the file specified by src into the path specified by
+// dst.
+func GetFile(dst, src string) error {
+	return (&Client{
+		Src:     src,
+		Dst:     dst,
+		Dir:     false,
 		Getters: Getters,
 	}).Get()
 }
