@@ -2,6 +2,7 @@ package getter
 
 import (
 	"fmt"
+	"io"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -9,7 +10,10 @@ import (
 
 // FileGetter is a Getter implementation that will download a module from
 // a file scheme.
-type FileGetter struct{}
+type FileGetter struct {
+	// Copy, if set to true, will copy data instead of using a symlink
+	Copy bool
+}
 
 func (g *FileGetter) Get(dst string, u *url.URL) error {
 	// The source path must exist and be a directory to be usable.
@@ -71,5 +75,24 @@ func (g *FileGetter) GetFile(dst string, u *url.URL) error {
 		return err
 	}
 
-	return os.Symlink(u.Path, dst)
+	// If we're not copying, just symlink and we're done
+	if !g.Copy {
+		return os.Symlink(u.Path, dst)
+	}
+
+	// Copy
+	srcF, err := os.Open(u.Path)
+	if err != nil {
+		return err
+	}
+	defer srcF.Close()
+
+	dstF, err := os.Create(dst)
+	if err != nil {
+		return err
+	}
+	defer dstF.Close()
+
+	_, err = io.Copy(dstF, srcF)
+	return err
 }

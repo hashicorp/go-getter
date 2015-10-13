@@ -2,9 +2,13 @@ package getter
 
 import (
 	"fmt"
+	"io/ioutil"
 	"net/url"
 	"os"
 	"os/exec"
+	"path/filepath"
+
+	urlhelper "github.com/hashicorp/terraform/helper/url"
 )
 
 // GitGetter is a Getter implementation that will download a module from
@@ -49,6 +53,37 @@ func (g *GitGetter) Get(dst string, u *url.URL) error {
 	}
 
 	return g.checkout(dst, ref)
+}
+
+// GetFile for Git doesn't support updating at this time. It will download
+// the file every time.
+func (g *GitGetter) GetFile(dst string, u *url.URL) error {
+	td, err := ioutil.TempDir("", "getter-git")
+	if err != nil {
+		return err
+	}
+	if err := os.RemoveAll(td); err != nil {
+		return err
+	}
+
+	// Get the filename, and strip the filename from the URL so we can
+	// just get the repository directly.
+	filename := filepath.Base(u.Path)
+	u.Path = filepath.Dir(u.Path)
+
+	// Get the full repository
+	if err := g.Get(td, u); err != nil {
+		return err
+	}
+
+	// Copy the single file
+	u, err = urlhelper.Parse(fmtFileURL(filepath.Join(td, filename)))
+	if err != nil {
+		return err
+	}
+
+	fg := &FileGetter{Copy: true}
+	return fg.GetFile(dst, u)
 }
 
 func (g *GitGetter) checkout(dst string, ref string) error {

@@ -141,3 +141,34 @@ func TestGitGetter_tag(t *testing.T) {
 		t.Fatalf("err: %s", err)
 	}
 }
+
+func TestGitGetter_GetFile(t *testing.T) {
+	if !testHasGit {
+		t.Log("git not found, skipping")
+		t.Skip()
+	}
+
+	g := new(GitGetter)
+	dst := tempFile(t)
+
+	// Git doesn't allow nested ".git" directories so we do some hackiness
+	// here to get around that...
+	moduleDir := filepath.Join(fixtureDir, "basic-git")
+	oldName := filepath.Join(moduleDir, "DOTgit")
+	newName := filepath.Join(moduleDir, ".git")
+	if err := os.Rename(oldName, newName); err != nil {
+		t.Fatalf("err: %s", err)
+	}
+	defer os.Rename(newName, oldName)
+
+	// Download
+	if err := g.GetFile(dst, testModuleURL("basic-git/foo.txt")); err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	// Verify the main file exists
+	if _, err := os.Stat(dst); err != nil {
+		t.Fatalf("err: %s", err)
+	}
+	assertContents(t, dst, "Hello\n")
+}
