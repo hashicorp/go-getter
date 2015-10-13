@@ -71,6 +71,14 @@ func (c *Client) Get() error {
 			"download not supported for scheme '%s'", force)
 	}
 
+	// If we're not downloading a directory, then just download the file
+	// and return.
+	if !c.Dir {
+		return g.GetFile(dst, u)
+	}
+
+	// We're downloading a directory, which might require a bit more work
+	// if we're specifying a subdir.
 	err = g.Get(dst, u)
 	if err != nil {
 		err = fmt.Errorf("error downloading '%s': %s", src, err)
