@@ -31,6 +31,25 @@ type Getter interface {
 // be used to get a dependency.
 var Getters map[string]Getter
 
+// GetMode is an enum that describes how modules are loaded.
+//
+// GetModeLoad says that modules will not be downloaded or updated, they will
+// only be loaded from the storage.
+//
+// GetModeGet says that modules can be initially downloaded if they don't
+// exist, but otherwise to just load from the current version in storage.
+//
+// GetModeUpdate says that modules should be checked for updates and
+// downloaded prior to loading. If there are no updates, we load the version
+// from disk, otherwise we download first and then load.
+type GetMode byte
+
+const (
+	GetModeNone GetMode = iota
+	GetModeGet
+	GetModeUpdate
+)
+
 // forcedRegexp is the regular expression that finds forced getters. This
 // syntax is schema::url, example: git::https://foo.com
 var forcedRegexp = regexp.MustCompile(`^([A-Za-z]+)::(.+)$`)
