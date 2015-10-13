@@ -86,7 +86,7 @@ func (c *Client) Get() error {
 			return err
 		}
 
-		return copyDir(realDst, filepath.Join(dst, subDir))
+		return copyDir(realDst, filepath.Join(dst, subDir), false)
 	}
 
 	return nil

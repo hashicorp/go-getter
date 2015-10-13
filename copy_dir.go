@@ -9,7 +9,9 @@ import (
 
 // copyDir copies the src directory contents into dst. Both directories
 // should already exist.
-func copyDir(dst, src string) error {
+//
+// If ignoreDot is set to true, then dot-prefixed files/folders are ignored.
+func copyDir(dst string, src string, ignoreDot bool) error {
 	src, err := filepath.EvalSymlinks(src)
 	if err != nil {
 		return err
@@ -23,7 +25,7 @@ func copyDir(dst, src string) error {
 			return nil
 		}
 
-		if strings.HasPrefix(filepath.Base(path), ".") {
+		if ignoreDot && strings.HasPrefix(filepath.Base(path), ".") {
 			// Skip any dot files
 			if info.IsDir() {
 				return filepath.SkipDir

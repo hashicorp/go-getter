@@ -85,7 +85,7 @@ func GetCopy(dst, src string) error {
 	}
 
 	// Copy to the final location
-	return copyDir(dst, tmpDir)
+	return copyDir(dst, tmpDir, true)
 }
 
 // getRunCommand is a helper that will run a command and capture the output

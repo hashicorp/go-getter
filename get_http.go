@@ -108,7 +108,7 @@ func (g *HttpGetter) getSubdir(dst, source, subDir string) error {
 		return err
 	}
 
-	return copyDir(dst, sourcePath)
+	return copyDir(dst, sourcePath, false)
 }
 
 // parseMeta looks for the first meta tag in the given reader that

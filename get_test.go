@@ -73,7 +73,7 @@ func TestGetCopy_dot(t *testing.T) {
 		t.Fatalf("err: %s", err)
 	}
 
-	mainPath = filepath.Join(dst, "foo.tf")
+	mainPath = filepath.Join(dst, ".test", "foo.tf")
 	if _, err := os.Stat(mainPath); err == nil {
 		t.Fatal("should not have foo.tf")
 	}
