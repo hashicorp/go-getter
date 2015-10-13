@@ -12,9 +12,12 @@ import (
 	"strings"
 )
 
-// HttpGetter is a Getter implementation that will download a module from
-// an HTTP endpoint. The protocol for downloading a module from an HTTP
-// endpoing is as follows:
+// HttpGetter is a Getter implementation that will download from an HTTP
+// endpoint.
+//
+// For file downloads, HTTP is used directly.
+//
+// The protocol for downloading a directory from an HTTP endpoing is as follows:
 //
 // An HTTP GET request is made to the URL with the additional GET parameter
 // "terraform-get=1". This lets you handle that scenario specially if you
@@ -74,6 +77,31 @@ func (g *HttpGetter) Get(dst string, u *url.URL) error {
 
 	// We have a subdir, time to jump some hoops
 	return g.getSubdir(dst, source, subDir)
+}
+
+func (g *HttpGetter) GetFile(dst string, u *url.URL) error {
+	resp, err := http.Get(u.String())
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != 200 {
+		return fmt.Errorf("bad response code: %d", resp.StatusCode)
+	}
+
+	// Create all the parent directories
+	if err := os.MkdirAll(filepath.Dir(dst), 0755); err != nil {
+		return err
+	}
+
+	f, err := os.Create(dst)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	_, err = io.Copy(f, resp.Body)
+	return err
 }
 
 // getSubdir downloads the source into the destination, but with

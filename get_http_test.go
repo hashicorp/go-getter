@@ -104,6 +104,30 @@ func TestHttpGetter_none(t *testing.T) {
 	}
 }
 
+func TestHttpGetter_file(t *testing.T) {
+	ln := testHttpServer(t)
+	defer ln.Close()
+
+	g := new(HttpGetter)
+	dst := tempFile(t)
+
+	var u url.URL
+	u.Scheme = "http"
+	u.Host = ln.Addr().String()
+	u.Path = "/file"
+
+	// Get it!
+	if err := g.GetFile(dst, &u); err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	// Verify the main file exists
+	if _, err := os.Stat(dst); err != nil {
+		t.Fatalf("err: %s", err)
+	}
+	assertContents(t, dst, "Hello\n")
+}
+
 func testHttpServer(t *testing.T) net.Listener {
 	ln, err := net.Listen("tcp", "127.0.0.1:0")
 	if err != nil {
@@ -111,6 +135,7 @@ func testHttpServer(t *testing.T) net.Listener {
 	}
 
 	mux := http.NewServeMux()
+	mux.HandleFunc("/file", testHttpHandlerFile)
 	mux.HandleFunc("/header", testHttpHandlerHeader)
 	mux.HandleFunc("/meta", testHttpHandlerMeta)
 	mux.HandleFunc("/meta-subdir", testHttpHandlerMetaSubdir)
@@ -120,6 +145,10 @@ func testHttpServer(t *testing.T) net.Listener {
 	go server.Serve(ln)
 
 	return ln
+}
+
+func testHttpHandlerFile(w http.ResponseWriter, r *http.Request) {
+	w.Write([]byte("Hello\n"))
 }
 
 func testHttpHandlerHeader(w http.ResponseWriter, r *http.Request) {
