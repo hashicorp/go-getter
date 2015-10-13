@@ -1,3 +1,14 @@
+// getter is a package for downloading files or directories from a variety of
+// protocols.
+//
+// getter is unique in its ability to download both directories and files.
+// It also detects certain source strings to be protocol-specific URLs. For
+// example, "github.com/hashicorp/go-getter" would turn into a Git URL and
+// use the Git protocol.
+//
+// Protocols and detectors are extensible.
+//
+// To get started, see Client.
 package getter
 
 import (
