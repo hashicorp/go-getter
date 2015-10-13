@@ -20,6 +20,11 @@ type Getter interface {
 	// format that isn't understood, an error should be returned. Get shouldn't
 	// simply nuke the directory.
 	Get(string, *url.URL) error
+
+	// GetFile downloads the give URL into the given path. The URL must
+	// reference a single file. If possible, the Getter should check if
+	// the remote end contains the same file and no-op this operation.
+	//GetFile(string, *url.URL) error
 }
 
 // Getters is the mapping of scheme to the Getter implementation that will

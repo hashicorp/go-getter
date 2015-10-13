@@ -5,6 +5,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"reflect"
 	"testing"
 
 	"github.com/hashicorp/terraform/config"
@@ -23,6 +24,11 @@ func tempDir(t *testing.T) string {
 	}
 
 	return dir
+}
+
+func tempFile(t *testing.T) string {
+	dir := tempDir(t)
+	return filepath.Join(dir, "foo")
 }
 
 func testConfig(t *testing.T, n string) *config.Config {
@@ -54,4 +60,15 @@ func testModuleURL(n string) *url.URL {
 
 func testStorage(t *testing.T) Storage {
 	return &FolderStorage{StorageDir: tempDir(t)}
+}
+
+func assertContents(t *testing.T, path string, contents string) {
+	data, err := ioutil.ReadFile(path)
+	if err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	if !reflect.DeepEqual(data, []byte(contents)) {
+		t.Fatalf("bad. expected:\n\n%s\n\nGot:\n\n%s", contents, string(data))
+	}
 }

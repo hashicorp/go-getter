@@ -102,3 +102,25 @@ func TestFileGetter_dirSymlink(t *testing.T) {
 		t.Fatalf("err: %s", err)
 	}
 }
+
+func TestFileGetter_GetFile(t *testing.T) {
+	g := new(FileGetter)
+	dst := tempFile(t)
+
+	// With a dir that doesn't exist
+	if err := g.GetFile(dst, testModuleURL("basic-file/foo.txt")); err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	// Verify the destination folder is a symlink
+	fi, err := os.Lstat(dst)
+	if err != nil {
+		t.Fatalf("err: %s", err)
+	}
+	if fi.Mode()&os.ModeSymlink == 0 {
+		t.Fatal("destination is not a symlink")
+	}
+
+	// Verify the main file exists
+	assertContents(t, dst, "Hello\n")
+}
