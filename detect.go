@@ -31,9 +31,13 @@ func init() {
 // Detect turns a source string into another source string if it is
 // detected to be of a known pattern.
 //
+// The third parameter should be the list of detectors to use in the
+// order to try them. If you don't want to configure this, just use
+// the global Detectors variable.
+//
 // This is safe to be called with an already valid source string: Detect
 // will just return it.
-func Detect(src string, pwd string) (string, error) {
+func Detect(src string, pwd string, ds []Detector) (string, error) {
 	getForce, getSrc := getForcedGetter(src)
 
 	// Separate out the subdir if there is one, we don't pass that to detect
@@ -45,7 +49,7 @@ func Detect(src string, pwd string) (string, error) {
 		return src, nil
 	}
 
-	for _, d := range Detectors {
+	for _, d := range ds {
 		result, ok, err := d.Detect(getSrc, pwd)
 		if err != nil {
 			return "", err
