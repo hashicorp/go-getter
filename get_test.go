@@ -60,39 +60,6 @@ func TestGet_fileSubdir(t *testing.T) {
 	}
 }
 
-func TestGetCopy_dot(t *testing.T) {
-	dst := tempDir(t)
-	u := testModule("basic-dot")
-
-	if err := GetCopy(dst, u); err != nil {
-		t.Fatalf("err: %s", err)
-	}
-
-	mainPath := filepath.Join(dst, "main.tf")
-	if _, err := os.Stat(mainPath); err != nil {
-		t.Fatalf("err: %s", err)
-	}
-
-	mainPath = filepath.Join(dst, ".test", "foo.tf")
-	if _, err := os.Stat(mainPath); err == nil {
-		t.Fatal("should not have foo.tf")
-	}
-}
-
-func TestGetCopy_file(t *testing.T) {
-	dst := tempDir(t)
-	u := testModule("basic")
-
-	if err := GetCopy(dst, u); err != nil {
-		t.Fatalf("err: %s", err)
-	}
-
-	mainPath := filepath.Join(dst, "main.tf")
-	if _, err := os.Stat(mainPath); err != nil {
-		t.Fatalf("err: %s", err)
-	}
-}
-
 func TestGetDirSubdir(t *testing.T) {
 	cases := []struct {
 		Input    string
