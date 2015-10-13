@@ -20,8 +20,6 @@ func TestHgGetter_impl(t *testing.T) {
 }
 
 func TestHgGetter(t *testing.T) {
-	t.Parallel()
-
 	if !testHasHg {
 		t.Log("hg not found, skipping")
 		t.Skip()
@@ -43,8 +41,6 @@ func TestHgGetter(t *testing.T) {
 }
 
 func TestHgGetter_branch(t *testing.T) {
-	t.Parallel()
-
 	if !testHasHg {
 		t.Log("hg not found, skipping")
 		t.Skip()
@@ -78,4 +74,25 @@ func TestHgGetter_branch(t *testing.T) {
 	if _, err := os.Stat(mainPath); err != nil {
 		t.Fatalf("err: %s", err)
 	}
+}
+
+func TestHgGetter_GetFile(t *testing.T) {
+	if !testHasHg {
+		t.Log("hg not found, skipping")
+		t.Skip()
+	}
+
+	g := new(HgGetter)
+	dst := tempFile(t)
+
+	// Download
+	if err := g.GetFile(dst, testModuleURL("basic-hg/foo.txt")); err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	// Verify the main file exists
+	if _, err := os.Stat(dst); err != nil {
+		t.Fatalf("err: %s", err)
+	}
+	assertContents(t, dst, "Hello\n")
 }

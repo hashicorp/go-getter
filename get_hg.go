@@ -2,9 +2,11 @@ package getter
 
 import (
 	"fmt"
+	"io/ioutil"
 	"net/url"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"runtime"
 
 	urlhelper "github.com/hashicorp/terraform/helper/url"
@@ -53,6 +55,37 @@ func (g *HgGetter) Get(dst string, u *url.URL) error {
 	}
 
 	return g.update(dst, newURL, rev)
+}
+
+// GetFile for Hg doesn't support updating at this time. It will download
+// the file every time.
+func (g *HgGetter) GetFile(dst string, u *url.URL) error {
+	td, err := ioutil.TempDir("", "getter-hg")
+	if err != nil {
+		return err
+	}
+	if err := os.RemoveAll(td); err != nil {
+		return err
+	}
+
+	// Get the filename, and strip the filename from the URL so we can
+	// just get the repository directly.
+	filename := filepath.Base(u.Path)
+	u.Path = filepath.Dir(u.Path)
+
+	// Get the full repository
+	if err := g.Get(td, u); err != nil {
+		return err
+	}
+
+	// Copy the single file
+	u, err = urlhelper.Parse(fmtFileURL(filepath.Join(td, filename)))
+	if err != nil {
+		return err
+	}
+
+	fg := &FileGetter{Copy: true}
+	return fg.GetFile(dst, u)
 }
 
 func (g *HgGetter) clone(dst string, u *url.URL) error {
