@@ -42,7 +42,7 @@ func (c *Client) Get() error {
 	// and then copy over the proper subdir.
 	var realDst string
 	dst := c.Dst
-	src, subDir := getDirSubdir(src)
+	src, subDir := SourceDirSubdir(src)
 	if subDir != "" {
 		tmpDir, err := ioutil.TempDir("", "tf")
 		if err != nil {

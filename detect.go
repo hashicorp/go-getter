@@ -41,7 +41,7 @@ func Detect(src string, pwd string, ds []Detector) (string, error) {
 	getForce, getSrc := getForcedGetter(src)
 
 	// Separate out the subdir if there is one, we don't pass that to detect
-	getSrc, subDir := getDirSubdir(getSrc)
+	getSrc, subDir := SourceDirSubdir(getSrc)
 
 	u, err := url.Parse(getSrc)
 	if err == nil && u.Scheme != "" {
@@ -60,7 +60,7 @@ func Detect(src string, pwd string, ds []Detector) (string, error) {
 
 		var detectForce string
 		detectForce, result = getForcedGetter(result)
-		result, detectSubdir := getDirSubdir(result)
+		result, detectSubdir := SourceDirSubdir(result)
 
 		// If we have a subdir from the detection, then prepend it to our
 		// requested subdir.

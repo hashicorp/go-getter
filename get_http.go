@@ -70,7 +70,7 @@ func (g *HttpGetter) Get(dst string, u *url.URL) error {
 
 	// If there is a subdir component, then we download the root separately
 	// into a temporary directory, then copy over the proper subdir.
-	source, subDir := getDirSubdir(source)
+	source, subDir := SourceDirSubdir(source)
 	if subDir == "" {
 		return Get(dst, source)
 	}
