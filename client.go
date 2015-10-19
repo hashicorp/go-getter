@@ -1,8 +1,12 @@
 package getter
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
+	"io"
 	"io/ioutil"
+	"log"
 	"os"
 	"path/filepath"
 
@@ -71,10 +75,25 @@ func (c *Client) Get() error {
 			"download not supported for scheme '%s'", force)
 	}
 
+	var sum string
+	sumRaw := u.Query()["checksum"]
+	if len(sumRaw) == 1 {
+		sum = sumRaw[0]
+	}
+
 	// If we're not downloading a directory, then just download the file
 	// and return.
 	if !c.Dir {
-		return g.GetFile(dst, u)
+		if sum == "" {
+			return g.GetFile(dst, u)
+		}
+
+		err := g.GetFile(dst, u)
+		if err != nil {
+			return err
+		}
+
+		return checksum(dst, sum)
 	}
 
 	// We're downloading a directory, which might require a bit more work
@@ -95,6 +114,34 @@ func (c *Client) Get() error {
 		}
 
 		return copyDir(realDst, filepath.Join(dst, subDir), false)
+	}
+
+	return checksum(realDst, sum)
+}
+
+// checksum is a simple method to compute the SHA256 checksum of a source (file
+// or dir) and compare it to a given sum.
+func checksum(source, sum string) error {
+	if sum == "" {
+		return nil
+	}
+	// compute and check checksum
+	log.Printf("[DEBUG] Running checksum on (%s)", source)
+	hasher := sha256.New()
+	file, err := os.Open(source)
+	if err != nil {
+		return fmt.Errorf("Failed to open file for checksum: %s", err)
+	}
+
+	defer file.Close()
+	io.Copy(hasher, file)
+
+	computed := hex.EncodeToString(hasher.Sum(nil))
+	if sum != computed {
+		return fmt.Errorf(
+			"Checksums did not match.\nExpected (%s), got (%s)",
+			sum,
+			computed)
 	}
 
 	return nil
