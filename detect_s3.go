@@ -1,0 +1,89 @@
+package getter
+
+import (
+	"fmt"
+	"net/url"
+	"strings"
+)
+
+const (
+	vhostFormat = ""
+)
+
+// S3Detector implements Detector to detect S3 URLs and turn
+// them into URLs that the S3 getter can understand.
+type S3Detector struct{}
+
+func (d *S3Detector) Detect(src, _ string) (string, bool, error) {
+	if len(src) == 0 {
+		return "", false, nil
+	}
+
+	if strings.Contains(src, ".amazonaws.com/") {
+		return d.detectHTTP(src)
+	}
+
+	return "", false, nil
+}
+
+func (d *S3Detector) detectHTTP(src string) (string, bool, error) {
+	parts := strings.Split(src, "/")
+	if len(parts) < 0 {
+		return "", false, fmt.Errorf(
+			"URL is not a valid S3 URL")
+	}
+
+	hostParts := strings.Split(parts[0], ".")
+	if len(hostParts) == 3 {
+		return d.detectPathStyle(hostParts[0], parts[1:])
+	} else if len(hostParts) == 4 {
+		return d.detectVhostStyle(hostParts[1], hostParts[0], parts[1:])
+	} else {
+		return "", false, fmt.Errorf(
+			"URL is not a valid S3 URL")
+	}
+}
+
+func (d *S3Detector) detectPathStyle(region string, parts []string) (string, bool, error) {
+	urlStr := fmt.Sprintf("https://%s.amazonaws.com/%s", region, strings.Join(parts, "/"))
+	url, err := url.Parse(urlStr)
+	if err != nil {
+		return "", true, fmt.Errorf("error parsing GitHub URL: %s", err)
+	}
+
+	return "s3::" + url.String(), true, nil
+}
+
+func (d *S3Detector) detectVhostStyle(region, bucket string, parts []string) (string, bool, error) {
+	urlStr := fmt.Sprintf("https://%s.amazonaws.com/%s/%s", region, bucket, strings.Join(parts, "/"))
+	url, err := url.Parse(urlStr)
+	if err != nil {
+		return "", true, fmt.Errorf("error parsing S3 URL: %s", err)
+	}
+
+	return "s3::" + url.String(), true, nil
+}
+
+// func (d *S3Detector) detectSSH(src string) (string, bool, error) {
+// 	idx := strings.Index(src, ":")
+// 	qidx := strings.Index(src, "?")
+// 	if qidx == -1 {
+// 		qidx = len(src)
+// 	}
+
+// 	var u url.URL
+// 	u.Scheme = "ssh"
+// 	u.User = url.User("git")
+// 	u.Host = "github.com"
+// 	u.Path = src[idx+1 : qidx]
+// 	if qidx < len(src) {
+// 		q, err := url.ParseQuery(src[qidx+1:])
+// 		if err != nil {
+// 			return "", true, fmt.Errorf("error parsing GitHub SSH URL: %s", err)
+// 		}
+
+// 		u.RawQuery = q.Encode()
+// 	}
+
+// 	return "git::" + u.String(), true, nil
+// }
