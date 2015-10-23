@@ -63,27 +63,3 @@ func (d *S3Detector) detectVhostStyle(region, bucket string, parts []string) (st
 
 	return "s3::" + url.String(), true, nil
 }
-
-// func (d *S3Detector) detectSSH(src string) (string, bool, error) {
-// 	idx := strings.Index(src, ":")
-// 	qidx := strings.Index(src, "?")
-// 	if qidx == -1 {
-// 		qidx = len(src)
-// 	}
-
-// 	var u url.URL
-// 	u.Scheme = "ssh"
-// 	u.User = url.User("git")
-// 	u.Host = "github.com"
-// 	u.Path = src[idx+1 : qidx]
-// 	if qidx < len(src) {
-// 		q, err := url.ParseQuery(src[qidx+1:])
-// 		if err != nil {
-// 			return "", true, fmt.Errorf("error parsing GitHub SSH URL: %s", err)
-// 		}
-
-// 		u.RawQuery = q.Encode()
-// 	}
-
-// 	return "git::" + u.String(), true, nil
-// }
