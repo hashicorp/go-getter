@@ -57,7 +57,12 @@ func (c *Client) Get() error {
 		dst = tmpDir
 	}
 
-	u, err := urlhelper.Parse(src)
+	detected, err := Detect(src, "", Detectors)
+	if err != nil {
+		fmt.Errorf("No supported getters for %s", src)
+	}
+
+	u, err := urlhelper.Parse(detected)
 	if err != nil {
 		return err
 	}
