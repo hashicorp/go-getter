@@ -74,3 +74,18 @@ func TestS3Getter_GetFile_params(t *testing.T) {
 		t.Fatalf("expected InvalidAccessKeyId error")
 	}
 }
+
+func TestS3Getter_GetFile_notfound(t *testing.T) {
+	g := new(S3Getter)
+	dst := tempFile(t)
+
+	// Download
+	err := g.GetFile(dst, testURL("https://s3-eu-west-1.amazonaws.com/hailo-s3-test/notfound.txt"))
+	if err == nil {
+		t.Fatalf("expected error, got none")
+	}
+
+	if reqerr, ok := err.(awserr.RequestFailure); !ok || reqerr.StatusCode() != 404 {
+		t.Fatalf("expected InvalidAccessKeyId error")
+	}
+}
