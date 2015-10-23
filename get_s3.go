@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/service/s3"
 )
 
@@ -18,7 +19,7 @@ type S3Getter struct{}
 
 func (g *S3Getter) Get(dst string, u *url.URL) error {
 	// Parse URL
-	region, bucket, path, err := g.parseUrl(u)
+	region, bucket, path, _, creds, err := g.parseUrl(u)
 	if err != nil {
 		return err
 	}
@@ -41,7 +42,10 @@ func (g *S3Getter) Get(dst string, u *url.URL) error {
 		return err
 	}
 
-	client := s3.New(&aws.Config{Region: aws.String(region)})
+	client := s3.New(&aws.Config{
+		Region:      aws.String(region),
+		Credentials: creds,
+	})
 
 	// List files in path, keep listing until no more objects are found
 	lastMarker := ""
@@ -51,7 +55,6 @@ func (g *S3Getter) Get(dst string, u *url.URL) error {
 			Bucket: aws.String(bucket),
 			Prefix: aws.String(path),
 		}
-
 		if lastMarker != "" {
 			req.Marker = aws.String(lastMarker)
 		}
@@ -63,6 +66,7 @@ func (g *S3Getter) Get(dst string, u *url.URL) error {
 
 		hasMore = aws.BoolValue(resp.IsTruncated)
 
+		// Get each object storing each file relative to the destination path
 		for _, object := range resp.Contents {
 			lastMarker = aws.StringValue(object.Key)
 			objPath := aws.StringValue(object.Key)
@@ -79,7 +83,7 @@ func (g *S3Getter) Get(dst string, u *url.URL) error {
 			}
 			objDst = filepath.Join(dst, objDst)
 
-			if err := g.getObject(client, objDst, bucket, objPath); err != nil {
+			if err := g.getObject(client, objDst, bucket, objPath, ""); err != nil {
 				return err
 			}
 		}
@@ -89,21 +93,29 @@ func (g *S3Getter) Get(dst string, u *url.URL) error {
 }
 
 func (g *S3Getter) GetFile(dst string, u *url.URL) error {
-	region, bucket, path, err := g.parseUrl(u)
+	region, bucket, path, version, creds, err := g.parseUrl(u)
 	if err != nil {
 		return err
 	}
 
-	client := s3.New(&aws.Config{Region: aws.String(region)})
+	client := s3.New(&aws.Config{
+		Region:      aws.String(region),
+		Credentials: creds,
+	})
 
-	return g.getObject(client, dst, bucket, path)
+	return g.getObject(client, dst, bucket, path, version)
 }
 
-func (g *S3Getter) getObject(client *s3.S3, dst, bucket, key string) error {
-	resp, err := client.GetObject(&s3.GetObjectInput{
+func (g *S3Getter) getObject(client *s3.S3, dst, bucket, key, version string) error {
+	req := &s3.GetObjectInput{
 		Bucket: aws.String(bucket),
 		Key:    aws.String(key),
-	})
+	}
+	if version != "" {
+		req.VersionId = aws.String(version)
+	}
+
+	resp, err := client.GetObject(req)
 	if err != nil {
 		return err
 	}
@@ -123,17 +135,30 @@ func (g *S3Getter) getObject(client *s3.S3, dst, bucket, key string) error {
 	return err
 }
 
-func (g *S3Getter) parseUrl(u *url.URL) (region, bucket, path string, err error) {
+func (g *S3Getter) parseUrl(u *url.URL) (region, bucket, path, version string, creds *credentials.Credentials, err error) {
 	hostParts := strings.Split(u.Host, ".")
 
 	if len(hostParts) != 3 {
-		return "", "", "", fmt.Errorf("URL is not a valid S3 URL")
+		return "", "", "", "", nil, fmt.Errorf("URL is not a valid S3 URL")
 	}
 	region = strings.TrimPrefix(strings.TrimPrefix(hostParts[0], "s3-"), "s3")
 
 	pathParts := strings.Split(u.Path, "/")
 	bucket = pathParts[1]
 	path = strings.Join(pathParts[2:], "/")
+
+	version = u.Query().Get("version")
+
+	_, hasAwsId := u.Query()["aws_access_key_id"]
+	_, hasAwsSecret := u.Query()["aws_access_key_secret"]
+	_, hasAwsToken := u.Query()["aws_access_token"]
+	if hasAwsId || hasAwsSecret || hasAwsToken {
+		creds = credentials.NewStaticCredentials(
+			u.Query().Get("aws_access_key_id"),
+			u.Query().Get("aws_access_key_secret"),
+			u.Query().Get("aws_access_token"),
+		)
+	}
 
 	return
 }

@@ -59,6 +59,11 @@ func TestS3Detector(t *testing.T) {
 			"s3-eu-west-1.amazonaws.com/bucket/foo/bar.baz",
 			"s3::https://s3-eu-west-1.amazonaws.com/bucket/foo/bar.baz",
 		},
+		// Misc tests
+		{
+			"s3-eu-west-1.amazonaws.com/bucket/foo/bar.baz?version=1234",
+			"s3::https://s3-eu-west-1.amazonaws.com/bucket/foo/bar.baz?version=1234",
+		},
 	}
 
 	pwd := "/pwd"

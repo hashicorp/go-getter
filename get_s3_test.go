@@ -4,6 +4,8 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/aws/aws-sdk-go/aws/awserr"
 )
 
 func TestS3Getter_impl(t *testing.T) {
@@ -26,7 +28,7 @@ func TestS3Getter(t *testing.T) {
 	}
 }
 
-func TestS3Getter_Subdir(t *testing.T) {
+func TestS3Getter_subdir(t *testing.T) {
 	g := new(S3Getter)
 	dst := tempDir(t)
 
@@ -56,4 +58,19 @@ func TestS3Getter_GetFile(t *testing.T) {
 		t.Fatalf("err: %s", err)
 	}
 	assertContents(t, dst, "Hello\n")
+}
+
+func TestS3Getter_GetFile_params(t *testing.T) {
+	g := new(S3Getter)
+	dst := tempFile(t)
+
+	// Download
+	err := g.GetFile(dst, testURL("https://s3-eu-west-1.amazonaws.com/hailo-s3-test/foo.txt?aws_access_key_id=foo&aws_access_key_secret=bar&aws_access_token=baz"))
+	if err == nil {
+		t.Fatalf("expected error, got none")
+	}
+
+	if reqerr, ok := err.(awserr.RequestFailure); !ok || reqerr.StatusCode() != 403 {
+		t.Fatalf("expected InvalidAccessKeyId error")
+	}
 }
