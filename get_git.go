@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 
 	urlhelper "github.com/hashicorp/terraform/helper/url"
 )
@@ -93,7 +94,8 @@ func (g *GitGetter) checkout(dst string, ref string) error {
 }
 
 func (g *GitGetter) clone(dst string, u *url.URL) error {
-	cmd := exec.Command("git", "clone", u.String(), dst)
+	// strip leading git:: from URL to make valid git url
+	cmd := exec.Command("git", "clone", strings.TrimPrefix(u.String(), "git::"), dst)
 	return getRunCommand(cmd)
 }
 
