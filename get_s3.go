@@ -42,10 +42,7 @@ func (g *S3Getter) Get(dst string, u *url.URL) error {
 		return err
 	}
 
-	client := s3.New(&aws.Config{
-		Region:      aws.String(region),
-		Credentials: creds,
-	})
+	client := s3.New(g.getAWSConfig(region, creds))
 
 	// List files in path, keep listing until no more objects are found
 	lastMarker := ""
@@ -98,10 +95,7 @@ func (g *S3Getter) GetFile(dst string, u *url.URL) error {
 		return err
 	}
 
-	client := s3.New(&aws.Config{
-		Region:      aws.String(region),
-		Credentials: creds,
-	})
+	client := s3.New(g.getAWSConfig(region, creds))
 
 	return g.getObject(client, dst, bucket, path, version)
 }
@@ -135,6 +129,16 @@ func (g *S3Getter) getObject(client *s3.S3, dst, bucket, key, version string) er
 	return err
 }
 
+func (g *S3Getter) getAWSConfig(region string, creds *credentials.Credentials) *aws.Config {
+	conf := &aws.Config{}
+	conf.Credentials = creds
+	if region != "" {
+		conf.Region = aws.String(region)
+	}
+
+	return conf
+}
+
 func (g *S3Getter) parseUrl(u *url.URL) (region, bucket, path, version string, creds *credentials.Credentials, err error) {
 	hostParts := strings.Split(u.Host, ".")
 
@@ -144,6 +148,10 @@ func (g *S3Getter) parseUrl(u *url.URL) (region, bucket, path, version string, c
 	region = strings.TrimPrefix(strings.TrimPrefix(hostParts[0], "s3-"), "s3")
 
 	pathParts := strings.Split(u.Path, "/")
+	if len(pathParts) < 3 {
+		return "", "", "", "", nil, fmt.Errorf("URL is not a valid S3 URL")
+	}
+
 	bucket = pathParts[1]
 	path = strings.Join(pathParts[2:], "/")
 

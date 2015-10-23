@@ -28,7 +28,7 @@ func (d *S3Detector) Detect(src, _ string) (string, bool, error) {
 
 func (d *S3Detector) detectHTTP(src string) (string, bool, error) {
 	parts := strings.Split(src, "/")
-	if len(parts) < 0 {
+	if len(parts) < 2 {
 		return "", false, fmt.Errorf(
 			"URL is not a valid S3 URL")
 	}
@@ -48,7 +48,7 @@ func (d *S3Detector) detectPathStyle(region string, parts []string) (string, boo
 	urlStr := fmt.Sprintf("https://%s.amazonaws.com/%s", region, strings.Join(parts, "/"))
 	url, err := url.Parse(urlStr)
 	if err != nil {
-		return "", true, fmt.Errorf("error parsing GitHub URL: %s", err)
+		return "", false, fmt.Errorf("error parsing S3 URL: %s", err)
 	}
 
 	return "s3::" + url.String(), true, nil
@@ -58,7 +58,7 @@ func (d *S3Detector) detectVhostStyle(region, bucket string, parts []string) (st
 	urlStr := fmt.Sprintf("https://%s.amazonaws.com/%s/%s", region, bucket, strings.Join(parts, "/"))
 	url, err := url.Parse(urlStr)
 	if err != nil {
-		return "", true, fmt.Errorf("error parsing S3 URL: %s", err)
+		return "", false, fmt.Errorf("error parsing S3 URL: %s", err)
 	}
 
 	return "s3::" + url.String(), true, nil
