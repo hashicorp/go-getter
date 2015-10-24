@@ -6,10 +6,6 @@ import (
 	"strings"
 )
 
-const (
-	vhostFormat = ""
-)
-
 // S3Detector implements Detector to detect S3 URLs and turn
 // them into URLs that the S3 getter can understand.
 type S3Detector struct{}
