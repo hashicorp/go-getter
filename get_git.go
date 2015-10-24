@@ -103,7 +103,9 @@ func (g *GitGetter) update(dst string, ref string) error {
 	cmd := exec.Command("git", "show-ref", "-q", "--verify", "refs/heads/"+ref)
 	cmd.Dir = dst
 	if getRunCommand(cmd) != nil {
-		// Not a branch, switch to master
+		// Not a branch, switch to master. This will also catch non-existent
+		// branches, in which case we want to switch to master and then
+		// checkout the proper branch later.
 		ref = "master"
 	}
 
