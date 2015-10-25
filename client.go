@@ -179,7 +179,7 @@ func checksum(source string, h hash.Hash, v []byte) error {
 
 	if actual := h.Sum(nil); !bytes.Equal(actual, v) {
 		return fmt.Errorf(
-			"Checksums did not match.\nExpected (%s), got (%s)",
+			"Checksums did not match.\nExpected: %s\nGot: %s",
 			hex.EncodeToString(v),
 			hex.EncodeToString(actual))
 	}
