@@ -157,6 +157,9 @@ func (g *S3Getter) parseUrl(u *url.URL) (region, bucket, path, version string, c
 		return "", "", "", "", nil, fmt.Errorf("URL is not a valid S3 URL")
 	}
 	region = strings.TrimPrefix(strings.TrimPrefix(hostParts[0], "s3-"), "s3")
+	if region == "" {
+		region = "us-east-1"
+	}
 
 	pathParts := strings.Split(u.Path, "/")
 	if len(pathParts) < 2 {

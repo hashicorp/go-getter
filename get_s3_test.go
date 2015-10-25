@@ -8,6 +8,14 @@ import (
 	"github.com/aws/aws-sdk-go/aws/awserr"
 )
 
+func init() {
+	// These are well known restricted IAM keys to a HashiCorp-managed bucket
+	// in a private AWS account that only has access to the open source test
+	// resources.
+	os.Setenv("AWS_ACCESS_KEY", "AKIAJCTNQIOBWAYXKGZA")
+	os.Setenv("AWS_SECRET_KEY", "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")
+}
+
 func TestS3Getter_impl(t *testing.T) {
 	var _ Getter = new(S3Getter)
 }
@@ -17,7 +25,9 @@ func TestS3Getter(t *testing.T) {
 	dst := tempDir(t)
 
 	// With a dir that doesn't exist
-	if err := g.Get(dst, testURL("https://s3-eu-west-1.amazonaws.com/hailo-s3-test")); err != nil {
+	err := g.Get(
+		dst, testURL("https://s3.amazonaws.com/hc-oss-test/go-getter/folder"))
+	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
@@ -33,7 +43,9 @@ func TestS3Getter_subdir(t *testing.T) {
 	dst := tempDir(t)
 
 	// With a dir that doesn't exist
-	if err := g.Get(dst, testURL("https://s3-eu-west-1.amazonaws.com/hailo-s3-test/subdir")); err != nil {
+	err := g.Get(
+		dst, testURL("https://s3.amazonaws.com/hc-oss-test/go-getter/folder/subfolder"))
+	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
@@ -49,7 +61,9 @@ func TestS3Getter_GetFile(t *testing.T) {
 	dst := tempFile(t)
 
 	// Download
-	if err := g.GetFile(dst, testURL("https://s3-eu-west-1.amazonaws.com/hailo-s3-test/foo.txt")); err != nil {
+	err := g.GetFile(
+		dst, testURL("https://s3.amazonaws.com/hc-oss-test/go-getter/folder/main.tf"))
+	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
@@ -57,15 +71,17 @@ func TestS3Getter_GetFile(t *testing.T) {
 	if _, err := os.Stat(dst); err != nil {
 		t.Fatalf("err: %s", err)
 	}
-	assertContents(t, dst, "Hello\n")
+	assertContents(t, dst, "# Main\n")
 }
 
-func TestS3Getter_GetFile_params(t *testing.T) {
+func TestS3Getter_GetFile_badParams(t *testing.T) {
 	g := new(S3Getter)
 	dst := tempFile(t)
 
 	// Download
-	err := g.GetFile(dst, testURL("https://s3-eu-west-1.amazonaws.com/hailo-s3-test/foo.txt?aws_access_key_id=foo&aws_access_key_secret=bar&aws_access_token=baz"))
+	err := g.GetFile(
+		dst,
+		testURL("https://s3.amazonaws.com/hc-oss-test/go-getter/folder/main.tf?aws_access_key_id=foo&aws_access_key_secret=bar&aws_access_token=baz"))
 	if err == nil {
 		t.Fatalf("expected error, got none")
 	}
@@ -80,12 +96,9 @@ func TestS3Getter_GetFile_notfound(t *testing.T) {
 	dst := tempFile(t)
 
 	// Download
-	err := g.GetFile(dst, testURL("https://s3-eu-west-1.amazonaws.com/hailo-s3-test/notfound.txt"))
+	err := g.GetFile(
+		dst, testURL("https://s3.amazonaws.com/hc-oss-test/go-getter/folder/404.tf"))
 	if err == nil {
 		t.Fatalf("expected error, got none")
-	}
-
-	if reqerr, ok := err.(awserr.RequestFailure); !ok || reqerr.StatusCode() != 404 {
-		t.Fatalf("expected InvalidAccessKeyId error")
 	}
 }
