@@ -80,3 +80,23 @@ Forced protocols will also override any detectors.
 In the absense of a forced protocol, detectors may be run on the URL, transforming
 the protocol anyways. The above example would've used the Git protocol either
 way since the Git detector would've detected it was a GitHub URL.
+
+## Checksumming
+
+For file downloads of any protocol, go-getter can automatically verify
+a checksum for you. Note that checksumming only works for downloading files,
+not directories, but checksumming will work for any protocol.
+
+To checksum a file, append a `checksum` query parameter to the URL.
+The paramter value should be in the format of `type:value`, where
+type is "md5", "sha1", "sha256", or "sha512". The "value" should be
+the actual checksum value. go-getter will parse out this query parameter
+automatically and use it to verify the checksum. An example URL
+is shown below:
+
+```
+./foo.txt?checksum=md5:b7d96c89d09d9e204f5fedc4d5d55b21
+```
+
+The checksum query parameter is never sent to the backend protocol
+implementation. It is used at a higher level by go-getter itself.
