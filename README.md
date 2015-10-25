@@ -1,5 +1,11 @@
 # go-getter
 
+[![Build Status](http://img.shields.io/travis/hashicorp/go-getter.svg?style=flat-square)][travis]
+[![Go Documentation](http://img.shields.io/badge/go-documentation-blue.svg?style=flat-square)][godocs]
+
+[travis]: http://travis-ci.org/hashicorp/go-getter
+[godocs]: http://godoc.org/github.com/hashicorp/go-getter
+
 go-getter is a library for Go (golang) for downloading files or directories
 from various sources using a URL as the primary form of input.
 
