@@ -24,6 +24,7 @@ func init() {
 	Detectors = []Detector{
 		new(GitHubDetector),
 		new(BitBucketDetector),
+		new(S3Detector),
 		new(FileDetector),
 	}
 }

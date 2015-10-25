@@ -58,6 +58,15 @@ func testModuleURL(n string) *url.URL {
 	return u
 }
 
+func testURL(s string) *url.URL {
+	u, err := urlhelper.Parse(s)
+	if err != nil {
+		panic(err)
+	}
+
+	return u
+}
+
 func testStorage(t *testing.T) Storage {
 	return &FolderStorage{StorageDir: tempDir(t)}
 }
