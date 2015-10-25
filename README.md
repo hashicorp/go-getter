@@ -81,7 +81,7 @@ In the absense of a forced protocol, detectors may be run on the URL, transformi
 the protocol anyways. The above example would've used the Git protocol either
 way since the Git detector would've detected it was a GitHub URL.
 
-## Checksumming
+### Checksumming
 
 For file downloads of any protocol, go-getter can automatically verify
 a checksum for you. Note that checksumming only works for downloading files,
