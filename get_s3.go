@@ -98,7 +98,6 @@ func (g *S3Getter) GetFile(dst string, u *url.URL) error {
 	}
 
 	client := s3.New(g.getAWSConfig(region, creds))
-
 	return g.getObject(client, dst, bucket, path, version)
 }
 
@@ -151,24 +150,28 @@ func (g *S3Getter) getAWSConfig(region string, creds *credentials.Credentials) *
 }
 
 func (g *S3Getter) parseUrl(u *url.URL) (region, bucket, path, version string, creds *credentials.Credentials, err error) {
+	// Expected host style: s3.amazonaws.com. They always have 3 parts,
+	// although the first may differ if we're accessing a specific region.
 	hostParts := strings.Split(u.Host, ".")
-
 	if len(hostParts) != 3 {
-		return "", "", "", "", nil, fmt.Errorf("URL is not a valid S3 URL")
+		err = fmt.Errorf("URL is not a valid S3 URL")
+		return
 	}
+
+	// Parse the region out of the first part of the host
 	region = strings.TrimPrefix(strings.TrimPrefix(hostParts[0], "s3-"), "s3")
 	if region == "" {
 		region = "us-east-1"
 	}
 
-	pathParts := strings.Split(u.Path, "/")
-	if len(pathParts) < 2 {
-		return "", "", "", "", nil, fmt.Errorf("URL is not a valid S3 URL")
+	pathParts := strings.SplitN(u.Path, "/", 3)
+	if len(pathParts) != 3 {
+		err = fmt.Errorf("URL is not a valid S3 URL")
+		return
 	}
 
 	bucket = pathParts[1]
-	path = strings.Join(pathParts[2:], "/")
-
+	path = pathParts[2]
 	version = u.Query().Get("version")
 
 	_, hasAwsId := u.Query()["aws_access_key_id"]
