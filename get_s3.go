@@ -7,9 +7,11 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
+	"github.com/aws/aws-sdk-go/aws/credentials/ec2rolecreds"
 	"github.com/aws/aws-sdk-go/service/s3"
 )
 
@@ -131,6 +133,15 @@ func (g *S3Getter) getObject(client *s3.S3, dst, bucket, key, version string) er
 
 func (g *S3Getter) getAWSConfig(region string, creds *credentials.Credentials) *aws.Config {
 	conf := &aws.Config{}
+	if creds == nil {
+		creds = credentials.NewChainCredentials(
+			[]credentials.Provider{
+				&credentials.EnvProvider{},
+				&credentials.SharedCredentialsProvider{Filename: "", Profile: ""},
+				&ec2rolecreds.EC2RoleProvider{ExpiryWindow: 5 * time.Minute},
+			})
+	}
+
 	conf.Credentials = creds
 	if region != "" {
 		conf.Region = aws.String(region)
