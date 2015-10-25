@@ -83,9 +83,11 @@ func (c *Client) Get() error {
 	// Determine if we have a checksum
 	var checksumHash hash.Hash
 	var checksumValue []byte
-	if v := u.Query().Get("checksum"); v != "" {
+	q := u.Query()
+	if v := q.Get("checksum"); v != "" {
 		// Delete the query parameter if we have it.
-		u.Query().Del("checksum")
+		q.Del("checksum")
+		u.RawQuery = q.Encode()
 
 		// If we're getting a directory, then this is an error. You cannot
 		// checksum a directory. TODO: test
