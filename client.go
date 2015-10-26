@@ -29,8 +29,13 @@ type Client struct {
 	// Dst is the path to save the downloaded thing as. If Dir is set to
 	// true, then this should be a directory. If the directory doesn't exist,
 	// it will be created for you.
+	//
+	// Pwd is the working directory for detection. If this isn't set, some
+	// detection may fail. Client will not default pwd to the current
+	// working directory for security reasons.
 	Src string
 	Dst string
+	Pwd string
 
 	// Dir, if true, tells the Client it is downloading a directory (versus
 	// a single file). This distinction is necessary since filenames and
@@ -38,14 +43,29 @@ type Client struct {
 	// without knowing ahead of time.
 	Dir bool
 
-	// Getters is the map of protocols supported by this client. Use
-	// the global Getters variable for the built-in defaults.
+	// Detectors is the list of detectors that are tried on the source.
+	// If this is nil, then the default Detectors will be used.
+	Detectors []Detector
+
+	// Getters is the map of protocols supported by this client. If this
+	// is nil, then the default Getters variable will be used.
 	Getters map[string]Getter
 }
 
 // Get downloads the configured source to the destination.
 func (c *Client) Get() error {
-	force, src := getForcedGetter(c.Src)
+	// Detect the URL. This is safe if it is already detected.
+	detectors := c.Detectors
+	if detectors == nil {
+		detectors = Detectors
+	}
+	src, err := Detect(c.Src, c.Pwd, detectors)
+	if err != nil {
+		return err
+	}
+
+	// Determine if we have a forced protocol, i.e. "git::http://..."
+	force, src := getForcedGetter(src)
 
 	// If there is a subdir component, then we download the root separately
 	// and then copy over the proper subdir.
@@ -74,7 +94,12 @@ func (c *Client) Get() error {
 		force = u.Scheme
 	}
 
-	g, ok := c.Getters[force]
+	getters := c.Getters
+	if getters == nil {
+		getters = Getters
+	}
+
+	g, ok := getters[force]
 	if !ok {
 		return fmt.Errorf(
 			"download not supported for scheme '%s'", force)
