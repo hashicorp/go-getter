@@ -8,7 +8,7 @@ import (
 	"reflect"
 	"testing"
 
-	urlhelper "github.com/hashicorp/terraform/helper/url"
+	urlhelper "github.com/hashicorp/go-getter/helper/url"
 )
 
 const fixtureDir = "./test-fixtures"

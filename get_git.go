@@ -8,7 +8,7 @@ import (
 	"os/exec"
 	"path/filepath"
 
-	urlhelper "github.com/hashicorp/terraform/helper/url"
+	urlhelper "github.com/hashicorp/go-getter/helper/url"
 )
 
 // GitGetter is a Getter implementation that will download a module from
