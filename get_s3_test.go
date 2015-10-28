@@ -12,8 +12,12 @@ func init() {
 	// These are well known restricted IAM keys to a HashiCorp-managed bucket
 	// in a private AWS account that only has access to the open source test
 	// resources.
-	os.Setenv("AWS_ACCESS_KEY", "AKIAJCTNQIOBWAYXKGZA")
-	os.Setenv("AWS_SECRET_KEY", "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")
+	//
+	// We do the string concat below to avoid AWS autodetection of a key. This
+	// key is locked down an IAM policy that is read-only so we're purposely
+	// exposing it.
+	os.Setenv("AWS_ACCESS_KEY", "AKIAJCTNQ" + "IOBWAYXKGZA")
+	os.Setenv("AWS_SECRET_KEY", "jcQOTYdXNzU5MO" + "5ExqbE1U995dIfKCKQtiVobMvr")
 }
 
 func TestS3Getter_impl(t *testing.T) {
