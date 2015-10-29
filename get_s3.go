@@ -12,6 +12,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/credentials/ec2rolecreds"
+	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 )
 
@@ -44,7 +45,9 @@ func (g *S3Getter) Get(dst string, u *url.URL) error {
 		return err
 	}
 
-	client := s3.New(g.getAWSConfig(region, creds))
+	config := g.getAWSConfig(region, creds)
+	sess := session.New(config)
+	client := s3.New(sess)
 
 	// List files in path, keep listing until no more objects are found
 	lastMarker := ""
@@ -97,7 +100,9 @@ func (g *S3Getter) GetFile(dst string, u *url.URL) error {
 		return err
 	}
 
-	client := s3.New(g.getAWSConfig(region, creds))
+	config := g.getAWSConfig(region, creds)
+	sess := session.New(config)
+	client := s3.New(sess)
 	return g.getObject(client, dst, bucket, path, version)
 }
 
