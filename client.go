@@ -15,7 +15,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	urlhelper "github.com/hashicorp/terraform/helper/url"
+	urlhelper "github.com/hashicorp/go-getter/helper/url"
 )
 
 // Client is a client for downloading things.
