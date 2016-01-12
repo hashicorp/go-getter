@@ -129,9 +129,11 @@ func (c *Client) Get() error {
 	}
 	if archiveV == "" {
 		// We don't appear to... but is it part of the filename?
-		ext := filepath.Ext(u.Path)
-		if _, ok := decompressors[ext]; ok {
-			archiveV = ext
+		for k, _ := range decompressors {
+			if strings.HasSuffix(u.Path, k) {
+				archiveV = k
+				break
+			}
 		}
 	}
 
