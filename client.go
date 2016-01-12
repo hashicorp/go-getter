@@ -129,10 +129,11 @@ func (c *Client) Get() error {
 	}
 	if archiveV == "" {
 		// We don't appear to... but is it part of the filename?
+		matchingLen := 0
 		for k, _ := range decompressors {
-			if strings.HasSuffix(u.Path, k) {
+			if strings.HasSuffix(u.Path, k) && len(k) > matchingLen {
 				archiveV = k
-				break
+				matchingLen = len(k)
 			}
 		}
 	}
