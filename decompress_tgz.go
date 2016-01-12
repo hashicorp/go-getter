@@ -15,10 +15,12 @@ type TarGzipDecompressor struct{}
 
 func (d *TarGzipDecompressor) Decompress(dst, src string, dir bool) error {
 	// If we're going into a directory we should make that first
-	if dir {
-		if err := os.MkdirAll(dst, 0755); err != nil {
-			return err
-		}
+	mkdir := dst
+	if !dir {
+		mkdir = filepath.Dir(dst)
+	}
+	if err := os.MkdirAll(mkdir, 0755); err != nil {
+		return err
 	}
 
 	// File first

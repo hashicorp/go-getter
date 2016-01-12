@@ -36,7 +36,7 @@ func TestDecompressor(t *testing.T, d Decompressor, cases []TestDecompressCase) 
 		}
 
 		// Destination is always joining result so that we have a new path
-		dst := filepath.Join(td, "result")
+		dst := filepath.Join(td, "subdir", "result")
 
 		// We use a function so defers work
 		func() {
