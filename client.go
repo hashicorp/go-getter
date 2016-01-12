@@ -105,10 +105,19 @@ func (c *Client) Get() error {
 			"download not supported for scheme '%s'", force)
 	}
 
+	// We have magic query parameters that we use to signal different features
+	q := u.Query()
+
+	// Determine if we have an archive type
+	archiveV := q.Get("archive")
+	if archiveV == "" {
+		// We don't appear to... but is it part of the filename?
+
+	}
+
 	// Determine if we have a checksum
 	var checksumHash hash.Hash
 	var checksumValue []byte
-	q := u.Query()
 	if v := q.Get("checksum"); v != "" {
 		// Delete the query parameter if we have it.
 		q.Del("checksum")
@@ -210,4 +219,13 @@ func checksum(source string, h hash.Hash, v []byte) error {
 	}
 
 	return nil
+}
+
+var archiveMagic = map[string]struct{}{
+	"tar.bz2": struct{}{},
+	"tar":     struct{}{},
+	"tar.gz":  struct{}{},
+	"tbz2":    struct{}{},
+	"tgz":     struct{}{},
+	"zip":     struct{}{},
 }
