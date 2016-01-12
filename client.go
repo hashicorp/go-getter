@@ -125,6 +125,8 @@ func (c *Client) Get() error {
 	// Determine if we have an archive type
 	archiveV := q.Get("archive")
 	if archiveV != "" {
+		// Delete the paramter since it is a magic parameter we don't
+		// want to pass on to the Getter
 		q.Del("archive")
 		u.RawQuery = q.Encode()
 
@@ -299,13 +301,4 @@ func checksum(source string, h hash.Hash, v []byte) error {
 	}
 
 	return nil
-}
-
-var archiveMagic = map[string]struct{}{
-	"tar.bz2": struct{}{},
-	"tar":     struct{}{},
-	"tar.gz":  struct{}{},
-	"tbz2":    struct{}{},
-	"tgz":     struct{}{},
-	"zip":     struct{}{},
 }
