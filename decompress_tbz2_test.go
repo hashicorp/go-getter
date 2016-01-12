@@ -5,10 +5,10 @@ import (
 	"testing"
 )
 
-func TestTarGzipDecompressor(t *testing.T) {
+func TestTarBzip2Decompressor(t *testing.T) {
 	cases := []TestDecompressCase{
 		{
-			"empty.tar.gz",
+			"empty.tar.bz2",
 			false,
 			true,
 			nil,
@@ -16,7 +16,7 @@ func TestTarGzipDecompressor(t *testing.T) {
 		},
 
 		{
-			"single.tar.gz",
+			"single.tar.bz2",
 			false,
 			false,
 			nil,
@@ -24,7 +24,7 @@ func TestTarGzipDecompressor(t *testing.T) {
 		},
 
 		{
-			"single.tar.gz",
+			"single.tar.bz2",
 			true,
 			false,
 			[]string{"file"},
@@ -32,7 +32,7 @@ func TestTarGzipDecompressor(t *testing.T) {
 		},
 
 		{
-			"multiple.tar.gz",
+			"multiple.tar.bz2",
 			true,
 			false,
 			[]string{"file1", "file2"},
@@ -40,7 +40,7 @@ func TestTarGzipDecompressor(t *testing.T) {
 		},
 
 		{
-			"multiple.tar.gz",
+			"multiple.tar.bz2",
 			false,
 			true,
 			nil,
@@ -49,8 +49,8 @@ func TestTarGzipDecompressor(t *testing.T) {
 	}
 
 	for i, tc := range cases {
-		cases[i].Input = filepath.Join("./test-fixtures", "decompress-tgz", tc.Input)
+		cases[i].Input = filepath.Join("./test-fixtures", "decompress-tbz2", tc.Input)
 	}
 
-	TestDecompressor(t, new(TarGzipDecompressor), cases)
+	TestDecompressor(t, new(TarBzip2Decompressor), cases)
 }
