@@ -13,6 +13,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	urlhelper "github.com/hashicorp/go-getter/helper/url"
@@ -126,6 +127,12 @@ func (c *Client) Get() error {
 	if archiveV != "" {
 		q.Del("archive")
 		u.RawQuery = q.Encode()
+
+		// If we can parse the value as a bool and it is false, then
+		// set the archive to "-" which should never map to a decompressor
+		if b, err := strconv.ParseBool(archiveV); err == nil && !b {
+			archiveV = "-"
+		}
 	}
 	if archiveV == "" {
 		// We don't appear to... but is it part of the filename?

@@ -137,6 +137,23 @@ func TestGetFile_archiveChecksum(t *testing.T) {
 	assertContents(t, dst, "Hello\n")
 }
 
+func TestGetFile_archiveNoUnarchive(t *testing.T) {
+	dst := tempFile(t)
+	u := testModule("basic-file-archive/archive.tar.gz")
+	u += "?archive=false"
+
+	if err := GetFile(dst, u); err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	// Verify the main file exists
+	actual := testMD5(t, dst)
+	expected := "fbd90037dacc4b1ab40811d610dde2f0"
+	if actual != expected {
+		t.Fatalf("bad: %s", actual)
+	}
+}
+
 func TestGetFile_checksum(t *testing.T) {
 	cases := []struct {
 		Append string
