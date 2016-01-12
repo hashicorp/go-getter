@@ -119,6 +119,14 @@ the archive. If this isn't specified, go-getter will use the extension of
 the path to see if it appears archived. Unarchiving can be explicitly
 disabled by setting the `archive` query parameter to `false`.
 
+The following archive formats are supported:
+
+  * `tar.gz` and `tgz`
+  * `tar.bz2` and `tbz2`
+  * `zip`
+  * `gz`
+  * `bz2`
+
 For example, an example URL is shown below:
 
 ```
