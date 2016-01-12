@@ -27,8 +27,6 @@ func TestDecompressor(t *testing.T, d Decompressor, cases []TestDecompressCase) 
 	for _, tc := range cases {
 		t.Logf("Testing: %s", tc.Input)
 
-		src := filepath.Join("./test-fixtures", "decompress-tgz", tc.Input)
-
 		// Temporary dir to store stuff
 		td, err := ioutil.TempDir("", "getter")
 		if err != nil {
@@ -43,7 +41,7 @@ func TestDecompressor(t *testing.T, d Decompressor, cases []TestDecompressCase) 
 			defer os.RemoveAll(td)
 
 			// Decompress
-			err := d.Decompress(dst, src, tc.Dir)
+			err := d.Decompress(dst, tc.Input, tc.Dir)
 			if (err != nil) != tc.Err {
 				t.Fatalf("err %s: %s", tc.Input, err)
 			}

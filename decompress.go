@@ -19,5 +19,6 @@ func init() {
 	Decompressors = map[string]Decompressor{
 		"tar.gz": tgzDecompressor,
 		"tgz":    tgzDecompressor,
+		"zip":    new(ZipDecompressor),
 	}
 }
