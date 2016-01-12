@@ -215,7 +215,9 @@ func (c *Client) Get() error {
 		}
 
 		if checksumHash != nil {
-			return checksum(dst, checksumHash, checksumValue)
+			if err := checksum(dst, checksumHash, checksumValue); err != nil {
+				return err
+			}
 		}
 
 		if decompressor != nil {
