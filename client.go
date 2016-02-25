@@ -66,7 +66,14 @@ type Client struct {
 // Get downloads the configured source to the destination.
 func (c *Client) Get() error {
 	// Store this locally since there are cases we swap this
-	dir := c.Dir
+	mode := c.Mode
+	if mode == ClientModeInvalid {
+		if c.Dir {
+			mode = ClientModeDir
+		} else {
+			mode = ClientModeFile
+		}
+	}
 
 	// Default decompressor value
 	decompressors := c.Decompressors
@@ -172,9 +179,9 @@ func (c *Client) Get() error {
 		// Swap the download directory to be our temporary path and
 		// store the old values.
 		decompressDst = dst
-		decompressDir = dir
+		decompressDir = mode != ClientModeFile
 		dst = filepath.Join(td, "archive")
-		dir = false
+		mode = ClientModeFile
 	}
 
 	// Determine if we have a checksum
@@ -184,13 +191,6 @@ func (c *Client) Get() error {
 		// Delete the query parameter if we have it.
 		q.Del("checksum")
 		u.RawQuery = q.Encode()
-
-		// If we're getting a directory, then this is an error. You cannot
-		// checksum a directory. TODO: test
-		if dir {
-			return fmt.Errorf(
-				"checksum cannot be specified for directory download")
-		}
 
 		// Determine the checksum hash type
 		checksumType := ""
@@ -224,7 +224,7 @@ func (c *Client) Get() error {
 
 	// If we're not downloading a directory, then just download the file
 	// and return.
-	if !dir {
+	if mode == ClientModeFile {
 		err := g.GetFile(dst, u)
 		if err != nil {
 			return err
@@ -246,13 +246,17 @@ func (c *Client) Get() error {
 
 			// Swap the information back
 			dst = decompressDst
-			dir = decompressDir
+			if decompressDir {
+				mode = ClientModeAny
+			} else {
+				mode = ClientModeFile
+			}
 		}
 
 		// We check the dir value again because it can be switched back
 		// if we were unarchiving. If we're still only Get-ing a file, then
 		// we're done.
-		if !dir {
+		if mode == ClientModeFile {
 			return nil
 		}
 	}
@@ -262,6 +266,13 @@ func (c *Client) Get() error {
 	// In the case we have a decompressor we don't Get because it was Get
 	// above.
 	if decompressor == nil {
+		// If we're getting a directory, then this is an error. You cannot
+		// checksum a directory. TODO: test
+		if checksumHash != nil {
+			return fmt.Errorf(
+				"checksum cannot be specified for directory download")
+		}
+
 		// We're downloading a directory, which might require a bit more work
 		// if we're specifying a subdir.
 		err := g.Get(dst, u)
