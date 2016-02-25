@@ -115,6 +115,20 @@ func TestGetAny_archive(t *testing.T) {
 	}
 }
 
+func TestGetAny_file(t *testing.T) {
+	dst := tempDir(t)
+	u := testModule("basic-file/foo.txt")
+
+	if err := GetAny(dst, u); err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	mainPath := filepath.Join(dst, "foo.txt")
+	if _, err := os.Stat(mainPath); err != nil {
+		t.Fatalf("err: %s", err)
+	}
+}
+
 func TestGetFile(t *testing.T) {
 	dst := tempFile(t)
 	u := testModule("basic-file/foo.txt")
