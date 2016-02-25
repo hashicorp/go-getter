@@ -38,11 +38,9 @@ type Client struct {
 	Dst string
 	Pwd string
 
-	// Dir, if true, tells the Client it is downloading a directory (versus
-	// a single file). This distinction is necessary since filenames and
-	// directory names follow the same format so disambiguating is impossible
-	// without knowing ahead of time.
-	Dir bool
+	// Mode is the method of download the client will use. See ClientMode
+	// for documentation.
+	Mode ClientMode
 
 	// Detectors is the list of detectors that are tried on the source.
 	// If this is nil, then the default Detectors will be used.
@@ -55,6 +53,14 @@ type Client struct {
 	// Getters is the map of protocols supported by this client. If this
 	// is nil, then the default Getters variable will be used.
 	Getters map[string]Getter
+
+	// Dir, if true, tells the Client it is downloading a directory (versus
+	// a single file). This distinction is necessary since filenames and
+	// directory names follow the same format so disambiguating is impossible
+	// without knowing ahead of time.
+	//
+	// WARNING: deprecated. If Mode is set, that will take precedence.
+	Dir bool
 }
 
 // Get downloads the configured source to the destination.
