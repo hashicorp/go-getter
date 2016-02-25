@@ -100,6 +100,60 @@ func TestGet_archive(t *testing.T) {
 	}
 }
 
+func TestGetAny_archive(t *testing.T) {
+	dst := tempDir(t)
+	u := filepath.Join("./test-fixtures", "archive.tar.gz")
+	u, _ = filepath.Abs(u)
+
+	if err := GetAny(dst, u); err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	mainPath := filepath.Join(dst, "main.tf")
+	if _, err := os.Stat(mainPath); err != nil {
+		t.Fatalf("err: %s", err)
+	}
+}
+
+func TestGetAny_file(t *testing.T) {
+	dst := tempDir(t)
+	u := testModule("basic-file/foo.txt")
+
+	if err := GetAny(dst, u); err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	mainPath := filepath.Join(dst, "foo.txt")
+	if _, err := os.Stat(mainPath); err != nil {
+		t.Fatalf("err: %s", err)
+	}
+}
+
+/*
+TODO
+func TestGetAny_dir(t *testing.T) {
+	dst := tempDir(t)
+	u := filepath.Join("./test-fixtures", "basic")
+	u, _ = filepath.Abs(u)
+
+	if err := GetAny(dst, u); err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	check := []string{
+		"main.tf",
+		"foo/main.tf",
+	}
+
+	for _, name := range check {
+		mainPath := filepath.Join(dst, name)
+		if _, err := os.Stat(mainPath); err != nil {
+			t.Fatalf("err: %s", err)
+		}
+	}
+}
+*/
+
 func TestGetFile(t *testing.T) {
 	dst := tempFile(t)
 	u := testModule("basic-file/foo.txt")
