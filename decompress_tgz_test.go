@@ -46,6 +46,14 @@ func TestTarGzipDecompressor(t *testing.T) {
 			nil,
 			"",
 		},
+
+		{
+			"multiple_dir.tar.gz",
+			true,
+			false,
+			[]string{"dir/", "dir/test2", "test1"},
+			"",
+		},
 	}
 
 	for i, tc := range cases {
