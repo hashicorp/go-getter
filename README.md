@@ -48,7 +48,7 @@ The command is useful for verifying URL structures.
 
 ## URL Format
 
-go-getter uses a single string URL as input to downlaod from a variety of
+go-getter uses a single string URL as input to download from a variety of
 protocols. go-getter has various "tricks" with this URL to do certain things.
 This section documents the URL format.
 
