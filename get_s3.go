@@ -45,7 +45,11 @@ func (g *S3Getter) Get(dst string, u *url.URL) error {
 		return err
 	}
 
-	config := g.getAWSConfig(region, creds)
+	config, err := g.getAWSConfig(region, creds)
+	if err != nil {
+		return err
+	}
+
 	sess := session.New(config)
 	client := s3.New(sess)
 
@@ -100,7 +104,11 @@ func (g *S3Getter) GetFile(dst string, u *url.URL) error {
 		return err
 	}
 
-	config := g.getAWSConfig(region, creds)
+	config, err := g.getAWSConfig(region, creds)
+	if err != nil {
+		return err
+	}
+
 	sess := session.New(config)
 	client := s3.New(sess)
 	return g.getObject(client, dst, bucket, path, version)
@@ -135,7 +143,7 @@ func (g *S3Getter) getObject(client *s3.S3, dst, bucket, key, version string) er
 	return err
 }
 
-func (g *S3Getter) getAWSConfig(region string, creds *credentials.Credentials) *aws.Config {
+func (g *S3Getter) getAWSConfig(region string, creds *credentials.Credentials) (*aws.Config, error) {
 	conf := &aws.Config{}
 	if creds == nil {
 		creds = credentials.NewChainCredentials(
@@ -144,6 +152,12 @@ func (g *S3Getter) getAWSConfig(region string, creds *credentials.Credentials) *
 				&credentials.SharedCredentialsProvider{Filename: "", Profile: ""},
 				&ec2rolecreds.EC2RoleProvider{ExpiryWindow: 5 * time.Minute},
 			})
+
+		// Retrieves credentials
+		_, err := creds.Get()
+		if err != nil {
+			return nil, err;
+		}
 	}
 
 	conf.Credentials = creds
@@ -151,7 +165,7 @@ func (g *S3Getter) getAWSConfig(region string, creds *credentials.Credentials) *
 		conf.Region = aws.String(region)
 	}
 
-	return conf
+	return conf, nil
 }
 
 func (g *S3Getter) parseUrl(u *url.URL) (region, bucket, path, version string, creds *credentials.Credentials, err error) {
