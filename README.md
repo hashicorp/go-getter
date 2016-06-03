@@ -227,3 +227,21 @@ the query parameters are present, these take priority.
   * `aws_access_key_id` - AWS access key.
   * `aws_access_key_secret` - AWS access key secret.
   * `aws_access_token` - AWS access token if this is being used.
+
+#### Using IAM Instance Profiles with S3
+
+If you use go-getter and want to use an EC2 IAM Instance Profile to avoid
+using credentials, then just omit these and the profile, if available will
+be used automatically.
+
+#### S3 Bucket Examples
+
+S3 has several addressing schemes used to reference your bucket. These are
+listed here: http://docs.aws.amazon.com/AmazonS3/latest/dev/UsingBucket.html#access-bucket-intro
+
+Some examples for these addressing schemes:
+- s3::https://s3.amazonaws.com/bucket/foo
+- s3::https://s3-eu-west-1.amazonaws.com/bucket/foo
+- bucket.s3.amazonaws.com/foo
+- bucket.s3-eu-west-1.amazonaws.com/foo/bar
+
