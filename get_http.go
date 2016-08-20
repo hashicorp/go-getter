@@ -43,9 +43,11 @@ func (g *HttpGetter) Get(dst string, u *url.URL) error {
 	var newU url.URL = *u
 	u = &newU
 
-	// Add auth from netrc if we can
-	if err := addAuthFromNetrc(u); err != nil {
-		return err
+	if g.Netrc {
+		// Add auth from netrc if we can
+		if err := addAuthFromNetrc(u); err != nil {
+			return err
+		}
 	}
 
 	// Add terraform-get to the parameter.
