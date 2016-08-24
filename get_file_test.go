@@ -148,3 +148,20 @@ func TestFileGetter_GetFile_Copy(t *testing.T) {
 	// Verify the main file exists
 	assertContents(t, dst, "Hello\n")
 }
+
+// https://github.com/hashicorp/terraform/issues/8418
+func TestFileGetter_percent2F(t *testing.T) {
+	g := new(FileGetter)
+	dst := tempDir(t)
+
+	// With a dir that doesn't exist
+	if err := g.Get(dst, testModuleURL("basic%2Ftest")); err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	// Verify the main file exists
+	mainPath := filepath.Join(dst, "main.tf")
+	if _, err := os.Stat(mainPath); err != nil {
+		t.Fatalf("err: %s", err)
+	}
+}

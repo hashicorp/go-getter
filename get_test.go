@@ -31,6 +31,21 @@ func TestGet_file(t *testing.T) {
 	}
 }
 
+// https://github.com/hashicorp/terraform/issues/8418
+func TestGet_filePercent2F(t *testing.T) {
+	dst := tempDir(t)
+	u := testModule("basic%2Ftest")
+
+	if err := Get(dst, u); err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	mainPath := filepath.Join(dst, "main.tf")
+	if _, err := os.Stat(mainPath); err != nil {
+		t.Fatalf("err: %s", err)
+	}
+}
+
 func TestGet_fileDetect(t *testing.T) {
 	dst := tempDir(t)
 	u := filepath.Join("./test-fixtures", "basic")
