@@ -153,6 +153,35 @@ func TestHttpGetter_auth(t *testing.T) {
 	}
 }
 
+func TestHttpGetter_basicAuth(t *testing.T) {
+	ln := testHttpServer(t)
+	defer ln.Close()
+
+	g := new(HttpGetter)
+	dst := tempDir(t)
+
+	var u url.URL
+	u.Scheme = "http"
+	u.Host = ln.Addr().String()
+	u.Path = "/file-basic-auth"
+	// set HTTP basic auth with query params
+	q := u.Query()
+	q.Add("http_basic_auth_user", "basicUser")
+	q.Add("http_basic_auth_pass", "basicPass")
+	u.RawQuery = q.Encode()
+
+	// Get it!
+	if err := g.GetFile(dst, &u); err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	// Verify the main file exists
+	if _, err := os.Stat(dst); err != nil {
+		t.Fatalf("err: %s", err)
+	}
+	assertContents(t, dst, "HelloBasicAuth\n")
+}
+
 func TestHttpGetter_authNetrc(t *testing.T) {
 	ln := testHttpServer(t)
 	defer ln.Close()
@@ -190,6 +219,7 @@ func testHttpServer(t *testing.T) net.Listener {
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/file", testHttpHandlerFile)
+	mux.HandleFunc("/file-basic-auth", testHttpHandlerFileBasicAuth)
 	mux.HandleFunc("/header", testHttpHandlerHeader)
 	mux.HandleFunc("/meta", testHttpHandlerMeta)
 	mux.HandleFunc("/meta-auth", testHttpHandlerMetaAuth)
@@ -204,6 +234,21 @@ func testHttpServer(t *testing.T) net.Listener {
 
 func testHttpHandlerFile(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("Hello\n"))
+}
+
+func testHttpHandlerFileBasicAuth(w http.ResponseWriter, r *http.Request) {
+	user, pass, ok := r.BasicAuth()
+	if !ok {
+		w.WriteHeader(401)
+		return
+	}
+
+	if user != "basicUser" || pass != "basicPass" {
+		w.WriteHeader(401)
+		return
+	}
+
+	w.Write([]byte("HelloBasicAuth\n"))
 }
 
 func testHttpHandlerHeader(w http.ResponseWriter, r *http.Request) {

@@ -216,7 +216,11 @@ None
 
 ### HTTP (`http`)
 
-None
+If the HTTP server is secured with Basic authorization, you can configure username
+and password using these parameters:
+
+  * `http_basic_auth_user` - HTTP Basic authorization username
+  * `http_basic_auth_pass` - HTTP Basic authorization password
 
 ### S3 (`s3`)
 
