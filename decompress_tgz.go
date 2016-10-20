@@ -80,6 +80,16 @@ func (d *TarGzipDecompressor) Decompress(dst, src string, dir bool) error {
 		// Mark that we're done so future in single file mode errors
 		done = true
 
+		if (hdr.Typeflag == tar.TypeSymlink) {
+			// If the type is a symlink we re-write it and
+			// continue instead of attempting to copy the contents
+			if err := os.Symlink(hdr.Linkname, path); err != nil {
+				return fmt.Errorf("failed writing symbolic link: %s", err)
+			}
+
+			continue
+		}
+
 		// Open the file for writing
 		dstF, err := os.Create(path)
 		if err != nil {

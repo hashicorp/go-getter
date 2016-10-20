@@ -61,6 +61,14 @@ func TestTarGzipDecompressor(t *testing.T) {
 			multiplePaths,
 			"",
 		},
+
+		{
+			"with-symlinks.tar.gz",
+			true,
+			false,
+			[]string{"bar", "baz", "foo"},
+			"",
+		},
 	}
 
 	for i, tc := range cases {
