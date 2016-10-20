@@ -69,6 +69,14 @@ func TestTarGzipDecompressor(t *testing.T) {
 			[]string{"bar", "baz", "foo"},
 			"",
 		},
+
+		{
+			"with-links.tar.gz",
+			true,
+			false,
+			[]string{"foo", "bar"},
+			"",
+		},
 	}
 
 	for i, tc := range cases {

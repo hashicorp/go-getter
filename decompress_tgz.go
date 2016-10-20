@@ -90,6 +90,16 @@ func (d *TarGzipDecompressor) Decompress(dst, src string, dir bool) error {
 			continue
 		}
 
+		if (hdr.Typeflag == tar.TypeLink) {
+			// If the type is a link ("hardlink") we re-write it and
+			// continue instead of attempting to copy the contents
+			if err := os.Link(hdr.Linkname, path); err != nil {
+				return fmt.Errorf("failed writing link: %s", err)
+			}
+
+			continue
+		}
+
 		// Open the file for writing
 		dstF, err := os.Create(path)
 		if err != nil {
