@@ -17,6 +17,15 @@ func TestGet_badSchema(t *testing.T) {
 	}
 }
 
+func TestGet_compressorNamedDir(t *testing.T) {
+	dst := tempDir(t)
+	u := testModule("basic/zip")
+
+	if err := Get(dst, u); err != nil {
+		t.Fatalf("Could not import a directory with same name as a decompressor: err %q", err)
+	}
+}
+
 func TestGet_file(t *testing.T) {
 	dst := tempDir(t)
 	u := testModule("basic")
