@@ -12,15 +12,15 @@ type FileGetter struct {
 	Copy bool
 }
 
-func (g *FileGetter) ClientMode(u *url.URL) ClientMode {
+func (g *FileGetter) ClientMode(u *url.URL) (ClientMode, error) {
 	path := u.Path
 	if u.RawPath != "" {
 		path = u.RawPath
 	}
 
 	if fi, err := os.Stat(path); err == nil && fi.IsDir() {
-		return ClientModeDir
+		return ClientModeDir, nil
 	}
 
-	return ClientModeFile
+	return ClientModeFile, nil
 }

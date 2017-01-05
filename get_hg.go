@@ -16,8 +16,8 @@ import (
 // a Mercurial repository.
 type HgGetter struct{}
 
-func (g *HgGetter) ClientMode(_ *url.URL) ClientMode {
-	return ClientModeDir
+func (g *HgGetter) ClientMode(_ *url.URL) (ClientMode, error) {
+	return ClientModeDir, nil
 }
 
 func (g *HgGetter) Get(dst string, u *url.URL) error {

@@ -15,8 +15,8 @@ import (
 // a git repository.
 type GitGetter struct{}
 
-func (g *GitGetter) ClientMode(_ *url.URL) ClientMode {
-	return ClientModeDir
+func (g *GitGetter) ClientMode(_ *url.URL) (ClientMode, error) {
+	return ClientModeDir, nil
 }
 
 func (g *GitGetter) Get(dst string, u *url.URL) error {

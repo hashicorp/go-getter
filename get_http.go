@@ -38,11 +38,11 @@ type HttpGetter struct {
 	Netrc bool
 }
 
-func (g *HttpGetter) ClientMode(u *url.URL) ClientMode {
+func (g *HttpGetter) ClientMode(u *url.URL) (ClientMode, error) {
 	if strings.HasSuffix(u.Path, "/") {
-		return ClientModeDir
+		return ClientModeDir, nil
 	}
-	return ClientModeFile
+	return ClientModeFile, nil
 }
 
 func (g *HttpGetter) Get(dst string, u *url.URL) error {

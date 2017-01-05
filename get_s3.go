@@ -20,8 +20,8 @@ import (
 // a S3 bucket.
 type S3Getter struct{}
 
-func (g *S3Getter) ClientMode(_ *url.URL) ClientMode {
-	return ClientModeDir
+func (g *S3Getter) ClientMode(u *url.URL) (ClientMode, error) {
+	return ClientModeFile, nil
 }
 
 func (g *S3Getter) Get(dst string, u *url.URL) error {

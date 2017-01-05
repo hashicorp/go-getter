@@ -224,7 +224,10 @@ func (c *Client) Get() error {
 
 	if mode == ClientModeAny {
 		// Ask the getter which client mode to use
-		mode = g.ClientMode(u)
+		mode, err = g.ClientMode(u)
+		if err != nil {
+			return err
+		}
 
 		// Destination is the base name of the URL path in "any" mode when
 		// a file source is detected.
