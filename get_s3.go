@@ -21,6 +21,29 @@ import (
 type S3Getter struct{}
 
 func (g *S3Getter) ClientMode(u *url.URL) (ClientMode, error) {
+	// Parse URL
+	region, bucket, path, _, creds, err := g.parseUrl(u)
+	if err != nil {
+		return 0, err
+	}
+
+	config := g.getAWSConfig(region, creds)
+	sess := session.New(config)
+	client := s3.New(sess)
+
+	req := &s3.ListObjectsInput{
+		Bucket: aws.String(bucket),
+		Prefix: aws.String(path),
+	}
+
+	resp, err := client.ListObjects(req)
+	if err != nil {
+		return 0, err
+	}
+
+	if len(resp.Contents) > 1 {
+		return ClientModeDir, nil
+	}
 	return ClientModeFile, nil
 }
 
