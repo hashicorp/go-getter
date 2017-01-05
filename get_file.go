@@ -1,6 +1,9 @@
 package getter
 
-import "net/url"
+import (
+	"net/url"
+	"os"
+)
 
 // FileGetter is a Getter implementation that will download a module from
 // a file scheme.
@@ -9,6 +12,15 @@ type FileGetter struct {
 	Copy bool
 }
 
-func (g *FileGetter) ClientMode(_ *url.URL) ClientMode {
+func (g *FileGetter) ClientMode(u *url.URL) ClientMode {
+	path := u.Path
+	if u.RawPath != "" {
+		path = u.RawPath
+	}
+
+	if fi, err := os.Stat(path); err == nil && fi.IsDir() {
+		return ClientModeDir
+	}
+
 	return ClientModeFile
 }
