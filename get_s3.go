@@ -42,10 +42,19 @@ func (g *S3Getter) ClientMode(u *url.URL) (ClientMode, error) {
 	}
 
 	for _, o := range resp.Contents {
+		// Use file mode on exact match.
+		if *o.Key == path {
+			return ClientModeFile, nil
+		}
+
+		// Use dir mode if child keys are found.
 		if strings.HasPrefix(*o.Key, path+"/") {
 			return ClientModeDir, nil
 		}
 	}
+
+	// There was no match, so just return file mode. The download is going
+	// to fail but we will let S3 return the proper error.
 	return ClientModeFile, nil
 }
 
