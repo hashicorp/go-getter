@@ -41,8 +41,10 @@ func (g *S3Getter) ClientMode(u *url.URL) (ClientMode, error) {
 		return 0, err
 	}
 
-	if len(resp.Contents) > 1 {
-		return ClientModeDir, nil
+	for _, o := range resp.Contents {
+		if strings.HasPrefix(*o.Key, path+"/") {
+			return ClientModeDir, nil
+		}
 	}
 	return ClientModeFile, nil
 }
