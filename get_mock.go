@@ -43,3 +43,10 @@ func (g *MockGetter) GetFile(dst string, u *url.URL) error {
 	}
 	return g.GetFileErr
 }
+
+func (g *MockGetter) ClientMode(u *url.URL) ClientMode {
+	if u.Path[len(u.Path)-1:] == "/" {
+		return ClientModeDir
+	}
+	return ClientModeFile
+}

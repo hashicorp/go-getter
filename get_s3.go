@@ -20,6 +20,10 @@ import (
 // a S3 bucket.
 type S3Getter struct{}
 
+func (g *S3Getter) ClientMode(_ *url.URL) ClientMode {
+	return ClientModeDir
+}
+
 func (g *S3Getter) Get(dst string, u *url.URL) error {
 	// Parse URL
 	region, bucket, path, _, creds, err := g.parseUrl(u)
