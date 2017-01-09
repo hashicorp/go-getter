@@ -18,8 +18,13 @@ func (g *FileGetter) ClientMode(u *url.URL) (ClientMode, error) {
 		path = u.RawPath
 	}
 
+	fi, err := os.Stat(path)
+	if err != nil {
+		return 0, err
+	}
+
 	// Check if the source is a directory.
-	if fi, err := os.Stat(path); err == nil && fi.IsDir() {
+	if fi.IsDir() {
 		return ClientModeDir, nil
 	}
 

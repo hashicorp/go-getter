@@ -166,6 +166,15 @@ func TestFileGetter_percent2F(t *testing.T) {
 	}
 }
 
+func TestFileGetter_ClientMode_notexist(t *testing.T) {
+	g := new(FileGetter)
+
+	u := testURL("nonexistent")
+	if _, err := g.ClientMode(u); err == nil {
+		t.Fatal("expect source file error")
+	}
+}
+
 func TestFileGetter_ClientMode_file(t *testing.T) {
 	g := new(FileGetter)
 
