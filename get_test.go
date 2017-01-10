@@ -144,8 +144,6 @@ func TestGetAny_file(t *testing.T) {
 	}
 }
 
-/*
-TODO
 func TestGetAny_dir(t *testing.T) {
 	dst := tempDir(t)
 	u := filepath.Join("./test-fixtures", "basic")
@@ -167,7 +165,6 @@ func TestGetAny_dir(t *testing.T) {
 		}
 	}
 }
-*/
 
 func TestGetFile(t *testing.T) {
 	dst := tempFile(t)

@@ -165,3 +165,38 @@ func TestFileGetter_percent2F(t *testing.T) {
 		t.Fatalf("err: %s", err)
 	}
 }
+
+func TestFileGetter_ClientMode_notexist(t *testing.T) {
+	g := new(FileGetter)
+
+	u := testURL("nonexistent")
+	if _, err := g.ClientMode(u); err == nil {
+		t.Fatal("expect source file error")
+	}
+}
+
+func TestFileGetter_ClientMode_file(t *testing.T) {
+	g := new(FileGetter)
+
+	// Check the client mode when pointed at a file.
+	mode, err := g.ClientMode(testModuleURL("basic-file/foo.txt"))
+	if err != nil {
+		t.Fatalf("err: %s", err)
+	}
+	if mode != ClientModeFile {
+		t.Fatal("expect ClientModeFile")
+	}
+}
+
+func TestFileGetter_ClientMode_dir(t *testing.T) {
+	g := new(FileGetter)
+
+	// Check the client mode when pointed at a directory.
+	mode, err := g.ClientMode(testModuleURL("basic"))
+	if err != nil {
+		t.Fatalf("err: %s", err)
+	}
+	if mode != ClientModeDir {
+		t.Fatal("expect ClientModeDir")
+	}
+}

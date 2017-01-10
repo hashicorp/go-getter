@@ -15,6 +15,10 @@ import (
 // a git repository.
 type GitGetter struct{}
 
+func (g *GitGetter) ClientMode(_ *url.URL) (ClientMode, error) {
+	return ClientModeDir, nil
+}
+
 func (g *GitGetter) Get(dst string, u *url.URL) error {
 	if _, err := exec.LookPath("git"); err != nil {
 		return fmt.Errorf("git must be available and on the PATH")
