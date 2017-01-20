@@ -1,6 +1,7 @@
 package getter
 
 import (
+	"encoding/base64"
 	"fmt"
 	"io/ioutil"
 	"net/url"
@@ -25,11 +26,14 @@ func (g *GitGetter) Get(dst string, u *url.URL) error {
 	}
 
 	// Extract some query parameters we use
-	var ref string
+	var ref, sshKey string
 	q := u.Query()
 	if len(q) > 0 {
 		ref = q.Get("ref")
 		q.Del("ref")
+
+		sshKey = q.Get("sshkey")
+		q.Del("sshkey")
 
 		// Copy the URL
 		var newU url.URL = *u
@@ -37,15 +41,43 @@ func (g *GitGetter) Get(dst string, u *url.URL) error {
 		u.RawQuery = q.Encode()
 	}
 
-	// First: clone or update the repository
+	var sshKeyFile string
+	if sshKey != "" {
+		// We have an SSH key - decode it.
+		raw, err := base64.StdEncoding.DecodeString(sshKey)
+		if err != nil {
+			return err
+		}
+
+		// Write the raw key into a file.
+		fh, err := ioutil.TempFile("", "go-getter")
+		if err != nil {
+			return err
+		}
+		sshKeyFile = fh.Name()
+		defer os.Remove(sshKeyFile)
+
+		_, err = fh.Write(raw)
+		fh.Close()
+		if err != nil {
+			return err
+		}
+
+		// Set the permissions
+		if err := os.Chmod(sshKeyFile, 0600); err != nil {
+			return err
+		}
+	}
+
+	// Clone or update the repository
 	_, err := os.Stat(dst)
 	if err != nil && !os.IsNotExist(err) {
 		return err
 	}
 	if err == nil {
-		err = g.update(dst, ref)
+		err = g.update(dst, sshKeyFile, ref)
 	} else {
-		err = g.clone(dst, u)
+		err = g.clone(dst, sshKeyFile, u)
 	}
 	if err != nil {
 		return err
@@ -96,16 +128,18 @@ func (g *GitGetter) checkout(dst string, ref string) error {
 	return getRunCommand(cmd)
 }
 
-func (g *GitGetter) clone(dst string, u *url.URL) error {
+func (g *GitGetter) clone(dst, sshKeyFile string, u *url.URL) error {
 	cmd := exec.Command("git", "clone", u.String(), dst)
+	addSSHKeyFile(cmd, sshKeyFile)
 	return getRunCommand(cmd)
 }
 
-func (g *GitGetter) update(dst string, ref string) error {
+func (g *GitGetter) update(dst, sshKeyFile, ref string) error {
 	// Determine if we're a branch. If we're NOT a branch, then we just
 	// switch to master prior to checking out
 	cmd := exec.Command("git", "show-ref", "-q", "--verify", "refs/heads/"+ref)
 	cmd.Dir = dst
+
 	if getRunCommand(cmd) != nil {
 		// Not a branch, switch to master. This will also catch non-existent
 		// branches, in which case we want to switch to master and then
@@ -120,5 +154,20 @@ func (g *GitGetter) update(dst string, ref string) error {
 
 	cmd = exec.Command("git", "pull", "--ff-only")
 	cmd.Dir = dst
+	addSSHKeyFile(cmd, sshKeyFile)
 	return getRunCommand(cmd)
+}
+
+// addSSHKeyFile sets up the given SSH private key file such that it will
+// be used by the "git" command during authentication. This is accomplished
+// using a special environment variable, which is set on the provided cmd.
+// If the sshKeyFile is empty, this is a noop.
+func addSSHKeyFile(cmd *exec.Cmd, sshKeyFile string) {
+	if sshKeyFile == "" {
+		return
+	}
+	cmd.Env = append(
+		os.Environ(),
+		fmt.Sprintf("GIT_SSH_COMMAND=ssh -i %s", sshKeyFile),
+	)
 }
