@@ -49,7 +49,7 @@ func (g *GitGetter) Get(dst string, u *url.URL) error {
 			return err
 		}
 
-		// Write the raw key into a file.
+		// Create a temp file for the key and ensure it is removed.
 		fh, err := ioutil.TempFile("", "go-getter")
 		if err != nil {
 			return err
@@ -57,14 +57,15 @@ func (g *GitGetter) Get(dst string, u *url.URL) error {
 		sshKeyFile = fh.Name()
 		defer os.Remove(sshKeyFile)
 
-		_, err = fh.Write(raw)
-		fh.Close()
-		if err != nil {
+		// Set the permissions prior to writing the key material.
+		if err := os.Chmod(sshKeyFile, 0600); err != nil {
 			return err
 		}
 
-		// Set the permissions
-		if err := os.Chmod(sshKeyFile, 0600); err != nil {
+		// Write the raw key into the temp file.
+		_, err = fh.Write(raw)
+		fh.Close()
+		if err != nil {
 			return err
 		}
 	}
