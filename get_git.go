@@ -8,8 +8,10 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 
 	urlhelper "github.com/hashicorp/go-getter/helper/url"
+	"github.com/hashicorp/go-version"
 )
 
 // GitGetter is a Getter implementation that will download a module from
@@ -43,6 +45,11 @@ func (g *GitGetter) Get(dst string, u *url.URL) error {
 
 	var sshKeyFile string
 	if sshKey != "" {
+		// Check that the git version is sufficiently new.
+		if err := checkGitVersion("2.3"); err != nil {
+			return fmt.Errorf("Error using ssh key: %v", err)
+		}
+
 		// We have an SSH key - decode it.
 		raw, err := base64.StdEncoding.DecodeString(sshKey)
 		if err != nil {
@@ -170,4 +177,35 @@ func addSSHKeyFile(cmd *exec.Cmd, sshKeyFile string) {
 	cmd.Env = append(os.Environ(), "GIT_SSH_COMMAND=ssh "+
 		"-o StrictHostKeyChecking=no "+
 		"-i "+sshKeyFile)
+}
+
+// checkGitVersion is used to check the version of git installed on the system
+// against a known minimum version. Returns an error if the installed version
+// is older than the given minimum.
+func checkGitVersion(min string) error {
+	want, err := version.NewVersion(min)
+	if err != nil {
+		return err
+	}
+
+	out, err := exec.Command("git", "version").Output()
+	if err != nil {
+		return err
+	}
+
+	fields := strings.Fields(string(out))
+	if len(fields) != 3 {
+		return fmt.Errorf("Unexpected 'git version' output: %q", string(out))
+	}
+
+	have, err := version.NewVersion(fields[2])
+	if err != nil {
+		return err
+	}
+
+	if have.LessThan(want) {
+		return fmt.Errorf("Required git version = %s, have %s", want, have)
+	}
+
+	return nil
 }
