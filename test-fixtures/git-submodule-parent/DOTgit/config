@@ -1,0 +1,7 @@
+[core]
+	repositoryformatversion = 0
+	filemode = true
+	bare = false
+	logallrefupdates = true
+[submodule "child"]
+	url = /home/ryanuber/go/src/github.com/hashicorp/go-getter/test-fixtures/git-submodule-child/

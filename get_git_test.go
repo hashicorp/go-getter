@@ -293,6 +293,59 @@ func TestGitGetter_sshKey(t *testing.T) {
 	}
 }
 
+func TestGitGetter_submodule(t *testing.T) {
+	if !testHasGit {
+		t.Log("git not found, skipping")
+		t.Skip()
+	}
+
+	g := new(GitGetter)
+	dst := tempDir(t)
+
+	// Set up the parent
+	moduleDir := filepath.Join(fixtureDir, "git-submodule-parent")
+	oldName := filepath.Join(moduleDir, "DOTgit")
+	newName := filepath.Join(moduleDir, ".git")
+	if err := os.Rename(oldName, newName); err != nil {
+		t.Fatalf("err: %s", err)
+	}
+	defer os.Rename(newName, oldName)
+
+	// Set up the child
+	childModuleDir := filepath.Join(fixtureDir, "git-submodule-child")
+	childOldName := filepath.Join(childModuleDir, "DOTgit")
+	childNewName := filepath.Join(childModuleDir, ".git")
+	if err := os.Rename(childOldName, childNewName); err != nil {
+		t.Fatalf("err: %s", err)
+	}
+	defer os.Rename(childNewName, childOldName)
+
+	// Set up the grandchild
+	grandchildModuleDir := filepath.Join(fixtureDir, "git-submodule-grandchild")
+	grandchildOldName := filepath.Join(grandchildModuleDir, "DOTgit")
+	grandchildNewName := filepath.Join(grandchildModuleDir, ".git")
+	if err := os.Rename(grandchildOldName, grandchildNewName); err != nil {
+		t.Fatalf("err: %s", err)
+	}
+	defer os.Rename(grandchildNewName, grandchildOldName)
+
+	// Clone the root repository
+	if err := g.Get(dst, testModuleURL("git-submodule-parent")); err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	// Check that the files exist
+	for _, path := range []string{
+		filepath.Join(dst, "parent.txt"),
+		filepath.Join(dst, "child", "child.txt"),
+		filepath.Join(dst, "child", "grandchild", "grandchild.txt"),
+	} {
+		if _, err := os.Stat(path); err != nil {
+			t.Fatalf("err: %s", err)
+		}
+	}
+}
+
 // This is a read-only deploy key for an empty test repository.
 var testGitToken = `-----BEGIN RSA PRIVATE KEY-----
 MIIEpgIBAAKCAQEArGJ7eweUMiT58m424ZHLu6UordeoTcOTPEMeOjIL2GuVhPU+

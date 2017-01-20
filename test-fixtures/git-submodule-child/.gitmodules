@@ -1,0 +1,3 @@
+[submodule "grandchild"]
+	path = grandchild
+	url = ../../git-submodule-grandchild/
