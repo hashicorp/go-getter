@@ -2,6 +2,7 @@ package getter
 
 import (
 	"encoding/base64"
+	"io/ioutil"
 	"net/url"
 	"os"
 	"os/exec"
@@ -230,6 +231,39 @@ func TestGitGetter_GetFile(t *testing.T) {
 		t.Fatalf("err: %s", err)
 	}
 	assertContents(t, dst, "Hello\n")
+}
+
+func TestGitGetter_gitVersion(t *testing.T) {
+	dir, err := ioutil.TempDir("", "go-getter")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(dir)
+
+	script := filepath.Join(dir, "git")
+	err = ioutil.WriteFile(
+		script,
+		[]byte("#!/bin/sh\necho git version 2.0\n"),
+		0700)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	defer func(v string) {
+		os.Setenv("PATH", v)
+	}(os.Getenv("PATH"))
+
+	os.Setenv("PATH", dir)
+
+	// Asking for a higher version throws an error
+	if err := checkGitVersion("2.3"); err == nil {
+		t.Fatal("expect git version error")
+	}
+
+	// Passes when version is satisfied
+	if err := checkGitVersion("1.9"); err != nil {
+		t.Fatal(err)
+	}
 }
 
 func TestGitGetter_sshKey(t *testing.T) {
