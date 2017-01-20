@@ -167,8 +167,7 @@ func addSSHKeyFile(cmd *exec.Cmd, sshKeyFile string) {
 	if sshKeyFile == "" {
 		return
 	}
-	cmd.Env = append(
-		os.Environ(),
-		fmt.Sprintf("GIT_SSH_COMMAND=ssh -i %s", sshKeyFile),
-	)
+	cmd.Env = append(os.Environ(), "GIT_SSH_COMMAND=ssh "+
+		"-o StrictHostKeyChecking=no "+
+		"-i "+sshKeyFile)
 }
