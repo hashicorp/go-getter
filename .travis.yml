@@ -1,5 +1,12 @@
 sudo: false
 
+addons:
+  apt:
+    sources:
+      - sourceline: 'ppa:git-core/ppa'
+    packages:
+      - git
+
 language: go
 
 go:
