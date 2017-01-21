@@ -92,11 +92,14 @@ func (g *GitGetter) Get(dst string, u *url.URL) error {
 	}
 
 	// Next: check out the proper tag/branch if it is specified, and checkout
-	if ref == "" {
-		return nil
+	if ref != "" {
+		if err := g.checkout(dst, ref); err != nil {
+			return err
+		}
 	}
 
-	return g.checkout(dst, ref)
+	// Lastly, download any/all submodules.
+	return g.fetchSubmodules(dst)
 }
 
 // GetFile for Git doesn't support updating at this time. It will download
@@ -163,6 +166,13 @@ func (g *GitGetter) update(dst, sshKeyFile, ref string) error {
 	cmd = exec.Command("git", "pull", "--ff-only")
 	cmd.Dir = dst
 	addSSHKeyFile(cmd, sshKeyFile)
+	return getRunCommand(cmd)
+}
+
+// fetchSubmodules downloads any configured submodules recursively.
+func (g *GitGetter) fetchSubmodules(dst string) error {
+	cmd := exec.Command("git", "submodule", "update", "--init", "--recursive")
+	cmd.Dir = dst
 	return getRunCommand(cmd)
 }
 
