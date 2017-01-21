@@ -31,18 +31,11 @@ func TestGitGetter(t *testing.T) {
 	g := new(GitGetter)
 	dst := tempDir(t)
 
-	// Git doesn't allow nested ".git" directories so we do some hackiness
-	// here to get around that...
-	moduleDir := filepath.Join(fixtureDir, "basic-git")
-	oldName := filepath.Join(moduleDir, "DOTgit")
-	newName := filepath.Join(moduleDir, ".git")
-	if err := os.Rename(oldName, newName); err != nil {
-		t.Fatalf("err: %s", err)
-	}
-	defer os.Rename(newName, oldName)
+	url, done := testGitRepo(t, "basic-git", "DOTgit")
+	defer done()
 
 	// With a dir that doesn't exist
-	if err := g.Get(dst, testModuleURL("basic-git")); err != nil {
+	if err := g.Get(dst, url); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
@@ -62,17 +55,9 @@ func TestGitGetter_branch(t *testing.T) {
 	g := new(GitGetter)
 	dst := tempDir(t)
 
-	// Git doesn't allow nested ".git" directories so we do some hackiness
-	// here to get around that...
-	moduleDir := filepath.Join(fixtureDir, "basic-git")
-	oldName := filepath.Join(moduleDir, "DOTgit")
-	newName := filepath.Join(moduleDir, ".git")
-	if err := os.Rename(oldName, newName); err != nil {
-		t.Fatalf("err: %s", err)
-	}
-	defer os.Rename(newName, oldName)
+	url, done := testGitRepo(t, "basic-git", "DOTgit")
+	defer done()
 
-	url := testModuleURL("basic-git")
 	q := url.Query()
 	q.Add("ref", "test-branch")
 	url.RawQuery = q.Encode()
@@ -109,16 +94,10 @@ func TestGitGetter_branchUpdate(t *testing.T) {
 	dst := tempDir(t)
 
 	// First setup the state with a fresh branch
-	moduleDir := filepath.Join(fixtureDir, "git-branch-update")
-	oldName := filepath.Join(moduleDir, "DOTgit-1")
-	newName := filepath.Join(moduleDir, ".git")
-	if err := os.Rename(oldName, newName); err != nil {
-		t.Fatalf("err: %s", err)
-	}
-	defer os.Rename(newName, oldName)
+	url, done := testGitRepo(t, "git-branch-update", "DOTgit-1")
+	defer done()
 
 	// Get the "test-branch" branch
-	url := testModuleURL("git-branch-update")
 	q := url.Query()
 	q.Add("ref", "test-branch")
 	url.RawQuery = q.Encode()
@@ -131,18 +110,11 @@ func TestGitGetter_branchUpdate(t *testing.T) {
 	if _, err := os.Stat(mainPath); err != nil {
 		t.Fatalf("err: %s", err)
 	}
+	done()
 
 	// Swap the data to have a branch update
-	if err := os.Rename(newName, oldName); err != nil {
-		t.Fatalf("err: %s", err)
-	}
-	defer os.Rename(oldName, newName)
-	oldName = filepath.Join(moduleDir, "DOTgit-2")
-	newName = filepath.Join(moduleDir, ".git")
-	if err := os.Rename(oldName, newName); err != nil {
-		t.Fatalf("err: %s", err)
-	}
-	defer os.Rename(newName, oldName)
+	_, done = testGitRepo(t, "git-branch-update", "DOTgit-2")
+	defer done()
 
 	// Get again should work
 	if err := g.Get(dst, url); err != nil {
@@ -165,17 +137,9 @@ func TestGitGetter_tag(t *testing.T) {
 	g := new(GitGetter)
 	dst := tempDir(t)
 
-	// Git doesn't allow nested ".git" directories so we do some hackiness
-	// here to get around that...
-	moduleDir := filepath.Join(fixtureDir, "basic-git")
-	oldName := filepath.Join(moduleDir, "DOTgit")
-	newName := filepath.Join(moduleDir, ".git")
-	if err := os.Rename(oldName, newName); err != nil {
-		t.Fatalf("err: %s", err)
-	}
-	defer os.Rename(newName, oldName)
+	url, done := testGitRepo(t, "basic-git", "DOTgit")
+	defer done()
 
-	url := testModuleURL("basic-git")
 	q := url.Query()
 	q.Add("ref", "v1.0")
 	url.RawQuery = q.Encode()
@@ -211,18 +175,12 @@ func TestGitGetter_GetFile(t *testing.T) {
 	g := new(GitGetter)
 	dst := tempFile(t)
 
-	// Git doesn't allow nested ".git" directories so we do some hackiness
-	// here to get around that...
-	moduleDir := filepath.Join(fixtureDir, "basic-git")
-	oldName := filepath.Join(moduleDir, "DOTgit")
-	newName := filepath.Join(moduleDir, ".git")
-	if err := os.Rename(oldName, newName); err != nil {
-		t.Fatalf("err: %s", err)
-	}
-	defer os.Rename(newName, oldName)
+	url, done := testGitRepo(t, "basic-git", "DOTgit")
+	defer done()
 
 	// Download
-	if err := g.GetFile(dst, testModuleURL("basic-git/foo.txt")); err != nil {
+	url.Path = filepath.Join(url.Path, "foo.txt")
+	if err := g.GetFile(dst, url); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
@@ -303,34 +261,19 @@ func TestGitGetter_submodule(t *testing.T) {
 	dst := tempDir(t)
 
 	// Set up the parent
-	moduleDir := filepath.Join(fixtureDir, "git-submodule-parent")
-	oldName := filepath.Join(moduleDir, "DOTgit")
-	newName := filepath.Join(moduleDir, ".git")
-	if err := os.Rename(oldName, newName); err != nil {
-		t.Fatalf("err: %s", err)
-	}
-	defer os.Rename(newName, oldName)
+	url, done := testGitRepo(t, "git-submodule-parent", "DOTgit")
+	defer done()
 
 	// Set up the child
-	childModuleDir := filepath.Join(fixtureDir, "git-submodule-child")
-	childOldName := filepath.Join(childModuleDir, "DOTgit")
-	childNewName := filepath.Join(childModuleDir, ".git")
-	if err := os.Rename(childOldName, childNewName); err != nil {
-		t.Fatalf("err: %s", err)
-	}
-	defer os.Rename(childNewName, childOldName)
+	_, done = testGitRepo(t, "git-submodule-child", "DOTgit")
+	defer done()
 
 	// Set up the grandchild
-	grandchildModuleDir := filepath.Join(fixtureDir, "git-submodule-grandchild")
-	grandchildOldName := filepath.Join(grandchildModuleDir, "DOTgit")
-	grandchildNewName := filepath.Join(grandchildModuleDir, ".git")
-	if err := os.Rename(grandchildOldName, grandchildNewName); err != nil {
-		t.Fatalf("err: %s", err)
-	}
-	defer os.Rename(grandchildNewName, grandchildOldName)
+	_, done = testGitRepo(t, "git-submodule-grandchild", "DOTgit")
+	defer done()
 
 	// Clone the root repository
-	if err := g.Get(dst, testModuleURL("git-submodule-parent")); err != nil {
+	if err := g.Get(dst, url); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
@@ -344,6 +287,18 @@ func TestGitGetter_submodule(t *testing.T) {
 			t.Fatalf("err: %s", err)
 		}
 	}
+}
+
+// testGitRepo shuffles some files around in the fixture dir to work around
+// git's limitation of not allowing nested .git directories. Returns the
+// URL to clone, and a cleanup function to move things back.
+func testGitRepo(t *testing.T, repoDir, gitDir string) (*url.URL, func()) {
+	oldName := filepath.Join(fixtureDir, repoDir, gitDir)
+	newName := filepath.Join(fixtureDir, repoDir, ".git")
+	if err := os.Rename(oldName, newName); err != nil {
+		t.Fatalf("err: %s", err)
+	}
+	return testModuleURL(repoDir), func() { os.Rename(newName, oldName) }
 }
 
 // This is a read-only deploy key for an empty test repository.
