@@ -324,6 +324,9 @@ func testGitRepo(t *testing.T, name string) *gitRepo {
 	r.url = url
 
 	r.git("init")
+	r.git("config", "user.name", "go-getter")
+	r.git("config", "user.email", "go-getter@hashicorp.com")
+
 	return r
 }
 
