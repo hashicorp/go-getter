@@ -31,16 +31,16 @@ func TestGitGetter(t *testing.T) {
 	g := new(GitGetter)
 	dst := tempDir(t)
 
-	url, done := testGitRepo(t, "basic-git", "DOTgit")
-	defer done()
+	repo := testGitRepo(t, "basic")
+	repo.commitFile("foo.txt", "hello")
 
 	// With a dir that doesn't exist
-	if err := g.Get(dst, url); err != nil {
+	if err := g.Get(dst, repo.url); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
 	// Verify the main file exists
-	mainPath := filepath.Join(dst, "main.tf")
+	mainPath := filepath.Join(dst, "foo.txt")
 	if _, err := os.Stat(mainPath); err != nil {
 		t.Fatalf("err: %s", err)
 	}
@@ -55,30 +55,31 @@ func TestGitGetter_branch(t *testing.T) {
 	g := new(GitGetter)
 	dst := tempDir(t)
 
-	url, done := testGitRepo(t, "basic-git", "DOTgit")
-	defer done()
+	repo := testGitRepo(t, "branch")
+	repo.git("checkout", "-b", "test-branch")
+	repo.commitFile("branch.txt", "branch")
 
-	q := url.Query()
+	q := repo.url.Query()
 	q.Add("ref", "test-branch")
-	url.RawQuery = q.Encode()
+	repo.url.RawQuery = q.Encode()
 
-	if err := g.Get(dst, url); err != nil {
+	if err := g.Get(dst, repo.url); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
 	// Verify the main file exists
-	mainPath := filepath.Join(dst, "main_branch.tf")
+	mainPath := filepath.Join(dst, "branch.txt")
 	if _, err := os.Stat(mainPath); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
 	// Get again should work
-	if err := g.Get(dst, url); err != nil {
+	if err := g.Get(dst, repo.url); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
 	// Verify the main file exists
-	mainPath = filepath.Join(dst, "main_branch.tf")
+	mainPath = filepath.Join(dst, "branch.txt")
 	if _, err := os.Stat(mainPath); err != nil {
 		t.Fatalf("err: %s", err)
 	}
@@ -94,35 +95,34 @@ func TestGitGetter_branchUpdate(t *testing.T) {
 	dst := tempDir(t)
 
 	// First setup the state with a fresh branch
-	url, done := testGitRepo(t, "git-branch-update", "DOTgit-1")
-	defer done()
+	repo := testGitRepo(t, "branch-update")
+	repo.git("checkout", "-b", "test-branch")
+	repo.commitFile("branch.txt", "branch")
 
 	// Get the "test-branch" branch
-	q := url.Query()
+	q := repo.url.Query()
 	q.Add("ref", "test-branch")
-	url.RawQuery = q.Encode()
-	if err := g.Get(dst, url); err != nil {
+	repo.url.RawQuery = q.Encode()
+	if err := g.Get(dst, repo.url); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
 	// Verify the main file exists
-	mainPath := filepath.Join(dst, "main_branch.tf")
+	mainPath := filepath.Join(dst, "branch.txt")
 	if _, err := os.Stat(mainPath); err != nil {
 		t.Fatalf("err: %s", err)
 	}
-	done()
 
-	// Swap the data to have a branch update
-	_, done = testGitRepo(t, "git-branch-update", "DOTgit-2")
-	defer done()
+	// Commit an update to the branch
+	repo.commitFile("branch-update.txt", "branch-update")
 
 	// Get again should work
-	if err := g.Get(dst, url); err != nil {
+	if err := g.Get(dst, repo.url); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
 	// Verify the main file exists
-	mainPath = filepath.Join(dst, "main_branch_update.tf")
+	mainPath = filepath.Join(dst, "branch-update.txt")
 	if _, err := os.Stat(mainPath); err != nil {
 		t.Fatalf("err: %s", err)
 	}
@@ -137,30 +137,31 @@ func TestGitGetter_tag(t *testing.T) {
 	g := new(GitGetter)
 	dst := tempDir(t)
 
-	url, done := testGitRepo(t, "basic-git", "DOTgit")
-	defer done()
+	repo := testGitRepo(t, "tag")
+	repo.commitFile("tag.txt", "tag")
+	repo.git("tag", "v1.0")
 
-	q := url.Query()
+	q := repo.url.Query()
 	q.Add("ref", "v1.0")
-	url.RawQuery = q.Encode()
+	repo.url.RawQuery = q.Encode()
 
-	if err := g.Get(dst, url); err != nil {
+	if err := g.Get(dst, repo.url); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
 	// Verify the main file exists
-	mainPath := filepath.Join(dst, "main_tag1.tf")
+	mainPath := filepath.Join(dst, "tag.txt")
 	if _, err := os.Stat(mainPath); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
 	// Get again should work
-	if err := g.Get(dst, url); err != nil {
+	if err := g.Get(dst, repo.url); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
 	// Verify the main file exists
-	mainPath = filepath.Join(dst, "main_tag1.tf")
+	mainPath = filepath.Join(dst, "tag.txt")
 	if _, err := os.Stat(mainPath); err != nil {
 		t.Fatalf("err: %s", err)
 	}
@@ -175,12 +176,12 @@ func TestGitGetter_GetFile(t *testing.T) {
 	g := new(GitGetter)
 	dst := tempFile(t)
 
-	url, done := testGitRepo(t, "basic-git", "DOTgit")
-	defer done()
+	repo := testGitRepo(t, "file")
+	repo.commitFile("file.txt", "hello")
 
-	// Download
-	url.Path = filepath.Join(url.Path, "foo.txt")
-	if err := g.GetFile(dst, url); err != nil {
+	// Download the file
+	repo.url.Path = filepath.Join(repo.url.Path, "file.txt")
+	if err := g.GetFile(dst, repo.url); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
@@ -188,7 +189,7 @@ func TestGitGetter_GetFile(t *testing.T) {
 	if _, err := os.Stat(dst); err != nil {
 		t.Fatalf("err: %s", err)
 	}
-	assertContents(t, dst, "Hello\n")
+	assertContents(t, dst, "hello")
 }
 
 func TestGitGetter_gitVersion(t *testing.T) {
@@ -260,20 +261,24 @@ func TestGitGetter_submodule(t *testing.T) {
 	g := new(GitGetter)
 	dst := tempDir(t)
 
-	// Set up the parent
-	url, done := testGitRepo(t, "git-submodule-parent", "DOTgit")
-	defer done()
+	// Set up the grandchild
+	gc := testGitRepo(t, "grandchild")
+	gc.commitFile("grandchild.txt", "grandchild")
 
 	// Set up the child
-	_, done = testGitRepo(t, "git-submodule-child", "DOTgit")
-	defer done()
+	c := testGitRepo(t, "child")
+	c.commitFile("child.txt", "child")
+	c.git("submodule", "add", gc.dir)
+	c.git("commit", "-m", "Add grandchild submodule")
 
-	// Set up the grandchild
-	_, done = testGitRepo(t, "git-submodule-grandchild", "DOTgit")
-	defer done()
+	// Set up the parent
+	p := testGitRepo(t, "parent")
+	p.commitFile("parent.txt", "parent")
+	p.git("submodule", "add", c.dir)
+	p.git("commit", "-m", "Add child submodule")
 
 	// Clone the root repository
-	if err := g.Get(dst, url); err != nil {
+	if err := g.Get(dst, p.url); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
@@ -289,16 +294,56 @@ func TestGitGetter_submodule(t *testing.T) {
 	}
 }
 
-// testGitRepo shuffles some files around in the fixture dir to work around
-// git's limitation of not allowing nested .git directories. Returns the
-// URL to clone, and a cleanup function to move things back.
-func testGitRepo(t *testing.T, repoDir, gitDir string) (*url.URL, func()) {
-	oldName := filepath.Join(fixtureDir, repoDir, gitDir)
-	newName := filepath.Join(fixtureDir, repoDir, ".git")
-	if err := os.Rename(oldName, newName); err != nil {
-		t.Fatalf("err: %s", err)
+// gitRepo is a helper struct which controls a single temp git repo.
+type gitRepo struct {
+	t   *testing.T
+	url *url.URL
+	dir string
+}
+
+// testGitRepo creates a new test git repository.
+func testGitRepo(t *testing.T, name string) *gitRepo {
+	dir, err := ioutil.TempDir("", "go-getter")
+	if err != nil {
+		t.Fatal(err)
 	}
-	return testModuleURL(repoDir), func() { os.Rename(newName, oldName) }
+	dir = filepath.Join(dir, name)
+	if err := os.Mkdir(dir, 0700); err != nil {
+		t.Fatal(err)
+	}
+
+	r := &gitRepo{
+		t:   t,
+		dir: dir,
+	}
+
+	url, err := url.Parse("file://" + r.dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	r.url = url
+
+	r.git("init")
+	return r
+}
+
+// git runs a git command against the repo.
+func (r *gitRepo) git(args ...string) {
+	cmd := exec.Command("git", args...)
+	cmd.Dir = r.dir
+	if err := cmd.Run(); err != nil {
+		r.t.Fatal(err)
+	}
+}
+
+// commitFile writes and commits a text file to the repo.
+func (r *gitRepo) commitFile(file, content string) {
+	path := filepath.Join(r.dir, file)
+	if err := ioutil.WriteFile(path, []byte(content), 0600); err != nil {
+		r.t.Fatal(err)
+	}
+	r.git("add", file)
+	r.git("commit", "-m", "Adding "+file)
 }
 
 // This is a read-only deploy key for an empty test repository.

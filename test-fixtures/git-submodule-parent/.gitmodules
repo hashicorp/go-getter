@@ -1,3 +1,0 @@
-[submodule "child"]
-	path = child
-	url = ../git-submodule-child/
