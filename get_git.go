@@ -140,7 +140,7 @@ func (g *GitGetter) checkout(dst string, ref string) error {
 }
 
 func (g *GitGetter) clone(dst, sshKeyFile string, u *url.URL) error {
-	cmd := exec.Command("git", "clone", u.String(), dst)
+	cmd := exec.Command("git", "clone", "--depth", "1", u.String(), dst)
 	addSSHKeyFile(cmd, sshKeyFile)
 	return getRunCommand(cmd)
 }
