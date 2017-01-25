@@ -99,7 +99,7 @@ func (g *GitGetter) Get(dst string, u *url.URL) error {
 	}
 
 	// Lastly, download any/all submodules.
-	return g.fetchSubmodules(dst)
+	return g.fetchSubmodules(dst, sshKeyFile)
 }
 
 // GetFile for Git doesn't support updating at this time. It will download
@@ -141,7 +141,7 @@ func (g *GitGetter) checkout(dst string, ref string) error {
 
 func (g *GitGetter) clone(dst, sshKeyFile string, u *url.URL) error {
 	cmd := exec.Command("git", "clone", u.String(), dst)
-	addSSHKeyFile(cmd, sshKeyFile)
+	setupGitEnv(cmd, sshKeyFile)
 	return getRunCommand(cmd)
 }
 
@@ -165,28 +165,36 @@ func (g *GitGetter) update(dst, sshKeyFile, ref string) error {
 
 	cmd = exec.Command("git", "pull", "--ff-only")
 	cmd.Dir = dst
-	addSSHKeyFile(cmd, sshKeyFile)
+	setupGitEnv(cmd, sshKeyFile)
 	return getRunCommand(cmd)
 }
 
 // fetchSubmodules downloads any configured submodules recursively.
-func (g *GitGetter) fetchSubmodules(dst string) error {
+func (g *GitGetter) fetchSubmodules(dst, sshKeyFile string) error {
 	cmd := exec.Command("git", "submodule", "update", "--init", "--recursive")
 	cmd.Dir = dst
+	setupGitEnv(cmd, sshKeyFile)
 	return getRunCommand(cmd)
 }
 
-// addSSHKeyFile sets up the given SSH private key file such that it will
-// be used by the "git" command during authentication. This is accomplished
-// using a special environment variable, which is set on the provided cmd.
-// If the sshKeyFile is empty, this is a noop.
-func addSSHKeyFile(cmd *exec.Cmd, sshKeyFile string) {
-	if sshKeyFile == "" {
-		return
+// setupGitEnv sets up the environment for the given command. This is used to
+// pass configuration data to git and ssh and enables advanced cloning methods.
+func setupGitEnv(cmd *exec.Cmd, sshKeyFile string) {
+	sshOpts := []string{
+		// Batch mode prevents ssh from prompting for usernames, passwords, or
+		// adding hosts into a known hosts file.
+		"-o BatchMode=yes",
 	}
-	cmd.Env = append(os.Environ(), "GIT_SSH_COMMAND=ssh "+
-		"-o StrictHostKeyChecking=no "+
-		"-i "+sshKeyFile)
+
+	if sshKeyFile != "" {
+		// We have an SSH key temp file configured, tell ssh about this.
+		sshOpts = append(sshOpts, "-i "+sshKeyFile)
+	}
+
+	cmd.Env = append(os.Environ(),
+		// Set the ssh command to use for clones.
+		"GIT_SSH_COMMAND=ssh "+strings.Join(sshOpts, " "),
+	)
 }
 
 // checkGitVersion is used to check the version of git installed on the system
