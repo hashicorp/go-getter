@@ -294,26 +294,16 @@ func TestGitGetter_submodule(t *testing.T) {
 	}
 }
 
-func TestGitGetter_setupGitEnv(t *testing.T) {
-	cmd := exec.Command("git")
-	setupGitEnv(cmd, "")
-	for _, v := range cmd.Env {
-		if v == "GIT_SSH_COMMAND=ssh -o BatchMode=yes" {
-			return
-		}
-	}
-	t.Fatalf("expect default options to be set: %v", cmd.Env)
-}
-
 func TestGitGetter_setupGitEnv_sshKey(t *testing.T) {
-	cmd := exec.Command("git")
+	cmd := exec.Command("/bin/sh", "-c", "echo -n $GIT_SSH_COMMAND")
 	setupGitEnv(cmd, "/tmp/foo.pem")
-	for _, v := range cmd.Env {
-		if v == "GIT_SSH_COMMAND=ssh -o BatchMode=yes -i /tmp/foo.pem" {
-			return
-		}
+	out, err := cmd.Output()
+	if err != nil {
+		t.Fatal(err)
 	}
-	t.Fatalf("expect default options to be set: %#v", cmd.Env)
+	if string(out) != "ssh -i /tmp/foo.pem" {
+		t.Fatalf("unexpected GIT_SSH_COMMAND: %q", string(out))
+	}
 }
 
 // gitRepo is a helper struct which controls a single temp git repo.

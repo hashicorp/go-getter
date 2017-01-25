@@ -180,15 +180,11 @@ func (g *GitGetter) fetchSubmodules(dst, sshKeyFile string) error {
 // setupGitEnv sets up the environment for the given command. This is used to
 // pass configuration data to git and ssh and enables advanced cloning methods.
 func setupGitEnv(cmd *exec.Cmd, sshKeyFile string) {
-	sshOpts := []string{
-		// Batch mode prevents ssh from prompting for usernames, passwords, or
-		// adding hosts into a known hosts file.
-		"-o BatchMode=yes",
-	}
+	var sshOpts []string
 
 	if sshKeyFile != "" {
 		// We have an SSH key temp file configured, tell ssh about this.
-		sshOpts = append(sshOpts, "-i "+sshKeyFile)
+		sshOpts = append(sshOpts, "-i", sshKeyFile)
 	}
 
 	cmd.Env = append(os.Environ(),
