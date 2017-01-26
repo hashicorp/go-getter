@@ -294,6 +294,18 @@ func TestGitGetter_submodule(t *testing.T) {
 	}
 }
 
+func TestGitGetter_setupGitEnv_sshKey(t *testing.T) {
+	cmd := exec.Command("/bin/sh", "-c", "echo -n $GIT_SSH_COMMAND")
+	setupGitEnv(cmd, "/tmp/foo.pem")
+	out, err := cmd.Output()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(out) != "ssh -i /tmp/foo.pem" {
+		t.Fatalf("unexpected GIT_SSH_COMMAND: %q", string(out))
+	}
+}
+
 // gitRepo is a helper struct which controls a single temp git repo.
 type gitRepo struct {
 	t   *testing.T
