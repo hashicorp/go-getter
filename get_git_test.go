@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 )
@@ -296,6 +297,11 @@ func TestGitGetter_submodule(t *testing.T) {
 }
 
 func TestGitGetter_setupGitEnv_sshKey(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skipf("skipping on windows since the test requires sh")
+		return
+	}
+
 	cmd := exec.Command("/bin/sh", "-c", "echo $GIT_SSH_COMMAND")
 	setupGitEnv(cmd, "/tmp/foo.pem")
 	out, err := cmd.Output()
