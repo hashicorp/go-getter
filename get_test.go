@@ -31,6 +31,21 @@ func TestGet_file(t *testing.T) {
 	}
 }
 
+// https://github.com/hashicorp/terraform/issues/11438
+func TestGet_fileDecompressorExt(t *testing.T) {
+	dst := tempDir(t)
+	u := testModule("basic-tgz")
+
+	if err := Get(dst, u); err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	mainPath := filepath.Join(dst, "main.tf")
+	if _, err := os.Stat(mainPath); err != nil {
+		t.Fatalf("err: %s", err)
+	}
+}
+
 // https://github.com/hashicorp/terraform/issues/8418
 func TestGet_filePercent2F(t *testing.T) {
 	dst := tempDir(t)
