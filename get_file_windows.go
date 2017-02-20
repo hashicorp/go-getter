@@ -50,8 +50,8 @@ func (g *FileGetter) Get(dst string, u *url.URL) error {
 
 	sourcePath := toBackslash(path)
 
-	// Use mklink to create a junction point
-	output, err := exec.Command("cmd", "/c", "mklink", "/J", dst, sourcePath).CombinedOutput()
+	// Use mklink to create a directory symbolic link
+	output, err := exec.Command("cmd", "/c", "mklink", "/D", dst, sourcePath).CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("failed to run mklink %v %v: %v %q", dst, sourcePath, err, output)
 	}
