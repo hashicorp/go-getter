@@ -9,8 +9,10 @@ import (
 func TestTarGzipDecompressor(t *testing.T) {
 
 	multiplePaths := []string{"dir/", "dir/test2", "test1"}
+	missingDirPaths := []string{"dir/", "dir/file1"}
 	if runtime.GOOS == "windows" {
 		multiplePaths = []string{"dir/", "dir\\test2", "test1"}
+		missingDirPaths = []string{"dir/", "dir\\file1"}
 	}
 
 	cases := []TestDecompressCase{
@@ -59,6 +61,14 @@ func TestTarGzipDecompressor(t *testing.T) {
 			true,
 			false,
 			multiplePaths,
+			"",
+		},
+
+		{
+			"missing_dir.tar.gz",
+			true,
+			false,
+			missingDirPaths,
 			"",
 		},
 	}
