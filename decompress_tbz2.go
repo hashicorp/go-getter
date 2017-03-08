@@ -56,7 +56,7 @@ func (d *TarBzip2Decompressor) Decompress(dst, src string, dir bool) error {
 		}
 
 		if hdr.FileInfo().IsDir() {
-			if dir {
+			if !dir {
 				return fmt.Errorf("expected a single file: %s", src)
 			}
 
@@ -75,6 +75,12 @@ func (d *TarBzip2Decompressor) Decompress(dst, src string, dir bool) error {
 
 		// Mark that we're done so future in single file mode errors
 		done = true
+
+		// Ensure the enclosing directory exists
+		dirpath := filepath.Dir(path)
+		if err := os.MkdirAll(dirpath, 0755); err != nil {
+			return err
+		}
 
 		// Open the file for writing
 		dstF, err := os.Create(path)
