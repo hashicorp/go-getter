@@ -56,7 +56,7 @@ func (d *TarBzip2Decompressor) Decompress(dst, src string, dir bool) error {
 		}
 
 		if hdr.FileInfo().IsDir() {
-			if dir {
+			if !dir {
 				return fmt.Errorf("expected a single file: %s", src)
 			}
 
