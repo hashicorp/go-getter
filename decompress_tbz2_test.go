@@ -2,10 +2,17 @@ package getter
 
 import (
 	"path/filepath"
+	"runtime"
 	"testing"
 )
 
 func TestTarBzip2Decompressor(t *testing.T) {
+
+	multiplePaths := []string{"dir/", "dir/test2", "test1"}
+	if runtime.GOOS == "windows" {
+		multiplePaths = []string{"dir/", "dir\\test2", "test1"}
+	}
+
 	cases := []TestDecompressCase{
 		{
 			"empty.tar.bz2",
@@ -44,6 +51,14 @@ func TestTarBzip2Decompressor(t *testing.T) {
 			false,
 			true,
 			nil,
+			"",
+		},
+
+		{
+			"multiple_dir.tar.bz2",
+			true,
+			false,
+			multiplePaths,
 			"",
 		},
 	}
