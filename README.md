@@ -72,6 +72,7 @@ can be augmented at runtime by implementing the `Getter` interface.
   * Mercurial
   * HTTP
   * Amazon S3
+  * Azure Blob Storage
 
 In addition to the above protocols, go-getter has what are called "detectors."
 These take a URL and attempt to automatically choose the best protocol for
@@ -251,3 +252,7 @@ Some examples for these addressing schemes:
 - bucket.s3.amazonaws.com/foo
 - bucket.s3-eu-west-1.amazonaws.com/foo/bar
 
+### Azure Blob Storage (`azureblob`)
+
+Azure Blob Storage requires a valid access key for the storage account, this can be provided by the
+ `ARM_ACCESS_KEY` environment variable, or the `access_key` query value which takes priority.

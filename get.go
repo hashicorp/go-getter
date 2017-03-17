@@ -53,12 +53,13 @@ func init() {
 	httpGetter := &HttpGetter{Netrc: true}
 
 	Getters = map[string]Getter{
-		"file":  new(FileGetter),
-		"git":   new(GitGetter),
-		"hg":    new(HgGetter),
-		"s3":    new(S3Getter),
-		"http":  httpGetter,
-		"https": httpGetter,
+		"file":      new(FileGetter),
+		"git":       new(GitGetter),
+		"hg":        new(HgGetter),
+		"s3":        new(S3Getter),
+		"azureblob": new(AzureBlobGetter),
+		"http":      httpGetter,
+		"https":     httpGetter,
 	}
 }
 
