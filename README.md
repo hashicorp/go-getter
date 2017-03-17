@@ -71,6 +71,7 @@ can be augmented at runtime by implementing the `Getter` interface.
   * Mercurial
   * HTTP
   * Amazon S3
+  * Azure Blob Storage
   * Google GCP
 
 In addition to the above protocols, go-getter has what are called "detectors."
@@ -360,3 +361,9 @@ In order to access to GCS, authentication credentials should be provided. More i
 #### GCS Testing
 
 The tests for `get_gcs.go` require you to have GCP credentials set in your environment.  These credentials can have any level of permissions to any project, they just need to exist.  This means setting `GOOGLE_APPLICATION_CREDENTIALS="~/path/to/credentials.json"` or `GOOGLE_CREDENTIALS="{stringified-credentials-json}"`.  Due to this configuration, `get_gcs_test.go` will fail for external contributors in CircleCI.
+
+### Azure Blob Storage (`azureblob`)
+
+Azure Blob Storage requires a valid access key for the storage account, this can be provided by the
+ `ARM_ACCESS_KEY` environment variable, or the `access_key` query value which takes priority.
+

@@ -70,6 +70,7 @@ func init() {
 		"gcs":   new(GCSGetter),
 		"hg":    new(HgGetter),
 		"s3":    new(S3Getter),
+		"azureblob": new(AzureBlobGetter),
 		"http":  httpGetter,
 		"https": httpGetter,
 	}
