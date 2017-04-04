@@ -17,7 +17,7 @@ import (
 //
 // For file downloads, HTTP is used directly.
 //
-// The protocol for downloading a directory from an HTTP endpoing is as follows:
+// The protocol for downloading a directory from an HTTP endpoint is as follows:
 //
 // An HTTP GET request is made to the URL with the additional GET parameter
 // "terraform-get=1". This lets you handle that scenario specially if you
@@ -62,8 +62,21 @@ func (g *HttpGetter) Get(dst string, u *url.URL) error {
 	q.Add("terraform-get", "1")
 	u.RawQuery = q.Encode()
 
+	// Create Request
+	req, err := http.NewRequest("GET", u.String(), nil)
+	if err != nil {
+		return err
+	}
+
+	// Get HTTP BasicAuth creds from url
+	basicAuthUser, basicAuthPass := g.getHttpBasicAuth(u)
+	// Set HTTP Basic Auth to request
+	if basicAuthUser != "" && basicAuthPass != "" {
+		req.SetBasicAuth(basicAuthUser, basicAuthPass)
+	}
+
 	// Get the URL
-	resp, err := http.Get(u.String())
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return err
 	}
@@ -98,7 +111,21 @@ func (g *HttpGetter) Get(dst string, u *url.URL) error {
 }
 
 func (g *HttpGetter) GetFile(dst string, u *url.URL) error {
-	resp, err := http.Get(u.String())
+	// Create Request
+	req, err := http.NewRequest("GET", u.String(), nil)
+	if err != nil {
+		return err
+	}
+
+	// Get HTTP BasicAuth creds from url
+	basicAuthUser, basicAuthPass := g.getHttpBasicAuth(u)
+	// Set HTTP Basic Auth to request
+	if basicAuthUser != "" && basicAuthPass != "" {
+		req.SetBasicAuth(basicAuthUser, basicAuthPass)
+	}
+
+	// Get the URL
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return err
 	}
@@ -120,6 +147,20 @@ func (g *HttpGetter) GetFile(dst string, u *url.URL) error {
 
 	_, err = io.Copy(f, resp.Body)
 	return err
+}
+
+func (g *HttpGetter) getHttpBasicAuth(u *url.URL) (basicAuthUser, basicAuthPass string) {
+	qUser := "http_basic_auth_user"
+	qPass := "http_basic_auth_pass"
+
+	q := u.Query()
+	basicAuthUser = q.Get(qUser)
+	basicAuthPass = q.Get(qPass)
+	q.Del(qUser)
+	q.Del(qPass)
+	u.RawQuery = q.Encode()
+
+	return
 }
 
 // getSubdir downloads the source into the destination, but with
