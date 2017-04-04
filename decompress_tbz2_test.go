@@ -2,15 +2,11 @@ package getter
 
 import (
 	"path/filepath"
-	"runtime"
 	"testing"
 )
 
 func TestTarBzip2Decompressor(t *testing.T) {
 	orderingPaths := []string{"workers/", "workers/mq/", "workers/mq/__init__.py"}
-	if runtime.GOOS == "windows" {
-		orderingPaths = []string{"workers/", "workers\\mq/", "workers\\mq\\__init__.py"}
-	}
 
 	cases := []TestDecompressCase{
 		{

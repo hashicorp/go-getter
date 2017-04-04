@@ -2,7 +2,6 @@ package getter
 
 import (
 	"path/filepath"
-	"runtime"
 	"testing"
 )
 
@@ -10,10 +9,6 @@ func TestTarGzipDecompressor(t *testing.T) {
 
 	multiplePaths := []string{"dir/", "dir/test2", "test1"}
 	orderingPaths := []string{"workers/", "workers/mq/", "workers/mq/__init__.py"}
-	if runtime.GOOS == "windows" {
-		multiplePaths = []string{"dir/", "dir\\test2", "test1"}
-		orderingPaths = []string{"workers/", "workers\\mq/", "workers\\mq\\__init__.py"}
-	}
 
 	cases := []TestDecompressCase{
 		{
