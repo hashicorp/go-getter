@@ -2,10 +2,16 @@ package getter
 
 import (
 	"path/filepath"
+	"runtime"
 	"testing"
 )
 
 func TestTarBzip2Decompressor(t *testing.T) {
+	orderingPaths := []string{"workers/", "workers/mq/", "workers/mq/__init__.py"}
+	if runtime.GOOS == "windows" {
+		orderingPaths = []string{"workers/", "workers\\mq/", "workers\\mq\\__init__.py"}
+	}
+
 	cases := []TestDecompressCase{
 		{
 			"empty.tar.bz2",
@@ -44,6 +50,15 @@ func TestTarBzip2Decompressor(t *testing.T) {
 			false,
 			true,
 			nil,
+			"",
+		},
+
+		// Tests when the file is listed before the parent folder
+		{
+			"ordering.tar.bz2",
+			true,
+			false,
+			orderingPaths,
 			"",
 		},
 	}
