@@ -6,7 +6,7 @@ import (
 )
 
 func TestBzip2Decompressor(t *testing.T) {
-	cases := []TestDecompressCase{
+	cases := []decompressTestCase{
 		{
 			"single.bz2",
 			false,
@@ -28,5 +28,5 @@ func TestBzip2Decompressor(t *testing.T) {
 		cases[i].Input = filepath.Join("./test-fixtures", "decompress-bz2", tc.Input)
 	}
 
-	TestDecompressor(t, new(Bzip2Decompressor), cases)
+	decompressorTest(t, new(Bzip2Decompressor), cases)
 }

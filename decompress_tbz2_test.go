@@ -8,7 +8,7 @@ import (
 func TestTarBzip2Decompressor(t *testing.T) {
 	orderingPaths := []string{"workers/", "workers/mq/", "workers/mq/__init__.py"}
 
-	cases := []TestDecompressCase{
+	cases := []decompressTestCase{
 		{
 			"empty.tar.bz2",
 			false,
@@ -63,5 +63,5 @@ func TestTarBzip2Decompressor(t *testing.T) {
 		cases[i].Input = filepath.Join("./test-fixtures", "decompress-tbz2", tc.Input)
 	}
 
-	TestDecompressor(t, new(TarBzip2Decompressor), cases)
+	decompressorTest(t, new(TarBzip2Decompressor), cases)
 }

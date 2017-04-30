@@ -6,7 +6,7 @@ import (
 )
 
 func TestGzipDecompressor(t *testing.T) {
-	cases := []TestDecompressCase{
+	cases := []decompressTestCase{
 		{
 			"single.gz",
 			false,
@@ -28,5 +28,5 @@ func TestGzipDecompressor(t *testing.T) {
 		cases[i].Input = filepath.Join("./test-fixtures", "decompress-gz", tc.Input)
 	}
 
-	TestDecompressor(t, new(GzipDecompressor), cases)
+	decompressorTest(t, new(GzipDecompressor), cases)
 }

@@ -14,8 +14,8 @@ import (
 	"testing"
 )
 
-// TestDecompressCase is a single test case for testing decompressors
-type TestDecompressCase struct {
+// decompressTestCase is a single test case for testing decompressors
+type decompressTestCase struct {
 	Input   string   // Input is the complete path to the input file
 	Dir     bool     // Dir is whether or not we're testing directory mode
 	Err     bool     // Err is whether we expect an error or not
@@ -23,8 +23,8 @@ type TestDecompressCase struct {
 	FileMD5 string   // FileMD5 is the expected MD5 for a single file
 }
 
-// TestDecompressor is a helper function for testing generic decompressors.
-func TestDecompressor(t *testing.T, d Decompressor, cases []TestDecompressCase) {
+// decompressorTest is a helper function for testing generic decompressors.
+func decompressorTest(t *testing.T, d Decompressor, cases []decompressTestCase) {
 	for _, tc := range cases {
 		t.Logf("Testing: %s", tc.Input)
 

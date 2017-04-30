@@ -10,7 +10,7 @@ func TestTarGzipDecompressor(t *testing.T) {
 	multiplePaths := []string{"dir/", "dir/test2", "test1"}
 	orderingPaths := []string{"workers/", "workers/mq/", "workers/mq/__init__.py"}
 
-	cases := []TestDecompressCase{
+	cases := []decompressTestCase{
 		{
 			"empty.tar.gz",
 			false,
@@ -73,5 +73,5 @@ func TestTarGzipDecompressor(t *testing.T) {
 		cases[i].Input = filepath.Join("./test-fixtures", "decompress-tgz", tc.Input)
 	}
 
-	TestDecompressor(t, new(TarGzipDecompressor), cases)
+	decompressorTest(t, new(TarGzipDecompressor), cases)
 }
