@@ -12,6 +12,13 @@ import (
 	"strings"
 )
 
+const (
+	// HttpBasicAuthUserParam and HttpBasicAuthPasswordParam are the url
+	// parameters used to configure HTTP basic auth
+	HttpBasicAuthUserParam     = "http_basic_auth_user"
+	HttpBasicAuthPasswordParam = "http_basic_auth_pass"
+)
+
 // HttpGetter is a Getter implementation that will download from an HTTP
 // endpoint.
 //
@@ -57,26 +64,16 @@ func (g *HttpGetter) Get(dst string, u *url.URL) error {
 		}
 	}
 
+	// Check if there is any basic auth and add it to the Url
+	addHttpBasicAuth(u)
+
 	// Add terraform-get to the parameter.
 	q := u.Query()
 	q.Add("terraform-get", "1")
 	u.RawQuery = q.Encode()
 
-	// Create Request
-	req, err := http.NewRequest("GET", u.String(), nil)
-	if err != nil {
-		return err
-	}
-
-	// Get HTTP BasicAuth creds from url
-	basicAuthUser, basicAuthPass := g.getHttpBasicAuth(u)
-	// Set HTTP Basic Auth to request
-	if basicAuthUser != "" && basicAuthPass != "" {
-		req.SetBasicAuth(basicAuthUser, basicAuthPass)
-	}
-
 	// Get the URL
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := http.Get(u.String())
 	if err != nil {
 		return err
 	}
@@ -117,21 +114,12 @@ func (g *HttpGetter) GetFile(dst string, u *url.URL) error {
 			return err
 		}
 	}
-	// Create Request
-	req, err := http.NewRequest("GET", u.String(), nil)
-	if err != nil {
-		return err
-	}
 
-	// Get HTTP BasicAuth creds from url
-	basicAuthUser, basicAuthPass := g.getHttpBasicAuth(u)
-	// Set HTTP Basic Auth to request
-	if basicAuthUser != "" && basicAuthPass != "" {
-		req.SetBasicAuth(basicAuthUser, basicAuthPass)
-	}
+	// Check if there is any basic auth and add it to the Url
+	addHttpBasicAuth(u)
 
 	// Get the URL
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := http.Get(u.String())
 	if err != nil {
 		return err
 	}
@@ -155,18 +143,17 @@ func (g *HttpGetter) GetFile(dst string, u *url.URL) error {
 	return err
 }
 
-func (g *HttpGetter) getHttpBasicAuth(u *url.URL) (basicAuthUser, basicAuthPass string) {
-	qUser := "http_basic_auth_user"
-	qPass := "http_basic_auth_pass"
-
+func addHttpBasicAuth(u *url.URL) {
 	q := u.Query()
-	basicAuthUser = q.Get(qUser)
-	basicAuthPass = q.Get(qPass)
-	q.Del(qUser)
-	q.Del(qPass)
+	user := q.Get(HttpBasicAuthUserParam)
+	pass := q.Get(HttpBasicAuthPasswordParam)
+	q.Del(HttpBasicAuthUserParam)
+	q.Del(HttpBasicAuthPasswordParam)
 	u.RawQuery = q.Encode()
 
-	return
+	if user != "" && pass != "" {
+		u.User = url.UserPassword(user, pass)
+	}
 }
 
 // getSubdir downloads the source into the destination, but with
