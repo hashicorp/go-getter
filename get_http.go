@@ -12,12 +12,19 @@ import (
 	"strings"
 )
 
+const (
+	// HttpBasicAuthUserParam and HttpBasicAuthPasswordParam are the url
+	// parameters used to configure HTTP basic auth
+	HttpBasicAuthUserParam     = "http_basic_auth_user"
+	HttpBasicAuthPasswordParam = "http_basic_auth_pass"
+)
+
 // HttpGetter is a Getter implementation that will download from an HTTP
 // endpoint.
 //
 // For file downloads, HTTP is used directly.
 //
-// The protocol for downloading a directory from an HTTP endpoing is as follows:
+// The protocol for downloading a directory from an HTTP endpoint is as follows:
 //
 // An HTTP GET request is made to the URL with the additional GET parameter
 // "terraform-get=1". This lets you handle that scenario specially if you
@@ -56,6 +63,9 @@ func (g *HttpGetter) Get(dst string, u *url.URL) error {
 			return err
 		}
 	}
+
+	// Check if there is any basic auth and add it to the Url
+	addHttpBasicAuth(u)
 
 	// Add terraform-get to the parameter.
 	q := u.Query()
@@ -98,7 +108,6 @@ func (g *HttpGetter) Get(dst string, u *url.URL) error {
 }
 
 func (g *HttpGetter) GetFile(dst string, u *url.URL) error {
-
 	if g.Netrc {
 		// Add auth from netrc if we can
 		if err := addAuthFromNetrc(u); err != nil {
@@ -106,6 +115,10 @@ func (g *HttpGetter) GetFile(dst string, u *url.URL) error {
 		}
 	}
 
+	// Check if there is any basic auth and add it to the Url
+	addHttpBasicAuth(u)
+
+	// Get the URL
 	resp, err := http.Get(u.String())
 	if err != nil {
 		return err
@@ -128,6 +141,19 @@ func (g *HttpGetter) GetFile(dst string, u *url.URL) error {
 
 	_, err = io.Copy(f, resp.Body)
 	return err
+}
+
+func addHttpBasicAuth(u *url.URL) {
+	q := u.Query()
+	user := q.Get(HttpBasicAuthUserParam)
+	pass := q.Get(HttpBasicAuthPasswordParam)
+	q.Del(HttpBasicAuthUserParam)
+	q.Del(HttpBasicAuthPasswordParam)
+	u.RawQuery = q.Encode()
+
+	if user != "" && pass != "" {
+		u.User = url.UserPassword(user, pass)
+	}
 }
 
 // getSubdir downloads the source into the destination, but with
