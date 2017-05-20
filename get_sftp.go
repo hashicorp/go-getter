@@ -7,6 +7,7 @@ import (
 	"net/url"
 	"os"
 	"regexp"
+	"strconv"
 
 	"github.com/mitchellh/go-homedir"
 	"github.com/pkg/sftp"
@@ -37,6 +38,9 @@ func (g *SftpGetter) ClientMode(u *url.URL) (ClientMode, error) {
 
 // Get the files under the remote dir.
 // Note: recursively download is not supported at the moment.
+// Query parameters:
+//   - fileName: the name of the file to download, support regex
+//   - preservePermissions: true to preserve the file permissions on local file, default as false
 // example url: sftp://username@host/the/remote/dir?fileName=f1.txt&fileName=f2.txt&fileName=.*\.txt
 func (g *SftpGetter) Get(dst string, u *url.URL) error {
 	sftp, err := g.createSftpClient(u)
@@ -72,8 +76,9 @@ func (g *SftpGetter) Get(dst string, u *url.URL) error {
 		}
 	}
 
+	preservePerm, _ := strconv.ParseBool(u.Query().Get("preservePermissions"))
 	for _, file := range targetFiles {
-		if err := g.getFile(sftp, dst+"/"+file, rmtDir+"/"+file); err != nil {
+		if err := g.getFile(sftp, dst+"/"+file, rmtDir+"/"+file, preservePerm); err != nil {
 			return err
 		}
 	}
@@ -82,6 +87,8 @@ func (g *SftpGetter) Get(dst string, u *url.URL) error {
 }
 
 // Get the remote file.
+// Query parameters:
+//   - preservePermissions: true to preserve the file permissions on local file, default as false
 // example url: sftp://username@host/the/remote/file.txt
 func (g *SftpGetter) GetFile(dst string, u *url.URL) error {
 	sftp, err := g.createSftpClient(u)
@@ -90,7 +97,8 @@ func (g *SftpGetter) GetFile(dst string, u *url.URL) error {
 	}
 	defer sftp.Close()
 
-	return g.getFile(sftp, dst, u.Path)
+	preservePerm, _ := strconv.ParseBool(u.Query().Get("preservePermissions"))
+	return g.getFile(sftp, dst, u.Path, preservePerm)
 }
 
 func (g *SftpGetter) createSftpClient(u *url.URL) (*sftp.Client, error) {
@@ -146,7 +154,7 @@ func (g *SftpGetter) getKeyFile(file string) (key ssh.Signer, err error) {
 	return key, err
 }
 
-func (g *SftpGetter) getFile(sftp *sftp.Client, dst, src string) error {
+func (g *SftpGetter) getFile(sftp *sftp.Client, dst, src string, preservePerm bool) error {
 	rmtFile, err := sftp.Open(src)
 	if err != nil {
 		return err
@@ -157,12 +165,25 @@ func (g *SftpGetter) getFile(sftp *sftp.Client, dst, src string) error {
 	if err != nil {
 		return err
 	}
-	defer dstFile.Close()
 
 	log.Printf("Downloading remote %s to local %s", src, dst)
-	if _, err := rmtFile.WriteTo(dstFile); err != nil {
+	_, err = rmtFile.WriteTo(dstFile)
+	dstFile.Close()
+	if err != nil {
 		return err
 	}
+
+	if preservePerm {
+		// Chmod the file
+		rmtFileInfo, err := rmtFile.Stat()
+		if err != nil {
+			return err
+		}
+		if err := os.Chmod(dst, rmtFileInfo.Mode()); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 

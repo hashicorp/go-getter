@@ -231,7 +231,7 @@ characters, including the username and password, must be URL encoded.
 
 ### SFTP (`sftp`)
 
-uri format: `sftp://[username@]hostname[:port]/director_or_file_yname[?options]`
+uri format: `sftp://[username@]hostname[:port]/director_or_file_name[?options]`
 
 * when the path is a directory on the SFTP server
 all the files under the directory will be download, recursively download is not supported at momenet. 
