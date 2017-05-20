@@ -71,6 +71,7 @@ can be augmented at runtime by implementing the `Getter` interface.
   * Git
   * Mercurial
   * HTTP
+  * SFTP
   * Amazon S3
 
 In addition to the above protocols, go-getter has what are called "detectors."
@@ -227,6 +228,14 @@ None
 To use HTTP basic authentication with go-getter, simply prepend `username:password@` to the
 hostname in the URL such as `https://Aladdin:OpenSesame@www.example.com/index.html`. All special
 characters, including the username and password, must be URL encoded.
+
+### SFTP (`sftp`)
+
+uri format: `sftp://[username@]hostname[:port]/director_or_file_yname[?options]`
+
+* when the path is a directory on the SFTP server
+all the files under the directory will be download, recursively download is not supported at momenet. 
+if want to download the specific file(s), use query parameter `fileName`, regex is supported: `?fileName=f1.txt&fileName=f2.txt&fileName=.*\.txt`
 
 ### S3 (`s3`)
 
