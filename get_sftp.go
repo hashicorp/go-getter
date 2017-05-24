@@ -102,6 +102,14 @@ func (g *SftpGetter) GetFile(dst string, u *url.URL) error {
 }
 
 func (g *SftpGetter) createSftpClient(u *url.URL) (*sftp.Client, error) {
+	if u.User == nil {
+		return nil, fmt.Errorf("user name is required in url.")
+	}
+	user := u.User.Username()
+	if user == "" {
+		return nil, fmt.Errorf("user name is required in url.")
+	}
+
 	var authMethods []ssh.AuthMethod
 	idRsaFile, _ := homedir.Expand("~/.ssh/id_rsa")
 	idDsaFile, _ := homedir.Expand("~/.ssh/id_dsa")
@@ -116,7 +124,7 @@ func (g *SftpGetter) createSftpClient(u *url.URL) (*sftp.Client, error) {
 			}
 		}
 	}
-	if passwd, hasPasswd := u.User.Password(); hasPasswd {
+	if passwd, ok := u.User.Password(); ok && passwd != "" {
 		authMethods = append(authMethods, ssh.Password(passwd))
 	} else if passwd := u.Query().Get("password"); passwd != "" {
 		authMethods = append(authMethods, ssh.Password(passwd))
@@ -126,7 +134,6 @@ func (g *SftpGetter) createSftpClient(u *url.URL) (*sftp.Client, error) {
 		return nil, fmt.Errorf("either password or private key is required for ssh auth.")
 	}
 
-	user := u.User.Username()
 	config := &ssh.ClientConfig{
 		User: user,
 		Auth: authMethods,
