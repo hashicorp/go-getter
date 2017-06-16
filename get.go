@@ -18,6 +18,8 @@ import (
 	"os/exec"
 	"regexp"
 	"syscall"
+
+	cleanhttp "github.com/hashicorp/go-cleanhttp"
 )
 
 // Getter defines the interface that schemes must implement to download
@@ -50,7 +52,10 @@ var Getters map[string]Getter
 var forcedRegexp = regexp.MustCompile(`^([A-Za-z0-9]+)::(.+)$`)
 
 func init() {
-	httpGetter := &HttpGetter{Netrc: true}
+	httpGetter := &HttpGetter{
+		Netrc:  true,
+		Client: cleanhttp.DefaultClient(),
+	}
 
 	Getters = map[string]Getter{
 		"file":  new(FileGetter),
