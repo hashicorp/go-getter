@@ -212,6 +212,9 @@ func (g *S3Getter) getAWSConfig(region string, url *url.URL, creds *credentials.
 }
 
 func (g *S3Getter) parseUrl(u *url.URL) (region, bucket, path, version string, creds *credentials.Credentials, err error) {
+	// This just check whether we are dealing with S3 or
+	// any other S3 compliant service. S3 has a predictable
+	// url as others do not
 	if strings.Contains(u.Host, "amazonaws.com") {
 		// Expected host style: s3.amazonaws.com. They always have 3 parts,
 		// although the first may differ if we're accessing a specific region.
@@ -246,7 +249,7 @@ func (g *S3Getter) parseUrl(u *url.URL) (region, bucket, path, version string, c
 		bucket = pathParts[1]
 		path = pathParts[2]
 		version = u.Query().Get("version")
-		region = "us-east-1"
+		region = u.Query().Get("region")
 	}
 
 	_, hasAwsId := u.Query()["aws_access_key_id"]
