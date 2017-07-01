@@ -169,22 +169,19 @@ func TestS3Getter_ClientMode_collision(t *testing.T) {
 	}
 }
 
-type parseTest struct {
+var s3tests = []struct {
 	url     string
 	region  string
 	bucket  string
 	path    string
 	version string
-}
-
-var s3tests = []parseTest{
-	{
-		url:     "s3::https://s3-eu-west-1.amazonaws.com/bucket/foo/bar.baz?version=1234",
-		region:  "eu-west-1",
-		bucket:  "bucket",
-		path:    "foo/bar.baz",
-		version: "1234",
-	},
+}{{
+	url:     "s3::https://s3-eu-west-1.amazonaws.com/bucket/foo/bar.baz?version=1234",
+	region:  "eu-west-1",
+	bucket:  "bucket",
+	path:    "foo/bar.baz",
+	version: "1234",
+},
 	{
 		url:     "s3::http://127.0.0.1:9000/test-bucket/hello.txt?aws_access_key_id=TESTID&aws_access_key_secret=TestSecret&region=us-east-2&version=1",
 		region:  "us-east-2",
