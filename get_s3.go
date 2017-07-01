@@ -250,6 +250,9 @@ func (g *S3Getter) parseUrl(u *url.URL) (region, bucket, path, version string, c
 		path = pathParts[2]
 		version = u.Query().Get("version")
 		region = u.Query().Get("region")
+		if region == "" {
+			region = "us-east-1"
+		}
 	}
 
 	_, hasAwsId := u.Query()["aws_access_key_id"]

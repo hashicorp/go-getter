@@ -1,7 +1,6 @@
 package getter
 
 import (
-	"log"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -170,82 +169,77 @@ func TestS3Getter_ClientMode_collision(t *testing.T) {
 	}
 }
 
-func TestS3Getter_Minio_Url(t *testing.T) {
-	g := new(S3Getter)
-	forced, src := getForcedGetter("s3::http://127.0.0.1:9000/test-bucket/hello.txt?aws_access_key_id=TESTID&aws_access_key_secret=TestSecret&region=us-east-2&version=1")
-	u, err := url.Parse(src)
-
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	if forced != "s3" {
-		t.Fatalf("expected forced protocol to be s3")
-	}
-
-	region, bucket, path, version, creds, err := g.parseUrl(u)
-
-	if err != nil {
-		t.Fatalf("err: %s", err)
-	}
-
-	if region != "us-east-2" {
-		t.Fatal("expected us-east-2")
-	}
-
-	if bucket != "test-bucket" {
-		t.Fatal("expected test-bucket")
-	}
-
-	if path != "hello.txt" {
-		t.Fatal("expected hello.txt")
-	}
-
-	if version != "1" {
-		t.Fatal("expected to be 1")
-	}
-
-	if creds == nil {
-		t.Fatal("expected to not be nil")
-	}
+type parseTest struct {
+	url     string
+	region  string
+	bucket  string
+	path    string
+	version string
 }
 
-func TestS3Getter_S3_Url(t *testing.T) {
-	g := new(S3Getter)
-	forced, src := getForcedGetter("s3::https://s3-eu-west-1.amazonaws.com/bucket/foo/bar.baz?version=1234")
-	u, err := url.Parse(src)
+var s3tests = []parseTest{
+	{
+		url:     "s3::https://s3-eu-west-1.amazonaws.com/bucket/foo/bar.baz?version=1234",
+		region:  "eu-west-1",
+		bucket:  "bucket",
+		path:    "foo/bar.baz",
+		version: "1234",
+	},
+	{
+		url:     "s3::http://127.0.0.1:9000/test-bucket/hello.txt?aws_access_key_id=TESTID&aws_access_key_secret=TestSecret&region=us-east-2&version=1",
+		region:  "us-east-2",
+		bucket:  "test-bucket",
+		path:    "hello.txt",
+		version: "1",
+	},
+	{
+		url:     "s3::http://127.0.0.1:9000/test-bucket/hello.txt?aws_access_key_id=TESTID&aws_access_key_secret=TestSecret&version=1",
+		region:  "us-east-1",
+		bucket:  "test-bucket",
+		path:    "hello.txt",
+		version: "1",
+	},
+	{
+		url:     "s3::http://127.0.0.1:9000/test-bucket/hello.txt?aws_access_key_id=TESTID&aws_access_key_secret=TestSecret",
+		region:  "us-east-1",
+		bucket:  "test-bucket",
+		path:    "hello.txt",
+		version: "",
+	},
+}
 
-	if err != nil {
-		log.Fatal(err)
-	}
+func TestS3Getter_Url(t *testing.T) {
+	for i, pt := range s3tests {
+		g := new(S3Getter)
+		forced, src := getForcedGetter(pt.url)
+		u, err := url.Parse(src)
 
-	if forced != "s3" {
-		t.Fatalf("expected forced protocol to be s3")
-	}
+		if err != nil {
+			t.Errorf("test %d: unexpected error: %s", i, err)
+		}
+		if forced != "s3" {
+			t.Fatalf("expected forced protocol to be s3")
+		}
 
-	region, bucket, path, version, creds, err := g.parseUrl(u)
+		region, bucket, path, version, creds, err := g.parseUrl(u)
 
-	if err != nil {
-		t.Fatalf("err: %s", err)
-	}
-
-	if region != "eu-west-1" {
-		t.Fatal("expected eu-west-1")
-	}
-
-	if bucket != "bucket" {
-		t.Fatal("expected bucket")
-	}
-
-	if path != "foo/bar.baz" {
-		t.Fatal("expected foo/bar.baz")
-	}
-
-	if version != "1234" {
-		t.Fatal("expected to be 1234")
-	}
-
-	if creds != nil {
-		t.Fatal("expected to not be nil")
+		if err != nil {
+			t.Fatalf("err: %s", err)
+		}
+		if region != pt.region {
+			t.Fatalf("expected %s, got %s", pt.region, region)
+		}
+		if bucket != pt.bucket {
+			t.Fatalf("expected %s, got %s", pt.bucket, bucket)
+		}
+		if path != pt.path {
+			t.Fatalf("expected %s, got %s", pt.path, path)
+		}
+		if version != pt.version {
+			t.Fatalf("expected %s, got %s", pt.version, version)
+		}
+		if &creds == nil {
+			t.Fatalf("expected to not be nil")
+		}
 	}
 }
