@@ -9,8 +9,8 @@ import (
 	"github.com/ulikunitz/xz"
 )
 
-// GzipDecompressor is an implementation of Decompressor that can
-// decompress bz2 files.
+// XzDecompressor is an implementation of Decompressor that can
+// decompress xz files.
 type XzDecompressor struct{}
 
 func (d *XzDecompressor) Decompress(dst, src string, dir bool) error {
