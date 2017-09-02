@@ -145,6 +145,44 @@ func TestGetAny_archive(t *testing.T) {
 	}
 }
 
+func TestGet_archiveRooted(t *testing.T) {
+	dst := tempDir(t)
+	u := testModule("archive-rooted/archive.tar.gz")
+	if err := Get(dst, u); err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	mainPath := filepath.Join(dst, "root", "hello.txt")
+	if _, err := os.Stat(mainPath); err != nil {
+		t.Fatalf("err: %s", err)
+	}
+}
+
+func TestGet_archiveSubdirWild(t *testing.T) {
+	dst := tempDir(t)
+	u := testModule("archive-rooted/archive.tar.gz")
+	u += "//*"
+	if err := Get(dst, u); err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	mainPath := filepath.Join(dst, "hello.txt")
+	if _, err := os.Stat(mainPath); err != nil {
+		t.Fatalf("err: %s", err)
+	}
+}
+
+func TestGet_archiveSubdirWildMultiMatch(t *testing.T) {
+	dst := tempDir(t)
+	u := testModule("archive-rooted-multi/archive.tar.gz")
+	u += "//*"
+	if err := Get(dst, u); err == nil {
+		t.Fatal("should error")
+	} else if !strings.Contains(err.Error(), "multiple") {
+		t.Fatalf("err: %s", err)
+	}
+}
+
 func TestGetAny_file(t *testing.T) {
 	dst := tempDir(t)
 	u := testModule("basic-file/foo.txt")

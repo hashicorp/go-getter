@@ -305,7 +305,21 @@ func (c *Client) Get() error {
 			return err
 		}
 
-		return copyDir(realDst, filepath.Join(dst, subDir), false)
+		// Subdir matching supports globs. This allows matching unknown
+		// subdirectory structures but where we know the general path.
+		// For example, for archives that have a root folder containing
+		// all the items, you can download it with the getter URL of:
+		// 'path//*'.
+		matches, err := filepath.Glob(filepath.Join(dst, subDir))
+		if err != nil {
+			return err
+		}
+		if len(matches) > 1 {
+			return fmt.Errorf("subdir %q matches multiple paths", subDir)
+		}
+		subDir = matches[0]
+
+		return copyDir(realDst, subDir, false)
 	}
 
 	return nil
