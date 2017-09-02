@@ -86,6 +86,30 @@ func TestHttpGetter_metaSubdir(t *testing.T) {
 	}
 }
 
+func TestHttpGetter_metaSubdirGlob(t *testing.T) {
+	ln := testHttpServer(t)
+	defer ln.Close()
+
+	g := new(HttpGetter)
+	dst := tempDir(t)
+
+	var u url.URL
+	u.Scheme = "http"
+	u.Host = ln.Addr().String()
+	u.Path = "/meta-subdir-glob"
+
+	// Get it!
+	if err := g.Get(dst, &u); err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	// Verify the main file exists
+	mainPath := filepath.Join(dst, "sub.tf")
+	if _, err := os.Stat(mainPath); err != nil {
+		t.Fatalf("err: %s", err)
+	}
+}
+
 func TestHttpGetter_none(t *testing.T) {
 	ln := testHttpServer(t)
 	defer ln.Close()
@@ -194,6 +218,7 @@ func testHttpServer(t *testing.T) net.Listener {
 	mux.HandleFunc("/meta", testHttpHandlerMeta)
 	mux.HandleFunc("/meta-auth", testHttpHandlerMetaAuth)
 	mux.HandleFunc("/meta-subdir", testHttpHandlerMetaSubdir)
+	mux.HandleFunc("/meta-subdir-glob", testHttpHandlerMetaSubdirGlob)
 
 	var server http.Server
 	server.Handler = mux
@@ -232,6 +257,10 @@ func testHttpHandlerMetaAuth(w http.ResponseWriter, r *http.Request) {
 
 func testHttpHandlerMetaSubdir(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(fmt.Sprintf(testHttpMetaStr, testModuleURL("basic//subdir").String())))
+}
+
+func testHttpHandlerMetaSubdirGlob(w http.ResponseWriter, r *http.Request) {
+	w.Write([]byte(fmt.Sprintf(testHttpMetaStr, testModuleURL("basic//sub*").String())))
 }
 
 func testHttpHandlerNone(w http.ResponseWriter, r *http.Request) {
