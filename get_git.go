@@ -180,14 +180,13 @@ func (g *GitGetter) fetchSubmodules(dst, sshKeyFile string) error {
 // setupGitEnv sets up the environment for the given command. This is used to
 // pass configuration data to git and ssh and enables advanced cloning methods.
 func setupGitEnv(cmd *exec.Cmd, sshKeyFile string) {
-	gitSSHCommand := "GIT_SSH_COMMAND="
+	const gitSSHCommand = "GIT_SSH_COMMAND="
 	var sshCmd []string
-
-	env := os.Environ()
 
 	// If we have an existing GIT_SSH_COMMAND, we need to append our options.
 	// We will also remove our old entry to make sure the behavior is the same
 	// with versions of Go < 1.9.
+	env := os.Environ()
 	for i, v := range env {
 		if strings.HasPrefix(v, gitSSHCommand) {
 			sshCmd = []string{v}
