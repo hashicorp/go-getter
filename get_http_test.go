@@ -1,6 +1,7 @@
 package getter
 
 import (
+	"errors"
 	"fmt"
 	"net"
 	"net/http"
@@ -178,6 +179,38 @@ func TestHttpGetter_authNetrc(t *testing.T) {
 	// Verify the main file exists
 	mainPath := filepath.Join(dst, "main.tf")
 	if _, err := os.Stat(mainPath); err != nil {
+		t.Fatalf("err: %s", err)
+	}
+}
+
+// test round tripper that only returns an error
+type errRoundTripper struct{}
+
+func (errRoundTripper) RoundTrip(r *http.Request) (*http.Response, error) {
+	return nil, errors.New("test round tripper")
+}
+
+// verify that the default httpClient no longer comes from http.DefaultClient
+func TestHttpGetter_cleanhttp(t *testing.T) {
+	ln := testHttpServer(t)
+	defer ln.Close()
+
+	// break the default http client
+	http.DefaultClient.Transport = errRoundTripper{}
+	defer func() {
+		http.DefaultClient.Transport = http.DefaultTransport
+	}()
+
+	g := new(HttpGetter)
+	dst := tempDir(t)
+
+	var u url.URL
+	u.Scheme = "http"
+	u.Host = ln.Addr().String()
+	u.Path = "/header"
+
+	// Get it!
+	if err := g.Get(dst, &u); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 }
