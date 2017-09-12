@@ -315,6 +315,29 @@ func TestGitGetter_setupGitEnv_sshKey(t *testing.T) {
 	}
 }
 
+func TestGitGetter_setupGitEnvWithExisting_sshKey(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skipf("skipping on windows since the test requires sh")
+		return
+	}
+
+	// start with an existing ssh command configuration
+	os.Setenv("GIT_SSH_COMMAND", "ssh -o StrictHostKeyChecking=no")
+	defer os.Setenv("GIT_SSH_COMMAND", "")
+
+	cmd := exec.Command("/bin/sh", "-c", "echo $GIT_SSH_COMMAND")
+	setupGitEnv(cmd, "/tmp/foo.pem")
+	out, err := cmd.Output()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	actual := strings.TrimSpace(string(out))
+	if actual != "ssh -o StrictHostKeyChecking=no -i /tmp/foo.pem" {
+		t.Fatalf("unexpected GIT_SSH_COMMAND: %q", actual)
+	}
+}
+
 // gitRepo is a helper struct which controls a single temp git repo.
 type gitRepo struct {
 	t   *testing.T
