@@ -38,7 +38,7 @@ type HttpGetter struct {
 	Netrc bool
 
 	// Client is the http.Client to use for Get requests.
-	// This defaults to http.DefaultClient if left unset.
+	// This defaults to a cleanhttp.DefaultClient if left unset.
 	Client *http.Client
 }
 
@@ -62,7 +62,7 @@ func (g *HttpGetter) Get(dst string, u *url.URL) error {
 	}
 
 	if g.Client == nil {
-		g.Client = http.DefaultClient
+		g.Client = httpClient
 	}
 
 	// Add terraform-get to the parameter.
@@ -115,7 +115,7 @@ func (g *HttpGetter) GetFile(dst string, u *url.URL) error {
 	}
 
 	if g.Client == nil {
-		g.Client = http.DefaultClient
+		g.Client = httpClient
 	}
 
 	resp, err := g.Client.Get(u.String())

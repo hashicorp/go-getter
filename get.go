@@ -51,10 +51,12 @@ var Getters map[string]Getter
 // syntax is schema::url, example: git::https://foo.com
 var forcedRegexp = regexp.MustCompile(`^([A-Za-z0-9]+)::(.+)$`)
 
+// httpClient is the default client to be used by HttpGetters.
+var httpClient = cleanhttp.DefaultClient()
+
 func init() {
 	httpGetter := &HttpGetter{
-		Netrc:  true,
-		Client: cleanhttp.DefaultClient(),
+		Netrc: true,
 	}
 
 	Getters = map[string]Getter{
