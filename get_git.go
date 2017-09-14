@@ -193,6 +193,7 @@ func setupGitEnv(cmd *exec.Cmd, sshKeyFile string) {
 
 			env[i], env[len(env)-1] = env[len(env)-1], env[i]
 			env = env[:len(env)-1]
+			break
 		}
 	}
 
