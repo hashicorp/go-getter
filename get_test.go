@@ -362,3 +362,19 @@ func TestGetFile_checksumURL(t *testing.T) {
 		t.Fatalf("bad: %s", v)
 	}
 }
+
+func TestGetFile_filename(t *testing.T) {
+	dst := tempDir(t)
+	u := testModule("basic-file/foo.txt")
+
+	u += "?filename=bar.txt"
+
+	if err := GetAny(dst, u); err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	mainPath := filepath.Join(dst, "bar.txt")
+	if _, err := os.Stat(mainPath); err != nil {
+		t.Fatalf("err: %s", err)
+	}
+}
