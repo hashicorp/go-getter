@@ -5,11 +5,13 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 )
 
 // HttpGetter is a Getter implementation that will download from an HTTP
@@ -49,6 +51,39 @@ func (g *HttpGetter) ClientMode(u *url.URL) (ClientMode, error) {
 	return ClientModeFile, nil
 }
 
+func (g *HttpGetter) PrintDownloadPercent(done chan int64, f *os.File, total int64) {
+	// stat file every two seconds to figure out the download progress
+	var stop bool = false
+
+	for {
+		select {
+		case <-done:
+			stop = true
+		default:
+			fi, err := f.Stat()
+			if err != nil {
+				return
+			}
+			size := fi.Size()
+
+			// catch edge case that would break our percentage calc
+			if size == 0 {
+				size = 1
+			}
+
+			var percent float64 = float64(size) / float64(total) * 100
+
+			log.Printf("download %.0f%% complete", percent)
+		}
+
+		if stop {
+			break
+		}
+
+		time.Sleep(3 * time.Second)
+	}
+}
+
 func (g *HttpGetter) Get(dst string, u *url.URL) error {
 	// Copy the URL so we can modify it
 	var newU url.URL = *u
@@ -69,12 +104,12 @@ func (g *HttpGetter) Get(dst string, u *url.URL) error {
 	q := u.Query()
 	q.Add("terraform-get", "1")
 	u.RawQuery = q.Encode()
-
 	// Get the URL
 	resp, err := g.Client.Get(u.String())
 	if err != nil {
 		return err
 	}
+
 	defer resp.Body.Close()
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		return fmt.Errorf("bad response code: %d", resp.StatusCode)
@@ -100,7 +135,6 @@ func (g *HttpGetter) Get(dst string, u *url.URL) error {
 	if subDir == "" {
 		return Get(dst, source)
 	}
-
 	// We have a subdir, time to jump some hoops
 	return g.getSubdir(dst, source, subDir)
 }
@@ -116,7 +150,6 @@ func (g *HttpGetter) GetFile(dst string, u *url.URL) error {
 	if g.Client == nil {
 		g.Client = httpClient
 	}
-
 	resp, err := g.Client.Get(u.String())
 	if err != nil {
 		return err
@@ -137,7 +170,11 @@ func (g *HttpGetter) GetFile(dst string, u *url.URL) error {
 	}
 	defer f.Close()
 
-	_, err = io.Copy(f, resp.Body)
+	done := make(chan int64)
+	go g.PrintDownloadPercent(done, f, resp.ContentLength)
+
+	nwritten, err := io.Copy(f, resp.Body)
+	done <- nwritten
 	return err
 }
 
