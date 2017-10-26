@@ -199,7 +199,7 @@ func (c *Client) Get() error {
 			checksumType = v[:idx]
 		}
 
-		checksumHash := HashForType(checksumType)
+		checksumHash = HashForType(checksumType)
 		if checksumHash == nil {
 			return fmt.Errorf(
 				"unsupported checksum type: %s", checksumType)
