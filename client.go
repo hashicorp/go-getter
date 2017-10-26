@@ -198,16 +198,9 @@ func (c *Client) Get() error {
 		if idx > -1 {
 			checksumType = v[:idx]
 		}
-		switch checksumType {
-		case "md5":
-			checksumHash = md5.New()
-		case "sha1":
-			checksumHash = sha1.New()
-		case "sha256":
-			checksumHash = sha256.New()
-		case "sha512":
-			checksumHash = sha512.New()
-		default:
+
+		checksumHash := HashForType()
+		if checksumHash == nil {
 			return fmt.Errorf(
 				"unsupported checksum type: %s", checksumType)
 		}
@@ -349,4 +342,21 @@ func checksum(source string, h hash.Hash, v []byte) error {
 	}
 
 	return nil
+}
+
+// HashForType returns the Hash implementation for the given string
+// type, or nil if the type is not supported.
+func HashForType(checksumType string) hash.Hash {
+	switch checksumType {
+	case "md5":
+		return md5.New()
+	case "sha1":
+		return sha1.New()
+	case "sha256":
+		return sha256.New()
+	case "sha512":
+		return sha512.New()
+	default:
+		return nil
+	}
 }
