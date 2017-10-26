@@ -1,12 +1,8 @@
 package getter
 
 import (
-	"crypto/md5"
-	"crypto/sha1"
-	"crypto/sha256"
-	"crypto/sha512"
 	"encoding/hex"
-	"hash"
+	"testing"
 )
 
 func TestHashForType(t *testing.T) {
