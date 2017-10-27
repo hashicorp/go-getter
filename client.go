@@ -189,7 +189,6 @@ func (c *Client) Get() error {
 	var checksumHash hash.Hash
 	var checksumValue []byte
 	if v := q.Get("checksum"); v != "" {
-		log.Printf("Megan in checksum conditiona, so get checksum worked.")
 		// Delete the query parameter if we have it.
 		q.Del("checksum")
 		u.RawQuery = q.Encode()
@@ -216,7 +215,6 @@ func (c *Client) Get() error {
 		// Set our value
 		checksumValue = b
 	}
-	log.Printf("Megan beneath checksum conditional")
 
 	if mode == ClientModeAny {
 		// Ask the getter which client mode to use
@@ -327,7 +325,6 @@ func (c *Client) Get() error {
 // checksum is a simple method to compute the checksum of a source file
 // and compare it to the given expected value.
 func checksum(source string, h hash.Hash, v []byte) error {
-	log.Printf("Megan in checksum func.")
 	f, err := os.Open(source)
 	if err != nil {
 		return fmt.Errorf("Failed to open file for checksum: %s", err)
