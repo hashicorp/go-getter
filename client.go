@@ -349,7 +349,7 @@ func checksum(source string, h hash.Hash, v []byte) error {
 }
 
 func CompareChecksum(source string, h hash.Hash, v []byte) bool {
-	err := checksum()
+	err := checksum(source, h, v)
 	if err != nil {
 		return false
 	}
