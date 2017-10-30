@@ -268,3 +268,7 @@ func (g *S3Getter) parseUrl(u *url.URL) (region, bucket, path, version string, c
 
 	return
 }
+
+func (g *S3Getter) GetProgress() int {
+	return 101
+}

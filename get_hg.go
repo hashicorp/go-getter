@@ -119,6 +119,10 @@ func (g *HgGetter) update(dst string, u *url.URL, rev string) error {
 	return getRunCommand(cmd)
 }
 
+func (g *HgGetter) GetProgress() int {
+	return 101
+}
+
 func fixWindowsDrivePath(u *url.URL) bool {
 	// hg assumes a file:/// prefix for Windows drive letter file paths.
 	// (e.g. file:///c:/foo/bar)

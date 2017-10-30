@@ -11,10 +11,12 @@ import (
 	"hash"
 	"io"
 	"io/ioutil"
+	"log"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 
 	urlhelper "github.com/hashicorp/go-getter/helper/url"
 )
@@ -54,11 +56,15 @@ type Client struct {
 	// is nil, then the default Getters variable will be used.
 	Getters map[string]Getter
 
+	// What percent done the download is.
+	PercentComplete int
+
 	// Dir, if true, tells the Client it is downloading a directory (versus
 	// a single file). This distinction is necessary since filenames and
 	// directory names follow the same format so disambiguating is impossible
 	// without knowing ahead of time.
 	//
+
 	// WARNING: deprecated. If Mode is set, that will take precedence.
 	Dir bool
 }
@@ -243,6 +249,18 @@ func (c *Client) Get() error {
 	// If we're not downloading a directory, then just download the file
 	// and return.
 	if mode == ClientModeFile {
+		// launch goroutine to check percent progress
+
+		go func() {
+			for {
+				c.PercentComplete = g.GetProgress()
+				if c.PercentComplete == 100 {
+					break
+				}
+				time.Sleep(time.Second)
+			}
+		}()
+
 		err := g.GetFile(dst, u)
 		if err != nil {
 			return err

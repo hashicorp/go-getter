@@ -42,6 +42,12 @@ type HttpGetter struct {
 	// Client is the http.Client to use for Get requests.
 	// This defaults to a cleanhttp.DefaultClient if left unset.
 	Client *http.Client
+
+	// Used for calculating percent progress
+	totalSize       int64
+	PercentComplete int
+	dstFile         string
+	Done            chan int64
 }
 
 func (g *HttpGetter) ClientMode(u *url.URL) (ClientMode, error) {
@@ -49,39 +55,6 @@ func (g *HttpGetter) ClientMode(u *url.URL) (ClientMode, error) {
 		return ClientModeDir, nil
 	}
 	return ClientModeFile, nil
-}
-
-func (g *HttpGetter) PrintDownloadPercent(done chan int64, f *os.File, total int64) {
-	// stat file every two seconds to figure out the download progress
-	var stop bool = false
-
-	for {
-		select {
-		case <-done:
-			stop = true
-		default:
-			fi, err := f.Stat()
-			if err != nil {
-				return
-			}
-			size := fi.Size()
-
-			// catch edge case that would break our percentage calc
-			if size == 0 {
-				size = 1
-			}
-
-			var percent float64 = float64(size) / float64(total) * 100
-
-			log.Printf("download %.0f%% complete", percent)
-		}
-
-		if stop {
-			break
-		}
-
-		time.Sleep(3 * time.Second)
-	}
 }
 
 func (g *HttpGetter) Get(dst string, u *url.URL) error {
@@ -99,6 +72,8 @@ func (g *HttpGetter) Get(dst string, u *url.URL) error {
 	if g.Client == nil {
 		g.Client = httpClient
 	}
+
+	g.dstFile = dst
 
 	// Add terraform-get to the parameter.
 	q := u.Query()
@@ -129,6 +104,9 @@ func (g *HttpGetter) Get(dst string, u *url.URL) error {
 		return fmt.Errorf("no source URL was returned")
 	}
 
+	// extract the source file size
+	g.totalSize = resp.ContentLength
+
 	// If there is a subdir component, then we download the root separately
 	// into a temporary directory, then copy over the proper subdir.
 	source, subDir := SourceDirSubdir(source)
@@ -140,6 +118,8 @@ func (g *HttpGetter) Get(dst string, u *url.URL) error {
 }
 
 func (g *HttpGetter) GetFile(dst string, u *url.URL) error {
+	g.dstFile = dst
+
 	if g.Netrc {
 		// Add auth from netrc if we can
 		if err := addAuthFromNetrc(u); err != nil {
@@ -159,6 +139,9 @@ func (g *HttpGetter) GetFile(dst string, u *url.URL) error {
 		return fmt.Errorf("bad response code: %d", resp.StatusCode)
 	}
 
+	// extract the source file size
+	g.totalSize = resp.ContentLength
+
 	// Create all the parent directories
 	if err := os.MkdirAll(filepath.Dir(dst), 0755); err != nil {
 		return err
@@ -170,11 +153,14 @@ func (g *HttpGetter) GetFile(dst string, u *url.URL) error {
 	}
 	defer f.Close()
 
-	done := make(chan int64)
-	go g.PrintDownloadPercent(done, f, resp.ContentLength)
+	go g.CalcDownloadPercent()
 
+	g.Done = make(chan int64, 1)
 	nwritten, err := io.Copy(f, resp.Body)
-	done <- nwritten
+
+	// tell progress tracker we're done
+	g.Done <- nwritten
+
 	return err
 }
 
@@ -254,6 +240,49 @@ func (g *HttpGetter) parseMeta(r io.Reader) (string, error) {
 		if f := attrValue(e.Attr, "content"); f != "" {
 			return f, nil
 		}
+	}
+}
+
+func (g *HttpGetter) GetProgress() int {
+	return g.PercentComplete
+}
+
+func (g *HttpGetter) CalcDownloadPercent() {
+	// stat file every n seconds to figure out the download progress
+	var stop bool = false
+	dstfile, err := os.Open(g.dstFile)
+	defer dstfile.Close()
+
+	if err != nil {
+		log.Printf("couldn't open file for reading: %s", err)
+		return
+	}
+	for {
+		select {
+		case <-g.Done:
+			stop = true
+		default:
+			fi, err := dstfile.Stat()
+			if err != nil {
+				fmt.Printf("Error stating file: %s", err)
+				return
+			}
+			size := fi.Size()
+
+			// catch edge case that would break our percentage calc
+			if size == 0 {
+				size = 1
+			}
+			var percent int = int(float64(size) / float64(g.totalSize) * 100)
+			fmt.Printf("percent complete is %d", g.PercentComplete)
+			g.PercentComplete = percent
+		}
+
+		if stop {
+			break
+		}
+		// repeat check once per second
+		time.Sleep(time.Second)
 	}
 }
 

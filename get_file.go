@@ -30,3 +30,7 @@ func (g *FileGetter) ClientMode(u *url.URL) (ClientMode, error) {
 
 	return ClientModeFile, nil
 }
+
+func (g *FileGetter) GetProgress() int {
+	return 101
+}
