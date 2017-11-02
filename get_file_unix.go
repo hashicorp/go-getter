@@ -22,6 +22,7 @@ func (g *FileGetter) Get(dst string, u *url.URL) error {
 	} else if !fi.IsDir() {
 		return fmt.Errorf("source path must be a directory")
 	}
+	g.totalSize = fi.Size()
 
 	fi, err := os.Lstat(dst)
 	if err != nil && !os.IsNotExist(err) {
@@ -45,7 +46,7 @@ func (g *FileGetter) Get(dst string, u *url.URL) error {
 	if err := os.MkdirAll(filepath.Dir(dst), 0755); err != nil {
 		return err
 	}
-
+	g.PercentComplete = 100
 	return os.Symlink(path, dst)
 }
 
@@ -61,6 +62,7 @@ func (g *FileGetter) GetFile(dst string, u *url.URL) error {
 	} else if fi.IsDir() {
 		return fmt.Errorf("source path must be a file")
 	}
+	g.totalSize = fi.Size()
 
 	_, err := os.Lstat(dst)
 	if err != nil && !os.IsNotExist(err) {
@@ -82,6 +84,7 @@ func (g *FileGetter) GetFile(dst string, u *url.URL) error {
 
 	// If we're not copying, just symlink and we're done
 	if !g.Copy {
+		g.PercentComplete = 100
 		return os.Symlink(path, dst)
 	}
 
@@ -98,6 +101,51 @@ func (g *FileGetter) GetFile(dst string, u *url.URL) error {
 	}
 	defer dstF.Close()
 
-	_, err = io.Copy(dstF, srcF)
+	go g.CalcPercentComplete(dst)
+
+	nwritten, err = io.Copy(dstF, srcF)
+	g.Done <- nwritten
 	return err
+}
+
+func (g *FileGetter) GetProgress() int {
+	return g.PercentComplete
+}
+
+func (g *HttpGetter) CalcPercentComplete(dst) {
+	// stat file every n seconds to figure out the download progress
+	var stop bool = false
+	dstfile, err := os.Open(dst)
+	defer dstfile.Close()
+
+	if err != nil {
+		log.Printf("couldn't open file for reading: %s", err)
+		return
+	}
+	for {
+		select {
+		case <-g.Done:
+			stop = true
+		default:
+			fi, err := dstfile.Stat()
+			if err != nil {
+				fmt.Printf("Error stating file: %s", err)
+				return
+			}
+			size := fi.Size()
+
+			// catch edge case that would break our percentage calc
+			if size == 0 {
+				size = 1
+			}
+
+			g.PercentComplete = int(float64(size) / float64(g.totalSize) * 100)
+		}
+
+		if stop {
+			break
+		}
+		// repeat check once per second
+		time.Sleep(time.Second)
+	}
 }

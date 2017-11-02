@@ -10,6 +10,11 @@ import (
 type FileGetter struct {
 	// Copy, if set to true, will copy data instead of using a symlink
 	Copy bool
+
+	// Used for calculating percent progress
+	totalSize       int64
+	PercentComplete int
+	Done            chan int64
 }
 
 func (g *FileGetter) ClientMode(u *url.URL) (ClientMode, error) {
@@ -29,8 +34,4 @@ func (g *FileGetter) ClientMode(u *url.URL) (ClientMode, error) {
 	}
 
 	return ClientModeFile, nil
-}
-
-func (g *FileGetter) GetProgress() int {
-	return 101
 }

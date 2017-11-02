@@ -338,6 +338,10 @@ func (c *Client) Get() error {
 	return nil
 }
 
+func (c *Client) GetProgress() int {
+	return g.GetProgress()
+}
+
 // checksum is a simple method to compute the checksum of a source file
 // and compare it to the given expected value.
 func checksum(source string, h hash.Hash, v []byte) error {

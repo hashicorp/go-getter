@@ -114,7 +114,12 @@ func GetFile(dst, src string) error {
 }
 
 func GetProgress() int {
-	return 101
+	return (&Client{
+		Src:     src,
+		Dst:     dst,
+		Dir:     false,
+		Getters: Getters,
+	}).GetProgress()
 }
 
 // getRunCommand is a helper that will run a command and capture the output
