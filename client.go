@@ -11,7 +11,6 @@ import (
 	"hash"
 	"io"
 	"io/ioutil"
-	"log"
 	"os"
 	"path/filepath"
 	"strconv"
