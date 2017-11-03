@@ -22,7 +22,6 @@ func (g *FileGetter) Get(dst string, u *url.URL) error {
 	} else if !fi.IsDir() {
 		return fmt.Errorf("source path must be a directory")
 	}
-	g.totalSize = fi.Size()
 
 	fi, err := os.Lstat(dst)
 	if err != nil && !os.IsNotExist(err) {
@@ -62,7 +61,6 @@ func (g *FileGetter) GetFile(dst string, u *url.URL) error {
 	} else if fi.IsDir() {
 		return fmt.Errorf("source path must be a file")
 	}
-	g.totalSize = fi.Size()
 
 	_, err := os.Lstat(dst)
 	if err != nil && !os.IsNotExist(err) {
@@ -93,6 +91,11 @@ func (g *FileGetter) GetFile(dst string, u *url.URL) error {
 	if err != nil {
 		return err
 	}
+	srcFinfo, err := srcF.Stat()
+	if err != nil {
+		return err
+	}
+	g.totalSize = srcFinfo.Size()
 	defer srcF.Close()
 
 	dstF, err := os.Create(dst)
@@ -102,9 +105,9 @@ func (g *FileGetter) GetFile(dst string, u *url.URL) error {
 	defer dstF.Close()
 	// track copy progress
 	g.Done = make(chan int64, 1)
-	go g.CalcPercentComplete(dst)
+	go g.CalcDownloadPercent(dst)
 
-	nwritten, err = io.Copy(dstF, srcF)
+	nwritten, err := io.Copy(dstF, srcF)
 	g.Done <- nwritten
 	return err
 }

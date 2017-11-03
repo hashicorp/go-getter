@@ -1,8 +1,10 @@
 package getter
 
 import (
+	"log"
 	"net/url"
 	"os"
+	"time"
 )
 
 // FileGetter is a Getter implementation that will download a module from
@@ -36,7 +38,7 @@ func (g *FileGetter) ClientMode(u *url.URL) (ClientMode, error) {
 	return ClientModeFile, nil
 }
 
-func (g *HttpGetter) CalcDownloadPercent(dst) {
+func (g *FileGetter) CalcDownloadPercent(dst string) {
 	// stat file every n seconds to figure out the download progress
 	var stop bool = false
 	dstfile, err := os.Open(dst)
@@ -53,7 +55,7 @@ func (g *HttpGetter) CalcDownloadPercent(dst) {
 		default:
 			fi, err := dstfile.Stat()
 			if err != nil {
-				fmt.Printf("Error stating file: %s", err)
+				log.Printf("Error stating file: %s", err)
 				return
 			}
 			size := fi.Size()
