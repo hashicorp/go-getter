@@ -1,6 +1,7 @@
 package getter
 
 import (
+	"bytes"
 	"encoding/base64"
 	"fmt"
 	"io/ioutil"
@@ -145,7 +146,10 @@ func (g *GitGetter) checkout(dst string, ref string) error {
 	// Receiving objects: 100% (63397/63397), 29.13 MiB | 6.04 MiB/s, done.
 	// it doesn't print our total mib being downloaded, so we can use the
 	// objects percentage, and that's pribably the best we can do
-	go g.checkPercentProgress(cmd)
+	var buf bytes.Buffer
+	cmd.Stdout = &buf
+	cmd.Stderr = &buf
+	go g.checkPercentProgress(cmd, buf)
 	return getRunCommand(cmd)
 }
 
@@ -187,10 +191,10 @@ func (g *GitGetter) fetchSubmodules(dst, sshKeyFile string) error {
 	return getRunCommand(cmd)
 }
 
-func (g *GitGetter) checkPercentProgress(cmd *exec.Cmd) int {
+func (g *GitGetter) checkPercentProgress(cmd *exec.Cmd, buf bytes.Buffer) int {
 	i := 0
 	for i < 60 {
-		outstr, err := cmd.Output()
+		outstr, err := buf.String()
 		if err != nil {
 			log.Printf("error reading from stdout: %s", err)
 		}
