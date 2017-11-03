@@ -121,8 +121,13 @@ func GetProgress() int {
 // in the case an error happens.
 func getRunCommand(cmd *exec.Cmd) error {
 	var buf bytes.Buffer
-	cmd.Stdout = &buf
-	cmd.Stderr = &buf
+	if cmd.Stdout == nil {
+		cmd.Stdout = &buf
+		cmd.Stderr = &buf
+	} else {
+		cmd.Stdout = io.MultiWriter(cmd.Stdout, &buf)
+	}
+
 	err := cmd.Run()
 	if err == nil {
 		return nil
