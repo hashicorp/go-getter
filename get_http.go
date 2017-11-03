@@ -273,9 +273,7 @@ func (g *HttpGetter) CalcDownloadPercent() {
 			if size == 0 {
 				size = 1
 			}
-			var percent int = int(float64(size) / float64(g.totalSize) * 100)
-			fmt.Printf("percent complete is %d", g.PercentComplete)
-			g.PercentComplete = percent
+			g.PercentComplete = int(float64(size) / float64(g.totalSize) * 100)
 		}
 
 		if stop {
