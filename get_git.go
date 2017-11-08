@@ -1,17 +1,14 @@
 package getter
 
 import (
-	"bytes"
 	"encoding/base64"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
-	"time"
 
 	urlhelper "github.com/hashicorp/go-getter/helper/url"
 	"github.com/hashicorp/go-version"
@@ -19,9 +16,7 @@ import (
 
 // GitGetter is a Getter implementation that will download a module from
 // a git repository.
-type GitGetter struct {
-	PercentComplete int
-}
+type GitGetter struct{}
 
 func (g *GitGetter) ClientMode(_ *url.URL) (ClientMode, error) {
 	return ClientModeDir, nil
@@ -141,15 +136,6 @@ func (g *GitGetter) GetFile(dst string, u *url.URL) error {
 func (g *GitGetter) checkout(dst string, ref string) error {
 	cmd := exec.Command("git", "checkout", ref)
 	cmd.Dir = dst
-	// TODO: Megan:
-	// stdout format is:
-	// Receiving objects: 100% (63397/63397), 29.13 MiB | 6.04 MiB/s, done.
-	// it doesn't print our total mib being downloaded, so we can use the
-	// objects percentage, and that's pribably the best we can do
-	var buf bytes.Buffer
-	cmd.Stdout = &buf
-	cmd.Stderr = &buf
-	go g.checkPercentProgress(cmd, buf)
 	return getRunCommand(cmd)
 }
 
@@ -189,24 +175,6 @@ func (g *GitGetter) fetchSubmodules(dst, sshKeyFile string) error {
 	cmd.Dir = dst
 	setupGitEnv(cmd, sshKeyFile)
 	return getRunCommand(cmd)
-}
-
-func (g *GitGetter) checkPercentProgress(cmd *exec.Cmd, buf bytes.Buffer) int {
-	i := 0
-	for i < 60 {
-		outstr, err := buf.String()
-		if err != nil {
-			log.Printf("error reading from stdout: %s", err)
-		}
-		log.Printf("stdout is %s\n", outstr)
-		time.Sleep(time.Second)
-		i += 1
-	}
-	return 100
-}
-
-func (g *GitGetter) GetProgress() int {
-	return g.PercentComplete
 }
 
 // setupGitEnv sets up the environment for the given command. This is used to
