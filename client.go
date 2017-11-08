@@ -253,7 +253,7 @@ func (c *Client) Get() error {
 		go func() {
 			for {
 				c.PercentComplete = g.GetProgress()
-				if c.PercentComplete == 100 {
+				if c.PercentComplete >= 100 {
 					break
 				}
 				time.Sleep(time.Second)

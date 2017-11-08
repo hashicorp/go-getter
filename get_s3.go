@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
@@ -18,7 +19,9 @@ import (
 
 // S3Getter is a Getter implementation that will download a module from
 // a S3 bucket.
-type S3Getter struct{}
+type S3Getter struct {
+	PercentComplete int
+}
 
 func (g *S3Getter) ClientMode(u *url.URL) (ClientMode, error) {
 	// Parse URL
@@ -155,6 +158,7 @@ func (g *S3Getter) getObject(client *s3.S3, dst, bucket, key, version string) er
 	}
 
 	resp, err := client.GetObject(req)
+
 	if err != nil {
 		return err
 	}
@@ -170,7 +174,12 @@ func (g *S3Getter) getObject(client *s3.S3, dst, bucket, key, version string) er
 	}
 	defer f.Close()
 
-	_, err = io.Copy(f, resp.Body)
+	Done := make(chan int64, 1)
+	totalSize := *resp.ContentLength
+	go g.CalcDownloadPercent(f, Done, totalSize)
+	nwritten, err := io.Copy(f, resp.Body)
+	Done <- nwritten
+
 	return err
 }
 
@@ -269,6 +278,27 @@ func (g *S3Getter) parseUrl(u *url.URL) (region, bucket, path, version string, c
 	return
 }
 
+func (g *S3Getter) CalcDownloadPercent(dstfile *os.File, Done chan int64,
+	totalSize int64) {
+	// stat file every n seconds to figure out the download progress
+	var stop bool = false
+
+	for {
+		select {
+		case <-Done:
+			stop = true
+		default:
+			g.PercentComplete = CalcPercent(dstfile, totalSize)
+		}
+
+		if stop {
+			break
+		}
+		// repeat check once per second
+		time.Sleep(time.Second)
+	}
+}
+
 func (g *S3Getter) GetProgress() int {
-	return 101
+	return g.PercentComplete
 }

@@ -53,18 +53,7 @@ func (g *FileGetter) CalcDownloadPercent(dst string) {
 		case <-g.Done:
 			stop = true
 		default:
-			fi, err := dstfile.Stat()
-			if err != nil {
-				log.Printf("Error stating file: %s", err)
-				return
-			}
-			size := fi.Size()
-
-			// catch edge case that would break our percentage calc
-			if size == 0 {
-				size = 1
-			}
-			g.PercentComplete = int(float64(size) / float64(g.totalSize) * 100)
+			g.PercentComplete = CalcPercent(dstfile, g.totalSize)
 		}
 
 		if stop {

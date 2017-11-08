@@ -177,6 +177,10 @@ func (g *GitGetter) fetchSubmodules(dst, sshKeyFile string) error {
 	return getRunCommand(cmd)
 }
 
+func (g *GitGetter) GetProgress() int {
+	return 101
+}
+
 // setupGitEnv sets up the environment for the given command. This is used to
 // pass configuration data to git and ssh and enables advanced cloning methods.
 func setupGitEnv(cmd *exec.Cmd, sshKeyFile string) {
