@@ -41,6 +41,9 @@ type Getter interface {
 	// ClientMode returns the mode based on the given URL. This is used to
 	// allow clients to let the getters decide which mode to use.
 	ClientMode(*url.URL) (ClientMode, error)
+
+	// Return what percent complete the download is.
+	GetProgress() int
 }
 
 // Getters is the mapping of scheme to the Getter implementation that will
@@ -107,6 +110,10 @@ func GetFile(dst, src string) error {
 		Dir:     false,
 		Getters: Getters,
 	}).Get()
+}
+func GetProgress() int {
+	fmt.Printf("GetProgress not implemented for this Getter.")
+	return 101
 }
 
 // getRunCommand is a helper that will run a command and capture the output

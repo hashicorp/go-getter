@@ -45,7 +45,7 @@ func (g *FileGetter) Get(dst string, u *url.URL) error {
 	if err := os.MkdirAll(filepath.Dir(dst), 0755); err != nil {
 		return err
 	}
-
+	g.PercentComplete = 100
 	return os.Symlink(path, dst)
 }
 
@@ -82,6 +82,7 @@ func (g *FileGetter) GetFile(dst string, u *url.URL) error {
 
 	// If we're not copying, just symlink and we're done
 	if !g.Copy {
+		g.PercentComplete = 100
 		return os.Symlink(path, dst)
 	}
 
@@ -90,6 +91,11 @@ func (g *FileGetter) GetFile(dst string, u *url.URL) error {
 	if err != nil {
 		return err
 	}
+	srcFinfo, err := srcF.Stat()
+	if err != nil {
+		return err
+	}
+	g.totalSize = srcFinfo.Size()
 	defer srcF.Close()
 
 	dstF, err := os.Create(dst)
@@ -97,7 +103,15 @@ func (g *FileGetter) GetFile(dst string, u *url.URL) error {
 		return err
 	}
 	defer dstF.Close()
+	// track copy progress
+	g.Done = make(chan int64, 1)
+	go g.CalcDownloadPercent(dst)
 
-	_, err = io.Copy(dstF, srcF)
+	nwritten, err := io.Copy(dstF, srcF)
+	g.Done <- nwritten
 	return err
+}
+
+func (g *FileGetter) GetProgress() int {
+	return g.PercentComplete
 }

@@ -55,7 +55,7 @@ func (g *FileGetter) Get(dst string, u *url.URL) error {
 	if err != nil {
 		return fmt.Errorf("failed to run mklink %v %v: %v %q", dst, sourcePath, err, output)
 	}
-
+	g.PercentComplete = 100
 	return nil
 }
 
@@ -71,6 +71,7 @@ func (g *FileGetter) GetFile(dst string, u *url.URL) error {
 	} else if fi.IsDir() {
 		return fmt.Errorf("source path must be a file")
 	}
+	g.totalSize = fi.Size()
 
 	_, err := os.Lstat(dst)
 	if err != nil && !os.IsNotExist(err) {
@@ -92,6 +93,7 @@ func (g *FileGetter) GetFile(dst string, u *url.URL) error {
 
 	// If we're not copying, just symlink and we're done
 	if !g.Copy {
+		g.PercentComplete = 100
 		return os.Symlink(path, dst)
 	}
 
@@ -108,7 +110,12 @@ func (g *FileGetter) GetFile(dst string, u *url.URL) error {
 	}
 	defer dstF.Close()
 
-	_, err = io.Copy(dstF, srcF)
+	// track copy progress
+	g.Done = make(chan int64, 1)
+	go g.CalcPercentComplete(dst)
+
+	nwritten, err = io.Copy(dstF, srcF)
+	g.Done <- nwritten
 	return err
 }
 
