@@ -8,7 +8,11 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
+	"time"
+
+	urlhelper "github.com/hashicorp/go-getter/helper/url"
 )
 
 func TestHttpGetter_impl(t *testing.T) {
@@ -187,6 +191,38 @@ func TestHttpGetter_file(t *testing.T) {
 	assertContents(t, dst, "Hello\n")
 }
 
+func TestHttpGetter_ranged_request(t *testing.T) {
+	var rangeReqs = []struct {
+		Input    string
+		Expected string
+	}{
+		{"0-", "Hello\n"},
+		{"0-2", "Hel"},
+		{"2-3", "ll"},
+		{"3-", "lo\n"},
+	}
+
+	ln := testHttpServer(t)
+	defer ln.Close()
+
+	g := new(HttpGetter)
+	dst := tempFile(t)
+	for _, rangeReq := range rangeReqs {
+		u, _ := urlhelper.Parse(fmt.Sprintf("http://%s/file?ranged_request_bytes=%s",
+			ln.Addr().String(), rangeReq.Input))
+		// Get it!
+		if err := g.GetFile(dst, u); err != nil {
+			t.Fatalf("err: %s", err)
+		}
+
+		// Verify the main file exists
+		if _, err := os.Stat(dst); err != nil {
+			t.Fatalf("err: %s", err)
+		}
+		assertContents(t, dst, rangeReq.Expected)
+	}
+}
+
 func TestHttpGetter_auth(t *testing.T) {
 	ln := testHttpServer(t)
 	defer ln.Close()
@@ -240,6 +276,48 @@ func TestHttpGetter_authNetrc(t *testing.T) {
 	mainPath := filepath.Join(dst, "main.tf")
 	if _, err := os.Stat(mainPath); err != nil {
 		t.Fatalf("err: %s", err)
+	}
+}
+
+func TestHttpGetter_GetByteRange(t *testing.T) {
+	var cases = []struct {
+		Input     string // example: "5555-66666"
+		Expected  []string
+		ExpectErr bool
+	}{
+		// both start and end bytes given
+		{"http://my/file.iso?ranged_request_bytes=555-666", []string{"555", "666"}, false},
+		// no end given
+		{"http://my/file.iso?ranged_request_bytes=555-", []string{"555", ""}, false},
+		// end greater than start
+		{"http://my/file.iso?ranged_request_bytes=666-555", nil, true},
+		// unparseable into ints
+		{"http://my/file.iso?ranged_request_bytes=66a6-5*55", nil, true},
+		// no ranged request made
+		{"http://my/file.iso", nil, false},
+	}
+
+	for _, testCase := range cases {
+		src := testCase.Input
+		u, err := urlhelper.Parse(src)
+		byteRange, err := getByteRange(u)
+
+		if byteRange == nil {
+			if testCase.Expected != nil {
+				t.Fatalf("unexpected output from getByteRange: expected %s; got %s",
+					testCase.Expected, byteRange)
+			}
+		} else if byteRange[0] != testCase.Expected[0] && byteRange[1] != testCase.Expected[1] {
+			t.Fatalf("unexpected output from getByteRange: expected %s; got %s",
+				testCase.Expected, byteRange)
+		}
+		if err == nil && testCase.ExpectErr {
+			t.Fatalf("Expected an error but didn't get one: %v", testCase)
+		}
+		if err != nil && !testCase.ExpectErr {
+			t.Fatalf("Got an error we were not expecting: %v, %s", testCase,
+				err)
+		}
 	}
 }
 
@@ -310,7 +388,7 @@ func testHttpHandlerExpectHeader(w http.ResponseWriter, r *http.Request) {
 }
 
 func testHttpHandlerFile(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("Hello\n"))
+	http.ServeContent(w, r, "hello.txt", time.Now(), strings.NewReader("Hello\n"))
 }
 
 func testHttpHandlerHeader(w http.ResponseWriter, r *http.Request) {

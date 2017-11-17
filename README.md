@@ -256,6 +256,12 @@ None
   * `rev` - The Mercurial revision to checkout.
 
 ### HTTP (`http`)
+  * `ranged_request_bytes` - If the server supports range requests, this will
+  set the `Range` header when making the HTTP request, allowing you to specify
+  a specific range of bytes to download.
+  Example usage: `http://www.path/2/my/file.iso?ranged_request_bytes=5555-66666`,
+  or `http://www.path/2/my/file.iso?ranged_request_bytes=5555-` which will
+  request byte 5555 to EOF.
 
 #### Basic Authentication
 

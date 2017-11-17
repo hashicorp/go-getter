@@ -4,10 +4,12 @@ import (
 	"encoding/xml"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"net/url"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	"github.com/hashicorp/go-safetemp"
@@ -131,19 +133,60 @@ func (g *HttpGetter) GetFile(dst string, u *url.URL) error {
 		g.Client = httpClient
 	}
 
+	// check to see whether user has specified a range of bytes to download.
+	// if user has, but the range is invalid, fall back to downloading the
+	// whole file
+	byteRange, rangeErr := getByteRange(u)
+	if rangeErr != nil {
+		// log that we are downloading whole file even though user
+		// requested a byte range.
+		log.Printf("%s; going to disregard range request and download entire file",
+			rangeErr)
+	}
+
+	// First determine whether we can make a ranged request. Then download.
 	req, err := http.NewRequest("GET", u.String(), nil)
 	if err != nil {
 		return err
 	}
 
-	req.Header = g.Header
+	isPartialDownload := false
+	if rangeErr == nil && byteRange != nil {
+		// We first make a HEAD request so we can check if the server supports
+		// range queries. If the server/URL doesn't support HEAD requests,
+		// we just fall back to GET.
+		resp, err := g.Client.Head(u.String())
+		if err == nil {
+			defer resp.Body.Close()
+		}
+
+		if err == nil && resp.StatusCode >= 200 && resp.StatusCode < 300 {
+			// If the HEAD request succeeded, then attempt to set the range
+			// query if we can.
+			if resp.Header.Get("Accept-Ranges") == "bytes" {
+				req.Header.Set("Range", fmt.Sprintf("bytes=%s-%s",
+					byteRange[0], byteRange[1]))
+				isPartialDownload = true
+			}
+		} else {
+			log.Printf("HEAD request for Range failed; falling back to full file download: %s",
+				err)
+		}
+	}
+
 	resp, err := g.Client.Do(req)
 	if err != nil {
 		return err
 	}
 
+	req.Header = g.Header
+	if err != nil {
+		return err
+	}
+
 	defer resp.Body.Close()
-	if resp.StatusCode != 200 {
+	// If we did a ranged request we should get a 206; otherwise we should get a 200
+	if resp.StatusCode != 200 && !(isPartialDownload && resp.StatusCode == 206) {
 		return fmt.Errorf("bad response code: %d", resp.StatusCode)
 	}
 
@@ -243,6 +286,62 @@ func (g *HttpGetter) parseMeta(r io.Reader) (string, error) {
 	}
 }
 
+// getByteRange is a helper function to parse out the byte range for ranged
+// requests.
+//
+// input values:
+// u must be non-nil and unmodified.
+// example of u:
+// "http://my/file.iso?ranged_request_bytes=5555-66666"
+// "http://my/file.iso?ranged_request_bytes=5555-"
+// note that the format of the raw url string can be either
+// bytes=startByte- OR bytes=startByte-endByte
+//
+// return values:
+// (non-nil, non-nil) - should not occur
+// (nil, nil) - returned when no byte range was provided in the first place
+// (nil, non-nil) - error occured when parsing or validating the byte range
+// (non-nil, nil) - byte range was successfully parsed, and the range is
+// returned as an array of strings in the following format:
+// example of a non-nil return value:
+// []string{"5555", "66666"}      // first url example above
+// []string{"5555", ""}             // second url example above
+func getByteRange(u *url.URL) ([]string, error) {
+	byteRange := u.Query().Get("ranged_request_bytes")
+	if byteRange == "" {
+		return nil, nil
+	}
+
+	vals := strings.Split(byteRange, "-")
+
+	// validate byte range values given
+	if len(vals) != 2 {
+		return nil, fmt.Errorf("%s; length of parsed byte range is not 2, %v",
+			invalidRangeMsg, vals)
+	}
+	start, err := strconv.ParseInt(vals[0], 10, 64)
+	if err != nil {
+		return nil, fmt.Errorf("%s; could not convert start byte string to "+
+			"an integer: original error: %s", invalidRangeMsg, err)
+	}
+	// If you leave endBytes blank, read to end of file.
+	if vals[1] != "" {
+		// otherwise make sure "finish" value is a number
+		finish, err := strconv.ParseInt(vals[1], 10, 64)
+		if err != nil {
+			return nil, fmt.Errorf("%s; could not convert finish byte string "+
+				"to an integer; original error: %s", invalidRangeMsg, err)
+		}
+		// need finish to be bigger than start val
+		if finish <= start {
+			return nil, fmt.Errorf("%s; finish byte must be bigger than start byte",
+				invalidRangeMsg)
+		}
+	}
+
+	return vals, nil
+}
+
 // attrValue returns the attribute value for the case-insensitive key
 // `name', or the empty string if nothing is found.
 func attrValue(attrs []xml.Attr, name string) string {
@@ -268,3 +367,5 @@ func charsetReader(charset string, input io.Reader) (io.Reader, error) {
 		return nil, fmt.Errorf("can't decode XML document using charset %q", charset)
 	}
 }
+
+const invalidRangeMsg = "Invalid byte range provided"
