@@ -11,12 +11,13 @@ import (
 type FileDetector struct{}
 
 func (d *FileDetector) Detect(src, pwd string) (string, bool, error) {
-	fmt.Printf("Megan in file detector")
+	fmt.Printf("Megan in file detector\n")
 	if len(src) == 0 {
 		return "", false, nil
 	}
-
+	fmt.Printf("Megan src is %s\n", src)
 	if !filepath.IsAbs(src) {
+		fmt.Printf("Megan src is NOT considered absolute")
 		if pwd == "" {
 			return "", true, fmt.Errorf(
 				"relative paths require a module with a pwd")
