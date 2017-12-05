@@ -11,6 +11,7 @@ import (
 type FileDetector struct{}
 
 func (d *FileDetector) Detect(src, pwd string) (string, bool, error) {
+	fmt.Printf("Megan in file detector")
 	if len(src) == 0 {
 		return "", false, nil
 	}
@@ -46,7 +47,10 @@ func (d *FileDetector) Detect(src, pwd string) (string, bool, error) {
 			}
 		}
 
+		fmt.Printf("Megan src is %s\n", src)
+		fmt.Printf("Megan filepath is %s\n", filepath)
 		src = filepath.Join(pwd, src)
+		fmt.Printf("Megan src is %s\n", src)
 	}
 
 	return fmtFileURL(src), true, nil
