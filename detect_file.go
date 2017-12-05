@@ -5,20 +5,18 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
-	"strings"
 )
 
 // FileDetector implements Detector to detect file paths.
 type FileDetector struct{}
 
 func (d *FileDetector) Detect(src, pwd string) (string, bool, error) {
-	fmt.Printf("Megan in file detector\n")
 	if len(src) == 0 {
 		return "", false, nil
 	}
 	fmt.Printf("Megan src is %s\n", src)
 	fmt.Printf("Megan isabs is %s", filepath.IsAbs(src))
-	if !filepath.IsAbs(src) || ((runtime.GOOS == "windows") && (strings.ToLower(src)[:2] != "c:")) {
+	if !filepath.IsAbs(src) {
 		fmt.Printf("Megan src is NOT considered absolute")
 		if pwd == "" {
 			return "", true, fmt.Errorf(
@@ -43,7 +41,9 @@ func (d *FileDetector) Detect(src, pwd string) (string, bool, error) {
 
 				// The symlink itself might be a relative path, so we have to
 				// resolve this to have a correctly rooted URL.
+				fmt.Printf("Megan pwd before is %s\n", pwd)
 				pwd, err = filepath.Abs(pwd)
+				fmt.Printf("Megan pwd after is %s\n", pwd)
 				if err != nil {
 					return "", true, err
 				}
