@@ -16,7 +16,7 @@ func (d *FileDetector) Detect(src, pwd string) (string, bool, error) {
 		return "", false, nil
 	}
 	fmt.Printf("Megan src is %s\n", src)
-	if !filepath.IsAbs(src) {
+	if !filepath.IsAbs(src) || ((runtime.GOOS == "windows") && (strings.ToLower(src)[:2] != "c:")) {
 		fmt.Printf("Megan src is NOT considered absolute")
 		if pwd == "" {
 			return "", true, fmt.Errorf(
