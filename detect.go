@@ -43,6 +43,7 @@ func Detect(src string, pwd string, ds []Detector) (string, error) {
 
 	// Separate out the subdir if there is one, we don't pass that to detect
 	getSrc, subDir := SourceDirSubdir(getSrc)
+	fmt.Printf("Megan getSrc is %s, subDir is %s\n", getSrc, subDir)
 
 	u, err := url.Parse(getSrc)
 	if err == nil && u.Scheme != "" {
@@ -61,6 +62,7 @@ func Detect(src string, pwd string, ds []Detector) (string, error) {
 
 		var detectForce string
 		detectForce, result = getForcedGetter(result)
+		fmt.Printf("Megan detectForce is %s, result is %s\n", detectForce, result)
 		result, detectSubdir := SourceDirSubdir(result)
 
 		// If we have a subdir from the detection, then prepend it to our
@@ -68,23 +70,32 @@ func Detect(src string, pwd string, ds []Detector) (string, error) {
 		if detectSubdir != "" {
 			if subDir != "" {
 				subDir = filepath.Join(detectSubdir, subDir)
+				fmt.Printf("Megan here 1")
 			} else {
 				subDir = detectSubdir
+				fmt.Printf("Megan here 2")
 			}
+			fmt.Printf("Megan here 3")
 		}
+		fmt.Printf("Megan here 4")
 
 		if subDir != "" {
+			fmt.Printf("Megan here 5")
 			u, err := url.Parse(result)
 			if err != nil {
 				return "", fmt.Errorf("Error parsing URL: %s", err)
 			}
+			fmt.Printf("Megan u.Path is %s", u.Path)
+			fmt.Printf("Megan subDir is %s", subDir)
 			u.Path += "//" + subDir
+			fmt.Printf("Megan u.Path is %s", u.Path)
 
 			// a subdir may contain wildcards, but in order to support them we
 			// have to ensure the path isn't escaped.
 			u.RawPath = u.Path
 
 			result = u.String()
+			fmt.Printf("Megan result is %s", result)
 		}
 
 		// Preserve the forced getter if it exists. We try to use the
