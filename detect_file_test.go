@@ -60,6 +60,7 @@ func TestFileDetector(t *testing.T) {
 			}
 
 			out, ok, err := f.Detect(tc.in, pwd)
+			fmt.Printf("Megan out is %s, ok is %s, err is %s\n\n\n", out, ok, err)
 			if err != nil {
 				t.Fatalf("err: %s", err)
 			}
