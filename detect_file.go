@@ -48,7 +48,7 @@ func (d *FileDetector) Detect(src, pwd string) (string, bool, error) {
 		}
 
 		fmt.Printf("Megan src is %s\n", src)
-		fmt.Printf("Megan filepath is %s\n", filepath)
+		fmt.Printf("Megan pwd is %s\n", pwd)
 		src = filepath.Join(pwd, src)
 		fmt.Printf("Megan src is %s\n", src)
 	}
