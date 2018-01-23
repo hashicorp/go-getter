@@ -22,19 +22,7 @@ func untar(input io.Reader, dst, src string, dir bool) error {
 				return fmt.Errorf("empty archive: %s", src)
 			}
 
-			// Adding a file or subdirectory changes the mtime of a directory
-			// We therefore wait until we've extracted everything and then set the mtime and atime attributes
-			for _, dirHdr := range dirHdrs {
-				path := dst
-				if dir {
-					path = filepath.Join(path, dirHdr.Name)
-				}
-				if err := os.Chtimes(path, dirHdr.AccessTime, dirHdr.ModTime); err != nil {
-					return err
-				}
-			}
-
-			return nil
+			break
 		}
 		if err != nil {
 			return err
@@ -107,6 +95,17 @@ func untar(input io.Reader, dst, src string, dir bool) error {
 			return err
 		}
 	}
+
+	// Adding a file or subdirectory changes the mtime of a directory
+	// We therefore wait until we've extracted everything and then set the mtime and atime attributes
+	for _, dirHdr := range dirHdrs {
+		path := filepath.Join(dst, dirHdr.Name)
+		if err := os.Chtimes(path, dirHdr.AccessTime, dirHdr.ModTime); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 // tarDecompressor is an implementation of Decompressor that can
