@@ -25,6 +25,7 @@ func init() {
 		new(GitHubDetector),
 		new(BitBucketDetector),
 		new(S3Detector),
+		new(SftpDetector),
 		new(FileDetector),
 	}
 }
