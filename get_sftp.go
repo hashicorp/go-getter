@@ -4,8 +4,10 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"net"
 	"net/url"
 	"os"
+	"path/filepath"
 	"regexp"
 	"strconv"
 
@@ -137,6 +139,9 @@ func (g *SftpGetter) createSftpClient(u *url.URL) (*sftp.Client, error) {
 	config := &ssh.ClientConfig{
 		User: user,
 		Auth: authMethods,
+		HostKeyCallback: func(hostname string, remote net.Addr, key ssh.PublicKey) error {
+			return nil
+		},
 	}
 	var port = u.Port()
 	if port == "" {
@@ -168,6 +173,10 @@ func (g *SftpGetter) getFile(sftp *sftp.Client, dst, src string, preservePerm bo
 	}
 	defer rmtFile.Close()
 
+	dstDir := filepath.Dir(dst)
+	if err := os.MkdirAll(dstDir, 0700); err != nil {
+		return err
+	}
 	dstFile, err := os.Create(dst)
 	if err != nil {
 		return err
