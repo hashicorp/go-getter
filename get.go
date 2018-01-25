@@ -41,6 +41,9 @@ type Getter interface {
 	// ClientMode returns the mode based on the given URL. This is used to
 	// allow clients to let the getters decide which mode to use.
 	ClientMode(*url.URL) (ClientMode, error)
+
+	// GetFilename returns the file name when ClientModeFile is ClientModeFile. This is used to allow Getter override the default filename.
+	GetFilename(*url.URL) (string, error)
 }
 
 // Getters is the mapping of scheme to the Getter implementation that will

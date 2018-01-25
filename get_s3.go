@@ -59,6 +59,10 @@ func (g *S3Getter) ClientMode(u *url.URL) (ClientMode, error) {
 	return ClientModeFile, nil
 }
 
+func (g *S3Getter) GetFilename(u *url.URL) (string, error) {
+	return getFilename(u), nil
+}
+
 func (g *S3Getter) Get(dst string, u *url.URL) error {
 	// Parse URL
 	region, bucket, path, _, creds, err := g.parseUrl(u)

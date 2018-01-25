@@ -49,6 +49,10 @@ func (g *HttpGetter) ClientMode(u *url.URL) (ClientMode, error) {
 	return ClientModeFile, nil
 }
 
+func (g *HttpGetter) GetFilename(u *url.URL) (string, error) {
+	return getFilename(u), nil
+}
+
 func (g *HttpGetter) Get(dst string, u *url.URL) error {
 	// Copy the URL so we can modify it
 	var newU url.URL = *u

@@ -22,6 +22,10 @@ func (g *GitGetter) ClientMode(_ *url.URL) (ClientMode, error) {
 	return ClientModeDir, nil
 }
 
+func (g *GitGetter) GetFilename(u *url.URL) (string, error) {
+	return getFilename(u), nil
+}
+
 func (g *GitGetter) Get(dst string, u *url.URL) error {
 	if _, err := exec.LookPath("git"); err != nil {
 		return fmt.Errorf("git must be available and on the PATH")
