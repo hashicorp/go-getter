@@ -135,9 +135,14 @@ func (g *HttpGetter) GetFile(dst string, u *url.URL) error {
 	if err != nil {
 		return err
 	}
-	defer f.Close()
 
-	_, err = io.Copy(f, resp.Body)
+	n, err := io.Copy(f, resp.Body)
+	if err == nil && n < resp.ContentLength {
+		err = io.ErrShortWrite
+	}
+	if err1 := f.Close(); err == nil {
+		err = err1
+	}
 	return err
 }
 
