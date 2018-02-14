@@ -21,6 +21,7 @@ func TestHttpGetter_header(t *testing.T) {
 
 	g := new(HttpGetter)
 	dst := tempDir(t)
+	defer os.RemoveAll(dst)
 
 	var u url.URL
 	u.Scheme = "http"
@@ -45,6 +46,7 @@ func TestHttpGetter_meta(t *testing.T) {
 
 	g := new(HttpGetter)
 	dst := tempDir(t)
+	defer os.RemoveAll(dst)
 
 	var u url.URL
 	u.Scheme = "http"
@@ -69,6 +71,7 @@ func TestHttpGetter_metaSubdir(t *testing.T) {
 
 	g := new(HttpGetter)
 	dst := tempDir(t)
+	defer os.RemoveAll(dst)
 
 	var u url.URL
 	u.Scheme = "http"
@@ -93,6 +96,7 @@ func TestHttpGetter_metaSubdirGlob(t *testing.T) {
 
 	g := new(HttpGetter)
 	dst := tempDir(t)
+	defer os.RemoveAll(dst)
 
 	var u url.URL
 	u.Scheme = "http"
@@ -117,6 +121,7 @@ func TestHttpGetter_none(t *testing.T) {
 
 	g := new(HttpGetter)
 	dst := tempDir(t)
+	defer os.RemoveAll(dst)
 
 	var u url.URL
 	u.Scheme = "http"
@@ -135,6 +140,7 @@ func TestHttpGetter_file(t *testing.T) {
 
 	g := new(HttpGetter)
 	dst := tempFile(t)
+	defer os.RemoveAll(dst)
 
 	var u url.URL
 	u.Scheme = "http"
@@ -159,6 +165,7 @@ func TestHttpGetter_auth(t *testing.T) {
 
 	g := new(HttpGetter)
 	dst := tempDir(t)
+	defer os.RemoveAll(dst)
 
 	var u url.URL
 	u.Scheme = "http"
@@ -184,6 +191,7 @@ func TestHttpGetter_authNetrc(t *testing.T) {
 
 	g := new(HttpGetter)
 	dst := tempDir(t)
+	defer os.RemoveAll(dst)
 
 	var u url.URL
 	u.Scheme = "http"
@@ -227,6 +235,7 @@ func TestHttpGetter_cleanhttp(t *testing.T) {
 
 	g := new(HttpGetter)
 	dst := tempDir(t)
+	defer os.RemoveAll(dst)
 
 	var u url.URL
 	u.Scheme = "http"
