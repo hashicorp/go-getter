@@ -78,6 +78,16 @@ func TestZipDecompressor(t *testing.T) {
 			"",
 			nil,
 		},
+
+		// Tests that a zip can't contain references with "..".
+		{
+			"outside_parent.zip",
+			true,
+			true,
+			nil,
+			"",
+			nil,
+		},
 	}
 
 	for i, tc := range cases {

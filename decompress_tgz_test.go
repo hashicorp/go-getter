@@ -74,6 +74,17 @@ func TestTarGzipDecompressor(t *testing.T) {
 			"",
 			nil,
 		},
+
+		// Tests that a tar.gz can't contain references with "..".
+		// GNU `tar` also disallows this.
+		{
+			"outside_parent.tar.gz",
+			true,
+			true,
+			nil,
+			"",
+			nil,
+		},
 	}
 
 	for i, tc := range cases {
