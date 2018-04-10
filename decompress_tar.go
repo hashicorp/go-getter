@@ -105,6 +105,10 @@ func untar(input io.Reader, dst, src string, dir bool) error {
 	// We therefore wait until we've extracted everything and then set the mtime and atime attributes
 	for _, dirHdr := range dirHdrs {
 		path := filepath.Join(dst, dirHdr.Name)
+		// Chmod the directory, because they might be created before we know the mode flags
+		if err := os.Chmod(path, dirHdr.FileInfo().Mode()); err != nil {
+			return err
+		}
 		if err := os.Chtimes(path, dirHdr.AccessTime, dirHdr.ModTime); err != nil {
 			return err
 		}
