@@ -204,7 +204,7 @@ func TestGitGetter_gitVersion(t *testing.T) {
 	script := filepath.Join(dir, "git")
 	err = ioutil.WriteFile(
 		script,
-		[]byte("#!/bin/sh\necho git version 2.0\n"),
+		[]byte("#!/bin/sh\necho \"git version 2.0 (Some Metadata Here)\n\""),
 		0700)
 	if err != nil {
 		t.Fatal(err)

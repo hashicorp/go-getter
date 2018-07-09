@@ -224,7 +224,7 @@ func checkGitVersion(min string) error {
 	}
 
 	fields := strings.Fields(string(out))
-	if len(fields) != 3 {
+	if len(fields) < 3 {
 		return fmt.Errorf("Unexpected 'git version' output: %q", string(out))
 	}
 
