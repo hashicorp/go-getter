@@ -29,7 +29,10 @@ func (g *S3Getter) ClientMode(u *url.URL) (ClientMode, error) {
 
 	// Create client config
 	config := g.getAWSConfig(region, u, creds)
-	sess := session.New(config)
+	sess, err := session.NewSession(config)
+	if err != nil {
+		return 0, err
+	}
 	client := s3.New(sess)
 
 	// List the object(s) at the given prefix
@@ -85,7 +88,10 @@ func (g *S3Getter) Get(dst string, u *url.URL) error {
 	}
 
 	config := g.getAWSConfig(region, u, creds)
-	sess := session.New(config)
+	sess, err := session.NewSession(config)
+	if err != nil {
+		return err
+	}
 	client := s3.New(sess)
 
 	// List files in path, keep listing until no more objects are found
@@ -140,7 +146,10 @@ func (g *S3Getter) GetFile(dst string, u *url.URL) error {
 	}
 
 	config := g.getAWSConfig(region, u, creds)
-	sess := session.New(config)
+	sess, err := session.NewSession(config)
+	if err != nil {
+		return err
+	}
 	client := s3.New(sess)
 	return g.getObject(client, dst, bucket, path, version)
 }
@@ -183,14 +192,16 @@ func (g *S3Getter) getAWSConfig(region string, url *url.URL, creds *credentials.
 			metadataURL = "http://169.254.169.254:80/latest"
 		}
 
+		sess, _ := session.NewSession(&aws.Config{
+			Endpoint: aws.String(metadataURL),
+		})
+
 		creds = credentials.NewChainCredentials(
 			[]credentials.Provider{
 				&credentials.EnvProvider{},
 				&credentials.SharedCredentialsProvider{Filename: "", Profile: ""},
 				&ec2rolecreds.EC2RoleProvider{
-					Client: ec2metadata.New(session.New(&aws.Config{
-						Endpoint: aws.String(metadataURL),
-					})),
+					Client: ec2metadata.New(sess),
 				},
 			})
 	}
