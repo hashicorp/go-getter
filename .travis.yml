@@ -1,4 +1,4 @@
-sudo: false
+sudo: true
 
 addons:
   apt:
@@ -6,6 +6,7 @@ addons:
       - sourceline: 'ppa:git-core/ppa'
     packages:
       - git
+      - upx-ucl
 
 language: go
 
@@ -21,3 +22,26 @@ branches:
 matrix:
   allow_failures:
     - go: master
+
+jobs:
+  include:
+    - stage: test
+      script: make test
+    - stage: package
+      script: make package
+stages:
+  - name: test
+  - name: package
+    if: env(TRAVIS_GO_VERSION) = 1.9.x
+
+deploy:
+  provider: releases
+  api_key: $GITHUB_TOKEN
+  file:
+    - go-getter_osx
+    - go-getter.exe
+    - go-getter
+  skip_cleanup: true
+  on:
+    tag: true
+    condition: $TRAVIS_GO_VERSION =~ ^1\.9\.[0-9]+$
