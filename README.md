@@ -3,6 +3,7 @@
 [![Build Status](http://img.shields.io/travis/hashicorp/go-getter.svg?style=flat-square)][travis]
 [![Build status](https://ci.appveyor.com/api/projects/status/ulq3qr43n62croyq/branch/master?svg=true)][appveyor]
 [![Go Documentation](http://img.shields.io/badge/go-documentation-blue.svg?style=flat-square)][godocs]
+[![Go Report Card](https://goreportcard.com/badge/github.com/hashicorp/go-getter)](https://goreportcard.com/report/github.com/hashicorp/go-getter)
 
 [travis]: http://travis-ci.org/hashicorp/go-getter
 [godocs]: http://godoc.org/github.com/hashicorp/go-getter
