@@ -136,7 +136,7 @@ func (c *Client) Get() error {
 	// Determine if we have an archive type
 	archiveV := q.Get("archive")
 	if archiveV != "" {
-		// Delete the paramter since it is a magic parameter we don't
+		// Delete the parameter since it is a magic parameter we don't
 		// want to pass on to the Getter
 		q.Del("archive")
 		u.RawQuery = q.Encode()
