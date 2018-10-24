@@ -361,7 +361,7 @@ func testGitRepo(t *testing.T, name string) *gitRepo {
 		dir: dir,
 	}
 
-	url, err := url.Parse("file://" + r.dir)
+	url, err := url.Parse("file:///" + r.dir)
 	if err != nil {
 		t.Fatal(err)
 	}
