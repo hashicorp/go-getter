@@ -48,7 +48,7 @@ func main() {
 	}
 	var opts []getter.ClientOption
 	if *progress {
-		opts = append(opts, getter.WithCheggaaaProgressBarV2())
+		opts = append(opts, getter.WithCheggaaaProgressBarV1())
 	}
 
 	if err := client.Configure(opts...); err != nil {
