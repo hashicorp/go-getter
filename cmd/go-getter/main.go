@@ -46,9 +46,12 @@ func main() {
 		Mode: mode,
 	}
 
+	if err := client.Configure(); err != nil {
+		log.Fatalf("Configure: %s", err)
+	}
+
 	if err := client.Get(); err != nil {
 		log.Fatalf("Error downloading: %s", err)
-		os.Exit(1)
 	}
 
 	log.Println("Success!")

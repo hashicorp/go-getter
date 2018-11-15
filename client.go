@@ -62,6 +62,12 @@ type Client struct {
 	//
 	// WARNING: deprecated. If Mode is set, that will take precedence.
 	Dir bool
+
+	// ProgressListener allows to track file downloads.
+	// By default a no op progress listener is used.
+	ProgressListener ProgressTracker
+
+	Options []ClientOption
 }
 
 // Get downloads the configured source to the destination.
@@ -76,18 +82,7 @@ func (c *Client) Get() error {
 		}
 	}
 
-	// Default decompressor value
-	decompressors := c.Decompressors
-	if decompressors == nil {
-		decompressors = Decompressors
-	}
-
-	// Detect the URL. This is safe if it is already detected.
-	detectors := c.Detectors
-	if detectors == nil {
-		detectors = Detectors
-	}
-	src, err := Detect(c.Src, c.Pwd, detectors)
+	src, err := Detect(c.Src, c.Pwd, c.Detectors)
 	if err != nil {
 		return err
 	}
@@ -119,12 +114,7 @@ func (c *Client) Get() error {
 		force = u.Scheme
 	}
 
-	getters := c.Getters
-	if getters == nil {
-		getters = Getters
-	}
-
-	g, ok := getters[force]
+	g, ok := c.Getters[force]
 	if !ok {
 		return fmt.Errorf(
 			"download not supported for scheme '%s'", force)
@@ -150,7 +140,7 @@ func (c *Client) Get() error {
 	if archiveV == "" {
 		// We don't appear to... but is it part of the filename?
 		matchingLen := 0
-		for k, _ := range decompressors {
+		for k := range c.Decompressors {
 			if strings.HasSuffix(u.Path, "."+k) && len(k) > matchingLen {
 				archiveV = k
 				matchingLen = len(k)
@@ -163,7 +153,7 @@ func (c *Client) Get() error {
 	// real path.
 	var decompressDst string
 	var decompressDir bool
-	decompressor := decompressors[archiveV]
+	decompressor := c.Decompressors[archiveV]
 	if decompressor != nil {
 		// Create a temporary directory to store our archive. We delete
 		// this at the end of everything.
