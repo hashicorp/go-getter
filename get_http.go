@@ -173,7 +173,6 @@ func (g *HttpGetter) GetFile(dst string, src *url.URL) error {
 	}
 	req.Method = "GET"
 
-	req.Header = g.Header
 	resp, err := g.Client.Do(req)
 	if err != nil {
 		return err
