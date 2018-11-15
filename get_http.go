@@ -18,7 +18,7 @@ import (
 //
 // For file downloads, HTTP is used directly.
 //
-// The protocol for downloading a directory from an HTTP endpoing is as follows:
+// The protocol for downloading a directory from an HTTP endpoint is as follows:
 //
 // An HTTP GET request is made to the URL with the additional GET parameter
 // "terraform-get=1". This lets you handle that scenario specially if you
@@ -34,6 +34,8 @@ import (
 // formed URL. The shorthand syntax of "github.com/foo/bar" or relative
 // paths are not allowed.
 type HttpGetter struct {
+	getter
+
 	// Netrc, if true, will lookup and use auth information found
 	// in the user's netrc file if available.
 	Netrc bool
@@ -112,52 +114,82 @@ func (g *HttpGetter) Get(dst string, u *url.URL) error {
 	// into a temporary directory, then copy over the proper subdir.
 	source, subDir := SourceDirSubdir(source)
 	if subDir == "" {
-		return Get(dst, source)
+		return Get(dst, source, g.client.Options...)
 	}
 
 	// We have a subdir, time to jump some hoops
 	return g.getSubdir(dst, source, subDir)
 }
 
-func (g *HttpGetter) GetFile(dst string, u *url.URL) error {
+func (g *HttpGetter) GetFile(dst string, src *url.URL) error {
 	if g.Netrc {
 		// Add auth from netrc if we can
-		if err := addAuthFromNetrc(u); err != nil {
+		if err := addAuthFromNetrc(src); err != nil {
 			return err
 		}
+	}
+
+	// Create all the parent directories if needed
+	if err := os.MkdirAll(filepath.Dir(dst), 0755); err != nil {
+		return err
+	}
+
+	f, err := os.OpenFile(dst, os.O_RDWR|os.O_CREATE, os.FileMode(0666))
+	if err != nil {
+		return err
 	}
 
 	if g.Client == nil {
 		g.Client = httpClient
 	}
 
-	req, err := http.NewRequest("GET", u.String(), nil)
+	var current int64
+
+	// We first make a HEAD request so we can check
+	// if the server supports range queries. If the server/URL doesn't
+	// support HEAD requests, we just fall back to GET.
+	req, err := http.NewRequest("HEAD", src.String(), nil)
 	if err != nil {
 		return err
 	}
+	if g.Header != nil {
+		req.Header = g.Header
+	}
+	headResp, err := g.Client.Do(req)
+	if err == nil && headResp != nil {
+		if headResp.StatusCode == 200 {
+			// If the HEAD request succeeded, then attempt to set the range
+			// query if we can.
+			if headResp.Header.Get("Accept-Ranges") == "bytes" {
+				if fi, err := f.Stat(); err == nil {
+					if _, err = f.Seek(0, os.SEEK_END); err == nil {
+						req.Header.Set("Range", fmt.Sprintf("bytes=%d-", fi.Size()))
+						current = fi.Size()
+					}
+				}
+			}
+		}
+		headResp.Body.Close()
+	}
+	req.Method = "GET"
 
 	req.Header = g.Header
 	resp, err := g.Client.Do(req)
 	if err != nil {
 		return err
 	}
-
-	defer resp.Body.Close()
 	if resp.StatusCode != 200 {
+		resp.Body.Close()
 		return fmt.Errorf("bad response code: %d", resp.StatusCode)
 	}
 
-	// Create all the parent directories
-	if err := os.MkdirAll(filepath.Dir(dst), 0755); err != nil {
-		return err
-	}
+	println(g.client)
+	println(src.String())
+	// track download
+	body := g.client.ProgressListener.TrackProgress(src.String(), current+resp.ContentLength, resp.Body)
+	defer body.Close()
 
-	f, err := os.Create(dst)
-	if err != nil {
-		return err
-	}
-
-	n, err := io.Copy(f, resp.Body)
+	n, err := io.Copy(f, body)
 	if err == nil && n < resp.ContentLength {
 		err = io.ErrShortWrite
 	}
@@ -179,7 +211,7 @@ func (g *HttpGetter) getSubdir(dst, source, subDir string) error {
 	defer tdcloser.Close()
 
 	// Download that into the given directory
-	if err := Get(td, source); err != nil {
+	if err := Get(td, source, g.client.Options...); err != nil {
 		return err
 	}
 

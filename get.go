@@ -41,6 +41,11 @@ type Getter interface {
 	// ClientMode returns the mode based on the given URL. This is used to
 	// allow clients to let the getters decide which mode to use.
 	ClientMode(*url.URL) (ClientMode, error)
+
+	// SetClient allows a getter to know it's client
+	// in order to access client's Get functions or
+	// progress tracking.
+	SetClient(*Client)
 }
 
 // Getters is the mapping of scheme to the Getter implementation that will
@@ -76,10 +81,9 @@ func init() {
 // folder doesn't need to exist. It will be created if it doesn't exist.
 func Get(dst, src string, opts ...ClientOption) error {
 	c := &Client{
-		Src:     src,
-		Dst:     dst,
-		Dir:     true,
-		Getters: Getters,
+		Src: src,
+		Dst: dst,
+		Dir: true,
 	}
 	if err := c.Configure(opts...); err != nil {
 		return err
@@ -95,10 +99,9 @@ func Get(dst, src string, opts ...ClientOption) error {
 // archive, it will be unpacked directly into dst.
 func GetAny(dst, src string, opts ...ClientOption) error {
 	c := &Client{
-		Src:     src,
-		Dst:     dst,
-		Mode:    ClientModeAny,
-		Getters: Getters,
+		Src:  src,
+		Dst:  dst,
+		Mode: ClientModeAny,
 	}
 	if err := c.Configure(opts...); err != nil {
 		return err
@@ -110,10 +113,9 @@ func GetAny(dst, src string, opts ...ClientOption) error {
 // dst.
 func GetFile(dst, src string, opts ...ClientOption) error {
 	c := &Client{
-		Src:     src,
-		Dst:     dst,
-		Dir:     false,
-		Getters: Getters,
+		Src: src,
+		Dst: dst,
+		Dir: false,
 	}
 	if err := c.Configure(opts...); err != nil {
 		return err
