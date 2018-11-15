@@ -183,8 +183,6 @@ func (g *HttpGetter) GetFile(dst string, src *url.URL) error {
 		return fmt.Errorf("bad response code: %d", resp.StatusCode)
 	}
 
-	println(g.client)
-	println(src.String())
 	// track download
 	body := g.client.ProgressListener.TrackProgress(src.String(), current+resp.ContentLength, resp.Body)
 	defer body.Close()
