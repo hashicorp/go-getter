@@ -6,9 +6,9 @@ import (
 	pb "gopkg.in/cheggaaa/pb.v1"
 )
 
-// WithCheggaaaProgressBar will have the downloads tracked
+// WithCheggaaaProgressBarV1 will have the downloads tracked
 // by a github.com/cheggaaa/pb v2 multi progress bar.
-func WithCheggaaaProgressBarV2() func(*Client) error {
+func WithCheggaaaProgressBarV1() func(*Client) error {
 	return func(c *Client) error {
 		c.ProgressListener = cheggaaaProgressBar
 		return nil
