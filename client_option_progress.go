@@ -22,7 +22,10 @@ type ProgressTracker interface {
 	// a new object is being downloaded.
 	// src is the location the file is
 	// downloaded from.
-	// size is the total size in bytes,
+	// currentSize is the current size of
+	// the file in case it is a partial
+	// download.
+	// totalSize is the total size in bytes,
 	// size can be zero if the file size
 	// is not known.
 	// stream is the file being downloaded, every
