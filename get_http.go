@@ -177,13 +177,16 @@ func (g *HttpGetter) GetFile(dst string, src *url.URL) error {
 	if err != nil {
 		return err
 	}
-	if resp.StatusCode != 200 {
+	switch resp.StatusCode {
+	case http.StatusOK, http.StatusPartialContent:
+		// all good
+	default:
 		resp.Body.Close()
 		return fmt.Errorf("bad response code: %d", resp.StatusCode)
 	}
 
 	// track download
-	body := g.client.ProgressListener.TrackProgress(src.String(), currentFileSize, resp.ContentLength, resp.Body)
+	body := g.client.ProgressListener.TrackProgress(src.String(), currentFileSize, currentFileSize+resp.ContentLength, resp.Body)
 	defer body.Close()
 
 	n, err := io.Copy(f, body)
