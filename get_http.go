@@ -143,7 +143,7 @@ func (g *HttpGetter) GetFile(dst string, src *url.URL) error {
 		g.Client = httpClient
 	}
 
-	var current int64
+	var currentFileSize int64
 
 	// We first make a HEAD request so we can check
 	// if the server supports range queries. If the server/URL doesn't
@@ -164,7 +164,7 @@ func (g *HttpGetter) GetFile(dst string, src *url.URL) error {
 				if fi, err := f.Stat(); err == nil {
 					if _, err = f.Seek(0, os.SEEK_END); err == nil {
 						req.Header.Set("Range", fmt.Sprintf("bytes=%d-", fi.Size()))
-						current = fi.Size()
+						currentFileSize = fi.Size()
 					}
 				}
 			}
@@ -184,7 +184,7 @@ func (g *HttpGetter) GetFile(dst string, src *url.URL) error {
 	}
 
 	// track download
-	body := g.client.ProgressListener.TrackProgress(src.String(), current+resp.ContentLength, resp.Body)
+	body := g.client.ProgressListener.TrackProgress(src.String(), currentFileSize, resp.ContentLength, resp.Body)
 	defer body.Close()
 
 	n, err := io.Copy(f, body)

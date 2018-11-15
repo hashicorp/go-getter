@@ -31,7 +31,7 @@ type ProgressTracker interface {
 	// TrackProgress returns a ReadCloser that wraps the
 	// download in progress ( stream ).
 	// When the download is finished, body shall be closed.
-	TrackProgress(src string, size int64, stream io.ReadCloser) (body io.ReadCloser)
+	TrackProgress(src string, currentSize, totalSize int64, stream io.ReadCloser) (body io.ReadCloser)
 }
 
 // NoopProgressListener is a progress listener
@@ -41,6 +41,6 @@ type NoopProgressListener struct{}
 var noopProgressListener ProgressTracker = &NoopProgressListener{}
 
 // TrackProgress is a no op
-func (*NoopProgressListener) TrackProgress(_ string, _ int64, stream io.ReadCloser) io.ReadCloser {
+func (*NoopProgressListener) TrackProgress(_ string, _, _ int64, stream io.ReadCloser) io.ReadCloser {
 	return stream
 }
