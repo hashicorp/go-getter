@@ -10,6 +10,7 @@ import (
 
 func main() {
 	modeRaw := flag.String("mode", "any", "get mode (any, file, dir)")
+	progress := flag.Bool("progress", false, "display terminal progress")
 	flag.Parse()
 	args := flag.Args()
 	if len(args) < 2 {
@@ -45,8 +46,12 @@ func main() {
 		Pwd:  pwd,
 		Mode: mode,
 	}
+	var opts []getter.ClientOption
+	if *progress {
+		opts = append(opts, getter.WithCheggaaaProgressBarV2())
+	}
 
-	if err := client.Configure(); err != nil {
+	if err := client.Configure(opts...); err != nil {
 		log.Fatalf("Configure: %s", err)
 	}
 
