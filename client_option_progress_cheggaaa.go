@@ -33,8 +33,9 @@ func defaultCheggaaaProgressBarConfigFN(bar *pb.ProgressBar, format string) {
 // TrackProgress instantiates a new progress bar that will
 // display the progress of stream until closed.
 // total can be 0.
-func (cpb *CheggaaaProgressBar) TrackProgress(src string, total int64, stream io.ReadCloser) io.ReadCloser {
-	newPb := pb.New64(total)
+func (cpb *CheggaaaProgressBar) TrackProgress(src string, currentSize, totalSize int64, stream io.ReadCloser) io.ReadCloser {
+	newPb := pb.New64(totalSize)
+	newPb.Set64(currentSize)
 	defaultCheggaaaProgressBarConfigFN(newPb, src)
 	if cpb.pool == nil {
 		cpb.pool = pb.NewPool()
