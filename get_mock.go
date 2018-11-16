@@ -50,3 +50,7 @@ func (g *MockGetter) ClientMode(u *url.URL) (ClientMode, error) {
 	}
 	return ClientModeFile, nil
 }
+
+func (g *MockGetter) GetFilename(u *url.URL) (string, error) {
+	return getFilename(u), nil
+}
