@@ -9,14 +9,18 @@ import (
 func TestTar(t *testing.T) {
 	mtime := time.Unix(0, 0)
 	cases := []TestDecompressCase{
-		{
-			"extended_header.tar",
-			true,
-			false,
-			[]string{"directory/", "directory/a", "directory/b"},
-			"",
-			nil,
-		},
+		/*
+			Disabled for now, this was broken in Go 1.10 and doesn't parse at
+			all anymore. Issue open here: https://github.com/golang/go/issues/28843
+			{
+				"extended_header.tar",
+				true,
+				false,
+				[]string{"directory/", "directory/a", "directory/b"},
+				"",
+				nil,
+			},
+		*/
 		{
 			"implied_dir.tar",
 			true,
