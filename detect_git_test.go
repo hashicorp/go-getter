@@ -11,12 +11,32 @@ func TestGitDetector(t *testing.T) {
 	}{
 		{"git@github.com:hashicorp/foo.git", "git::ssh://git@github.com/hashicorp/foo.git"},
 		{
+			"git@github.com:org/project.git?ref=test-branch",
+			"git::ssh://git@github.com/org/project.git?ref=test-branch",
+		},
+		{
 			"git@github.com:hashicorp/foo.git//bar",
 			"git::ssh://git@github.com/hashicorp/foo.git//bar",
 		},
 		{
 			"git@github.com:hashicorp/foo.git?foo=bar",
 			"git::ssh://git@github.com/hashicorp/foo.git?foo=bar",
+		},
+		{
+			"git@github.xyz.com:org/project.git",
+			"git::ssh://git@github.xyz.com/org/project.git",
+		},
+		{
+			"git@github.xyz.com:org/project.git?ref=test-branch",
+			"git::ssh://git@github.xyz.com/org/project.git?ref=test-branch",
+		},
+		{
+			"git@github.xyz.com:org/project.git//module/a",
+			"git::ssh://git@github.xyz.com/org/project.git//module/a",
+		},
+		{
+			"git@github.xyz.com:org/project.git//module/a?ref=test-branch",
+			"git::ssh://git@github.xyz.com/org/project.git//module/a?ref=test-branch",
 		},
 	}
 
