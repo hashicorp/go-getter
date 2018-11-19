@@ -162,6 +162,7 @@ func (g *HttpGetter) GetFile(dst string, src *url.URL) error {
 	}
 	headResp, err := g.Client.Do(req)
 	if err == nil && headResp != nil {
+		headResp.Body.Close()
 		if headResp.StatusCode == 200 {
 			// If the HEAD request succeeded, then attempt to set the range
 			// query if we can.
@@ -179,7 +180,6 @@ func (g *HttpGetter) GetFile(dst string, src *url.URL) error {
 				}
 			}
 		}
-		headResp.Body.Close()
 	}
 	req.Method = "GET"
 
