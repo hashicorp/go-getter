@@ -3,6 +3,7 @@ package getter
 import (
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"net"
 	"net/http"
 	"net/url"
@@ -192,6 +193,16 @@ func TestHttpGetter_range(t *testing.T) {
 	if err := g.GetFile(dst, &u); err != nil {
 		t.Fatalf("should not error: %v", err)
 	}
+
+	b, err := ioutil.ReadFile(dst)
+	if err != nil {
+		t.Fatalf("should not error: %v", err)
+	}
+
+	if string(b) != string(load) {
+		t.Fatalf("file differs: got:\n%s\n expected:\n%s\n", string(b), string(load))
+	}
+
 }
 
 func TestHttpGetter_file(t *testing.T) {
