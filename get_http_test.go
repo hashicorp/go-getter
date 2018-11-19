@@ -165,7 +165,7 @@ func TestHttpGetter_none(t *testing.T) {
 	}
 }
 
-func TestHttpGetter_range(t *testing.T) {
+func TestHttpGetter_resume(t *testing.T) {
 	load := []byte(testHttpMetaStr)
 	downloadFrom := len(load) / 2
 
