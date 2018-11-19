@@ -114,7 +114,11 @@ func (g *HttpGetter) Get(dst string, u *url.URL) error {
 	// into a temporary directory, then copy over the proper subdir.
 	source, subDir := SourceDirSubdir(source)
 	if subDir == "" {
-		return Get(dst, source, g.client.Options...)
+		var opts []ClientOption
+		if g.client != nil {
+			opts = g.client.Options
+		}
+		return Get(dst, source, opts...)
 	}
 
 	// We have a subdir, time to jump some hoops
@@ -185,8 +189,12 @@ func (g *HttpGetter) GetFile(dst string, src *url.URL) error {
 		return fmt.Errorf("bad response code: %d", resp.StatusCode)
 	}
 
-	// track download
-	body := g.client.ProgressListener.TrackProgress(src.String(), currentFileSize, currentFileSize+resp.ContentLength, resp.Body)
+	body := resp.Body
+
+	if g.client != nil {
+		// track download
+		body = g.client.ProgressListener.TrackProgress(src.String(), currentFileSize, currentFileSize+resp.ContentLength, resp.Body)
+	}
 	defer body.Close()
 
 	n, err := io.Copy(f, body)
@@ -210,8 +218,12 @@ func (g *HttpGetter) getSubdir(dst, source, subDir string) error {
 	}
 	defer tdcloser.Close()
 
+	var opts []ClientOption
+	if g.client != nil {
+		opts = g.client.Options
+	}
 	// Download that into the given directory
-	if err := Get(td, source, g.client.Options...); err != nil {
+	if err := Get(td, source, opts...); err != nil {
 		return err
 	}
 
