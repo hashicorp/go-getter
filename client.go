@@ -2,6 +2,7 @@ package getter
 
 import (
 	"bytes"
+	"context"
 	"crypto/md5"
 	"crypto/sha1"
 	"crypto/sha256"
@@ -26,6 +27,9 @@ import (
 // Using a client directly allows more fine-grained control over how downloading
 // is done, as well as customizing the protocols supported.
 type Client struct {
+	// Ctx for cancellation
+	Ctx context.Context
+
 	// Src is the source URL to get.
 	//
 	// Dst is the path to save the downloaded thing as. If Dir is set to
@@ -242,7 +246,7 @@ func (c *Client) Get() error {
 	// If we're not downloading a directory, then just download the file
 	// and return.
 	if mode == ClientModeFile {
-		err := g.GetFile(dst, u)
+		err := g.GetFile(c.Ctx, dst, u)
 		if err != nil {
 			return err
 		}
@@ -292,7 +296,7 @@ func (c *Client) Get() error {
 
 		// We're downloading a directory, which might require a bit more work
 		// if we're specifying a subdir.
-		err := g.Get(dst, u)
+		err := g.Get(c.Ctx, dst, u)
 		if err != nil {
 			err = fmt.Errorf("error downloading '%s': %s", src, err)
 			return err
@@ -314,7 +318,7 @@ func (c *Client) Get() error {
 			return err
 		}
 
-		return copyDir(realDst, subDir, false)
+		return copyDir(c.Ctx, realDst, subDir, false)
 	}
 
 	return nil
