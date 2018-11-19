@@ -80,15 +80,12 @@ func init() {
 // src is a URL, whereas dst is always just a file path to a folder. This
 // folder doesn't need to exist. It will be created if it doesn't exist.
 func Get(dst, src string, opts ...ClientOption) error {
-	c := &Client{
-		Src: src,
-		Dst: dst,
-		Dir: true,
-	}
-	if err := c.Configure(opts...); err != nil {
-		return err
-	}
-	return c.Get()
+	return (&Client{
+		Src:     src,
+		Dst:     dst,
+		Dir:     true,
+		Options: opts,
+	}).Get()
 }
 
 // GetAny downloads a URL into the given destination. Unlike Get or
@@ -98,29 +95,23 @@ func Get(dst, src string, opts ...ClientOption) error {
 // into dst with the basename of the URL. If src is a directory or
 // archive, it will be unpacked directly into dst.
 func GetAny(dst, src string, opts ...ClientOption) error {
-	c := &Client{
-		Src:  src,
-		Dst:  dst,
-		Mode: ClientModeAny,
-	}
-	if err := c.Configure(opts...); err != nil {
-		return err
-	}
-	return c.Get()
+	return (&Client{
+		Src:     src,
+		Dst:     dst,
+		Mode:    ClientModeAny,
+		Options: opts,
+	}).Get()
 }
 
 // GetFile downloads the file specified by src into the path specified by
 // dst.
 func GetFile(dst, src string, opts ...ClientOption) error {
-	c := &Client{
-		Src: src,
-		Dst: dst,
-		Dir: false,
-	}
-	if err := c.Configure(opts...); err != nil {
-		return err
-	}
-	return c.Get()
+	return (&Client{
+		Src:     src,
+		Dst:     dst,
+		Dir:     false,
+		Options: opts,
+	}).Get()
 }
 
 // getRunCommand is a helper that will run a command and capture the output
