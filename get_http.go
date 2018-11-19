@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	"github.com/hashicorp/go-safetemp"
@@ -169,6 +170,11 @@ func (g *HttpGetter) GetFile(dst string, src *url.URL) error {
 					if _, err = f.Seek(0, os.SEEK_END); err == nil {
 						req.Header.Set("Range", fmt.Sprintf("bytes=%d-", fi.Size()))
 						currentFileSize = fi.Size()
+						totalFileSize, _ := strconv.ParseInt(headResp.Header.Get("Content-Length"), 10, 64)
+						if currentFileSize >= totalFileSize {
+							// file already present
+							return nil
+						}
 					}
 				}
 			}
