@@ -72,6 +72,10 @@ type Client struct {
 
 // Get downloads the configured source to the destination.
 func (c *Client) Get() error {
+	if err := c.Configure(c.Options...); err != nil {
+		return err
+	}
+
 	// Store this locally since there are cases we swap this
 	mode := c.Mode
 	if mode == ClientModeInvalid {
