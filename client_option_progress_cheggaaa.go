@@ -2,6 +2,7 @@ package getter
 
 import (
 	"io"
+	"path/filepath"
 
 	pb "gopkg.in/cheggaaa/pb.v1"
 )
@@ -25,9 +26,9 @@ type CheggaaaProgressBar struct {
 
 var cheggaaaProgressBar ProgressTracker = &CheggaaaProgressBar{}
 
-func defaultCheggaaaProgressBarConfigFN(bar *pb.ProgressBar, format string) {
+func defaultCheggaaaProgressBarConfigFN(bar *pb.ProgressBar, prefix string) {
 	bar.SetUnits(pb.U_BYTES)
-	bar.Format(format)
+	bar.Prefix(prefix)
 }
 
 // TrackProgress instantiates a new progress bar that will
@@ -36,7 +37,7 @@ func defaultCheggaaaProgressBarConfigFN(bar *pb.ProgressBar, format string) {
 func (cpb *CheggaaaProgressBar) TrackProgress(src string, currentSize, totalSize int64, stream io.ReadCloser) io.ReadCloser {
 	newPb := pb.New64(totalSize)
 	newPb.Set64(currentSize)
-	defaultCheggaaaProgressBarConfigFN(newPb, src)
+	defaultCheggaaaProgressBarConfigFN(newPb, filepath.Base(src))
 	if cpb.pool == nil {
 		cpb.pool = pb.NewPool()
 		cpb.pool.Start()
