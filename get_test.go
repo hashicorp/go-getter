@@ -63,7 +63,7 @@ func TestGet_filePercent2F(t *testing.T) {
 
 func TestGet_fileDetect(t *testing.T) {
 	dst := tempDir(t)
-	u := filepath.Join("./test-fixtures", "basic")
+	u := filepath.Join(".", "test-fixtures", "basic")
 	pwd, err := os.Getwd()
 	if err != nil {
 		t.Fatalf("err: %s", err)
@@ -76,13 +76,17 @@ func TestGet_fileDetect(t *testing.T) {
 		Dir: true,
 	}
 
+	if err := client.Configure(); err != nil {
+		t.Fatalf("configure: %s", err)
+	}
+
 	if err := client.Get(); err != nil {
-		t.Fatalf("err: %s", err)
+		t.Fatalf("get: %s", err)
 	}
 
 	mainPath := filepath.Join(dst, "main.tf")
 	if _, err := os.Stat(mainPath); err != nil {
-		t.Fatalf("err: %s", err)
+		t.Fatalf("stat: %s", err)
 	}
 }
 
