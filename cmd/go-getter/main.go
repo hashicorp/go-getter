@@ -36,7 +36,6 @@ func main() {
 	pwd, err := os.Getwd()
 	if err != nil {
 		log.Fatalf("Error getting wd: %s", err)
-		os.Exit(1)
 	}
 
 	// Build the client
