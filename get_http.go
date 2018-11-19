@@ -1,6 +1,7 @@
 package getter
 
 import (
+	"context"
 	"encoding/xml"
 	"fmt"
 	"io"
@@ -59,7 +60,7 @@ func (g *HttpGetter) ClientMode(u *url.URL) (ClientMode, error) {
 	return ClientModeFile, nil
 }
 
-func (g *HttpGetter) Get(dst string, u *url.URL) error {
+func (g *HttpGetter) Get(ctx context.Context, dst string, u *url.URL) error {
 	// Copy the URL so we can modify it
 	var newU url.URL = *u
 	u = &newU
@@ -123,10 +124,10 @@ func (g *HttpGetter) Get(dst string, u *url.URL) error {
 	}
 
 	// We have a subdir, time to jump some hoops
-	return g.getSubdir(dst, source, subDir)
+	return g.getSubdir(ctx, dst, source, subDir)
 }
 
-func (g *HttpGetter) GetFile(dst string, src *url.URL) error {
+func (g *HttpGetter) GetFile(ctx context.Context, dst string, src *url.URL) error {
 	if g.Netrc {
 		// Add auth from netrc if we can
 		if err := addAuthFromNetrc(src); err != nil {
@@ -204,7 +205,7 @@ func (g *HttpGetter) GetFile(dst string, src *url.URL) error {
 	}
 	defer body.Close()
 
-	n, err := io.Copy(f, body)
+	n, err := Copy(ctx, f, body)
 	if err == nil && n < resp.ContentLength {
 		err = io.ErrShortWrite
 	}
@@ -216,7 +217,7 @@ func (g *HttpGetter) GetFile(dst string, src *url.URL) error {
 
 // getSubdir downloads the source into the destination, but with
 // the proper subdir.
-func (g *HttpGetter) getSubdir(dst, source, subDir string) error {
+func (g *HttpGetter) getSubdir(ctx context.Context, dst, source, subDir string) error {
 	// Create a temporary directory to store the full source. This has to be
 	// a non-existent directory.
 	td, tdcloser, err := safetemp.Dir("", "getter")
@@ -256,7 +257,7 @@ func (g *HttpGetter) getSubdir(dst, source, subDir string) error {
 		return err
 	}
 
-	return copyDir(dst, sourcePath, false)
+	return copyDir(ctx, dst, sourcePath, false)
 }
 
 // parseMeta looks for the first meta tag in the given reader that

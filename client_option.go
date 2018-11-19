@@ -1,5 +1,7 @@
 package getter
 
+import "context"
+
 // A ClientOption allows to configure a client
 type ClientOption func(*Client) error
 
@@ -29,4 +31,13 @@ func (c *Client) Configure(opts ...ClientOption) error {
 		getter.SetClient(c)
 	}
 	return nil
+}
+
+// WithContext allows to pass a context to operation
+// in order to be able to cancel a download in progress.
+func WithContext(ctx context.Context) func(*Client) error {
+	return func(c *Client) error {
+		c.Ctx = ctx
+		return nil
+	}
 }
