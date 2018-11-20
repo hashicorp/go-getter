@@ -7,6 +7,7 @@ type ClientOption func(*Client) error
 
 // Configure configures a client with options.
 func (c *Client) Configure(opts ...ClientOption) error {
+	c.ctx = context.Background()
 	c.Options = opts
 	for _, opt := range opts {
 		err := opt(c)
@@ -37,7 +38,7 @@ func (c *Client) Configure(opts ...ClientOption) error {
 // in order to be able to cancel a download in progress.
 func WithContext(ctx context.Context) func(*Client) error {
 	return func(c *Client) error {
-		c.Ctx = ctx
+		c.ctx = ctx
 		return nil
 	}
 }

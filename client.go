@@ -19,8 +19,8 @@ import (
 // Using a client directly allows more fine-grained control over how downloading
 // is done, as well as customizing the protocols supported.
 type Client struct {
-	// Ctx for cancellation
-	Ctx context.Context
+	// ctx for cancellation
+	ctx context.Context
 
 	// Src is the source URL to get.
 	//
@@ -218,7 +218,7 @@ func (c *Client) Get() error {
 			}
 		}
 		if getFile {
-			err := g.GetFile(c.Ctx, dst, u)
+			err := g.GetFile(c.ctx, dst, u)
 			if err != nil {
 				return err
 			}
@@ -269,7 +269,7 @@ func (c *Client) Get() error {
 
 		// We're downloading a directory, which might require a bit more work
 		// if we're specifying a subdir.
-		err := g.Get(c.Ctx, dst, u)
+		err := g.Get(c.ctx, dst, u)
 		if err != nil {
 			err = fmt.Errorf("error downloading '%s': %s", src, err)
 			return err
@@ -291,7 +291,7 @@ func (c *Client) Get() error {
 			return err
 		}
 
-		return copyDir(c.Ctx, realDst, subDir, false)
+		return copyDir(c.ctx, realDst, subDir, false)
 	}
 
 	return nil
