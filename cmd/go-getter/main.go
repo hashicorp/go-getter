@@ -55,7 +55,6 @@ func main() {
 		Dst:     args[1],
 		Pwd:     pwd,
 		Mode:    mode,
-		Ctx:     ctx,
 		Options: opts,
 	}
 
