@@ -3,6 +3,7 @@ package getter
 import (
 	"io"
 	"path/filepath"
+	"sync"
 
 	pb "gopkg.in/cheggaaa/pb.v1"
 )
@@ -19,6 +20,9 @@ func WithCheggaaaProgressBarV1() func(*Client) error {
 // CheggaaaProgressBar just wraps
 // a pb.Pool to display a progress
 type CheggaaaProgressBar struct {
+	// lock everythin below
+	lock sync.Mutex
+
 	pool *pb.Pool
 
 	pbs int
@@ -35,6 +39,9 @@ func defaultCheggaaaProgressBarConfigFN(bar *pb.ProgressBar, prefix string) {
 // display the progress of stream until closed.
 // total can be 0.
 func (cpb *CheggaaaProgressBar) TrackProgress(src string, currentSize, totalSize int64, stream io.ReadCloser) io.ReadCloser {
+	cpb.lock.Lock()
+	defer cpb.lock.Unlock()
+
 	newPb := pb.New64(totalSize)
 	newPb.Set64(currentSize)
 	defaultCheggaaaProgressBarConfigFN(newPb, filepath.Base(src))
@@ -49,11 +56,15 @@ func (cpb *CheggaaaProgressBar) TrackProgress(src string, currentSize, totalSize
 	return &cheggaaaReadCloser{
 		Reader: reader,
 		close: func() error {
+			cpb.lock.Lock()
+			defer cpb.lock.Unlock()
+
+			newPb.Finish()
 			cpb.pbs--
 			if cpb.pbs <= 0 {
 				cpb.pool.Stop()
+				cpb.pool = nil
 			}
-			newPb.Finish()
 			return nil
 		},
 	}
