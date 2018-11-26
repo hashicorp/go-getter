@@ -221,14 +221,18 @@ func (g *GitGetter) fetchSubmodules(ctx context.Context, dst, sshKeyFile string,
 }
 
 // findDefaultBranch checks the repo's origin remote for its default branch
-// (generally "master")
+// (generally "master"). "master" is returned if an origin default branch
+// can't be determined.
 func findDefaultBranch(dst string) string {
 	var stdoutbuf bytes.Buffer
 	cmd := exec.Command("git", "branch", "-r", "--points-at", "refs/remotes/origin/HEAD")
 	cmd.Dir = dst
 	cmd.Stdout = &stdoutbuf
-	cmd.Run()
+	err := cmd.Run()
 	matches := defaultBranchRegexp.FindStringSubmatch(stdoutbuf.String())
+	if err != nil || matches == nil {
+		return "master"
+	}
 	return matches[len(matches)-1]
 }
 
