@@ -25,6 +25,16 @@ func Test_parseChecksumLine(t *testing.T) {
 			"*ubuntu-14.04-desktop-amd64+mac.iso",
 			true,
 		},
+		{"bad gnu checksum",
+			args{
+				"ftp://ftp.freebsd.org/pub/FreeBSD/snapshots/VM-IMAGES/10.4-STABLE/i386/Latest/CHECKSUM.SHAz",
+				"d9a217e80fb6dc2576d5ccca4c44376c25e6016de47a48e07345678d660fac51 ubuntu-14.04-desktop-amd64+mac.iso",
+			},
+			"",
+			"d9a217e80fb6dc2576d5ccca4c44376c25e6016de47a48e07345678d660fac51",
+			"ubuntu-14.04-desktop-amd64+mac.iso",
+			true,
+		},
 		{"bsd CHECKSUM.SHA256",
 			args{
 				"ftp://ftp.freebsd.org/pub/FreeBSD/snapshots/VM-IMAGES/10.4-STABLE/i386/Latest/CHECKSUM.SHA256",
