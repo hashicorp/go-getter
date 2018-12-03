@@ -66,7 +66,7 @@ func checksumHashAndValue(u *url.URL) (checksumHash hash.Hash, checksumValue []b
 	}
 
 	return nil, nil, fmt.Errorf(
-		"Could not find a supported checksum in %s: %s", file, checksumType)
+		"Could not find/guess checksum in %s: %s", file, checksumType)
 }
 
 // checksumsFromFile will download checksumFile that is a checksum for file
