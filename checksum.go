@@ -76,7 +76,7 @@ func checksumsFromFile(checksumFile string, src *url.URL) (checkSums map[string]
 		return nil, err
 	}
 
-	f, err := ioutil.TempFile("", "go-getter.checksum")
+	f, err := ioutil.TempFile("", filepath.Base(checksumFileURL.Path))
 	if err != nil {
 		return nil, err
 	}
