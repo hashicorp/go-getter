@@ -2,10 +2,6 @@ package getter
 
 import (
 	"bytes"
-	"crypto/md5"
-	"crypto/sha1"
-	"crypto/sha256"
-	"crypto/sha512"
 	"encoding/hex"
 	"fmt"
 	"hash"
@@ -176,43 +172,15 @@ func (c *Client) Get() error {
 		mode = ClientModeFile
 	}
 
-	// Determine if we have a checksum
-	var checksumHash hash.Hash
-	var checksumValue []byte
-	if v := q.Get("checksum"); v != "" {
-		// Delete the query parameter if we have it.
-		q.Del("checksum")
-		u.RawQuery = q.Encode()
-
-		// Determine the checksum hash type
-		checksumType := ""
-		idx := strings.Index(v, ":")
-		if idx > -1 {
-			checksumType = v[:idx]
-		}
-		switch checksumType {
-		case "md5":
-			checksumHash = md5.New()
-		case "sha1":
-			checksumHash = sha1.New()
-		case "sha256":
-			checksumHash = sha256.New()
-		case "sha512":
-			checksumHash = sha512.New()
-		default:
-			return fmt.Errorf(
-				"unsupported checksum type: %s", checksumType)
-		}
-
-		// Get the remainder of the value and parse it into bytes
-		b, err := hex.DecodeString(v[idx+1:])
-		if err != nil {
-			return fmt.Errorf("invalid checksum: %s", err)
-		}
-
-		// Set our value
-		checksumValue = b
+	// Determine checksum if we have one
+	checksumHash, checksumValue, err := checksumHashAndValue(u) // can return nil nil nil
+	if err != nil {
+		return fmt.Errorf("invalid checksum: %s", err)
 	}
+
+	// Delete the query parameter if we have it.
+	q.Del("checksum")
+	u.RawQuery = q.Encode()
 
 	if mode == ClientModeAny {
 		// Ask the getter which client mode to use
