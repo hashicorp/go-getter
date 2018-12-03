@@ -49,8 +49,9 @@ func checksumHashAndValue(u *url.URL) (checksumHash hash.Hash, checksumValue []b
 		return nil, nil, fmt.Errorf(
 			"unsupported checksum type: %s", checksumType)
 	}
+	file := v[idx+1:]
 
-	checkSums, err := checksumsFromFile(v[idx+1:], u)
+	checkSums, err := checksumsFromFile(file, u)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -60,11 +61,12 @@ func checksumHashAndValue(u *url.URL) (checksumHash hash.Hash, checksumValue []b
 		if fn, found := checksummers[checksumType]; found {
 			checksumHash = fn()
 			checksumValue, err = hex.DecodeString(checksumValueString)
-			return
+			return checksumHash, checksumValue, err
 		}
 	}
 
-	return
+	return nil, nil, fmt.Errorf(
+		"Could not find a supported checksum in %s: %s", file, checksumType)
 }
 
 func checksumsFromFile(checksumFile string, src *url.URL) (checkSums map[string]string, err error) {
@@ -114,11 +116,15 @@ func checksumsFromFile(checksumFile string, src *url.URL) (checkSums map[string]
 			// filename matches src ?
 			if filename == option {
 				res[checksumType] = checksumValue
+				break
 			}
 		}
 
 	}
-	return
+	if len(res) == 0 {
+		err = fmt.Errorf("Could not find a checksum for %s in %s", filename, checksumFile)
+	}
+	return res, err
 }
 
 // parseChecksumLine takes a line from a checksum file and returns
@@ -150,7 +156,7 @@ func parseChecksumLine(checksumFilename, line string) (checksumType, checksumVal
 
 		for ctype := range checksummers {
 			// guess checksum type from filename
-			if strings.ContainsAny(checksumFilename, ctype) {
+			if strings.Contains(strings.ToLower(checksumFilename), ctype) {
 				checksumType = ctype
 			}
 		}

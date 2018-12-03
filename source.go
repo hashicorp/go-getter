@@ -6,9 +6,9 @@ import (
 	"strings"
 )
 
-// SourceDirSubdir takes a source and returns a tuple of the URL without
-// the subdir and the URL with the subdir.
-func SourceDirSubdir(src string) (string, string) {
+// SourceDirSubdir takes a source and returns the URL without
+// the subdir and the subdir.
+func SourceDirSubdir(src string) (url string, subdir string) {
 	// Calcaulate an offset to avoid accidentally marking the scheme
 	// as the dir.
 	var offset int
@@ -16,14 +16,20 @@ func SourceDirSubdir(src string) (string, string) {
 		offset = idx + 3
 	}
 
+	// URL might contains another url in query parameters
+	stop := len(src)
+	if idx := strings.Index(src, "?"); idx > -1 {
+		stop = idx
+	}
+
 	// First see if we even have an explicit subdir
-	idx := strings.Index(src[offset:], "//")
+	idx := strings.Index(src[offset:stop], "//")
 	if idx == -1 {
 		return src, ""
 	}
 
 	idx += offset
-	subdir := src[idx+2:]
+	subdir = src[idx+2:]
 	src = src[:idx]
 
 	// Next, check if we have query parameters and push them onto the

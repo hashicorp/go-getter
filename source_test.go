@@ -29,6 +29,14 @@ func TestSourceDirSubdir(t *testing.T) {
 			"https://hashicorp.com/path?archive=foo", "*",
 		},
 		{
+			"https://hashicorp.com/path?checksum=file:http://url.com/....iso.sha256",
+			"https://hashicorp.com/path?checksum=file:http://url.com/....iso.sha256", "",
+		},
+		{
+			"https://hashicorp.com/path//*?checksum=file:http://url.com/....iso.sha256",
+			"https://hashicorp.com/path?checksum=file:http://url.com/....iso.sha256", "*",
+		},
+		{
 			"file://foo//bar",
 			"file://foo", "bar",
 		},

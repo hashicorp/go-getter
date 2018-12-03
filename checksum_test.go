@@ -17,7 +17,7 @@ func Test_parseChecksumLine(t *testing.T) {
 	}{
 		{"gnu SHA256SUMS",
 			args{
-				"http://old-releases.ubuntu.com/releases/14.04.1/SHA256SUMS",
+				"http://old-releases.ubuntu.com/releases/14.04.1/SHA512SUMS",
 				"d9a217e80fb6dc2576d5ccca4c44376c25e6016de47a48e07345678d660fac51 *ubuntu-14.04-desktop-amd64+mac.iso",
 			},
 			"sha512",
