@@ -156,15 +156,30 @@ a checksum for you. Note that checksumming only works for downloading files,
 not directories, but checksumming will work for any protocol.
 
 To checksum a file, append a `checksum` query parameter to the URL.
-The paramter value should be in the format of `type:value`, where
-type is "md5", "sha1", "sha256", or "sha512". The "value" should be
-the actual checksum value. go-getter will parse out this query parameter
-automatically and use it to verify the checksum. An example URL
-is shown below:
+The parameter value should be in the format of `type:value`, where
+type is "md5", "sha1", "sha256", "sha512" or "file". The "value" should be
+the actual checksum value or download URL for "file".
+go-getter will parse out this query parameter automatically
+and use it to verify the checksum. 
+Examples:
 
 ```
 ./foo.txt?checksum=md5:b7d96c89d09d9e204f5fedc4d5d55b21
 ```
+
+```
+./foo.txt?checksum=file:./foo.txt.sha256sum
+```
+ 
+When checksumming from a file, go-getter will go get checksum_url
+in a temporary directory and parse the content of the file.
+Content of files are expected to be BSD style or GNU style.
+For GNU-style checksum files; it is very common that the hashing algorithm identifier
+is in the filename; so the name of every supported hashing algorithm is compared
+against checksum_url for a match/guess.
+In case a different hashing algorithm is in the filename of checksum_url
+it is recommended to explicitly set hashing algorithm instead; the
+outcome would be undetermined otherwise.
 
 The checksum query parameter is never sent to the backend protocol
 implementation. It is used at a higher level by go-getter itself.
