@@ -24,6 +24,27 @@ var checksummers = map[string]func() hash.Hash{
 	"sha512": sha512.New,
 }
 
+// checksumHashAndValue will return checksum based on checksum parameter of u
+// ex:
+//  http://hashicorp.com/terraform?checksum=<checksumType>:<checksumValue>
+//  http://hashicorp.com/terraform?checksum=file:<checksum_url>
+// when checksumming from a file checksumHashAndValue will go get checksum_url
+// in a temporary directory and parse the content of the file.
+// Content of files are expected to be BSD style or GNU style.
+//
+// BSD-style checksum:
+//  MD5 (file1) = <checksum>
+//  MD5 (file2) = <checksum>
+//
+// GNU-style:
+//  <checksum>  file1
+//  <checksum> *file2
+//
+// For GNU-style checksum files; it is very common that the hashing algorithm identifier
+// is in the filename; so the name of every supported hashing algorithm is compared
+// against checksum_url for a match/guess.
+// In case a different hashing algorithm is in the filename of checksum_url
+// it is recommended to explicitly set hashing algorithm instead.
 func checksumHashAndValue(u *url.URL) (checksumHash hash.Hash, checksumValue []byte, err error) {
 	q := u.Query()
 	v := q.Get("checksum")
