@@ -55,10 +55,11 @@ func checksumHashAndValue(u *url.URL) (checksumHash hash.Hash, checksumValue []b
 
 	// Determine the checksum hash type
 	checksumType := ""
-	idx := strings.Index(v, ":")
-	if idx > -1 {
-		checksumType = v[:idx]
+	idx := len(v)
+	if i := strings.Index(v, ":"); i > -1 {
+		idx = i
 	}
+	checksumType = v[:idx]
 	if fn, found := checksummers[checksumType]; found {
 		checksumHash = fn()
 		// Get the remainder of the value and parse it into bytes
