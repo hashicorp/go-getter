@@ -69,6 +69,11 @@ func checksumHashAndValue(u *url.URL) (checksumHash hash.Hash, checksumValue []b
 		"Could not find a supported checksum in %s: %s", file, checksumType)
 }
 
+// checksumsFromFile will download checksumFile that is a checksum for file
+// behind src.
+//
+// checksumsFromFile will try to guess the hashing algorithm based on content
+// of or name of checksum file
 func checksumsFromFile(checksumFile string, src *url.URL) (checkSums map[string]string, err error) {
 
 	checksumFileURL, err := urlhelper.Parse(checksumFile)
