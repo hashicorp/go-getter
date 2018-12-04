@@ -9,8 +9,10 @@ import (
 	"encoding/hex"
 	"fmt"
 	"hash"
+	"io"
 	"io/ioutil"
 	"net/url"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -107,7 +109,11 @@ func checksumsFromFile(checksumFile string, src *url.URL) (checkSums map[string]
 	if err != nil {
 		return nil, err
 	}
-	defer f.Close()
+	tempfile := f.Name()
+	f.Close()
+	defer func() {
+		os.Remove(tempfile)
+	}()
 
 	if err = GetFile(f.Name(), checksumFile); err != nil {
 		return nil, fmt.Errorf(
@@ -122,17 +128,27 @@ func checksumsFromFile(checksumFile string, src *url.URL) (checkSums map[string]
 	options := []string{
 		filename,       // ubuntu-14.04.1-server-amd64.iso
 		"*" + filename, // *ubuntu-14.04.1-server-amd64.iso  Standard checksum
+		"?" + filename, // ?ubuntu-14.04.1-server-amd64.iso  shasum -p
 		relpath,        // dir/ubuntu-14.04.1-server-amd64.iso
 		"./" + relpath, // ./dir/ubuntu-14.04.1-server-amd64.iso
 		absPath,        // fullpath; set if local
 	}
 
+	f, err = os.Open(tempfile)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"Error opening downloaded file: %s", err)
+	}
+	defer f.Close()
 	rd := bufio.NewReader(f)
 	res := map[string]string{}
 	for {
-
 		line, err := rd.ReadString('\n')
-		if err != nil && line == "" {
+		if err != nil {
+			if err != io.EOF {
+				return nil, fmt.Errorf(
+					"Error reading checksum file: %s", err)
+			}
 			break
 		}
 		checksumType, checksumValue, filename, ok := parseChecksumLine(checksumFile, line)
