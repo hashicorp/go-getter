@@ -2,6 +2,7 @@ package getter
 
 import (
 	"bufio"
+	"context"
 	"crypto/md5"
 	"crypto/sha1"
 	"crypto/sha256"
@@ -47,7 +48,7 @@ var checksummers = map[string]func() hash.Hash{
 // against checksum_url for a match/guess.
 // In case a different hashing algorithm is in the filename of checksum_url
 // it is recommended to explicitly set hashing algorithm instead.
-func checksumHashAndValue(u *url.URL) (checksumHash hash.Hash, checksumValue []byte, err error) {
+func checksumHashAndValue(ctx context.Context, u *url.URL) (checksumHash hash.Hash, checksumValue []byte, err error) {
 	q := u.Query()
 	v := q.Get("checksum")
 
@@ -75,7 +76,7 @@ func checksumHashAndValue(u *url.URL) (checksumHash hash.Hash, checksumValue []b
 	}
 	file := v[idx+1:]
 
-	checkSums, err := checksumsFromFile(file, u)
+	checkSums, err := checksumsFromFile(ctx, file, u)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -98,7 +99,7 @@ func checksumHashAndValue(u *url.URL) (checksumHash hash.Hash, checksumValue []b
 //
 // checksumsFromFile will try to guess the hashing algorithm based on content
 // of or name of checksum file
-func checksumsFromFile(checksumFile string, src *url.URL) (checkSums map[string]string, err error) {
+func checksumsFromFile(ctx context.Context, checksumFile string, src *url.URL) (checkSums map[string]string, err error) {
 
 	checksumFileURL, err := urlhelper.Parse(checksumFile)
 	if err != nil {
@@ -115,7 +116,7 @@ func checksumsFromFile(checksumFile string, src *url.URL) (checkSums map[string]
 		os.Remove(tempfile)
 	}()
 
-	if err = GetFile(f.Name(), checksumFile); err != nil {
+	if err = GetFile(f.Name(), checksumFile, WithContext(ctx)); err != nil {
 		return nil, fmt.Errorf(
 			"Error downloading checksum file: %s", err)
 	}
