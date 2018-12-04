@@ -1,6 +1,7 @@
 package getter
 
 import (
+	"context"
 	"fmt"
 	"net/url"
 	"os"
@@ -14,13 +15,15 @@ import (
 
 // HgGetter is a Getter implementation that will download a module from
 // a Mercurial repository.
-type HgGetter struct{}
+type HgGetter struct {
+	getter
+}
 
 func (g *HgGetter) ClientMode(_ *url.URL) (ClientMode, error) {
 	return ClientModeDir, nil
 }
 
-func (g *HgGetter) Get(dst string, u *url.URL) error {
+func (g *HgGetter) Get(ctx context.Context, dst string, u *url.URL) error {
 	if _, err := exec.LookPath("hg"); err != nil {
 		return fmt.Errorf("hg must be available and on the PATH")
 	}
@@ -58,12 +61,12 @@ func (g *HgGetter) Get(dst string, u *url.URL) error {
 		return err
 	}
 
-	return g.update(dst, newURL, rev)
+	return g.update(ctx, dst, newURL, rev)
 }
 
 // GetFile for Hg doesn't support updating at this time. It will download
 // the file every time.
-func (g *HgGetter) GetFile(dst string, u *url.URL) error {
+func (g *HgGetter) GetFile(ctx context.Context, dst string, u *url.URL) error {
 	// Create a temporary directory to store the full source. This has to be
 	// a non-existent directory.
 	td, tdcloser, err := safetemp.Dir("", "getter")
@@ -83,7 +86,7 @@ func (g *HgGetter) GetFile(dst string, u *url.URL) error {
 	}
 
 	// Get the full repository
-	if err := g.Get(td, u); err != nil {
+	if err := g.Get(ctx, td, u); err != nil {
 		return err
 	}
 
@@ -94,7 +97,7 @@ func (g *HgGetter) GetFile(dst string, u *url.URL) error {
 	}
 
 	fg := &FileGetter{Copy: true}
-	return fg.GetFile(dst, u)
+	return fg.GetFile(ctx, dst, u)
 }
 
 func (g *HgGetter) clone(dst string, u *url.URL) error {
@@ -108,13 +111,13 @@ func (g *HgGetter) pull(dst string, u *url.URL) error {
 	return getRunCommand(cmd)
 }
 
-func (g *HgGetter) update(dst string, u *url.URL, rev string) error {
+func (g *HgGetter) update(ctx context.Context, dst string, u *url.URL, rev string) error {
 	args := []string{"update"}
 	if rev != "" {
 		args = append(args, rev)
 	}
 
-	cmd := exec.Command("hg", args...)
+	cmd := exec.CommandContext(ctx, "hg", args...)
 	cmd.Dir = dst
 	return getRunCommand(cmd)
 }

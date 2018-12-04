@@ -1,13 +1,17 @@
 package getter
 
 import (
+	"context"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"net"
 	"net/http"
 	"net/url"
 	"os"
 	"path/filepath"
+	"strconv"
+	"strings"
 	"testing"
 )
 
@@ -29,7 +33,7 @@ func TestHttpGetter_header(t *testing.T) {
 	u.Path = "/header"
 
 	// Get it!
-	if err := g.Get(dst, &u); err != nil {
+	if err := g.Get(context.Background(), dst, &u); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
@@ -57,7 +61,7 @@ func TestHttpGetter_requestHeader(t *testing.T) {
 	u.RawQuery = "expected=X-Foobar"
 
 	// Get it!
-	if err := g.GetFile(dst, &u); err != nil {
+	if err := g.GetFile(context.Background(), dst, &u); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
@@ -82,7 +86,7 @@ func TestHttpGetter_meta(t *testing.T) {
 	u.Path = "/meta"
 
 	// Get it!
-	if err := g.Get(dst, &u); err != nil {
+	if err := g.Get(context.Background(), dst, &u); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
@@ -107,7 +111,7 @@ func TestHttpGetter_metaSubdir(t *testing.T) {
 	u.Path = "/meta-subdir"
 
 	// Get it!
-	if err := g.Get(dst, &u); err != nil {
+	if err := g.Get(context.Background(), dst, &u); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
@@ -132,7 +136,7 @@ func TestHttpGetter_metaSubdirGlob(t *testing.T) {
 	u.Path = "/meta-subdir-glob"
 
 	// Get it!
-	if err := g.Get(dst, &u); err != nil {
+	if err := g.Get(context.Background(), dst, &u); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
@@ -157,9 +161,49 @@ func TestHttpGetter_none(t *testing.T) {
 	u.Path = "/none"
 
 	// Get it!
-	if err := g.Get(dst, &u); err == nil {
+	if err := g.Get(context.Background(), dst, &u); err == nil {
 		t.Fatal("should error")
 	}
+}
+
+func TestHttpGetter_resume(t *testing.T) {
+	load := []byte(testHttpMetaStr)
+	downloadFrom := len(load) / 2
+
+	ln := testHttpServer(t)
+	defer ln.Close()
+
+	g := new(HttpGetter)
+	dst := tempDir(t)
+	defer os.RemoveAll(dst)
+
+	dst = filepath.Join(dst, "..", "range")
+	f, err := os.Create(dst)
+	if err != nil {
+		t.Fatalf("create: %v", err)
+	}
+	f.Write(load[:downloadFrom])
+	f.Close()
+
+	var u url.URL
+	u.Scheme = "http"
+	u.Host = ln.Addr().String()
+	u.Path = "/range"
+
+	// Get it!
+	if err := g.GetFile(context.Background(), dst, &u); err != nil {
+		t.Fatalf("should not error: %v", err)
+	}
+
+	b, err := ioutil.ReadFile(dst)
+	if err != nil {
+		t.Fatalf("should not error: %v", err)
+	}
+
+	if string(b) != string(load) {
+		t.Fatalf("file differs: got:\n%s\n expected:\n%s\n", string(b), string(load))
+	}
+
 }
 
 func TestHttpGetter_file(t *testing.T) {
@@ -176,7 +220,7 @@ func TestHttpGetter_file(t *testing.T) {
 	u.Path = "/file"
 
 	// Get it!
-	if err := g.GetFile(dst, &u); err != nil {
+	if err := g.GetFile(context.Background(), dst, &u); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
@@ -202,7 +246,7 @@ func TestHttpGetter_auth(t *testing.T) {
 	u.User = url.UserPassword("foo", "bar")
 
 	// Get it!
-	if err := g.Get(dst, &u); err != nil {
+	if err := g.Get(context.Background(), dst, &u); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
@@ -232,7 +276,7 @@ func TestHttpGetter_authNetrc(t *testing.T) {
 	defer tempEnv(t, "NETRC", path)()
 
 	// Get it!
-	if err := g.Get(dst, &u); err != nil {
+	if err := g.Get(context.Background(), dst, &u); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
@@ -271,7 +315,7 @@ func TestHttpGetter_cleanhttp(t *testing.T) {
 	u.Path = "/header"
 
 	// Get it!
-	if err := g.Get(dst, &u); err != nil {
+	if err := g.Get(context.Background(), dst, &u); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 }
@@ -290,6 +334,7 @@ func testHttpServer(t *testing.T) net.Listener {
 	mux.HandleFunc("/meta-auth", testHttpHandlerMetaAuth)
 	mux.HandleFunc("/meta-subdir", testHttpHandlerMetaSubdir)
 	mux.HandleFunc("/meta-subdir-glob", testHttpHandlerMetaSubdirGlob)
+	mux.HandleFunc("/range", testHttpHandlerRange)
 
 	var server http.Server
 	server.Handler = mux
@@ -347,6 +392,24 @@ func testHttpHandlerMetaSubdirGlob(w http.ResponseWriter, r *http.Request) {
 
 func testHttpHandlerNone(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(testHttpNoneStr))
+}
+
+func testHttpHandlerRange(w http.ResponseWriter, r *http.Request) {
+	load := []byte(testHttpMetaStr)
+	switch r.Method {
+	case "HEAD":
+		w.Header().Add("accept-ranges", "bytes")
+		w.Header().Add("content-length", strconv.Itoa(len(load)))
+	default:
+		// request should have header "Range: bytes=0-1023"
+		// or                         "Range: bytes=123-"
+		rangeHeaderValue := strings.Split(r.Header.Get("Range"), "=")[1]
+		rng, _ := strconv.Atoi(strings.Split(rangeHeaderValue, "-")[0])
+		if rng < 1 || rng > len(load) {
+			http.Error(w, "", http.StatusBadRequest)
+		}
+		w.Write(load[rng:])
+	}
 }
 
 const testHttpMetaStr = `

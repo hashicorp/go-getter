@@ -1,6 +1,7 @@
 package getter
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"testing"
@@ -15,7 +16,7 @@ func TestFileGetter(t *testing.T) {
 	dst := tempDir(t)
 
 	// With a dir that doesn't exist
-	if err := g.Get(dst, testModuleURL("basic")); err != nil {
+	if err := g.Get(context.Background(), dst, testModuleURL("basic")); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
@@ -42,7 +43,7 @@ func TestFileGetter_sourceFile(t *testing.T) {
 	// With a source URL that is a path to a file
 	u := testModuleURL("basic")
 	u.Path += "/main.tf"
-	if err := g.Get(dst, u); err == nil {
+	if err := g.Get(context.Background(), dst, u); err == nil {
 		t.Fatal("should error")
 	}
 }
@@ -54,7 +55,7 @@ func TestFileGetter_sourceNoExist(t *testing.T) {
 	// With a source URL that doesn't exist
 	u := testModuleURL("basic")
 	u.Path += "/main"
-	if err := g.Get(dst, u); err == nil {
+	if err := g.Get(context.Background(), dst, u); err == nil {
 		t.Fatal("should error")
 	}
 }
@@ -68,7 +69,7 @@ func TestFileGetter_dir(t *testing.T) {
 	}
 
 	// With a dir that exists that isn't a symlink
-	if err := g.Get(dst, testModuleURL("basic")); err == nil {
+	if err := g.Get(context.Background(), dst, testModuleURL("basic")); err == nil {
 		t.Fatal("should error")
 	}
 }
@@ -92,7 +93,7 @@ func TestFileGetter_dirSymlink(t *testing.T) {
 	}
 
 	// With a dir that exists that isn't a symlink
-	if err := g.Get(dst, testModuleURL("basic")); err != nil {
+	if err := g.Get(context.Background(), dst, testModuleURL("basic")); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
@@ -108,7 +109,7 @@ func TestFileGetter_GetFile(t *testing.T) {
 	dst := tempFile(t)
 
 	// With a dir that doesn't exist
-	if err := g.GetFile(dst, testModuleURL("basic-file/foo.txt")); err != nil {
+	if err := g.GetFile(context.Background(), dst, testModuleURL("basic-file/foo.txt")); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
@@ -132,7 +133,7 @@ func TestFileGetter_GetFile_Copy(t *testing.T) {
 	dst := tempFile(t)
 
 	// With a dir that doesn't exist
-	if err := g.GetFile(dst, testModuleURL("basic-file/foo.txt")); err != nil {
+	if err := g.GetFile(context.Background(), dst, testModuleURL("basic-file/foo.txt")); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
@@ -155,7 +156,7 @@ func TestFileGetter_percent2F(t *testing.T) {
 	dst := tempDir(t)
 
 	// With a dir that doesn't exist
-	if err := g.Get(dst, testModuleURL("basic%2Ftest")); err != nil {
+	if err := g.Get(context.Background(), dst, testModuleURL("basic%2Ftest")); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 

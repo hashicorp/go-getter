@@ -30,8 +30,8 @@ var checksummers = map[string]func() hash.Hash{
 // ex:
 //  http://hashicorp.com/terraform?checksum=<checksumType>:<checksumValue>
 //  http://hashicorp.com/terraform?checksum=file:<checksum_url>
-// when checksumming from a file checksumHashAndValue will go get checksum_url
-// in a temporary directory and parse the content of the file.
+// when checksumming from a file checksumHashAndValue will GetFile of
+// <checksum_url> in a temporary directory and parse the content of the file.
 // Content of files are expected to be BSD style or GNU style.
 //
 // BSD-style checksum:

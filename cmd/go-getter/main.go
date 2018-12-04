@@ -1,15 +1,19 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"log"
 	"os"
+	"os/signal"
+	"sync"
 
 	"github.com/hashicorp/go-getter"
 )
 
 func main() {
 	modeRaw := flag.String("mode", "any", "get mode (any, file, dir)")
+	progress := flag.Bool("progress", false, "display terminal progress")
 	flag.Parse()
 	args := flag.Args()
 	if len(args) < 2 {
@@ -35,21 +39,50 @@ func main() {
 	pwd, err := os.Getwd()
 	if err != nil {
 		log.Fatalf("Error getting wd: %s", err)
-		os.Exit(1)
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	opts := []getter.ClientOption{
+		getter.WithContext(ctx),
+	}
+	if *progress {
+		opts = append(opts, getter.WithCheggaaaProgressBarV1())
 	}
 
 	// Build the client
 	client := &getter.Client{
-		Src:  args[0],
-		Dst:  args[1],
-		Pwd:  pwd,
-		Mode: mode,
+		Src:     args[0],
+		Dst:     args[1],
+		Pwd:     pwd,
+		Mode:    mode,
+		Options: opts,
 	}
 
-	if err := client.Get(); err != nil {
+	wg := sync.WaitGroup{}
+	wg.Add(1)
+	errChan := make(chan error, 2)
+	go func() {
+		defer wg.Done()
+		defer cancel()
+		if err := client.Get(); err != nil {
+			errChan <- err
+		}
+	}()
+
+	c := make(chan os.Signal)
+	signal.Notify(c, os.Interrupt)
+
+	select {
+	case sig := <-c:
+		signal.Reset(os.Interrupt)
+		cancel()
+		wg.Wait()
+		log.Printf("signal %v", sig)
+	case <-ctx.Done():
+		wg.Wait()
+		log.Printf("success!")
+	case err := <-errChan:
+		wg.Wait()
 		log.Fatalf("Error downloading: %s", err)
-		os.Exit(1)
 	}
-
-	log.Println("Success!")
 }
