@@ -139,7 +139,7 @@ func checksumsFromFile(checksumFile string, src *url.URL) (checkSums map[string]
 		return nil, fmt.Errorf(
 			"Error opening downloaded file: %s", err)
 	}
-	defer f.Close()
+	defer f.Close() // last defer comes first
 	rd := bufio.NewReader(f)
 	res := map[string]string{}
 	for {
