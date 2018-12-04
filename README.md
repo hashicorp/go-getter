@@ -185,6 +185,9 @@ Once go-getter is done with the file; it is deleted.
 The checksum query parameter is never sent to the backend protocol
 implementation. It is used at a higher level by go-getter itself.
 
+If the destination file exists and the checksums match: download
+will be skipped.
+
 ### Unarchiving
 
 go-getter will automatically unarchive files into a file or directory
