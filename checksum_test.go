@@ -1,75 +1,72 @@
 package getter
 
-import "testing"
+import (
+	"encoding/hex"
+	"hash"
+	"net/url"
+	"reflect"
+	"testing"
+)
 
-func Test_parseChecksumLine(t *testing.T) {
+func u(t *testing.T, in string) *url.URL {
+	u, err := url.Parse(in)
+	if err != nil {
+		t.Fatalf("cannot parse %s: %v", in, err)
+	}
+	return u
+}
+
+func Test_checksumHashAndValue(t *testing.T) {
+
+	checksums := testModule("checksum-file")
+
 	type args struct {
-		checksumFile string
-		line         string
+		u *url.URL
 	}
 	tests := []struct {
 		name              string
 		args              args
-		wantChecksumType  string
+		wantChecksumHash  hash.Hash
 		wantChecksumValue string
-		wantFilename      string
-		wantOk            bool
+		wantErr           bool
 	}{
-		{"gnu SHA256SUMS",
-			args{
-				"http://old-releases.ubuntu.com/releases/14.04.1/SHA512SUMS",
-				"d9a217e80fb6dc2576d5ccca4c44376c25e6016de47a48e07345678d660fac51 *ubuntu-14.04-desktop-amd64+mac.iso",
-			},
-			"sha512",
-			"d9a217e80fb6dc2576d5ccca4c44376c25e6016de47a48e07345678d660fac51",
-			"*ubuntu-14.04-desktop-amd64+mac.iso",
+		{"shasum -a 256 -p",
+			args{u(t, checksums+"/content.txt?checksum=file:"+checksums+"/sha256-p.sum")},
+			checksummers["sha256"](),
+			"47afcdfff05a6e5d9db5f6c6df2140f04a6e7422d7ad7f6a7006a4f5a78570e4",
+			false,
+		},
+		{"not properly named shasum -a 256 -p",
+			args{u(t, checksums+"/content.txt?checksum=file:"+checksums+"/sha2FiveSixError.sum")},
+			nil,
+			"",
 			true,
 		},
-		{"bad gnu checksum",
-			args{
-				"ftp://ftp.freebsd.org/pub/FreeBSD/snapshots/VM-IMAGES/10.4-STABLE/i386/Latest/CHECKSUM.SHAz",
-				"d9a217e80fb6dc2576d5ccca4c44376c25e6016de47a48e07345678d660fac51 ubuntu-14.04-desktop-amd64+mac.iso",
-			},
-			"",
-			"d9a217e80fb6dc2576d5ccca4c44376c25e6016de47a48e07345678d660fac51",
-			"ubuntu-14.04-desktop-amd64+mac.iso",
-			true,
-		},
-		{"bsd CHECKSUM.SHA256",
-			args{
-				"ftp://ftp.freebsd.org/pub/FreeBSD/snapshots/VM-IMAGES/10.4-STABLE/i386/Latest/CHECKSUM.SHA256",
-				"SHA256 (FreeBSD-10.4-STABLE-i386-20181012-r339297.qcow2.xz) = cedf5203525ef1c7048631d7d26ca54b81f224fccf6b9185eab2cf4b894e8651",
-			},
-			"sha256",
-			"cedf5203525ef1c7048631d7d26ca54b81f224fccf6b9185eab2cf4b894e8651",
-			"FreeBSD-10.4-STABLE-i386-20181012-r339297.qcow2.xz",
-			true,
-		},
-		{"potato",
-			args{
-				"blip",
-				"potato chips 3 4",
-			},
-			"",
-			"",
-			"",
+		{"md5",
+			args{u(t, checksums+"/content.txt?checksum=file:"+checksums+"/sha256-p.sum")},
+			checksummers["sha256"](),
+			"47afcdfff05a6e5d9db5f6c6df2140f04a6e7422d7ad7f6a7006a4f5a78570e4",
 			false,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotChecksumType, gotChecksumValue, gotFilename, gotOk := parseChecksumLine(tt.args.checksumFile, tt.args.line)
-			if gotChecksumType != tt.wantChecksumType {
-				t.Errorf("parseChecksumLine() gotChecksumType = %v, want %v", gotChecksumType, tt.wantChecksumType)
+			gotChecksumHash, gotChecksumValue, err := checksumHashAndValue(tt.args.u)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("checksumHashAndValue() error = %v , wantErr %v", err, tt.wantErr)
+				return
 			}
-			if gotChecksumValue != tt.wantChecksumValue {
-				t.Errorf("parseChecksumLine() gotChecksumValue = %v, want %v", gotChecksumValue, tt.wantChecksumValue)
+			var wantChecksumValue []byte
+			if tt.wantChecksumValue != "" {
+				if wantChecksumValue, err = hex.DecodeString(tt.wantChecksumValue); err != nil {
+					panic(err)
+				}
 			}
-			if gotFilename != tt.wantFilename {
-				t.Errorf("parseChecksumLine() gotFilename = %v, want %v", gotFilename, tt.wantFilename)
+			if !reflect.DeepEqual(gotChecksumHash, tt.wantChecksumHash) {
+				t.Errorf("checksumHashAndValue() gotChecksumHash = %v, want %v", gotChecksumHash, tt.wantChecksumHash)
 			}
-			if gotOk != tt.wantOk {
-				t.Errorf("parseChecksumLine() gotOk = %v, want %v", gotOk, tt.wantOk)
+			if !reflect.DeepEqual(gotChecksumValue, wantChecksumValue) {
+				t.Errorf("checksumHashAndValue() gotChecksumValue = %v, want %v", gotChecksumValue, tt.wantChecksumValue)
 			}
 		})
 	}
