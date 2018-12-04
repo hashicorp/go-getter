@@ -180,6 +180,7 @@ against checksum_url for a match/guess.
 In case a different hashing algorithm is in the filename of checksum_url
 it is recommended to explicitly set hashing algorithm instead; the
 outcome would be undetermined otherwise.
+Once go-getter is done with the file; it is deleted.
 
 The checksum query parameter is never sent to the backend protocol
 implementation. It is used at a higher level by go-getter itself.
