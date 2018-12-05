@@ -195,6 +195,11 @@ func (c *Client) Get() error {
 		idx := strings.Index(v, ":")
 		if idx > -1 {
 			checksumType = v[:idx]
+		} else {
+			idx = strings.Index(v, "-")
+			if idx > -1 {
+				checksumType = v[:idx]
+			}
 		}
 		switch checksumType {
 		case "md5":
@@ -203,6 +208,8 @@ func (c *Client) Get() error {
 			checksumHash = sha1.New()
 		case "sha256":
 			checksumHash = sha256.New()
+		case "sha384":
+			checksumHash = sha512.New384()
 		case "sha512":
 			checksumHash = sha512.New()
 		default:

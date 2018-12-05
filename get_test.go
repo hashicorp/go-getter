@@ -313,6 +313,16 @@ func TestGetFile_checksum(t *testing.T) {
 			true,
 		},
 
+		// SHA384
+		{
+			"?checksum=sha384-1d283e09aa7e597f2c0505c13f7c09eb4d4cd198fb7b144eeea2824cc59a046d9363b3f038abf7aa6bde7f8adaf561a4",
+			false,
+		},
+		{
+			"?checksum=sha384-1d283e09aa7e597f2c0505c13f7c09eb4d4cd198fb7b144eeea2824cc59a046d9363b3f038abf7aa6bde7f8adaf561a5",
+			true,
+		},
+
 		// SHA512
 		{
 			"?checksum=sha512:c2bad2223811194582af4d1508ac02cd69eeeeedeeb98d54fcae4dcefb13cc882e7640328206603d3fb9cd5f949a9be0db054dd34fbfa190c498a5fe09750cef",
