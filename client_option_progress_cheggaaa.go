@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"sync"
 
-	pb "gopkg.in/cheggaaa/pb.v1"
+	pb "github.com/cheggaaa/pb"
 )
 
 // WithCheggaaaProgressBarV1 will have the downloads tracked
