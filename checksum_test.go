@@ -17,7 +17,6 @@ func u(t *testing.T, in string) *url.URL {
 }
 
 func Test_checksumHashAndValue(t *testing.T) {
-
 	checksums := testModule("checksum-file")
 
 	type args struct {
