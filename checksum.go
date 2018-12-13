@@ -99,7 +99,6 @@ func checksumHashAndValue(u *url.URL) (checksumHash hash.Hash, checksumValue []b
 // checksumsFromFile will try to guess the hashing algorithm based on content
 // of or name of checksum file
 func checksumsFromFile(checksumFile string, src *url.URL) (checkSums map[string]string, err error) {
-
 	checksumFileURL, err := urlhelper.Parse(checksumFile)
 	if err != nil {
 		return nil, err
