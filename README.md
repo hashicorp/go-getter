@@ -171,16 +171,18 @@ Examples:
 ./foo.txt?checksum=file:./foo.txt.sha256sum
 ```
  
-When checksumming from a file, go-getter will go get checksum_url
-in a temporary directory and parse the content of the file.
-Content of files are expected to be BSD style or GNU style.
-For GNU-style checksum files; it is very common that the hashing algorithm identifier
-is in the filename; so the name of every supported hashing algorithm is compared
-against checksum_url for a match/guess.
-In case a different hashing algorithm is in the filename of checksum_url
-it is recommended to explicitly set hashing algorithm instead; the
-outcome would be undetermined otherwise.
-Once go-getter is done with the file; it is deleted.
+When checksumming from a file - ex: with `checksum=file:url` - go-getter will
+get the file linked in the URL after `file:` using a new getter
+(`getter.GetFile`). For example, in
+`file:http://releases.ubuntu.com/cosmic/MD5SUMS` go-getter will download a
+checksum file under the aforementioned url using the http protocol. All
+protocols supported by go-getter can be used. The checksum file will be
+downloaded in a temporary file then parsed. The destination of the temporary
+file can be changed by setting system specific environment variables: `TMPDIR`
+for unix; `TMP`, `TEMP` or `USERPROFILE` on windows. Read godoc of
+[os.TempDir](https://golang.org/pkg/os/#TempDir) for more information. Content
+of files are expected to be BSD or GNU style. Once go-getter is done with the
+checksum file; it is deleted.
 
 The checksum query parameter is never sent to the backend protocol
 implementation. It is used at a higher level by go-getter itself.
