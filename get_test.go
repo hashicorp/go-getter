@@ -378,3 +378,39 @@ func TestGetFile_filename(t *testing.T) {
 		t.Fatalf("err: %s", err)
 	}
 }
+
+func TestGetFile_checksumSkip(t *testing.T) {
+	dst := tempFile(t)
+	u := testModule("basic-file/foo.txt") + "?checksum=md5:09f7e02f1290be211da707a266f153b3"
+
+	getter := &MockGetter{Proxy: new(FileGetter)}
+	client := &Client{
+		Src: u,
+		Dst: dst,
+		Dir: false,
+		Getters: map[string]Getter{
+			"file": getter,
+		},
+	}
+
+	// get the file
+	if err := client.Get(); err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	if v := getter.GetFileURL.Query().Get("checksum"); v != "" {
+		t.Fatalf("bad: %s", v)
+	}
+
+	// remove proxy file getter and reset GetFileCalled so that we can re-test.
+	getter.Proxy = nil
+	getter.GetFileCalled = false
+
+	if err := client.Get(); err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	if getter.GetFileCalled {
+		t.Fatalf("get should not have been called")
+	}
+}
