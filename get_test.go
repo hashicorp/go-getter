@@ -402,11 +402,15 @@ func TestGetFile_checksumSkip(t *testing.T) {
 		t.Fatalf("bad: %s", v)
 	}
 
-	// remove file getter as
-	// client does the skip
-	client.Getters["file"] = nil
+	// remove proxy file getter and reset GetFileCalled so that we can re-test.
+	getter.Proxy = nil
+	getter.GetFileCalled = false
 
 	if err := client.Get(); err != nil {
 		t.Fatalf("err: %s", err)
+	}
+
+	if getter.GetFileCalled {
+		t.Fatalf("get should not have been called")
 	}
 }
