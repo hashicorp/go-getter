@@ -18,8 +18,7 @@ import (
 	urlhelper "github.com/hashicorp/go-getter/helper/url"
 )
 
-// checksum helps verifying the checksum for
-// a file.
+// fileChecksum helps verifying the checksum for a file.
 type fileChecksum struct {
 	Type     string
 	Hash     hash.Hash
