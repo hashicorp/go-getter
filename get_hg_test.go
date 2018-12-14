@@ -84,6 +84,7 @@ func TestHgGetter_GetFile(t *testing.T) {
 
 	g := new(HgGetter)
 	dst := tempFile(t)
+	defer os.Remove(dst)
 
 	// Download
 	if err := g.GetFile(dst, testModuleURL("basic-hg/foo.txt")); err != nil {
