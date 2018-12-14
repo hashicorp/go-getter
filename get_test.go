@@ -348,52 +348,102 @@ func TestGetFile_checksum_from_file(t *testing.T) {
 	checksums := testModule("checksum-file")
 
 	cases := []struct {
-		Append string
-		Err    bool
+		Append       string
+		WantTransfer bool
+		WantErr      bool
 	}{
 		{
 			"",
+			true,
 			false,
 		},
 
 		// md5
 		{
-			"?file:" + checksums + "/md5-p.sum",
+			"?checksum=file:" + checksums + "/md5-p.sum",
+			true,
 			false,
 		},
 		{
-			"?file:" + checksums + "/md5-bsd.sum",
+			"?checksum=file:" + checksums + "/md5-bsd.sum",
+			true,
 			false,
+		},
+		{
+			"?checksum=file:" + checksums + "/md5-bsd-bad.sum",
+			false,
+			true,
+		},
+		{
+			"?checksum=file:" + checksums + "/md5-bsd-wrong.sum",
+			true,
+			true,
 		},
 
 		// sha1
 		{
-			"?file:" + checksums + "/sha1-p.sum",
+			"?checksum=file:" + checksums + "/sha1-p.sum",
+			true,
 			false,
 		},
 		{
-			"?file:" + checksums + "/sha1-bsd.sum",
+			"?checksum=file:" + checksums + "/sha1-bsd.sum",
+			true,
 			false,
+		},
+		{
+			"?checksum=file:" + checksums + "/sha1-bsd-bad.sum",
+			false,
+			true,
+		},
+		{
+			"?checksum=file:" + checksums + "/sha1-bsd-wrong.sum",
+			true,
+			true,
 		},
 
 		// sha256
 		{
-			"?file:" + checksums + "/sha256-p.sum",
+			"?checksum=file:" + checksums + "/sha256-p.sum",
+			true,
 			false,
 		},
 		{
-			"?file:" + checksums + "/sha256-bsd.sum",
+			"?checksum=file:" + checksums + "/sha256-bsd.sum",
+			true,
 			false,
+		},
+		{
+			"?checksum=file:" + checksums + "/sha256-bsd-bad.sum",
+			false,
+			true,
+		},
+		{
+			"?checksum=file:" + checksums + "/sha256-bsd-wrong.sum",
+			true,
+			true,
 		},
 
 		// sha512
 		{
-			"?file:" + checksums + "/sha512-p.sum",
+			"?checksum=file:" + checksums + "/sha512-p.sum",
+			true,
 			false,
 		},
 		{
-			"?file:" + checksums + "/sha512-bsd.sum",
+			"?checksum=file:" + checksums + "/sha512-bsd.sum",
+			true,
 			false,
+		},
+		{
+			"?checksum=file:" + checksums + "/sha512-bsd-bad.sum",
+			false,
+			true,
+		},
+		{
+			"?checksum=file:" + checksums + "/sha512-bsd-wrong.sum",
+			true,
+			true,
 		},
 	}
 
@@ -402,12 +452,14 @@ func TestGetFile_checksum_from_file(t *testing.T) {
 		t.Run(tc.Append, func(t *testing.T) {
 			dst := tempFile(t)
 			defer os.Remove(dst)
-			if err := GetFile(dst, u); (err != nil) != tc.Err {
+			if err := GetFile(dst, u); (err != nil) != tc.WantErr {
 				t.Fatalf("append: %s\n\nerr: %s", tc.Append, err)
 			}
 
-			// Verify the main file exists
-			assertContents(t, dst, "I am a file with some content\n")
+			if tc.WantTransfer {
+				// Verify the main file exists
+				assertContents(t, dst, "I am a file with some content\n")
+			}
 		})
 	}
 }
