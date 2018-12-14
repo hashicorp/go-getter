@@ -10,7 +10,6 @@ import (
 	"fmt"
 	"hash"
 	"io"
-	"io/ioutil"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -19,11 +18,75 @@ import (
 	urlhelper "github.com/hashicorp/go-getter/helper/url"
 )
 
-var checksummers = map[string]func() hash.Hash{
-	"md5":    md5.New,
-	"sha1":   sha1.New,
-	"sha256": sha256.New,
-	"sha512": sha512.New,
+// checksum helps verifying the checksum for
+// a file.
+type fileChecksum struct {
+	Type     string
+	Hash     hash.Hash
+	Value    []byte
+	Filename string
+}
+
+func newChecksum(checksumValue, filename string) (*fileChecksum, error) {
+	c := &fileChecksum{
+		Filename: filename,
+	}
+	var err error
+	c.Value, err = hex.DecodeString(checksumValue)
+	if err != nil {
+		return nil, fmt.Errorf("invalid checksum: %s", err)
+	}
+	return c, nil
+}
+
+func newChecksumFromType(checksumType, checksumValue, filename string) (*fileChecksum, error) {
+	c, err := newChecksum(checksumValue, filename)
+	if err != nil {
+		return nil, err
+	}
+
+	c.Type = strings.ToLower(checksumType)
+	switch c.Type {
+	case "md5":
+		c.Hash = md5.New()
+	case "sha1":
+		c.Hash = sha1.New()
+	case "sha256":
+		c.Hash = sha256.New()
+	case "sha512":
+		c.Hash = sha512.New()
+	default:
+		return nil, fmt.Errorf(
+			"unsupported checksum type: %s", checksumType)
+	}
+
+	return c, nil
+}
+
+func newChecksumFromValue(checksumValue, filename string) (*fileChecksum, error) {
+	c, err := newChecksum(checksumValue, filename)
+	if err != nil {
+		return nil, err
+	}
+
+	switch len(c.Value) {
+	case md5.Size:
+		c.Hash = md5.New()
+		c.Type = "md5"
+	case sha1.Size:
+		c.Hash = sha1.New()
+		c.Type = "sha1"
+	case sha256.Size:
+		c.Hash = sha256.New()
+		c.Type = "sha256"
+	case sha512.Size:
+		c.Hash = sha512.New()
+		c.Type = "sha512"
+	default:
+		return nil, fmt.Errorf("Unknown type for checksum %s", checksumValue)
+	}
+
+	return c, nil
 }
 
 // checksumHashAndValue will return checksum based on checksum parameter of u
@@ -42,79 +105,53 @@ var checksummers = map[string]func() hash.Hash{
 //  <checksum>  file1
 //  <checksum> *file2
 //
-// For GNU-style checksum files; it is very common that the hashing algorithm identifier
-// is in the filename; so the name of every supported hashing algorithm is compared
-// against checksum_url for a match/guess.
-// In case a different hashing algorithm is in the filename of checksum_url
-// it is recommended to explicitly set hashing algorithm instead.
-func checksumHashAndValue(u *url.URL) (checksumHash hash.Hash, checksumValue []byte, err error) {
+// see parseChecksumLine for more detail.
+func checksumHashAndValue(u *url.URL) (*fileChecksum, error) {
 	q := u.Query()
 	v := q.Get("checksum")
 
 	if v == "" {
-		return nil, nil, nil
+		return nil, nil
 	}
 
-	// Determine the checksum hash type
-	checksumType := ""
-	idx := len(v)
-	if i := strings.Index(v, ":"); i > -1 {
-		idx = i
-	}
-	checksumType = v[:idx]
-	if fn, found := checksummers[checksumType]; found {
-		checksumHash = fn()
-		// Get the remainder of the value and parse it into bytes
-		checksumValue, err = hex.DecodeString(v[idx+1:])
-		return
+	vs := strings.SplitN(v, ":", 2)
+	if len(vs) != 2 {
+		return nil, fmt.Errorf("non explicit checksum type: %s", v)
 	}
 
-	if checksumType != "file" {
-		return nil, nil, fmt.Errorf(
-			"unsupported checksum type: %s", checksumType)
-	}
-	file := v[idx+1:]
+	checksumType, checksumValue := vs[0], vs[1]
 
-	checkSums, err := checksumsFromFile(file, u)
-	if err != nil {
-		return nil, nil, err
+	switch checksumType {
+	case "file":
+		return checksumFromFile(checksumValue, u)
+	default:
+		return newChecksumFromType(checksumType, checksumValue, filepath.Base(u.EscapedPath()))
 	}
-
-	var checksumValueString string
-	for checksumType, checksumValueString = range checkSums {
-		if fn, found := checksummers[checksumType]; found {
-			checksumHash = fn()
-			checksumValue, err = hex.DecodeString(checksumValueString)
-			return checksumHash, checksumValue, err
-		}
-	}
-
-	return nil, nil, fmt.Errorf(
-		"Could not find/guess checksum in %s: %s", file, checksumType)
 }
 
 // checksumsFromFile will download checksumFile that is a checksum for file
 // behind src.
 //
 // checksumsFromFile will try to guess the hashing algorithm based on content
-// of or name of checksum file
-func checksumsFromFile(checksumFile string, src *url.URL) (checkSums map[string]string, err error) {
+// of checksum file
+//
+// checksumsFromFile will only return checksums for files that match file
+// behind src
+func checksumFromFile(checksumFile string, src *url.URL) (*fileChecksum, error) {
 	checksumFileURL, err := urlhelper.Parse(checksumFile)
 	if err != nil {
 		return nil, err
 	}
 
-	f, err := ioutil.TempFile("", filepath.Base(checksumFileURL.Path))
+	tempfile, err := tmpFile("", filepath.Base(checksumFileURL.Path))
 	if err != nil {
 		return nil, err
 	}
-	tempfile := f.Name()
-	f.Close()
 	defer func() {
 		os.Remove(tempfile)
 	}()
 
-	if err = GetFile(f.Name(), checksumFile); err != nil {
+	if err = GetFile(tempfile, checksumFile); err != nil {
 		return nil, fmt.Errorf(
 			"Error downloading checksum file: %s", err)
 	}
@@ -133,14 +170,13 @@ func checksumsFromFile(checksumFile string, src *url.URL) (checkSums map[string]
 		absPath,        // fullpath; set if local
 	}
 
-	f, err = os.Open(tempfile)
+	f, err := os.Open(tempfile)
 	if err != nil {
 		return nil, fmt.Errorf(
 			"Error opening downloaded file: %s", err)
 	}
-	defer f.Close() // last defer comes first
+	defer f.Close()
 	rd := bufio.NewReader(f)
-	res := map[string]string{}
 	for {
 		line, err := rd.ReadString('\n')
 		if err != nil {
@@ -150,63 +186,48 @@ func checksumsFromFile(checksumFile string, src *url.URL) (checkSums map[string]
 			}
 			break
 		}
-		checksumType, checksumValue, filename, ok := parseChecksumLine(checksumFile, line)
-		if !ok {
+		checksum, err := parseChecksumLine(line)
+		if err != nil {
 			continue
 		}
+		// make sure the checksum is for the right file
 		for _, option := range options {
-			// filename matches src ?
-			if filename == option {
-				res[checksumType] = checksumValue
-				break
+			if checksum.Filename == option {
+				// any checksum will work so we return the first one
+				return checksum, nil
 			}
 		}
-
 	}
-	if len(res) == 0 {
-		err = fmt.Errorf("Could not find a checksum for %s in %s", filename, checksumFile)
-	}
-	return res, err
+	return nil, fmt.Errorf("no checksum found in: %s", checksumFile)
 }
 
 // parseChecksumLine takes a line from a checksum file and returns
-// checksumType, checksumValue and filename
-// For GNU-style entries parseChecksumLine will try to guess checksumType
-// based on checksumFile which should usually contain the checksum type.
-// checksumType will be lowercase.
-//
-// BSD-style checksum:
-//  MD5 (file1) = <checksum>
-//  MD5 (file2) = <checksum>
-//
-// GNU-style:
-//  <checksum>  file1
-//  <checksum> *file2
-func parseChecksumLine(checksumFilename, line string) (checksumType, checksumValue, filename string, ok bool) {
+// checksumType, checksumValue and filename parseChecksumLine guesses the style
+// of the checksum BSD vs GNU by splitting the line and by counting the parts.
+// of a line.
+// for BSD type sums parseChecksumLine guesses the hashing algorithm
+// by checking the length of the checksum.
+func parseChecksumLine(line string) (*fileChecksum, error) {
 	parts := strings.Fields(line)
 
-	ok = true
 	switch len(parts) {
-	case 4: // BSD-style
-		if len(parts[1]) <= 2 || parts[1][0] != '(' || parts[1][len(parts[1])-1] != ')' {
-			return "", "", "", false
+	case 4:
+		// BSD-style checksum:
+		//  MD5 (file1) = <checksum>
+		//  MD5 (file2) = <checksum>
+		if len(parts[1]) <= 2 ||
+			parts[1][0] != '(' || parts[1][len(parts[1])-1] != ')' {
+			return nil, fmt.Errorf(
+				"Unexpected BSD-style-checksum filename format: %s", line)
 		}
-		checksumType = strings.ToLower(parts[0])
-		filename = parts[1][1 : len(parts[1])-1]
-		checksumValue = parts[3]
-	case 2: // GNU-style
-
-		for ctype := range checksummers {
-			// guess checksum type from filename
-			if strings.Contains(strings.ToLower(checksumFilename), ctype) {
-				checksumType = ctype
-			}
-		}
-		checksumValue = parts[0]
-		filename = parts[1]
+		filename := parts[1][1 : len(parts[1])-1]
+		return newChecksumFromType(parts[0], parts[3], filename)
+	case 2:
+		// GNU-style:
+		//  <checksum>  file1
+		//  <checksum> *file2
+		return newChecksumFromValue(parts[0], parts[1])
 	default:
-		ok = false
+		return nil, fmt.Errorf("Unexpected checksum line format: %s", line)
 	}
-
-	return
 }

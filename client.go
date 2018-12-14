@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/hex"
 	"fmt"
-	"hash"
 	"io"
 	"io/ioutil"
 	"os"
@@ -179,7 +178,7 @@ func (c *Client) Get() error {
 	}
 
 	// Determine checksum if we have one
-	checksumHash, checksumValue, err := checksumHashAndValue(u) // can return nil nil nil
+	checksum, err := checksumHashAndValue(u) // can return nil nil
 	if err != nil {
 		return fmt.Errorf("invalid checksum: %s", err)
 	}
@@ -217,8 +216,8 @@ func (c *Client) Get() error {
 	// and return.
 	if mode == ClientModeFile {
 		getFile := true
-		if checksumHash != nil {
-			if err := checksum(dst, checksumHash, checksumValue); err == nil {
+		if checksum != nil {
+			if err := checksum.checksum(dst); err == nil {
 				// don't get the file if the checksum of dst is correct
 				getFile = false
 			}
@@ -229,8 +228,8 @@ func (c *Client) Get() error {
 				return err
 			}
 
-			if checksumHash != nil {
-				if err := checksum(dst, checksumHash, checksumValue); err != nil {
+			if checksum != nil {
+				if err := checksum.checksum(dst); err != nil {
 					return err
 				}
 			}
@@ -268,7 +267,7 @@ func (c *Client) Get() error {
 	if decompressor == nil {
 		// If we're getting a directory, then this is an error. You cannot
 		// checksum a directory. TODO: test
-		if checksumHash != nil {
+		if checksum != nil {
 			return fmt.Errorf(
 				"checksum cannot be specified for directory download")
 		}
@@ -305,21 +304,21 @@ func (c *Client) Get() error {
 
 // checksum is a simple method to compute the checksum of a source file
 // and compare it to the given expected value.
-func checksum(source string, h hash.Hash, v []byte) error {
+func (c *fileChecksum) checksum(source string) error {
 	f, err := os.Open(source)
 	if err != nil {
 		return fmt.Errorf("Failed to open file for checksum: %s", err)
 	}
 	defer f.Close()
 
-	if _, err := io.Copy(h, f); err != nil {
+	if _, err := io.Copy(c.Hash, f); err != nil {
 		return fmt.Errorf("Failed to hash: %s", err)
 	}
 
-	if actual := h.Sum(nil); !bytes.Equal(actual, v) {
+	if actual := c.Hash.Sum(nil); !bytes.Equal(actual, c.Value) {
 		return fmt.Errorf(
 			"Checksums did not match.\nExpected: %s\nGot: %s",
-			hex.EncodeToString(v),
+			hex.EncodeToString(c.Value),
 			hex.EncodeToString(actual))
 	}
 
