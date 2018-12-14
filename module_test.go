@@ -26,11 +26,8 @@ func tempDir(t *testing.T) string {
 }
 
 func tempFile(t *testing.T) string {
-	fn, err := tmpFile("", "foo")
-	if err != nil {
-		t.Fatalf("err: %v", err)
-	}
-	return fn
+	dir := tempDir(t)
+	return filepath.Join(dir, "foo")
 }
 
 func testModule(n string) string {
