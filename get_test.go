@@ -289,6 +289,10 @@ func TestGetFile_checksum(t *testing.T) {
 
 		// MD5
 		{
+			"?checksum=09f7e02f1290be211da707a266f153b3",
+			false,
+		},
+		{
 			"?checksum=md5:09f7e02f1290be211da707a266f153b3",
 			false,
 		},
@@ -298,6 +302,10 @@ func TestGetFile_checksum(t *testing.T) {
 		},
 
 		// SHA1
+		{
+			"?checksum=1d229271928d3f9e2bb0375bd6ce5db6c6d348d9",
+			false,
+		},
 		{
 			"?checksum=sha1:1d229271928d3f9e2bb0375bd6ce5db6c6d348d9",
 			false,
@@ -309,6 +317,10 @@ func TestGetFile_checksum(t *testing.T) {
 
 		// SHA256
 		{
+			"?checksum=66a045b452102c59d840ec097d59d9467e13a3f34f6494e539ffd32c1bb35f18",
+			false,
+		},
+		{
 			"?checksum=sha256:66a045b452102c59d840ec097d59d9467e13a3f34f6494e539ffd32c1bb35f18",
 			false,
 		},
@@ -318,6 +330,10 @@ func TestGetFile_checksum(t *testing.T) {
 		},
 
 		// SHA512
+		{
+			"?checksum=c2bad2223811194582af4d1508ac02cd69eeeeedeeb98d54fcae4dcefb13cc882e7640328206603d3fb9cd5f949a9be0db054dd34fbfa190c498a5fe09750cef",
+			false,
+		},
 		{
 			"?checksum=sha512:c2bad2223811194582af4d1508ac02cd69eeeeedeeb98d54fcae4dcefb13cc882e7640328206603d3fb9cd5f949a9be0db054dd34fbfa190c498a5fe09750cef",
 			false,

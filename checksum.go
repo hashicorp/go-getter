@@ -29,6 +29,7 @@ type fileChecksum struct {
 // extractChecksum will return a fileChecksum based on the 'checksum'
 // parameter of u.
 // ex:
+//  http://hashicorp.com/terraform?checksum=<checksumValue>
 //  http://hashicorp.com/terraform?checksum=<checksumType>:<checksumValue>
 //  http://hashicorp.com/terraform?checksum=file:<checksum_url>
 // when checksumming from a file, extractChecksum will go get checksum_url
@@ -53,8 +54,13 @@ func extractChecksum(u *url.URL) (*fileChecksum, error) {
 	}
 
 	vs := strings.SplitN(v, ":", 2)
-	if len(vs) != 2 {
-		return nil, fmt.Errorf("non explicit checksum type: %s", v)
+	switch len(vs) {
+	case 2:
+		break // good
+	default:
+		// here, we try to guess the checksum from it's length
+		// if the type was not passed
+		return newChecksumFromValue(v, filepath.Base(u.EscapedPath()))
 	}
 
 	checksumType, checksumValue := vs[0], vs[1]

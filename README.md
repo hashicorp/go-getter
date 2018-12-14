@@ -159,12 +159,18 @@ To checksum a file, append a `checksum` query parameter to the URL.
 The parameter value should be in the format of `type:value`, where
 type is "md5", "sha1", "sha256", "sha512" or "file". The "value" should be
 the actual checksum value or download URL for "file".
+When `type` part is omitted it will be guessed based on the length
+of the checksum string.
 go-getter will parse out this query parameter automatically
 and use it to verify the checksum. 
 Examples:
 
 ```
 ./foo.txt?checksum=md5:b7d96c89d09d9e204f5fedc4d5d55b21
+```
+
+```
+./foo.txt?checksum=b7d96c89d09d9e204f5fedc4d5d55b21
 ```
 
 ```
