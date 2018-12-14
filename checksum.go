@@ -193,8 +193,12 @@ func checksumFromFile(checksumFile string, src *url.URL) (*fileChecksum, error) 
 			break
 		}
 		checksum, err := parseChecksumLine(line)
-		if err != nil {
+		if err != nil || checksum == nil {
 			continue
+		}
+		if checksum.Filename == "" {
+			// filename not sure, let's try
+			return checksum, nil
 		}
 		// make sure the checksum is for the right file
 		for _, option := range options {
@@ -233,7 +237,9 @@ func parseChecksumLine(line string) (*fileChecksum, error) {
 		//  <checksum>  file1
 		//  <checksum> *file2
 		return newChecksumFromValue(parts[0], parts[1])
+	case 0:
+		return nil, nil // empty line
 	default:
-		return nil, fmt.Errorf("Unexpected checksum line format: %s", line)
+		return newChecksumFromValue(parts[0], "")
 	}
 }
