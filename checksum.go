@@ -26,6 +26,47 @@ type fileChecksum struct {
 	Filename string
 }
 
+// extractChecksum will return a fileChecksum based on the 'checksum'
+// parameter of u.
+// ex:
+//  http://hashicorp.com/terraform?checksum=<checksumType>:<checksumValue>
+//  http://hashicorp.com/terraform?checksum=file:<checksum_url>
+// when checksumming from a file, extractChecksum will go get checksum_url
+// in a temporary directory, parse the content of the file then delete it.
+// Content of files are expected to be BSD style or GNU style.
+//
+// BSD-style checksum:
+//  MD5 (file1) = <checksum>
+//  MD5 (file2) = <checksum>
+//
+// GNU-style:
+//  <checksum>  file1
+//  <checksum> *file2
+//
+// see parseChecksumLine for more detail on checksum file parsing
+func extractChecksum(u *url.URL) (*fileChecksum, error) {
+	q := u.Query()
+	v := q.Get("checksum")
+
+	if v == "" {
+		return nil, nil
+	}
+
+	vs := strings.SplitN(v, ":", 2)
+	if len(vs) != 2 {
+		return nil, fmt.Errorf("non explicit checksum type: %s", v)
+	}
+
+	checksumType, checksumValue := vs[0], vs[1]
+
+	switch checksumType {
+	case "file":
+		return checksumFromFile(checksumValue, u)
+	default:
+		return newChecksumFromType(checksumType, checksumValue, filepath.Base(u.EscapedPath()))
+	}
+}
+
 func newChecksum(checksumValue, filename string) (*fileChecksum, error) {
 	c := &fileChecksum{
 		Filename: filename,
@@ -86,47 +127,6 @@ func newChecksumFromValue(checksumValue, filename string) (*fileChecksum, error)
 	}
 
 	return c, nil
-}
-
-// extractChecksum will return a fileChecksum based on the 'checksum'
-// parameter of u.
-// ex:
-//  http://hashicorp.com/terraform?checksum=<checksumType>:<checksumValue>
-//  http://hashicorp.com/terraform?checksum=file:<checksum_url>
-// when checksumming from a file extractChecksum will go get checksum_url
-// in a temporary directory, parse the content of the file then delete it.
-// Content of files are expected to be BSD style or GNU style.
-//
-// BSD-style checksum:
-//  MD5 (file1) = <checksum>
-//  MD5 (file2) = <checksum>
-//
-// GNU-style:
-//  <checksum>  file1
-//  <checksum> *file2
-//
-// see parseChecksumLine for more detail.
-func extractChecksum(u *url.URL) (*fileChecksum, error) {
-	q := u.Query()
-	v := q.Get("checksum")
-
-	if v == "" {
-		return nil, nil
-	}
-
-	vs := strings.SplitN(v, ":", 2)
-	if len(vs) != 2 {
-		return nil, fmt.Errorf("non explicit checksum type: %s", v)
-	}
-
-	checksumType, checksumValue := vs[0], vs[1]
-
-	switch checksumType {
-	case "file":
-		return checksumFromFile(checksumValue, u)
-	default:
-		return newChecksumFromType(checksumType, checksumValue, filepath.Base(u.EscapedPath()))
-	}
 }
 
 // checksumsFromFile will download checksumFile that is a checksum for file
