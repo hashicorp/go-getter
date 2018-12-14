@@ -6,7 +6,6 @@ type ClientOption func(*Client) error
 // Configure configures a client with options.
 func (c *Client) Configure(opts ...ClientOption) error {
 	c.Options = opts
-	c.ProgressListener = noopProgressListener
 	for _, opt := range opts {
 		err := opt(c)
 		if err != nil {

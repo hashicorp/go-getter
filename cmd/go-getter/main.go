@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/hashicorp/go-getter"
+	"github.com/hashicorp/go-getter/progresstracking/cheggaaa"
 )
 
 func main() {
@@ -48,7 +49,7 @@ func main() {
 	}
 	var opts []getter.ClientOption
 	if *progress {
-		opts = append(opts, getter.WithCheggaaaProgressBarV1())
+		opts = append(opts, getter.WithProgress(cheggaaa.DefaultProgressBar))
 	}
 
 	if err := client.Configure(opts...); err != nil {

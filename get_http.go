@@ -197,9 +197,10 @@ func (g *HttpGetter) GetFile(dst string, src *url.URL) error {
 
 	body := resp.Body
 
-	if g.client != nil {
+	if g.client != nil && g.client.ProgressListener != nil {
 		// track download
-		body = g.client.ProgressListener.TrackProgress(src.String(), currentFileSize, currentFileSize+resp.ContentLength, resp.Body)
+		fn := filepath.Base(src.EscapedPath())
+		body = g.client.ProgressListener.TrackProgress(fn, currentFileSize, currentFileSize+resp.ContentLength, resp.Body)
 	}
 	defer body.Close()
 
