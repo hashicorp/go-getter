@@ -344,6 +344,74 @@ func TestGetFile_checksum(t *testing.T) {
 	}
 }
 
+func TestGetFile_checksum_from_file(t *testing.T) {
+	checksums := testModule("checksum-file")
+
+	cases := []struct {
+		Append string
+		Err    bool
+	}{
+		{
+			"",
+			false,
+		},
+
+		// md5
+		{
+			"?file:" + checksums + "/md5-p.sum",
+			false,
+		},
+		{
+			"?file:" + checksums + "/md5-bsd.sum",
+			false,
+		},
+
+		// sha1
+		{
+			"?file:" + checksums + "/sha1-p.sum",
+			false,
+		},
+		{
+			"?file:" + checksums + "/sha1-bsd.sum",
+			false,
+		},
+
+		// sha256
+		{
+			"?file:" + checksums + "/sha256-p.sum",
+			false,
+		},
+		{
+			"?file:" + checksums + "/sha256-bsd.sum",
+			false,
+		},
+
+		// sha512
+		{
+			"?file:" + checksums + "/sha512-p.sum",
+			false,
+		},
+		{
+			"?file:" + checksums + "/sha512-bsd.sum",
+			false,
+		},
+	}
+
+	for _, tc := range cases {
+		u := checksums + "/content.txt" + tc.Append
+		t.Run(tc.Append, func(t *testing.T) {
+			dst := tempFile(t)
+			defer os.Remove(dst)
+			if err := GetFile(dst, u); (err != nil) != tc.Err {
+				t.Fatalf("append: %s\n\nerr: %s", tc.Append, err)
+			}
+
+			// Verify the main file exists
+			assertContents(t, dst, "I am a file with some content\n")
+		})
+	}
+}
+
 func TestGetFile_checksumURL(t *testing.T) {
 	dst := tempFile(t)
 	u := testModule("basic-file/foo.txt") + "?checksum=md5:09f7e02f1290be211da707a266f153b3"
