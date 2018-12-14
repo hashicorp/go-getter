@@ -88,12 +88,13 @@ func newChecksumFromValue(checksumValue, filename string) (*fileChecksum, error)
 	return c, nil
 }
 
-// checksumHashAndValue will return checksum based on checksum parameter of u
+// extractChecksum will return a fileChecksum based on the 'checksum'
+// parameter of u.
 // ex:
 //  http://hashicorp.com/terraform?checksum=<checksumType>:<checksumValue>
 //  http://hashicorp.com/terraform?checksum=file:<checksum_url>
-// when checksumming from a file checksumHashAndValue will go get checksum_url
-// in a temporary directory and parse the content of the file.
+// when checksumming from a file extractChecksum will go get checksum_url
+// in a temporary directory, parse the content of the file then delete it.
 // Content of files are expected to be BSD style or GNU style.
 //
 // BSD-style checksum:
@@ -105,7 +106,7 @@ func newChecksumFromValue(checksumValue, filename string) (*fileChecksum, error)
 //  <checksum> *file2
 //
 // see parseChecksumLine for more detail.
-func checksumHashAndValue(u *url.URL) (*fileChecksum, error) {
+func extractChecksum(u *url.URL) (*fileChecksum, error) {
 	q := u.Query()
 	v := q.Get("checksum")
 

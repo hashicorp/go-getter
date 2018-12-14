@@ -172,7 +172,7 @@ func (c *Client) Get() error {
 	}
 
 	// Determine checksum if we have one
-	checksum, err := checksumHashAndValue(u) // can return nil nil
+	checksum, err := extractChecksum(u)
 	if err != nil {
 		return fmt.Errorf("invalid checksum: %s", err)
 	}

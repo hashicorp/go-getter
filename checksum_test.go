@@ -21,7 +21,7 @@ func u(t *testing.T, in string) *url.URL {
 	return u
 }
 
-func Test_checksumHashAndValue(t *testing.T) {
+func Test_extractChecksum(t *testing.T) {
 	checksums := testModule("checksum-file")
 
 	type args struct {
@@ -186,7 +186,7 @@ func Test_checksumHashAndValue(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotFileChecksum, err := checksumHashAndValue(tt.args.u)
+			gotFileChecksum, err := extractChecksum(tt.args.u)
 			if (err != nil) != tt.want.Err {
 				t.Errorf("checksumHashAndValue() error = %v , wantErr %v", err, tt.want.Err)
 				return
