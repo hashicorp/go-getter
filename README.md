@@ -178,8 +178,8 @@ Examples:
 ```
  
 When checksumming from a file - ex: with `checksum=file:url` - go-getter will
-get the file linked in the URL after `file:` using a new getter
-(`getter.GetFile`). For example, in
+get the file linked in the URL after `file:` using the same client
+(`client.Get(`). For example, in
 `file:http://releases.ubuntu.com/cosmic/MD5SUMS` go-getter will download a
 checksum file under the aforementioned url using the http protocol. All
 protocols supported by go-getter can be used. The checksum file will be
