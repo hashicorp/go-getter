@@ -39,14 +39,14 @@ func main() {
 	}
 
 	// Build the client
-	client := &getter.Client{
+	request := &getter.Request{
 		Src:  args[0],
 		Dst:  args[1],
 		Pwd:  pwd,
 		Mode: mode,
 	}
 
-	if err := client.Get(); err != nil {
+	if err := getter.DefaultClient.Get(request); err != nil {
 		log.Fatalf("Error downloading: %s", err)
 		os.Exit(1)
 	}

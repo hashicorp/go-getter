@@ -69,14 +69,15 @@ func TestGet_fileDetect(t *testing.T) {
 		t.Fatalf("err: %s", err)
 	}
 
-	client := &Client{
+	client := &Client{}
+	req := &Request{
 		Src: u,
 		Dst: dst,
 		Pwd: pwd,
 		Dir: true,
 	}
 
-	if err := client.Get(); err != nil {
+	if err := client.Get(req); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
@@ -486,16 +487,18 @@ func TestGetFile_checksumURL(t *testing.T) {
 	u := testModule("basic-file/foo.txt") + "?checksum=md5:09f7e02f1290be211da707a266f153b3"
 
 	getter := &MockGetter{Proxy: new(FileGetter)}
-	client := &Client{
+	req := &Request{
 		Src: u,
 		Dst: dst,
 		Dir: false,
+	}
+	client := &Client{
 		Getters: map[string]Getter{
 			"file": getter,
 		},
 	}
 
-	if err := client.Get(); err != nil {
+	if err := client.Get(req); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
@@ -526,17 +529,19 @@ func TestGetFile_checksumSkip(t *testing.T) {
 	u := testModule("basic-file/foo.txt") + "?checksum=md5:09f7e02f1290be211da707a266f153b3"
 
 	getter := &MockGetter{Proxy: new(FileGetter)}
-	client := &Client{
+	req := &Request{
 		Src: u,
 		Dst: dst,
 		Dir: false,
+	}
+	client := &Client{
 		Getters: map[string]Getter{
 			"file": getter,
 		},
 	}
 
 	// get the file
-	if err := client.Get(); err != nil {
+	if err := client.Get(req); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
@@ -548,7 +553,7 @@ func TestGetFile_checksumSkip(t *testing.T) {
 	getter.Proxy = nil
 	getter.GetFileCalled = false
 
-	if err := client.Get(); err != nil {
+	if err := client.Get(req); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 

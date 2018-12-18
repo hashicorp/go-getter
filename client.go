@@ -21,6 +21,22 @@ import (
 // Using a client directly allows more fine-grained control over how downloading
 // is done, as well as customizing the protocols supported.
 type Client struct {
+
+	// Detectors is the list of detectors that are tried on the source.
+	// If this is nil, then the default Detectors will be used.
+	Detectors []Detector
+
+	// Decompressors is the map of decompressors supported by this client.
+	// If this is nil, then the default value is the Decompressors global.
+	Decompressors map[string]Decompressor
+
+	// Getters is the map of protocols supported by this client. If this
+	// is nil, then the default Getters variable will be used.
+	Getters map[string]Getter
+}
+
+// Request is a request for downloading things
+type Request struct {
 	// Src is the source URL to get.
 	//
 	// Dst is the path to save the downloaded thing as. If Dir is set to
@@ -38,18 +54,6 @@ type Client struct {
 	// for documentation.
 	Mode ClientMode
 
-	// Detectors is the list of detectors that are tried on the source.
-	// If this is nil, then the default Detectors will be used.
-	Detectors []Detector
-
-	// Decompressors is the map of decompressors supported by this client.
-	// If this is nil, then the default value is the Decompressors global.
-	Decompressors map[string]Decompressor
-
-	// Getters is the map of protocols supported by this client. If this
-	// is nil, then the default Getters variable will be used.
-	Getters map[string]Getter
-
 	// Dir, if true, tells the Client it is downloading a directory (versus
 	// a single file). This distinction is necessary since filenames and
 	// directory names follow the same format so disambiguating is impossible
@@ -60,11 +64,11 @@ type Client struct {
 }
 
 // Get downloads the configured source to the destination.
-func (c *Client) Get() error {
+func (c *Client) Get(req *Request) error {
 	// Store this locally since there are cases we swap this
-	mode := c.Mode
+	mode := req.Mode
 	if mode == ClientModeInvalid {
-		if c.Dir {
+		if req.Dir {
 			mode = ClientModeDir
 		} else {
 			mode = ClientModeFile
@@ -82,7 +86,7 @@ func (c *Client) Get() error {
 	if detectors == nil {
 		detectors = Detectors
 	}
-	src, err := Detect(c.Src, c.Pwd, detectors)
+	src, err := Detect(req.Src, req.Pwd, detectors)
 	if err != nil {
 		return err
 	}
@@ -93,7 +97,7 @@ func (c *Client) Get() error {
 	// If there is a subdir component, then we download the root separately
 	// and then copy over the proper subdir.
 	var realDst string
-	dst := c.Dst
+	dst := req.Dst
 	src, subDir := SourceDirSubdir(src)
 	if subDir != "" {
 		td, tdcloser, err := safetemp.Dir("", "getter")
@@ -102,7 +106,7 @@ func (c *Client) Get() error {
 		}
 		defer tdcloser.Close()
 
-		realDst = dst
+		realDst = req.Dst
 		dst = td
 	}
 
@@ -178,7 +182,7 @@ func (c *Client) Get() error {
 	}
 
 	// Determine checksum if we have one
-	checksum, err := extractChecksum(u)
+	checksum, err := c.extractChecksum(u)
 	if err != nil {
 		return fmt.Errorf("invalid checksum: %s", err)
 	}

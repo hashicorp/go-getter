@@ -69,18 +69,23 @@ func init() {
 	}
 }
 
+// DefaultClient is the default client used
+// for all requests.
+var DefaultClient = &Client{
+	Getters: Getters,
+}
+
 // Get downloads the directory specified by src into the folder specified by
 // dst. If dst already exists, Get will attempt to update it.
 //
 // src is a URL, whereas dst is always just a file path to a folder. This
 // folder doesn't need to exist. It will be created if it doesn't exist.
 func Get(dst, src string) error {
-	return (&Client{
-		Src:     src,
-		Dst:     dst,
-		Dir:     true,
-		Getters: Getters,
-	}).Get()
+	return DefaultClient.Get(&Request{
+		Src: src,
+		Dst: dst,
+		Dir: true,
+	})
 }
 
 // GetAny downloads a URL into the given destination. Unlike Get or
@@ -90,23 +95,21 @@ func Get(dst, src string) error {
 // into dst with the basename of the URL. If src is a directory or
 // archive, it will be unpacked directly into dst.
 func GetAny(dst, src string) error {
-	return (&Client{
-		Src:     src,
-		Dst:     dst,
-		Mode:    ClientModeAny,
-		Getters: Getters,
-	}).Get()
+	return DefaultClient.Get(&Request{
+		Src:  src,
+		Dst:  dst,
+		Mode: ClientModeAny,
+	})
 }
 
 // GetFile downloads the file specified by src into the path specified by
 // dst.
 func GetFile(dst, src string) error {
-	return (&Client{
-		Src:     src,
-		Dst:     dst,
-		Dir:     false,
-		Getters: Getters,
-	}).Get()
+	return DefaultClient.Get(&Request{
+		Src: src,
+		Dst: dst,
+		Dir: false,
+	})
 }
 
 // getRunCommand is a helper that will run a command and capture the output
