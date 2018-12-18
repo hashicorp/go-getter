@@ -409,6 +409,11 @@ func TestGetFile_checksum_from_file(t *testing.T) {
 			false,
 		},
 		{
+			"?checksum=file:" + checksums + "/sha1.sum",
+			true,
+			false,
+		},
+		{
 			"?checksum=file:" + checksums + "/sha1-bsd-bad.sum",
 			false,
 			true,
