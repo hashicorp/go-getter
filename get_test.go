@@ -404,24 +404,9 @@ func TestGetFile_checksum_from_file(t *testing.T) {
 			false,
 		},
 		{
-			"?checksum=file:" + checksums + "/sha1-bsd.sum",
-			true,
-			false,
-		},
-		{
 			"?checksum=file:" + checksums + "/sha1.sum",
 			true,
 			false,
-		},
-		{
-			"?checksum=file:" + checksums + "/sha1-bsd-bad.sum",
-			false,
-			true,
-		},
-		{
-			"?checksum=file:" + checksums + "/sha1-bsd-wrong.sum",
-			true,
-			true,
 		},
 
 		// sha256
@@ -430,42 +415,12 @@ func TestGetFile_checksum_from_file(t *testing.T) {
 			true,
 			false,
 		},
-		{
-			"?checksum=file:" + checksums + "/sha256-bsd.sum",
-			true,
-			false,
-		},
-		{
-			"?checksum=file:" + checksums + "/sha256-bsd-bad.sum",
-			false,
-			true,
-		},
-		{
-			"?checksum=file:" + checksums + "/sha256-bsd-wrong.sum",
-			true,
-			true,
-		},
 
 		// sha512
 		{
 			"?checksum=file:" + checksums + "/sha512-p.sum",
 			true,
 			false,
-		},
-		{
-			"?checksum=file:" + checksums + "/sha512-bsd.sum",
-			true,
-			false,
-		},
-		{
-			"?checksum=file:" + checksums + "/sha512-bsd-bad.sum",
-			false,
-			true,
-		},
-		{
-			"?checksum=file:" + checksums + "/sha512-bsd-wrong.sum",
-			true,
-			true,
 		},
 	}
 
