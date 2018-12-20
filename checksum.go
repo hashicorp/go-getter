@@ -45,7 +45,7 @@ type fileChecksum struct {
 //  <checksum> *file2
 //
 // see parseChecksumLine for more detail on checksum file parsing
-func (c *Client) extractChecksum(u *url.URL) (*fileChecksum, error) {
+func extractChecksum(u *url.URL) (*fileChecksum, error) {
 	q := u.Query()
 	v := q.Get("checksum")
 
@@ -67,7 +67,7 @@ func (c *Client) extractChecksum(u *url.URL) (*fileChecksum, error) {
 
 	switch checksumType {
 	case "file":
-		return c.checksumFromFile(checksumValue, u)
+		return checksumFromFile(checksumValue, u)
 	default:
 		return newChecksumFromType(checksumType, checksumValue, filepath.Base(u.EscapedPath()))
 	}
@@ -143,7 +143,7 @@ func newChecksumFromValue(checksumValue, filename string) (*fileChecksum, error)
 //
 // checksumsFromFile will only return checksums for files that match file
 // behind src
-func (c *Client) checksumFromFile(checksumFile string, src *url.URL) (*fileChecksum, error) {
+func checksumFromFile(checksumFile string, src *url.URL) (*fileChecksum, error) {
 	checksumFileURL, err := urlhelper.Parse(checksumFile)
 	if err != nil {
 		return nil, err
@@ -157,11 +157,7 @@ func (c *Client) checksumFromFile(checksumFile string, src *url.URL) (*fileCheck
 		os.Remove(tempfile)
 	}()
 
-	if err = c.Get(&Request{
-		Src: checksumFile,
-		Dst: tempfile,
-		Dir: false,
-	}); err != nil {
+	if err = GetFile(tempfile, checksumFile); err != nil {
 		return nil, fmt.Errorf(
 			"Error downloading checksum file: %s", err)
 	}
