@@ -155,15 +155,13 @@ For file downloads of any protocol, go-getter can automatically verify
 a checksum for you. Note that checksumming only works for downloading files,
 not directories, but checksumming will work for any protocol.
 
-To checksum a file, append a `checksum` query parameter to the URL.
-The parameter value should be in the format of `type:value`, where
-type is "md5", "sha1", "sha256", "sha512" or "file". The "value" should be
-the actual checksum value or download URL for "file".
-When `type` part is omitted it will be guessed based on the length
-of the checksum string.
-go-getter will parse out this query parameter automatically
-and use it to verify the checksum. 
-Examples:
+To checksum a file, append a `checksum` query parameter to the URL. go-getter
+will parse out this query parameter automatically and use it to verify the
+checksum. The parameter value can be in the format of `type:value` or just
+`value`, where type is "md5", "sha1", "sha256", "sha512" or "file" . The
+"value" should be the actual checksum value or download URL for "file". When
+`type` part is omitted, type will be guessed based on the length of the
+checksum string. Examples:
 
 ```
 ./foo.txt?checksum=md5:b7d96c89d09d9e204f5fedc4d5d55b21
@@ -178,11 +176,10 @@ Examples:
 ```
  
 When checksumming from a file - ex: with `checksum=file:url` - go-getter will
-get the file linked in the URL after `file:` using the same client
-(`client.Get(`). For example, in
-`file:http://releases.ubuntu.com/cosmic/MD5SUMS` go-getter will download a
-checksum file under the aforementioned url using the http protocol. All
-protocols supported by go-getter can be used. The checksum file will be
+get the file linked in the URL after `file:` using the same configuration. For
+example, in `file:http://releases.ubuntu.com/cosmic/MD5SUMS` go-getter will
+download a checksum file under the aforementioned url using the http protocol.
+All protocols supported by go-getter can be used. The checksum file will be
 downloaded in a temporary file then parsed. The destination of the temporary
 file can be changed by setting system specific environment variables: `TMPDIR`
 for unix; `TMP`, `TEMP` or `USERPROFILE` on windows. Read godoc of
