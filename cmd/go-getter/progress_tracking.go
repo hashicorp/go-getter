@@ -1,4 +1,4 @@
-package cheggaaa
+package main
 
 import (
 	"io"
@@ -10,8 +10,7 @@ import (
 )
 
 // DefaultProgressBar is the default instance of a cheggaaa
-// progress bar. It is recommended to use DefaultProgressBar
-// in all places.
+// progress bar.
 var DefaultProgressBar getter.ProgressTracker = &ProgressBar{}
 
 // ProgressBar wraps a github.com/cheggaaa/pb.Pool
@@ -30,7 +29,7 @@ type ProgressBar struct {
 	pbs int
 }
 
-func defaultCheggaaaProgressBarConfigFN(bar *pb.ProgressBar, prefix string) {
+func ProgressBarConfig(bar *pb.ProgressBar, prefix string) {
 	bar.SetUnits(pb.U_BYTES)
 	bar.Prefix(prefix)
 }
@@ -44,7 +43,7 @@ func (cpb *ProgressBar) TrackProgress(src string, currentSize, totalSize int64, 
 
 	newPb := pb.New64(totalSize)
 	newPb.Set64(currentSize)
-	defaultCheggaaaProgressBarConfigFN(newPb, filepath.Base(src))
+	ProgressBarConfig(newPb, filepath.Base(src))
 	if cpb.pool == nil {
 		cpb.pool = pb.NewPool()
 		cpb.pool.Start()
