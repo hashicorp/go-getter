@@ -84,14 +84,10 @@ func newChecksumFromValue(checksumValue, filename string) (*fileChecksum, error)
 	return c, nil
 }
 
-// checksumsFromFile will download checksumFile that is a checksum for file
-// behind src.
+// checksumsFromFile will return all the fileChecksums found in file
 //
-// checksumsFromFile will try to guess the hashing algorithm based on content
-// of checksum file
-//
-// checksumsFromFile will only return checksums for files that match file
-// behind src
+// a checksum file could contain checksum from different files.
+// check wether the Filename matches before using a fileChecksum.
 func checksumsFromFile(file string) ([]*fileChecksum, error) {
 	f, err := os.Open(file)
 	if err != nil {
