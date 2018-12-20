@@ -256,7 +256,9 @@ func get(src, dst, pwd string,
 				}
 			}
 			if checksum == nil {
-				return fmt.Errorf("No matching checksum found in %s. Options: %v", checksumFile, options)
+				return fmt.Errorf(
+					"No matching checksum found in %s. %d file sums. Options %v",
+					checksumFile, len(checksums), options)
 			}
 		case "":
 			checksum, err = newChecksumFromValue(v, filepath.Base(u.EscapedPath()))
