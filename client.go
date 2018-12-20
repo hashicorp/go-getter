@@ -194,6 +194,10 @@ func get(src, dst, pwd string,
 	//  http://hashicorp.com/terraform?checksum=file:<checksum_url>
 	//
 	if v := q.Get("checksum"); v != "" {
+		// Delete the query parameter if we have it.
+		q.Del("checksum")
+		u.RawQuery = q.Encode()
+
 		vs := strings.SplitN(v, ":", 2)
 		var checksumType, checksumValue string
 		switch len(vs) {
@@ -269,10 +273,6 @@ func get(src, dst, pwd string,
 		if err != nil {
 			return fmt.Errorf("invalid checksum: %s", err)
 		}
-
-		// Delete the query parameter
-		q.Del("checksum")
-		u.RawQuery = q.Encode()
 	}
 
 	if mode == ClientModeAny {
