@@ -366,6 +366,8 @@ func TestGetFile_checksum(t *testing.T) {
 
 func TestGetFile_checksum_from_file(t *testing.T) {
 	checksums := testModule("checksum-file")
+	httpChecksums := httpTestModule("checksum-file")
+	defer httpChecksums.Close()
 
 	cases := []struct {
 		Append       string
@@ -385,7 +387,7 @@ func TestGetFile_checksum_from_file(t *testing.T) {
 			false,
 		},
 		{
-			"?checksum=file:" + checksums + "/md5-bsd.sum",
+			"?checksum=file:" + httpChecksums.URL + "/md5-bsd.sum",
 			true,
 			false,
 		},
@@ -395,7 +397,7 @@ func TestGetFile_checksum_from_file(t *testing.T) {
 			true,
 		},
 		{
-			"?checksum=file:" + checksums + "/md5-bsd-wrong.sum",
+			"?checksum=file:" + httpChecksums.URL + "/md5-bsd-wrong.sum",
 			true,
 			true,
 		},
@@ -407,7 +409,7 @@ func TestGetFile_checksum_from_file(t *testing.T) {
 			false,
 		},
 		{
-			"?checksum=file:" + checksums + "/sha1.sum",
+			"?checksum=file:" + httpChecksums.URL + "/sha1.sum",
 			true,
 			false,
 		},
@@ -421,7 +423,7 @@ func TestGetFile_checksum_from_file(t *testing.T) {
 
 		// sha512
 		{
-			"?checksum=file:" + checksums + "/sha512-p.sum",
+			"?checksum=file:" + httpChecksums.URL + "/sha512-p.sum",
 			true,
 			false,
 		},
