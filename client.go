@@ -177,15 +177,41 @@ func (c *Client) Get() error {
 		mode = ClientModeFile
 	}
 
+	var checksum *fileChecksum
 	// Determine checksum if we have one
-	checksum, err := extractChecksum(u)
-	if err != nil {
-		return fmt.Errorf("invalid checksum: %s", err)
-	}
+	// a checksum could be for example:
+	//
+	//  http://hashicorp.com/terraform?checksum=<checksumValue>
+	//  http://hashicorp.com/terraform?checksum=<checksumType>:<checksumValue>
+	//  http://hashicorp.com/terraform?checksum=file:<checksum_url>
+	//
+	if v := q.Get("checksum"); v != "" {
+		vs := strings.SplitN(v, ":", 2)
+		var checksumType, checksumValue string
+		switch len(vs) {
+		default:
+			checksumValue = v
+		case 2:
+			checksumType, checksumValue = vs[0], vs[1]
+		}
 
-	// Delete the query parameter if we have it.
-	q.Del("checksum")
-	u.RawQuery = q.Encode()
+		switch checksumType {
+		case "":
+			checksum, err = newChecksumFromValue(v, filepath.Base(u.EscapedPath()))
+		case "file":
+			checksum, err = checksumFromFile(checksumValue, u)
+		default:
+			checksum, err = newChecksumFromType(checksumType, checksumValue, filepath.Base(u.EscapedPath()))
+		}
+
+		if err != nil {
+			return fmt.Errorf("invalid checksum: %s", err)
+		}
+
+		// Delete the query parameter
+		q.Del("checksum")
+		u.RawQuery = q.Encode()
+	}
 
 	if mode == ClientModeAny {
 		// Ask the getter which client mode to use
