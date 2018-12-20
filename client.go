@@ -82,7 +82,21 @@ func (c *Client) Get() error {
 	if detectors == nil {
 		detectors = Detectors
 	}
-	src, err := Detect(c.Src, c.Pwd, detectors)
+
+	getters := c.Getters
+	if getters == nil {
+		getters = Getters
+	}
+
+	return get(c.Src, c.Dst, c.Pwd, detectors, getters, decompressors, mode)
+}
+
+func get(src, dst, pwd string,
+	detectors []Detector,
+	getters map[string]Getter,
+	decompressors map[string]Decompressor,
+	mode ClientMode) error {
+	src, err := Detect(src, pwd, detectors)
 	if err != nil {
 		return err
 	}
@@ -93,7 +107,6 @@ func (c *Client) Get() error {
 	// If there is a subdir component, then we download the root separately
 	// and then copy over the proper subdir.
 	var realDst string
-	dst := c.Dst
 	src, subDir := SourceDirSubdir(src)
 	if subDir != "" {
 		td, tdcloser, err := safetemp.Dir("", "getter")
@@ -112,11 +125,6 @@ func (c *Client) Get() error {
 	}
 	if force == "" {
 		force = u.Scheme
-	}
-
-	getters := c.Getters
-	if getters == nil {
-		getters = Getters
 	}
 
 	g, ok := getters[force]
@@ -196,10 +204,62 @@ func (c *Client) Get() error {
 		}
 
 		switch checksumType {
+		case "file":
+			// download checksum file to temporary file
+			checksumFile, err := urlhelper.Parse(checksumValue)
+			if err != nil {
+				return fmt.Errorf("invalid checksum file url: %s", err)
+			}
+			tempfile, err := tmpFile("", filepath.Base(checksumFile.Path))
+			if err != nil {
+				return fmt.Errorf("failed to create temporary checksum file: %s", err)
+			}
+			defer os.Remove(tempfile)
+
+			if err := get(checksumFile.String(), tempfile, pwd, detectors, getters, decompressors, mode); err != nil {
+				return fmt.Errorf("Get checksum file: %s", err)
+			}
+			checksums, err := checksumsFromFile(tempfile)
+			if err != nil {
+				return err
+			}
+			filename := filepath.Base(u.Path)
+			absPath, err := filepath.Abs(u.Path)
+			if err != nil {
+				return err
+			}
+			relpath, err := filepath.Rel(filepath.Dir(checksumFile.Path), absPath)
+			if err != nil {
+				return err
+			}
+			options := []string{
+				filename,       // ubuntu-14.04.1-server-amd64.iso
+				"*" + filename, // *ubuntu-14.04.1-server-amd64.iso  Standard checksum
+				"?" + filename, // ?ubuntu-14.04.1-server-amd64.iso  shasum -p
+				relpath,        // dir/ubuntu-14.04.1-server-amd64.iso
+				"./" + relpath, // ./dir/ubuntu-14.04.1-server-amd64.iso
+				absPath,        // /root/dir/ubuntu-14.04.1-server-amd64.iso
+			}
+			for _, c := range checksums {
+				if c.Filename == "" {
+					checksum = c
+					break
+				}
+				for _, option := range options {
+					if c.Filename == option {
+						checksum = c
+						break
+					}
+				}
+				if checksum != nil {
+					break
+				}
+			}
+			if checksum == nil {
+				return fmt.Errorf("No matching checksum found in %s. Options: %v", checksumFile, options)
+			}
 		case "":
 			checksum, err = newChecksumFromValue(v, filepath.Base(u.EscapedPath()))
-		case "file":
-			checksum, err = checksumFromFile(checksumValue, u)
 		default:
 			checksum, err = newChecksumFromType(checksumType, checksumValue, filepath.Base(u.EscapedPath()))
 		}

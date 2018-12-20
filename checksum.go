@@ -10,12 +10,8 @@ import (
 	"fmt"
 	"hash"
 	"io"
-	"net/url"
 	"os"
-	"path/filepath"
 	"strings"
-
-	urlhelper "github.com/hashicorp/go-getter/helper/url"
 )
 
 // fileChecksum helps verifying the checksum for a file.
@@ -96,52 +92,19 @@ func newChecksumFromValue(checksumValue, filename string) (*fileChecksum, error)
 //
 // checksumsFromFile will only return checksums for files that match file
 // behind src
-func checksumFromFile(checksumFile string, src *url.URL) (*fileChecksum, error) {
-	checksumFileURL, err := urlhelper.Parse(checksumFile)
+func checksumsFromFile(file string) ([]*fileChecksum, error) {
+	f, err := os.Open(file)
 	if err != nil {
-		return nil, err
-	}
-
-	tempfile, err := tmpFile("", filepath.Base(checksumFileURL.Path))
-	if err != nil {
-		return nil, err
-	}
-	defer func() {
-		os.Remove(tempfile)
-	}()
-
-	if err = GetFile(tempfile, checksumFile); err != nil {
-		return nil, fmt.Errorf(
-			"Error downloading checksum file: %s", err)
-	}
-
-	filename := filepath.Base(src.Path)
-	absPath, _ := filepath.Abs(src.Path)
-	relpath, _ := filepath.Rel(filepath.Dir(checksumFileURL.Path), absPath)
-
-	// possible file identifiers:
-	options := []string{
-		filename,       // ubuntu-14.04.1-server-amd64.iso
-		"*" + filename, // *ubuntu-14.04.1-server-amd64.iso  Standard checksum
-		"?" + filename, // ?ubuntu-14.04.1-server-amd64.iso  shasum -p
-		relpath,        // dir/ubuntu-14.04.1-server-amd64.iso
-		"./" + relpath, // ./dir/ubuntu-14.04.1-server-amd64.iso
-		absPath,        // fullpath; set if local
-	}
-
-	f, err := os.Open(tempfile)
-	if err != nil {
-		return nil, fmt.Errorf(
-			"Error opening downloaded file: %s", err)
+		return nil, fmt.Errorf("Error opening checksum file: %s", err)
 	}
 	defer f.Close()
 	rd := bufio.NewReader(f)
+	res := []*fileChecksum{}
 	for {
 		line, err := rd.ReadString('\n')
 		if err != nil {
 			if err != io.EOF {
-				return nil, fmt.Errorf(
-					"Error reading checksum file: %s", err)
+				return nil, fmt.Errorf("Error reading checksum file: %s", err)
 			}
 			break
 		}
@@ -149,19 +112,12 @@ func checksumFromFile(checksumFile string, src *url.URL) (*fileChecksum, error) 
 		if err != nil || checksum == nil {
 			continue
 		}
-		if checksum.Filename == "" {
-			// filename not sure, let's try
-			return checksum, nil
-		}
-		// make sure the checksum is for the right file
-		for _, option := range options {
-			if checksum.Filename == option {
-				// any checksum will work so we return the first one
-				return checksum, nil
-			}
-		}
+		res = append(res, checksum)
 	}
-	return nil, fmt.Errorf("no checksum found in: %s", checksumFile)
+	if len(res) == 0 {
+		return nil, fmt.Errorf("no checksum found in: %s", file)
+	}
+	return res, nil
 }
 
 // parseChecksumLine takes a line from a checksum file and returns
