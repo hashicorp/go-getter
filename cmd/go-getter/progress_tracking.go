@@ -9,9 +9,9 @@ import (
 	getter "github.com/hashicorp/go-getter"
 )
 
-// DefaultProgressBar is the default instance of a cheggaaa
+// defaultProgressBar is the default instance of a cheggaaa
 // progress bar.
-var DefaultProgressBar getter.ProgressTracker = &ProgressBar{}
+var defaultProgressBar getter.ProgressTracker = &ProgressBar{}
 
 // ProgressBar wraps a github.com/cheggaaa/pb.Pool
 // in order to display download progress for one or multiple

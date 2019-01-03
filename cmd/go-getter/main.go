@@ -48,7 +48,7 @@ func main() {
 	}
 	var opts []getter.ClientOption
 	if *progress {
-		opts = append(opts, getter.WithProgress(DefaultProgressBar))
+		opts = append(opts, getter.WithProgress(defaultProgressBar))
 	}
 
 	if err := client.Configure(opts...); err != nil {
