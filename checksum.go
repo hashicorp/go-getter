@@ -152,9 +152,7 @@ func (c *Client) checksumFromFile(checksumFile string, src *url.URL) (*fileCheck
 	if err != nil {
 		return nil, err
 	}
-	defer func() {
-		os.Remove(tempfile)
-	}()
+	defer os.Remove(tempfile)
 
 	c2 := &Client{
 		Getters:       c.Getters,
