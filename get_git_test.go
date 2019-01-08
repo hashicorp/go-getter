@@ -176,7 +176,7 @@ func TestGitGetter_GetFile(t *testing.T) {
 	}
 
 	g := new(GitGetter)
-	dst := tempFile(t)
+	dst := mustString(tempFile("", ""))
 	defer os.Remove(dst)
 
 	repo := testGitRepo(t, "file")

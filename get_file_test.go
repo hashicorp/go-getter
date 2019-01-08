@@ -105,7 +105,7 @@ func TestFileGetter_dirSymlink(t *testing.T) {
 
 func TestFileGetter_GetFile(t *testing.T) {
 	g := new(FileGetter)
-	dst := tempFile(t)
+	dst := mustString(tempFile("", ""))
 	defer os.Remove(dst)
 
 	// With a dir that doesn't exist
@@ -130,7 +130,7 @@ func TestFileGetter_GetFile_Copy(t *testing.T) {
 	g := new(FileGetter)
 	g.Copy = true
 
-	dst := tempFile(t)
+	dst := mustString(tempFile("", ""))
 	defer os.Remove(dst)
 
 	// With a dir that doesn't exist

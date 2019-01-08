@@ -27,9 +27,11 @@ func tempDir(t *testing.T) string {
 	return dir
 }
 
-func tempFile(t *testing.T) string {
-	dir := tempDir(t)
-	return filepath.Join(dir, "foo")
+func mustString(s string, err error) string {
+	if err != nil {
+		panic("err: " + err.Error())
+	}
+	return s
 }
 
 func testModule(n string) string {

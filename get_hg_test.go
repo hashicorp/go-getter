@@ -83,7 +83,7 @@ func TestHgGetter_GetFile(t *testing.T) {
 	}
 
 	g := new(HgGetter)
-	dst := tempFile(t)
+	dst := mustString(tempFile("", ""))
 	defer os.Remove(dst)
 
 	// Download

@@ -172,7 +172,7 @@ func (c *Client) checksumFromFile(checksumFile string, src *url.URL) (*fileCheck
 		return nil, err
 	}
 
-	tempfile, err := tmpFile("", filepath.Base(checksumFileURL.Path))
+	tempfile, err := tempFile("", filepath.Base(checksumFileURL.Path))
 	if err != nil {
 		return nil, err
 	}
