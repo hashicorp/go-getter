@@ -283,6 +283,7 @@ are also supported. If the query parameters are present, these take priority.
   * `aws_access_key_id` - AWS access key.
   * `aws_access_key_secret` - AWS access key secret.
   * `aws_access_token` - AWS access token if this is being used.
+  * `s3_use_accelerate` - Set this to `true` to enable S3 Accelerate feature.
 
 #### Using IAM Instance Profiles with S3
 
