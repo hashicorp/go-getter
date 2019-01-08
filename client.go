@@ -1,10 +1,7 @@
 package getter
 
 import (
-	"bytes"
-	"encoding/hex"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -291,29 +288,6 @@ func (c *Client) Get() error {
 		}
 
 		return copyDir(realDst, subDir, false)
-	}
-
-	return nil
-}
-
-// checksum is a simple method to compute the checksum of a source file
-// and compare it to the given expected value.
-func (c *fileChecksum) checksum(source string) error {
-	f, err := os.Open(source)
-	if err != nil {
-		return fmt.Errorf("Failed to open file for checksum: %s", err)
-	}
-	defer f.Close()
-
-	if _, err := io.Copy(c.Hash, f); err != nil {
-		return fmt.Errorf("Failed to hash: %s", err)
-	}
-
-	if actual := c.Hash.Sum(nil); !bytes.Equal(actual, c.Value) {
-		return fmt.Errorf(
-			"Checksums did not match.\nExpected: %s\nGot: %s",
-			hex.EncodeToString(c.Value),
-			hex.EncodeToString(actual))
 	}
 
 	return nil
