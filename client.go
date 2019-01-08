@@ -1,15 +1,7 @@
 package getter
 
 import (
-	"bytes"
-	"crypto/md5"
-	"crypto/sha1"
-	"crypto/sha256"
-	"crypto/sha512"
-	"encoding/hex"
 	"fmt"
-	"hash"
-	"io"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -17,7 +9,7 @@ import (
 	"strings"
 
 	urlhelper "github.com/hashicorp/go-getter/helper/url"
-	"github.com/hashicorp/go-safetemp"
+	safetemp "github.com/hashicorp/go-safetemp"
 )
 
 // Client is a client for downloading things.
@@ -176,43 +168,15 @@ func (c *Client) Get() error {
 		mode = ClientModeFile
 	}
 
-	// Determine if we have a checksum
-	var checksumHash hash.Hash
-	var checksumValue []byte
-	if v := q.Get("checksum"); v != "" {
-		// Delete the query parameter if we have it.
-		q.Del("checksum")
-		u.RawQuery = q.Encode()
-
-		// Determine the checksum hash type
-		checksumType := ""
-		idx := strings.Index(v, ":")
-		if idx > -1 {
-			checksumType = v[:idx]
-		}
-		switch checksumType {
-		case "md5":
-			checksumHash = md5.New()
-		case "sha1":
-			checksumHash = sha1.New()
-		case "sha256":
-			checksumHash = sha256.New()
-		case "sha512":
-			checksumHash = sha512.New()
-		default:
-			return fmt.Errorf(
-				"unsupported checksum type: %s", checksumType)
-		}
-
-		// Get the remainder of the value and parse it into bytes
-		b, err := hex.DecodeString(v[idx+1:])
-		if err != nil {
-			return fmt.Errorf("invalid checksum: %s", err)
-		}
-
-		// Set our value
-		checksumValue = b
+	// Determine checksum if we have one
+	checksum, err := c.extractChecksum(u)
+	if err != nil {
+		return fmt.Errorf("invalid checksum: %s", err)
 	}
+
+	// Delete the query parameter if we have it.
+	q.Del("checksum")
+	u.RawQuery = q.Encode()
 
 	if mode == ClientModeAny {
 		// Ask the getter which client mode to use
@@ -243,8 +207,8 @@ func (c *Client) Get() error {
 	// and return.
 	if mode == ClientModeFile {
 		getFile := true
-		if checksumHash != nil {
-			if err := checksum(dst, checksumHash, checksumValue); err == nil {
+		if checksum != nil {
+			if err := checksum.checksum(dst); err == nil {
 				// don't get the file if the checksum of dst is correct
 				getFile = false
 			}
@@ -255,8 +219,8 @@ func (c *Client) Get() error {
 				return err
 			}
 
-			if checksumHash != nil {
-				if err := checksum(dst, checksumHash, checksumValue); err != nil {
+			if checksum != nil {
+				if err := checksum.checksum(dst); err != nil {
 					return err
 				}
 			}
@@ -294,7 +258,7 @@ func (c *Client) Get() error {
 	if decompressor == nil {
 		// If we're getting a directory, then this is an error. You cannot
 		// checksum a directory. TODO: test
-		if checksumHash != nil {
+		if checksum != nil {
 			return fmt.Errorf(
 				"checksum cannot be specified for directory download")
 		}
@@ -324,29 +288,6 @@ func (c *Client) Get() error {
 		}
 
 		return copyDir(realDst, subDir, false)
-	}
-
-	return nil
-}
-
-// checksum is a simple method to compute the checksum of a source file
-// and compare it to the given expected value.
-func checksum(source string, h hash.Hash, v []byte) error {
-	f, err := os.Open(source)
-	if err != nil {
-		return fmt.Errorf("Failed to open file for checksum: %s", err)
-	}
-	defer f.Close()
-
-	if _, err := io.Copy(h, f); err != nil {
-		return fmt.Errorf("Failed to hash: %s", err)
-	}
-
-	if actual := h.Sum(nil); !bytes.Equal(actual, v) {
-		return fmt.Errorf(
-			"Checksums did not match.\nExpected: %s\nGot: %s",
-			hex.EncodeToString(v),
-			hex.EncodeToString(actual))
 	}
 
 	return nil

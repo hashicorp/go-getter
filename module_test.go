@@ -2,6 +2,8 @@ package getter
 
 import (
 	"io/ioutil"
+	"net/http"
+	"net/http/httptest"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -25,7 +27,7 @@ func tempDir(t *testing.T) string {
 	return dir
 }
 
-func tempFile(t *testing.T) string {
+func tempTestFile(t *testing.T) string {
 	dir := tempDir(t)
 	return filepath.Join(dir, "foo")
 }
@@ -37,6 +39,15 @@ func testModule(n string) string {
 		panic(err)
 	}
 	return fmtFileURL(p)
+}
+func httpTestModule(n string) *httptest.Server {
+	p := filepath.Join(fixtureDir, n)
+	p, err := filepath.Abs(p)
+	if err != nil {
+		panic(err)
+	}
+
+	return httptest.NewServer(http.FileServer(http.Dir(p)))
 }
 
 func testModuleURL(n string) *url.URL {
