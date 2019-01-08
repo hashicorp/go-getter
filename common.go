@@ -9,7 +9,5 @@ func tmpFile(dir, pattern string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	tempfile := f.Name()
-	f.Close()
-	return tempfile, nil
+	return f.Name(), nil
 }
