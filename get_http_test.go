@@ -210,7 +210,7 @@ func TestHttpGetter_file(t *testing.T) {
 	defer ln.Close()
 
 	g := new(HttpGetter)
-	dst := mustString(tempFile("", ""))
+	dst := tempFile(t)
 	defer os.RemoveAll(dst)
 
 	var u url.URL

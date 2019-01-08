@@ -35,7 +35,7 @@ func TestGet_progress(t *testing.T) {
 	defer s.Close()
 
 	{ // dl without tracking
-		dst := mustString(tempFile("", ""))
+		dst := tempFile(t)
 		if err := GetFile(dst, s.URL+"/file?thig=this&that"); err != nil {
 			t.Fatalf("download failed: %v", err)
 		}
@@ -43,7 +43,7 @@ func TestGet_progress(t *testing.T) {
 
 	{ // tracking
 		p := &MockProgressTracking{}
-		dst := mustString(tempFile("", ""))
+		dst := tempFile(t)
 		if err := GetFile(dst, s.URL+"/file?thig=this&that", WithProgress(p)); err != nil {
 			t.Fatalf("download failed: %v", err)
 		}
