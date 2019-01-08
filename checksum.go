@@ -171,8 +171,14 @@ func (c *Client) checksumFromFile(checksumFile string, src *url.URL) (*fileCheck
 	}
 
 	filename := filepath.Base(src.Path)
-	absPath, _ := filepath.Abs(src.Path)
-	relpath, _ := filepath.Rel(filepath.Dir(checksumFileURL.Path), absPath)
+	absPath, err := filepath.Abs(src.Path)
+	if err != nil {
+		return nil, err
+	}
+	relpath, err := filepath.Rel(filepath.Dir(checksumFileURL.Path), absPath)
+	if err != nil {
+		return nil, err
+	}
 
 	// possible file identifiers:
 	options := []string{
