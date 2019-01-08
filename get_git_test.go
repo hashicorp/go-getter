@@ -176,8 +176,8 @@ func TestGitGetter_GetFile(t *testing.T) {
 	}
 
 	g := new(GitGetter)
-	dst := tempFile(t)
-	defer os.Remove(dst)
+	dst := tempTestFile(t)
+	defer os.RemoveAll(filepath.Dir(dst))
 
 	repo := testGitRepo(t, "file")
 	repo.commitFile("file.txt", "hello")

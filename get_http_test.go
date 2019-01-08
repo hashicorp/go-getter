@@ -210,8 +210,8 @@ func TestHttpGetter_file(t *testing.T) {
 	defer ln.Close()
 
 	g := new(HttpGetter)
-	dst := tempFile(t)
-	defer os.RemoveAll(dst)
+	dst := tempTestFile(t)
+	defer os.RemoveAll(filepath.Dir(dst))
 
 	var u url.URL
 	u.Scheme = "http"

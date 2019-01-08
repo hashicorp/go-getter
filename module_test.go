@@ -27,7 +27,7 @@ func tempDir(t *testing.T) string {
 	return dir
 }
 
-func tempFile(t *testing.T) string {
+func tempTestFile(t *testing.T) string {
 	dir := tempDir(t)
 	return filepath.Join(dir, "foo")
 }

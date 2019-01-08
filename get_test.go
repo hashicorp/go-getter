@@ -224,8 +224,8 @@ func TestGetAny_dir(t *testing.T) {
 }
 
 func TestGetFile(t *testing.T) {
-	dst := tempFile(t)
-	defer os.Remove(dst)
+	dst := tempTestFile(t)
+	defer os.RemoveAll(filepath.Dir(dst))
 	u := testModule("basic-file/foo.txt")
 
 	if err := GetFile(dst, u); err != nil {
@@ -237,8 +237,8 @@ func TestGetFile(t *testing.T) {
 }
 
 func TestGetFile_archive(t *testing.T) {
-	dst := tempFile(t)
-	defer os.Remove(dst)
+	dst := tempTestFile(t)
+	defer os.RemoveAll(filepath.Dir(dst))
 	u := testModule("basic-file-archive/archive.tar.gz")
 
 	if err := GetFile(dst, u); err != nil {
@@ -250,8 +250,8 @@ func TestGetFile_archive(t *testing.T) {
 }
 
 func TestGetFile_archiveChecksum(t *testing.T) {
-	dst := tempFile(t)
-	defer os.Remove(dst)
+	dst := tempTestFile(t)
+	defer os.RemoveAll(filepath.Dir(dst))
 	u := testModule(
 		"basic-file-archive/archive.tar.gz?checksum=md5:fbd90037dacc4b1ab40811d610dde2f0")
 
@@ -264,8 +264,8 @@ func TestGetFile_archiveChecksum(t *testing.T) {
 }
 
 func TestGetFile_archiveNoUnarchive(t *testing.T) {
-	dst := tempFile(t)
-	defer os.Remove(dst)
+	dst := tempTestFile(t)
+	defer os.RemoveAll(filepath.Dir(dst))
 	u := testModule("basic-file-archive/archive.tar.gz")
 	u += "?archive=false"
 
@@ -352,8 +352,8 @@ func TestGetFile_checksum(t *testing.T) {
 		u := testModule("basic-file/foo.txt") + tc.Append
 
 		func() {
-			dst := tempFile(t)
-			defer os.Remove(dst)
+			dst := tempTestFile(t)
+			defer os.RemoveAll(filepath.Dir(dst))
 			if err := GetFile(dst, u); (err != nil) != tc.Err {
 				t.Fatalf("append: %s\n\nerr: %s", tc.Append, err)
 			}
@@ -432,8 +432,8 @@ func TestGetFile_checksum_from_file(t *testing.T) {
 	for _, tc := range cases {
 		u := checksums + "/content.txt" + tc.Append
 		t.Run(tc.Append, func(t *testing.T) {
-			dst := tempFile(t)
-			defer os.Remove(dst)
+			dst := tempTestFile(t)
+			defer os.RemoveAll(filepath.Dir(dst))
 			if err := GetFile(dst, u); (err != nil) != tc.WantErr {
 				t.Fatalf("append: %s\n\nerr: %s", tc.Append, err)
 			}
@@ -447,8 +447,8 @@ func TestGetFile_checksum_from_file(t *testing.T) {
 }
 
 func TestGetFile_checksumURL(t *testing.T) {
-	dst := tempFile(t)
-	defer os.Remove(dst)
+	dst := tempTestFile(t)
+	defer os.RemoveAll(filepath.Dir(dst))
 	u := testModule("basic-file/foo.txt") + "?checksum=md5:09f7e02f1290be211da707a266f153b3"
 
 	getter := &MockGetter{Proxy: new(FileGetter)}
@@ -487,8 +487,8 @@ func TestGetFile_filename(t *testing.T) {
 }
 
 func TestGetFile_checksumSkip(t *testing.T) {
-	dst := tempFile(t)
-	defer os.Remove(dst)
+	dst := tempTestFile(t)
+	defer os.RemoveAll(filepath.Dir(dst))
 	u := testModule("basic-file/foo.txt") + "?checksum=md5:09f7e02f1290be211da707a266f153b3"
 
 	getter := &MockGetter{Proxy: new(FileGetter)}
