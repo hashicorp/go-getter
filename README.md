@@ -183,9 +183,9 @@ All protocols supported by go-getter can be used. The checksum file will be
 downloaded in a temporary file then parsed. The destination of the temporary
 file can be changed by setting system specific environment variables: `TMPDIR`
 for unix; `TMP`, `TEMP` or `USERPROFILE` on windows. Read godoc of
-[os.TempDir](https://golang.org/pkg/os/#TempDir) for more information. Content
-of files are expected to be BSD or GNU style. Once go-getter is done with the
-checksum file; it is deleted.
+[os.TempDir](https://golang.org/pkg/os/#TempDir) for more information on the
+temporary directory selection. Content of files are expected to be BSD or GNU
+style. Once go-getter is done with the checksum file; it is deleted.
 
 The checksum query parameter is never sent to the backend protocol
 implementation. It is used at a higher level by go-getter itself.
