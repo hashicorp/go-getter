@@ -97,7 +97,7 @@ would download the given HTTP URL using the Git protocol.
 
 Forced protocols will also override any detectors.
 
-In the absense of a forced protocol, detectors may be run on the URL, transforming
+In the absence of a forced protocol, detectors may be run on the URL, transforming
 the protocol anyways. The above example would've used the Git protocol either
 way since the Git detector would've detected it was a GitHub URL.
 
