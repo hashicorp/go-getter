@@ -17,7 +17,9 @@ import (
 
 // GitGetter is a Getter implementation that will download a module from
 // a git repository.
-type GitGetter struct{}
+type GitGetter struct {
+	getter
+}
 
 func (g *GitGetter) ClientMode(_ *url.URL) (ClientMode, error) {
 	return ClientModeDir, nil

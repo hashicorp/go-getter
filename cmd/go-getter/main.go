@@ -10,6 +10,7 @@ import (
 
 func main() {
 	modeRaw := flag.String("mode", "any", "get mode (any, file, dir)")
+	progress := flag.Bool("progress", false, "display terminal progress")
 	flag.Parse()
 	args := flag.Args()
 	if len(args) < 2 {
@@ -45,10 +46,17 @@ func main() {
 		Pwd:  pwd,
 		Mode: mode,
 	}
+	var opts []getter.ClientOption
+	if *progress {
+		opts = append(opts, getter.WithProgress(defaultProgressBar))
+	}
+
+	if err := client.Configure(opts...); err != nil {
+		log.Fatalf("Configure: %s", err)
+	}
 
 	if err := client.Get(); err != nil {
 		log.Fatalf("Error downloading: %s", err)
-		os.Exit(1)
 	}
 
 	log.Println("Success!")

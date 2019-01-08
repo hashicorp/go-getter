@@ -3,11 +3,14 @@ package getter
 import (
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"net"
 	"net/http"
 	"net/url"
 	"os"
 	"path/filepath"
+	"strconv"
+	"strings"
 	"testing"
 )
 
@@ -162,6 +165,46 @@ func TestHttpGetter_none(t *testing.T) {
 	}
 }
 
+func TestHttpGetter_resume(t *testing.T) {
+	load := []byte(testHttpMetaStr)
+	downloadFrom := len(load) / 2
+
+	ln := testHttpServer(t)
+	defer ln.Close()
+
+	g := new(HttpGetter)
+	dst := tempDir(t)
+	defer os.RemoveAll(dst)
+
+	dst = filepath.Join(dst, "..", "range")
+	f, err := os.Create(dst)
+	if err != nil {
+		t.Fatalf("create: %v", err)
+	}
+	f.Write(load[:downloadFrom])
+	f.Close()
+
+	var u url.URL
+	u.Scheme = "http"
+	u.Host = ln.Addr().String()
+	u.Path = "/range"
+
+	// Get it!
+	if err := g.GetFile(dst, &u); err != nil {
+		t.Fatalf("should not error: %v", err)
+	}
+
+	b, err := ioutil.ReadFile(dst)
+	if err != nil {
+		t.Fatalf("should not error: %v", err)
+	}
+
+	if string(b) != string(load) {
+		t.Fatalf("file differs: got:\n%s\n expected:\n%s\n", string(b), string(load))
+	}
+
+}
+
 func TestHttpGetter_file(t *testing.T) {
 	ln := testHttpServer(t)
 	defer ln.Close()
@@ -290,6 +333,7 @@ func testHttpServer(t *testing.T) net.Listener {
 	mux.HandleFunc("/meta-auth", testHttpHandlerMetaAuth)
 	mux.HandleFunc("/meta-subdir", testHttpHandlerMetaSubdir)
 	mux.HandleFunc("/meta-subdir-glob", testHttpHandlerMetaSubdirGlob)
+	mux.HandleFunc("/range", testHttpHandlerRange)
 
 	var server http.Server
 	server.Handler = mux
@@ -347,6 +391,24 @@ func testHttpHandlerMetaSubdirGlob(w http.ResponseWriter, r *http.Request) {
 
 func testHttpHandlerNone(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(testHttpNoneStr))
+}
+
+func testHttpHandlerRange(w http.ResponseWriter, r *http.Request) {
+	load := []byte(testHttpMetaStr)
+	switch r.Method {
+	case "HEAD":
+		w.Header().Add("accept-ranges", "bytes")
+		w.Header().Add("content-length", strconv.Itoa(len(load)))
+	default:
+		// request should have header "Range: bytes=0-1023"
+		// or                         "Range: bytes=123-"
+		rangeHeaderValue := strings.Split(r.Header.Get("Range"), "=")[1]
+		rng, _ := strconv.Atoi(strings.Split(rangeHeaderValue, "-")[0])
+		if rng < 1 || rng > len(load) {
+			http.Error(w, "", http.StatusBadRequest)
+		}
+		w.Write(load[rng:])
+	}
 }
 
 const testHttpMetaStr = `
