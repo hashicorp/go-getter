@@ -12,7 +12,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/hashicorp/go-safetemp"
+	safetemp "github.com/hashicorp/go-safetemp"
 )
 
 // HttpGetter is a Getter implementation that will download from an HTTP
@@ -60,7 +60,8 @@ func (g *HttpGetter) ClientMode(u *url.URL) (ClientMode, error) {
 	return ClientModeFile, nil
 }
 
-func (g *HttpGetter) Get(ctx context.Context, dst string, u *url.URL) error {
+func (g *HttpGetter) Get(dst string, u *url.URL) error {
+	ctx := g.Context()
 	// Copy the URL so we can modify it
 	var newU url.URL = *u
 	u = &newU
@@ -127,7 +128,8 @@ func (g *HttpGetter) Get(ctx context.Context, dst string, u *url.URL) error {
 	return g.getSubdir(ctx, dst, source, subDir)
 }
 
-func (g *HttpGetter) GetFile(ctx context.Context, dst string, src *url.URL) error {
+func (g *HttpGetter) GetFile(dst string, src *url.URL) error {
+	ctx := g.Context()
 	if g.Netrc {
 		// Add auth from netrc if we can
 		if err := addAuthFromNetrc(src); err != nil {

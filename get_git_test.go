@@ -1,7 +1,6 @@
 package getter
 
 import (
-	"context"
 	"encoding/base64"
 	"io/ioutil"
 	"net/url"
@@ -38,7 +37,7 @@ func TestGitGetter(t *testing.T) {
 	repo.commitFile("foo.txt", "hello")
 
 	// With a dir that doesn't exist
-	if err := g.Get(context.Background(), dst, repo.url); err != nil {
+	if err := g.Get(dst, repo.url); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
@@ -66,7 +65,7 @@ func TestGitGetter_branch(t *testing.T) {
 	q.Add("ref", "test-branch")
 	repo.url.RawQuery = q.Encode()
 
-	if err := g.Get(context.Background(), dst, repo.url); err != nil {
+	if err := g.Get(dst, repo.url); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
@@ -77,7 +76,7 @@ func TestGitGetter_branch(t *testing.T) {
 	}
 
 	// Get again should work
-	if err := g.Get(context.Background(), dst, repo.url); err != nil {
+	if err := g.Get(dst, repo.url); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
@@ -106,7 +105,7 @@ func TestGitGetter_branchUpdate(t *testing.T) {
 	q := repo.url.Query()
 	q.Add("ref", "test-branch")
 	repo.url.RawQuery = q.Encode()
-	if err := g.Get(context.Background(), dst, repo.url); err != nil {
+	if err := g.Get(dst, repo.url); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
@@ -120,7 +119,7 @@ func TestGitGetter_branchUpdate(t *testing.T) {
 	repo.commitFile("branch-update.txt", "branch-update")
 
 	// Get again should work
-	if err := g.Get(context.Background(), dst, repo.url); err != nil {
+	if err := g.Get(dst, repo.url); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
@@ -148,7 +147,7 @@ func TestGitGetter_tag(t *testing.T) {
 	q.Add("ref", "v1.0")
 	repo.url.RawQuery = q.Encode()
 
-	if err := g.Get(context.Background(), dst, repo.url); err != nil {
+	if err := g.Get(dst, repo.url); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
@@ -159,7 +158,7 @@ func TestGitGetter_tag(t *testing.T) {
 	}
 
 	// Get again should work
-	if err := g.Get(context.Background(), dst, repo.url); err != nil {
+	if err := g.Get(dst, repo.url); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
@@ -185,7 +184,7 @@ func TestGitGetter_GetFile(t *testing.T) {
 
 	// Download the file
 	repo.url.Path = filepath.Join(repo.url.Path, "file.txt")
-	if err := g.GetFile(context.Background(), dst, repo.url); err != nil {
+	if err := g.GetFile(dst, repo.url); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
@@ -246,7 +245,7 @@ func TestGitGetter_sshKey(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err := g.Get(context.Background(), dst, u); err != nil {
+	if err := g.Get(dst, u); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
@@ -282,7 +281,7 @@ func TestGitGetter_submodule(t *testing.T) {
 	p.git("commit", "-m", "Add child submodule")
 
 	// Clone the root repository
-	if err := g.Get(context.Background(), dst, p.url); err != nil {
+	if err := g.Get(dst, p.url); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 

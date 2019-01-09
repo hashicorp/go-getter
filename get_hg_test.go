@@ -1,7 +1,6 @@
 package getter
 
 import (
-	"context"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -30,7 +29,7 @@ func TestHgGetter(t *testing.T) {
 	dst := tempDir(t)
 
 	// With a dir that doesn't exist
-	if err := g.Get(context.Background(), dst, testModuleURL("basic-hg")); err != nil {
+	if err := g.Get(dst, testModuleURL("basic-hg")); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
@@ -55,7 +54,7 @@ func TestHgGetter_branch(t *testing.T) {
 	q.Add("rev", "test-branch")
 	url.RawQuery = q.Encode()
 
-	if err := g.Get(context.Background(), dst, url); err != nil {
+	if err := g.Get(dst, url); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
@@ -66,7 +65,7 @@ func TestHgGetter_branch(t *testing.T) {
 	}
 
 	// Get again should work
-	if err := g.Get(context.Background(), dst, url); err != nil {
+	if err := g.Get(dst, url); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
@@ -88,7 +87,7 @@ func TestHgGetter_GetFile(t *testing.T) {
 	defer os.RemoveAll(filepath.Dir(dst))
 
 	// Download
-	if err := g.GetFile(context.Background(), dst, testModuleURL("basic-hg/foo.txt")); err != nil {
+	if err := g.GetFile(dst, testModuleURL("basic-hg/foo.txt")); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 

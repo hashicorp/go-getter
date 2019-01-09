@@ -218,7 +218,7 @@ func (c *Client) Get() error {
 			}
 		}
 		if getFile {
-			err := g.GetFile(c.ctx, dst, u)
+			err := g.GetFile(dst, u)
 			if err != nil {
 				return err
 			}
@@ -269,7 +269,7 @@ func (c *Client) Get() error {
 
 		// We're downloading a directory, which might require a bit more work
 		// if we're specifying a subdir.
-		err := g.Get(c.ctx, dst, u)
+		err := g.Get(dst, u)
 		if err != nil {
 			err = fmt.Errorf("error downloading '%s': %s", src, err)
 			return err

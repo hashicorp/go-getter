@@ -10,7 +10,7 @@ import (
 	"runtime"
 
 	urlhelper "github.com/hashicorp/go-getter/helper/url"
-	"github.com/hashicorp/go-safetemp"
+	safetemp "github.com/hashicorp/go-safetemp"
 )
 
 // HgGetter is a Getter implementation that will download a module from
@@ -23,7 +23,8 @@ func (g *HgGetter) ClientMode(_ *url.URL) (ClientMode, error) {
 	return ClientModeDir, nil
 }
 
-func (g *HgGetter) Get(ctx context.Context, dst string, u *url.URL) error {
+func (g *HgGetter) Get(dst string, u *url.URL) error {
+	ctx := g.Context()
 	if _, err := exec.LookPath("hg"); err != nil {
 		return fmt.Errorf("hg must be available and on the PATH")
 	}
@@ -66,7 +67,7 @@ func (g *HgGetter) Get(ctx context.Context, dst string, u *url.URL) error {
 
 // GetFile for Hg doesn't support updating at this time. It will download
 // the file every time.
-func (g *HgGetter) GetFile(ctx context.Context, dst string, u *url.URL) error {
+func (g *HgGetter) GetFile(dst string, u *url.URL) error {
 	// Create a temporary directory to store the full source. This has to be
 	// a non-existent directory.
 	td, tdcloser, err := safetemp.Dir("", "getter")
@@ -86,7 +87,7 @@ func (g *HgGetter) GetFile(ctx context.Context, dst string, u *url.URL) error {
 	}
 
 	// Get the full repository
-	if err := g.Get(ctx, td, u); err != nil {
+	if err := g.Get(td, u); err != nil {
 		return err
 	}
 
@@ -96,8 +97,8 @@ func (g *HgGetter) GetFile(ctx context.Context, dst string, u *url.URL) error {
 		return err
 	}
 
-	fg := &FileGetter{Copy: true}
-	return fg.GetFile(ctx, dst, u)
+	fg := &FileGetter{Copy: true, getter: g.getter}
+	return fg.GetFile(dst, u)
 }
 
 func (g *HgGetter) clone(dst string, u *url.URL) error {

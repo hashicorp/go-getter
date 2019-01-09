@@ -1,7 +1,6 @@
 package getter
 
 import (
-	"context"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -31,7 +30,7 @@ func TestS3Getter(t *testing.T) {
 	dst := tempDir(t)
 
 	// With a dir that doesn't exist
-	err := g.Get(context.Background(),
+	err := g.Get(
 		dst, testURL("https://s3.amazonaws.com/hc-oss-test/go-getter/folder"))
 	if err != nil {
 		t.Fatalf("err: %s", err)
@@ -49,7 +48,7 @@ func TestS3Getter_subdir(t *testing.T) {
 	dst := tempDir(t)
 
 	// With a dir that doesn't exist
-	err := g.Get(context.Background(),
+	err := g.Get(
 		dst, testURL("https://s3.amazonaws.com/hc-oss-test/go-getter/folder/subfolder"))
 	if err != nil {
 		t.Fatalf("err: %s", err)
@@ -68,7 +67,7 @@ func TestS3Getter_GetFile(t *testing.T) {
 	defer os.RemoveAll(filepath.Dir(dst))
 
 	// Download
-	err := g.GetFile(context.Background(),
+	err := g.GetFile(
 		dst, testURL("https://s3.amazonaws.com/hc-oss-test/go-getter/folder/main.tf"))
 	if err != nil {
 		t.Fatalf("err: %s", err)
@@ -87,7 +86,7 @@ func TestS3Getter_GetFile_badParams(t *testing.T) {
 	defer os.RemoveAll(filepath.Dir(dst))
 
 	// Download
-	err := g.GetFile(context.Background(),
+	err := g.GetFile(
 		dst,
 		testURL("https://s3.amazonaws.com/hc-oss-test/go-getter/folder/main.tf?aws_access_key_id=foo&aws_access_key_secret=bar&aws_access_token=baz"))
 	if err == nil {
@@ -105,7 +104,7 @@ func TestS3Getter_GetFile_notfound(t *testing.T) {
 	defer os.RemoveAll(filepath.Dir(dst))
 
 	// Download
-	err := g.GetFile(context.Background(),
+	err := g.GetFile(
 		dst, testURL("https://s3.amazonaws.com/hc-oss-test/go-getter/folder/404.tf"))
 	if err == nil {
 		t.Fatalf("expected error, got none")

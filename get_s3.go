@@ -61,7 +61,9 @@ func (g *S3Getter) ClientMode(u *url.URL) (ClientMode, error) {
 	return ClientModeFile, nil
 }
 
-func (g *S3Getter) Get(ctx context.Context, dst string, u *url.URL) error {
+func (g *S3Getter) Get(dst string, u *url.URL) error {
+	ctx := g.Context()
+
 	// Parse URL
 	region, bucket, path, _, creds, err := g.parseUrl(u)
 	if err != nil {
@@ -135,7 +137,8 @@ func (g *S3Getter) Get(ctx context.Context, dst string, u *url.URL) error {
 	return nil
 }
 
-func (g *S3Getter) GetFile(ctx context.Context, dst string, u *url.URL) error {
+func (g *S3Getter) GetFile(dst string, u *url.URL) error {
+	ctx := g.Context()
 	region, bucket, path, version, creds, err := g.parseUrl(u)
 	if err != nil {
 		return err
