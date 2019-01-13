@@ -180,22 +180,25 @@ func TestS3Getter_Url(t *testing.T) {
 		bucket  string
 		path    string
 		version string
+		s3Acc   bool
 	}{
 		{
 			name:    "AWSv1234",
-			url:     "s3::https://s3-eu-west-1.amazonaws.com/bucket/foo/bar.baz?version=1234",
+			url:     "s3::https://s3-eu-west-1.amazonaws.com/bucket/foo/bar.baz?version=1234&s3_use_accelerate=true",
 			region:  "eu-west-1",
 			bucket:  "bucket",
 			path:    "foo/bar.baz",
 			version: "1234",
+			s3Acc:   true,
 		},
 		{
 			name:    "localhost-1",
-			url:     "s3::http://127.0.0.1:9000/test-bucket/hello.txt?aws_access_key_id=TESTID&aws_access_key_secret=TestSecret&region=us-east-2&version=1",
+			url:     "s3::http://127.0.0.1:9000/test-bucket/hello.txt?aws_access_key_id=TESTID&aws_access_key_secret=TestSecret&region=us-east-2&version=1&s3_use_accelerate=true",
 			region:  "us-east-2",
 			bucket:  "test-bucket",
 			path:    "hello.txt",
 			version: "1",
+			s3Acc:   true,
 		},
 		{
 			name:    "localhost-2",
@@ -204,14 +207,16 @@ func TestS3Getter_Url(t *testing.T) {
 			bucket:  "test-bucket",
 			path:    "hello.txt",
 			version: "1",
+			s3Acc:   false,
 		},
 		{
 			name:    "localhost-3",
-			url:     "s3::http://127.0.0.1:9000/test-bucket/hello.txt?aws_access_key_id=TESTID&aws_access_key_secret=TestSecret",
+			url:     "s3::http://127.0.0.1:9000/test-bucket/hello.txt?aws_access_key_id=TESTID&aws_access_key_secret=TestSecret&s3_use_accelerate=false",
 			region:  "us-east-1",
 			bucket:  "test-bucket",
 			path:    "hello.txt",
 			version: "",
+			s3Acc:   false,
 		},
 	}
 
@@ -228,7 +233,7 @@ func TestS3Getter_Url(t *testing.T) {
 				t.Fatalf("expected forced protocol to be s3")
 			}
 
-			region, bucket, path, version, creds, err := g.parseUrl(u)
+			region, bucket, path, version, s3Acc, creds, err := g.parseUrl(u)
 
 			if err != nil {
 				t.Fatalf("err: %s", err)
@@ -247,6 +252,9 @@ func TestS3Getter_Url(t *testing.T) {
 			}
 			if &creds == nil {
 				t.Fatalf("expected to not be nil")
+			}
+			if s3Acc != pt.s3Acc {
+				t.Fatalf("expected %v, got %v", pt.s3Acc, s3Acc)
 			}
 		})
 	}

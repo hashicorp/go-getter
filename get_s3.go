@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -24,13 +25,13 @@ type S3Getter struct {
 
 func (g *S3Getter) ClientMode(u *url.URL) (ClientMode, error) {
 	// Parse URL
-	region, bucket, path, _, creds, err := g.parseUrl(u)
+	region, bucket, path, _, s3Acc, creds, err := g.parseUrl(u)
 	if err != nil {
 		return 0, err
 	}
 
 	// Create client config
-	config := g.getAWSConfig(region, u, creds)
+	config := g.getAWSConfig(region, u, s3Acc, creds)
 	sess := session.New(config)
 	client := s3.New(sess)
 
@@ -63,7 +64,7 @@ func (g *S3Getter) ClientMode(u *url.URL) (ClientMode, error) {
 
 func (g *S3Getter) Get(dst string, u *url.URL) error {
 	// Parse URL
-	region, bucket, path, _, creds, err := g.parseUrl(u)
+	region, bucket, path, _, s3Acc, creds, err := g.parseUrl(u)
 	if err != nil {
 		return err
 	}
@@ -86,7 +87,7 @@ func (g *S3Getter) Get(dst string, u *url.URL) error {
 		return err
 	}
 
-	config := g.getAWSConfig(region, u, creds)
+	config := g.getAWSConfig(region, u, s3Acc, creds)
 	sess := session.New(config)
 	client := s3.New(sess)
 
@@ -136,12 +137,12 @@ func (g *S3Getter) Get(dst string, u *url.URL) error {
 }
 
 func (g *S3Getter) GetFile(dst string, u *url.URL) error {
-	region, bucket, path, version, creds, err := g.parseUrl(u)
+	region, bucket, path, version, s3Acc, creds, err := g.parseUrl(u)
 	if err != nil {
 		return err
 	}
 
-	config := g.getAWSConfig(region, u, creds)
+	config := g.getAWSConfig(region, u, s3Acc, creds)
 	sess := session.New(config)
 	client := s3.New(sess)
 	return g.getObject(client, dst, bucket, path, version)
@@ -176,7 +177,7 @@ func (g *S3Getter) getObject(client *s3.S3, dst, bucket, key, version string) er
 	return err
 }
 
-func (g *S3Getter) getAWSConfig(region string, url *url.URL, creds *credentials.Credentials) *aws.Config {
+func (g *S3Getter) getAWSConfig(region string, url *url.URL, s3Acc bool, creds *credentials.Credentials) *aws.Config {
 	conf := &aws.Config{}
 	if creds == nil {
 		// Grab the metadata URL
@@ -210,10 +211,15 @@ func (g *S3Getter) getAWSConfig(region string, url *url.URL, creds *credentials.
 		conf.Region = aws.String(region)
 	}
 
+	if s3Acc {
+		conf.S3ForcePathStyle = aws.Bool(false)
+		conf.S3UseAccelerate = &s3Acc
+	}
+
 	return conf
 }
 
-func (g *S3Getter) parseUrl(u *url.URL) (region, bucket, path, version string, creds *credentials.Credentials, err error) {
+func (g *S3Getter) parseUrl(u *url.URL) (region, bucket, path, version string, s3Acc bool, creds *credentials.Credentials, err error) {
 	// This just check whether we are dealing with S3 or
 	// any other S3 compliant service. S3 has a predictable
 	// url as others do not
@@ -266,6 +272,15 @@ func (g *S3Getter) parseUrl(u *url.URL) (region, bucket, path, version string, c
 			u.Query().Get("aws_access_key_secret"),
 			u.Query().Get("aws_access_token"),
 		)
+	}
+
+	_, hasS3Acc := u.Query()["s3_use_accelerate"]
+	if hasS3Acc {
+		s3 := u.Query().Get("s3_use_accelerate")
+		s3Acc, err = strconv.ParseBool(s3)
+		if err != nil {
+			return
+		}
 	}
 
 	return
