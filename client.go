@@ -19,8 +19,8 @@ import (
 // Using a client directly allows more fine-grained control over how downloading
 // is done, as well as customizing the protocols supported.
 type Client struct {
-	// ctx for cancellation
-	ctx context.Context
+ 	// Ctx for cancellation
+	Ctx context.Context
 
 	// Src is the source URL to get.
 	//
@@ -291,7 +291,7 @@ func (c *Client) Get() error {
 			return err
 		}
 
-		return copyDir(c.ctx, realDst, subDir, false)
+		return copyDir(c.Ctx, realDst, subDir, false)
 	}
 
 	return nil

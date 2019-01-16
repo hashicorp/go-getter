@@ -16,5 +16,5 @@ func (g *getter) Context() context.Context {
 	if g == nil || g.client == nil {
 		return context.Background()
 	}
-	return g.client.ctx
+	return g.client.Ctx
 }

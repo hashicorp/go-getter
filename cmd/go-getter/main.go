@@ -8,7 +8,7 @@ import (
 	"os/signal"
 	"sync"
 
-	"github.com/hashicorp/go-getter"
+	getter "github.com/hashicorp/go-getter"
 )
 
 func main() {
@@ -41,16 +41,15 @@ func main() {
 		log.Fatalf("Error getting wd: %s", err)
 	}
 
-	ctx, cancel := context.WithCancel(context.Background())
-	opts := []getter.ClientOption{
-		getter.WithContext(ctx),
-	}
+	opts := []getter.ClientOption{}
 	if *progress {
 		opts = append(opts, getter.WithProgress(defaultProgressBar))
 	}
 
+	ctx, cancel := context.WithCancel(context.Background())
 	// Build the client
 	client := &getter.Client{
+		Ctx:     ctx,
 		Src:     args[0],
 		Dst:     args[1],
 		Pwd:     pwd,
