@@ -12,8 +12,6 @@ import (
 // cancelled after a first done is called.
 type OneDoneContext bool
 
-var _ context.Context = new(OneDoneContext)
-
 func (*OneDoneContext) Deadline() (deadline time.Time, ok bool) { return }
 func (*OneDoneContext) Value(key interface{}) interface{}       { return nil }
 
