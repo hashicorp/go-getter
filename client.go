@@ -1,6 +1,7 @@
 package getter
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -18,6 +19,9 @@ import (
 // Using a client directly allows more fine-grained control over how downloading
 // is done, as well as customizing the protocols supported.
 type Client struct {
+ 	// Ctx for cancellation
+	Ctx context.Context
+
 	// Src is the source URL to get.
 	//
 	// Dst is the path to save the downloaded thing as. If Dir is set to
@@ -287,7 +291,7 @@ func (c *Client) Get() error {
 			return err
 		}
 
-		return copyDir(realDst, subDir, false)
+		return copyDir(c.Ctx, realDst, subDir, false)
 	}
 
 	return nil
