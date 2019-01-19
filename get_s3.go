@@ -10,8 +10,8 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
-	"github.com/aws/aws-sdk-go/aws/credentials/ec2rolecreds"
 	"github.com/aws/aws-sdk-go/aws/ec2metadata"
+	"github.com/aws/aws-sdk-go/aws/endpoints"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 )
@@ -181,31 +181,26 @@ func (g *S3Getter) getObject(ctx context.Context, client *s3.S3, dst, bucket, ke
 
 func (g *S3Getter) getAWSConfig(region string, url *url.URL, creds *credentials.Credentials) *aws.Config {
 	conf := &aws.Config{}
-	if creds == nil {
-		// Grab the metadata URL
-		metadataURL := os.Getenv("AWS_METADATA_URL")
-		if metadataURL == "" {
-			metadataURL = "http://169.254.169.254:80/latest"
-		}
 
-		creds = credentials.NewChainCredentials(
-			[]credentials.Provider{
-				&credentials.EnvProvider{},
-				&credentials.SharedCredentialsProvider{Filename: "", Profile: ""},
-				&ec2rolecreds.EC2RoleProvider{
-					Client: ec2metadata.New(session.New(&aws.Config{
-						Endpoint: aws.String(metadataURL),
-					})),
-				},
-			})
-	}
-
-	if creds != nil {
-		conf.Endpoint = &url.Host
-		conf.S3ForcePathStyle = aws.Bool(true)
-		if url.Scheme == "http" {
-			conf.DisableSSL = aws.Bool(true)
+	// Grab the metadata URL
+	metadataURL := os.Getenv("AWS_METADATA_URL")
+	conf.EndpointResolver = endpoints.ResolverFunc(func(service, region string, optFns ...func(*endpoints.Options)) (endpoints.ResolvedEndpoint, error) {
+		if service == ec2metadata.ServiceName && metadataURL != "" {
+			return endpoints.ResolvedEndpoint{
+				URL: metadataURL,
+			}, nil
+		} else if service == s3.EndpointsID {
+			return endpoints.ResolvedEndpoint{
+				URL: endpoints.AddScheme(url.Host, url.Scheme == "http"),
+				SigningRegion: region,
+			}, nil
 		}
+		return endpoints.DefaultResolver().EndpointFor(service, region, optFns...)
+	})
+
+	conf.S3ForcePathStyle = aws.Bool(true)
+	if url.Scheme == "http" {
+		conf.DisableSSL = aws.Bool(true)
 	}
 
 	conf.Credentials = creds
