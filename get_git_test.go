@@ -10,6 +10,8 @@ import (
 	"runtime"
 	"strings"
 	"testing"
+
+	urlhelper "github.com/hashicorp/go-getter/helper/url"
 )
 
 var testHasGit bool
@@ -355,7 +357,7 @@ func testGitRepo(t *testing.T, name string) *gitRepo {
 		dir: dir,
 	}
 
-	url, err := url.Parse("file://" + r.dir)
+	url, err := urlhelper.Parse("file://" + r.dir)
 	if err != nil {
 		t.Fatal(err)
 	}
