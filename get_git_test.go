@@ -26,8 +26,7 @@ func TestGitGetter_impl(t *testing.T) {
 
 func TestGitGetter(t *testing.T) {
 	if !testHasGit {
-		t.Log("git not found, skipping")
-		t.Skip()
+		t.Skip("git not found, skipping")
 	}
 
 	g := new(GitGetter)
@@ -50,8 +49,7 @@ func TestGitGetter(t *testing.T) {
 
 func TestGitGetter_branch(t *testing.T) {
 	if !testHasGit {
-		t.Log("git not found, skipping")
-		t.Skip()
+		t.Skip("git not found, skipping")
 	}
 
 	g := new(GitGetter)
@@ -89,8 +87,7 @@ func TestGitGetter_branch(t *testing.T) {
 
 func TestGitGetter_branchUpdate(t *testing.T) {
 	if !testHasGit {
-		t.Log("git not found, skipping")
-		t.Skip()
+		t.Skip("git not found, skipping")
 	}
 
 	g := new(GitGetter)
@@ -132,8 +129,7 @@ func TestGitGetter_branchUpdate(t *testing.T) {
 
 func TestGitGetter_tag(t *testing.T) {
 	if !testHasGit {
-		t.Log("git not found, skipping")
-		t.Skip()
+		t.Skip("git not found, skipping")
 	}
 
 	g := new(GitGetter)
@@ -171,8 +167,7 @@ func TestGitGetter_tag(t *testing.T) {
 
 func TestGitGetter_GetFile(t *testing.T) {
 	if !testHasGit {
-		t.Log("git not found, skipping")
-		t.Skip()
+		t.Skip("git not found, skipping")
 	}
 
 	g := new(GitGetter)
@@ -230,8 +225,7 @@ func TestGitGetter_gitVersion(t *testing.T) {
 
 func TestGitGetter_sshKey(t *testing.T) {
 	if !testHasGit {
-		t.Log("git not found, skipping")
-		t.Skip()
+		t.Skip("git not found, skipping")
 	}
 
 	g := new(GitGetter)
@@ -257,8 +251,7 @@ func TestGitGetter_sshKey(t *testing.T) {
 
 func TestGitGetter_submodule(t *testing.T) {
 	if !testHasGit {
-		t.Log("git not found, skipping")
-		t.Skip()
+		t.Skip("git not found, skipping")
 	}
 
 	g := new(GitGetter)
