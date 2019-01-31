@@ -55,9 +55,6 @@ func TestFileDetector(t *testing.T) {
 	for i, tc := range fileTests {
 		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
 			pwd := tc.pwd
-			if !filepath.IsAbs(pwd) {
-				pwd = filepath.Join(pwdRoot, pwd)
-			}
 
 			out, ok, err := f.Detect(tc.in, pwd)
 			if err != nil {
