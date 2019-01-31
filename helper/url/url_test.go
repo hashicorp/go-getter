@@ -1,7 +1,6 @@
 package url
 
 import (
-	"runtime"
 	"testing"
 )
 
@@ -36,10 +35,10 @@ var parseTests = []parseTest{
 var winParseTests = []parseTest{
 	{
 		rawURL: `C:\`,
-		scheme: ``,
+		scheme: `file`,
 		host:   ``,
 		path:   `C:/`,
-		str:    `C:/`,
+		str:    `file://C:/`,
 		err:    false,
 	},
 	{
@@ -61,16 +60,16 @@ var winParseTests = []parseTest{
 }
 
 func TestParse(t *testing.T) {
-	if runtime.GOOS == "windows" {
-		parseTests = append(parseTests, winParseTests...)
-	}
-	for i, pt := range parseTests {
+	for i, pt := range append(parseTests, winParseTests...) {
 		url, err := Parse(pt.rawURL)
 		if err != nil && !pt.err {
 			t.Errorf("test %d: unexpected error: %s", i, err)
 		}
 		if err == nil && pt.err {
 			t.Errorf("test %d: expected an error", i)
+		}
+		if url == nil {
+			continue
 		}
 		if url.Scheme != pt.scheme {
 			t.Errorf("test %d: expected Scheme = %q, got %q", i, pt.scheme, url.Scheme)
