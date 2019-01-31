@@ -238,7 +238,7 @@ func TestGitGetter_sshKey(t *testing.T) {
 
 	encodedKey := base64.StdEncoding.EncodeToString([]byte(testGitToken))
 
-	u, err := url.Parse("ssh://git@github.com/hashicorp/test-private-repo" +
+	u, err := urlhelper.Parse("ssh://git@github.com/hashicorp/test-private-repo" +
 		"?sshkey=" + encodedKey)
 	if err != nil {
 		t.Fatal(err)
