@@ -193,6 +193,9 @@ func TestGitGetter_GetFile(t *testing.T) {
 }
 
 func TestGitGetter_gitVersion(t *testing.T) {
+	if !testHasGit {
+		t.Skip("git not found, skipping")
+	}
 	dir, err := ioutil.TempDir("", "go-getter")
 	if err != nil {
 		t.Fatal(err)
