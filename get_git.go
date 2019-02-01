@@ -227,6 +227,9 @@ func setupGitEnv(cmd *exec.Cmd, sshKeyFile string) {
 
 	if sshKeyFile != "" {
 		// We have an SSH key temp file configured, tell ssh about this.
+		if runtime.GOOS == "windows" {
+			sshKeyFile = strings.Replace(sshKeyFile, `\`, `/`, -1)
+		}
 		sshCmd = append(sshCmd, "-i", sshKeyFile)
 	}
 
