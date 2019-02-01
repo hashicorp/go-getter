@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strings"
 
 	urlhelper "github.com/hashicorp/go-getter/helper/url"
@@ -251,8 +252,17 @@ func checkGitVersion(min string) error {
 	if len(fields) < 3 {
 		return fmt.Errorf("Unexpected 'git version' output: %q", string(out))
 	}
+	v := fields[2]
+	if runtime.GOOS == "windows" && strings.Contains(v, ".windows.") {
+		// on windows, git version will return for example:
+		// git version 2.20.1.windows.1
+		// Which does not follow the semantic versionning specs
+		// https://semver.org. We remove that part in order for
+		// go-version to not error.
+		v = v[:strings.Index(v, ".windows.")]
+	}
 
-	have, err := version.NewVersion(fields[2])
+	have, err := version.NewVersion(v)
 	if err != nil {
 		return err
 	}
