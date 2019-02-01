@@ -1,6 +1,7 @@
 package getter
 
 import (
+	"bytes"
 	"encoding/base64"
 	"io/ioutil"
 	"net/url"
@@ -366,6 +367,7 @@ func testGitRepo(t *testing.T, name string) *gitRepo {
 	}
 	r.url = url
 
+	t.Logf("initializing git repo in %s", dir)
 	r.git("init")
 	r.git("config", "user.name", "go-getter")
 	r.git("config", "user.email", "go-getter@hashicorp.com")
@@ -377,8 +379,10 @@ func testGitRepo(t *testing.T, name string) *gitRepo {
 func (r *gitRepo) git(args ...string) {
 	cmd := exec.Command("git", args...)
 	cmd.Dir = r.dir
+	bfr := bytes.NewBuffer(nil)
+	cmd.Stderr = bfr
 	if err := cmd.Run(); err != nil {
-		r.t.Fatal(err)
+		r.t.Fatal(err, bfr.String())
 	}
 }
 
