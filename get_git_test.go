@@ -197,6 +197,9 @@ func TestGitGetter_gitVersion(t *testing.T) {
 	if !testHasGit {
 		t.Skip("git not found, skipping")
 	}
+	if runtime.GOOS == "windows" {
+		t.Skip("skipping on windows since the test requires sh")
+	}
 	dir, err := ioutil.TempDir("", "go-getter")
 	if err != nil {
 		t.Fatal(err)
@@ -308,8 +311,7 @@ func TestGitGetter_submodule(t *testing.T) {
 
 func TestGitGetter_setupGitEnv_sshKey(t *testing.T) {
 	if runtime.GOOS == "windows" {
-		t.Skipf("skipping on windows since the test requires sh")
-		return
+		t.Skip("skipping on windows since the test requires sh")
 	}
 
 	cmd := exec.Command("/bin/sh", "-c", "echo $GIT_SSH_COMMAND")
