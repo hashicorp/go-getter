@@ -263,6 +263,16 @@ func TestGitGetter_submodule(t *testing.T) {
 	g := new(GitGetter)
 	dst := tempDir(t)
 
+	relpath := func(basepath, targpath string) string {
+		relpath, err := filepath.Rel(basepath, targpath)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return strings.Replace(relpath, `\`, `/`, -1)
+		// on windows git still prefers relatives paths
+		// containing `/` for submodules
+	}
+
 	// Set up the grandchild
 	gc := testGitRepo(t, "grandchild")
 	gc.commitFile("grandchild.txt", "grandchild")
@@ -270,13 +280,13 @@ func TestGitGetter_submodule(t *testing.T) {
 	// Set up the child
 	c := testGitRepo(t, "child")
 	c.commitFile("child.txt", "child")
-	c.git("submodule", "add", gc.dir)
+	c.git("submodule", "add", "-f", relpath(c.dir, gc.dir))
 	c.git("commit", "-m", "Add grandchild submodule")
 
 	// Set up the parent
 	p := testGitRepo(t, "parent")
 	p.commitFile("parent.txt", "parent")
-	p.git("submodule", "add", c.dir)
+	p.git("submodule", "add", "-f", relpath(p.dir, c.dir))
 	p.git("commit", "-m", "Add child submodule")
 
 	// Clone the root repository
