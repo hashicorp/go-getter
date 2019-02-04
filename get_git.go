@@ -212,7 +212,7 @@ func setupGitEnv(cmd *exec.Cmd, sshKeyFile string) {
 	// with versions of Go < 1.9.
 	env := os.Environ()
 	for i, v := range env {
-		if strings.HasPrefix(v, gitSSHCommand) {
+		if strings.HasPrefix(v, gitSSHCommand) && len(v) > len(gitSSHCommand) {
 			sshCmd = []string{v}
 
 			env[i], env[len(env)-1] = env[len(env)-1], env[i]
