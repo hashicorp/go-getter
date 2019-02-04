@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strings"
 
 	urlhelper "github.com/hashicorp/go-getter/helper/url"
@@ -211,7 +212,7 @@ func setupGitEnv(cmd *exec.Cmd, sshKeyFile string) {
 	// with versions of Go < 1.9.
 	env := os.Environ()
 	for i, v := range env {
-		if strings.HasPrefix(v, gitSSHCommand) {
+		if strings.HasPrefix(v, gitSSHCommand) && len(v) > len(gitSSHCommand) {
 			sshCmd = []string{v}
 
 			env[i], env[len(env)-1] = env[len(env)-1], env[i]
@@ -226,6 +227,9 @@ func setupGitEnv(cmd *exec.Cmd, sshKeyFile string) {
 
 	if sshKeyFile != "" {
 		// We have an SSH key temp file configured, tell ssh about this.
+		if runtime.GOOS == "windows" {
+			sshKeyFile = strings.Replace(sshKeyFile, `\`, `/`, -1)
+		}
 		sshCmd = append(sshCmd, "-i", sshKeyFile)
 	}
 
@@ -251,8 +255,17 @@ func checkGitVersion(min string) error {
 	if len(fields) < 3 {
 		return fmt.Errorf("Unexpected 'git version' output: %q", string(out))
 	}
+	v := fields[2]
+	if runtime.GOOS == "windows" && strings.Contains(v, ".windows.") {
+		// on windows, git version will return for example:
+		// git version 2.20.1.windows.1
+		// Which does not follow the semantic versionning specs
+		// https://semver.org. We remove that part in order for
+		// go-version to not error.
+		v = v[:strings.Index(v, ".windows.")]
+	}
 
-	have, err := version.NewVersion(fields[2])
+	have, err := version.NewVersion(v)
 	if err != nil {
 		return err
 	}
