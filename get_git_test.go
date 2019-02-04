@@ -242,6 +242,10 @@ func TestGitGetter_sshKey(t *testing.T) {
 
 	encodedKey := base64.StdEncoding.EncodeToString([]byte(testGitToken))
 
+	// avoid getting locked by a github authenticity validation prompt
+	os.Setenv("GIT_SSH_COMMAND", "ssh -o StrictHostKeyChecking=no")
+	defer os.Setenv("GIT_SSH_COMMAND", "")
+
 	u, err := urlhelper.Parse("ssh://git@github.com/hashicorp/test-private-repo" +
 		"?sshkey=" + encodedKey)
 	if err != nil {
