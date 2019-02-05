@@ -128,7 +128,7 @@ func (g *HttpGetter) Get(dst string, u *url.URL) error {
 	return g.getSubdir(ctx, dst, source, subDir)
 }
 
-func (g *HttpGetter) GetFile(dst string, src *url.URL) error {
+func (g *HttpGetter) GetFile(dst string, src *url.URL) (err error) {
 	ctx := g.Context()
 	if g.Netrc {
 		// Add auth from netrc if we can
@@ -146,6 +146,12 @@ func (g *HttpGetter) GetFile(dst string, src *url.URL) error {
 	if err != nil {
 		return err
 	}
+	defer func() {
+		cerr := f.Close()
+		if err == nil {
+			err = cerr
+		}
+	}()
 
 	if g.Client == nil {
 		g.Client = httpClient
@@ -210,9 +216,6 @@ func (g *HttpGetter) GetFile(dst string, src *url.URL) error {
 	n, err := Copy(ctx, f, body)
 	if err == nil && n < resp.ContentLength {
 		err = io.ErrShortWrite
-	}
-	if err1 := f.Close(); err == nil {
-		err = err1
 	}
 	return err
 }
