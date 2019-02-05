@@ -179,13 +179,15 @@ func (c *Client) checksumFromFile(checksumFile string, src *url.URL) (*fileCheck
 	defer os.Remove(tempfile)
 
 	c2 := &Client{
-		Getters:       c.Getters,
-		Decompressors: c.Decompressors,
-		Detectors:     c.Detectors,
-		Pwd:           c.Pwd,
-		Dir:           false,
-		Src:           checksumFile,
-		Dst:           tempfile,
+		Ctx:              c.Ctx,
+		Getters:          c.Getters,
+		Decompressors:    c.Decompressors,
+		Detectors:        c.Detectors,
+		Pwd:              c.Pwd,
+		Dir:              false,
+		Src:              checksumFile,
+		Dst:              tempfile,
+		ProgressListener: c.ProgressListener,
 	}
 	if err = c2.Get(); err != nil {
 		return nil, fmt.Errorf(
