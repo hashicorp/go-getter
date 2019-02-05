@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"strings"
 
-	urlhelper "github.com/hashicorp/go-getter/helper/url"
+	urlhelper "github.com/sfdc-pcg/go-getter/helper/url"
 	safetemp "github.com/hashicorp/go-safetemp"
 )
 

@@ -16,7 +16,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	urlhelper "github.com/hashicorp/go-getter/helper/url"
+	urlhelper "github.com/sfdc-pcg/go-getter/helper/url"
 )
 
 // fileChecksum helps verifying the checksum for a file.
