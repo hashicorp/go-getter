@@ -5,9 +5,11 @@ import (
 	"fmt"
 	"net/url"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"cloud.google.com/go/storage"
+	"google.golang.org/api/iterator"
 )
 
 // GCSGetter is a Getter implementation that will download a module from
@@ -16,26 +18,104 @@ type GCSGetter struct {
 	getter
 }
 
-// ClientMode ...
-// TODO: Check whether any files appear under the path
-// by doing a bucket listing,
-// or whether it shows as an exact match.
 func (g *GCSGetter) ClientMode(u *url.URL) (ClientMode, error) {
-	return ClientModeFile, nil
+	ctx := g.Context()
+
+	// Parse URL
+	bucket, object, err := g.parseURL(u)
+	if err != nil {
+		return 0, err
+	}
+
+	sctx := context.Background()
+	client, err := storage.NewClient(sctx)
+	if err != nil {
+		return 0, err
+	}
+	iter := client.Bucket(bucket).Objects(ctx, &storage.Query{Prefix: object})
+	count := 0
+	for {
+		_, err := iter.Next()
+		if err != nil && err != iterator.Done {
+			return 0, err
+		}
+		count++
+		if err == iterator.Done {
+			break
+		}
+	}
+	if count <= 1 {
+		// Return file if there are no matches as well.
+		// GetFile will fail in this case.
+		return ClientModeFile, nil
+	} else {
+		return ClientModeDir, nil
+	}
 }
 
-// Get ...
-// TODO: might have to copy every file
 func (g *GCSGetter) Get(dst string, u *url.URL) error {
+	ctx := g.Context()
+
+	// Parse URL
+	bucket, object, err := g.parseURL(u)
+	if err != nil {
+		return err
+	}
+
+	// Remove destination if it already exists
+	_, err = os.Stat(dst)
+	if err != nil && !os.IsNotExist(err) {
+		return err
+	}
+	if err == nil {
+		// Remove the destination
+		if err := os.RemoveAll(dst); err != nil {
+			return err
+		}
+	}
+
+	// Create all the parent directories
+	if err := os.MkdirAll(filepath.Dir(dst), 0755); err != nil {
+		return err
+	}
+
+	sctx := context.Background()
+	client, err := storage.NewClient(sctx)
+	if err != nil {
+		return err
+	}
+
+	// Iterate through all matching objects.
+	iter := client.Bucket(bucket).Objects(ctx, &storage.Query{Prefix: object})
+	for {
+		obj, err := iter.Next()
+		if err != nil && err != iterator.Done {
+			return err
+		}
+		if err == iterator.Done {
+			break
+		}
+
+		// Get the object destination path
+		objDst, err := filepath.Rel(object, obj.Name)
+		if err != nil {
+			return err
+		}
+		objDst = filepath.Join(dst, objDst)
+		// Download the matching object.
+		err = g.getObject(ctx, client, objDst, bucket, obj.Name)
+		if err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
-// GetFile ...
 func (g *GCSGetter) GetFile(dst string, u *url.URL) error {
 	ctx := g.Context()
 
 	// Parse URL
-	bucket, object, err := g.parseUrl(u)
+	bucket, object, err := g.parseURL(u)
 	if err != nil {
 		return err
 	}
@@ -43,13 +123,22 @@ func (g *GCSGetter) GetFile(dst string, u *url.URL) error {
 	sctx := context.Background()
 	client, err := storage.NewClient(sctx)
 	if err != nil {
-		// TODO: Handle error.
+		return err
 	}
+	return g.getObject(ctx, client, dst, bucket, object)
+}
+
+func (g *GCSGetter) getObject(ctx context.Context, client *storage.Client, dst, bucket, object string) error {
 	rc, err := client.Bucket(bucket).Object(object).NewReader(ctx)
 	if err != nil {
 		return err
 	}
 	defer rc.Close()
+
+	// Create all the parent directories
+	if err := os.MkdirAll(filepath.Dir(dst), 0755); err != nil {
+		return err
+	}
 
 	f, err := os.Create(dst)
 	if err != nil {
@@ -61,8 +150,7 @@ func (g *GCSGetter) GetFile(dst string, u *url.URL) error {
 	return err
 }
 
-// https://www.googleapis.com/storage/v1/
-func (g *GCSGetter) parseUrl(u *url.URL) (bucket, path string, err error) {
+func (g *GCSGetter) parseURL(u *url.URL) (bucket, path string, err error) {
 	if strings.Contains(u.Host, "googleapis.com") {
 		hostParts := strings.Split(u.Host, ".")
 		if len(hostParts) != 3 {
