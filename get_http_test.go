@@ -188,7 +188,7 @@ func TestHttpGetter_resume(t *testing.T) {
 		t.Fatalf("create: %v", err)
 	}
 	if n, err := f.Write(load[:downloadFrom]); n != downloadFrom || err != nil {
-		t.Fatalf("partia file write failed: %d, %s", n, err)
+		t.Fatalf("partial file write failed: %d, %s", n, err)
 	}
 	if err := f.Close(); err != nil {
 		t.Fatalf("close failed: %s", err)
