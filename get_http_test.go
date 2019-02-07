@@ -213,7 +213,7 @@ func TestHttpGetter_resume(t *testing.T) {
 	}
 
 	if string(b) != string(load) {
-		t.Errorf("file differs: got:\n%s\n expected:\n%s\n", string(b), string(load))
+		t.Fatalf("file differs: got:\n%s\n expected:\n%s\n", string(b), string(load))
 	}
 
 	// Get it again
