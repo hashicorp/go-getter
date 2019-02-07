@@ -36,6 +36,7 @@ func (c *fileChecksum) checksum(source string) error {
 	}
 	defer f.Close()
 
+	c.Hash.Reset()
 	if _, err := io.Copy(c.Hash, f); err != nil {
 		return fmt.Errorf("Failed to hash: %s", err)
 	}
