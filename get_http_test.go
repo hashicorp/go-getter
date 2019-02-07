@@ -204,7 +204,7 @@ func TestHttpGetter_resume(t *testing.T) {
 
 	// Finish getting it!
 	if err := GetFile(dst, u.String()); err != nil {
-		t.Errorf("finishing download should not error: %v", err)
+		t.Fatalf("finishing download should not error: %v", err)
 	}
 
 	b, err := ioutil.ReadFile(dst)
@@ -218,7 +218,7 @@ func TestHttpGetter_resume(t *testing.T) {
 
 	// Get it again
 	if err := GetFile(dst, u.String()); err != nil {
-		t.Errorf("should not error: %v", err)
+		t.Fatalf("should not error: %v", err)
 	}
 }
 
