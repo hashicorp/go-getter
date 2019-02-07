@@ -1,6 +1,8 @@
 package getter
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -167,12 +169,16 @@ func TestHttpGetter_none(t *testing.T) {
 
 func TestHttpGetter_resume(t *testing.T) {
 	load := []byte(testHttpMetaStr)
+	sha := sha256.New()
+	if n, err := sha.Write(load); n != len(load) || err != nil {
+		t.Fatalf("sha write failed: %d, %s", n, err)
+	}
+	checksum := hex.EncodeToString(sha.Sum(nil))
 	downloadFrom := len(load) / 2
 
 	ln := testHttpServer(t)
 	defer ln.Close()
 
-	g := new(HttpGetter)
 	dst := tempDir(t)
 	defer os.RemoveAll(dst)
 
@@ -181,28 +187,39 @@ func TestHttpGetter_resume(t *testing.T) {
 	if err != nil {
 		t.Fatalf("create: %v", err)
 	}
-	f.Write(load[:downloadFrom])
-	f.Close()
+	if n, err := f.Write(load[:downloadFrom]); n != downloadFrom || err != nil {
+		t.Fatalf("partia file write failed: %d, %s", n, err)
+	}
+	if err := f.Close(); err != nil {
+		t.Fatalf("close failed: %s", err)
+	}
 
-	var u url.URL
-	u.Scheme = "http"
-	u.Host = ln.Addr().String()
-	u.Path = "/range"
+	u := url.URL{
+		Scheme:   "http",
+		Host:     ln.Addr().String(),
+		Path:     "/range",
+		RawQuery: "checksum=" + checksum,
+	}
+	t.Logf("url: %s", u.String())
 
-	// Get it!
-	if err := g.GetFile(dst, &u); err != nil {
-		t.Fatalf("should not error: %v", err)
+	// Finish getting it!
+	if err := GetFile(dst, u.String()); err != nil {
+		t.Errorf("finishing download should not error: %v", err)
 	}
 
 	b, err := ioutil.ReadFile(dst)
 	if err != nil {
-		t.Fatalf("should not error: %v", err)
+		t.Fatalf("readfile failed: %v", err)
 	}
 
 	if string(b) != string(load) {
-		t.Fatalf("file differs: got:\n%s\n expected:\n%s\n", string(b), string(load))
+		t.Errorf("file differs: got:\n%s\n expected:\n%s\n", string(b), string(load))
 	}
 
+	// Get it again
+	if err := GetFile(dst, u.String()); err != nil {
+		t.Errorf("should not error: %v", err)
+	}
 }
 
 func TestHttpGetter_file(t *testing.T) {
