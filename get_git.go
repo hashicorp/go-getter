@@ -10,6 +10,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"strconv"
 	"strings"
 
 	urlhelper "github.com/hashicorp/go-getter/helper/url"
@@ -35,6 +36,7 @@ func (g *GitGetter) Get(dst string, u *url.URL) error {
 
 	// Extract some query parameters we use
 	var ref, sshKey string
+	var depth int
 	q := u.Query()
 	if len(q) > 0 {
 		ref = q.Get("ref")
@@ -42,6 +44,11 @@ func (g *GitGetter) Get(dst string, u *url.URL) error {
 
 		sshKey = q.Get("sshkey")
 		q.Del("sshkey")
+
+		if n, err := strconv.Atoi(q.Get("depth")); err == nil {
+			depth = n
+		}
+		q.Del("depth")
 
 		// Copy the URL
 		var newU url.URL = *u
@@ -109,9 +116,9 @@ func (g *GitGetter) Get(dst string, u *url.URL) error {
 		return err
 	}
 	if err == nil {
-		err = g.update(ctx, dst, sshKeyFile, ref)
+		err = g.update(ctx, dst, sshKeyFile, ref, depth)
 	} else {
-		err = g.clone(ctx, dst, sshKeyFile, u)
+		err = g.clone(ctx, dst, sshKeyFile, u, depth)
 	}
 	if err != nil {
 		return err
@@ -125,7 +132,7 @@ func (g *GitGetter) Get(dst string, u *url.URL) error {
 	}
 
 	// Lastly, download any/all submodules.
-	return g.fetchSubmodules(ctx, dst, sshKeyFile)
+	return g.fetchSubmodules(ctx, dst, sshKeyFile, depth)
 }
 
 // GetFile for Git doesn't support updating at this time. It will download
@@ -163,13 +170,20 @@ func (g *GitGetter) checkout(dst string, ref string) error {
 	return getRunCommand(cmd)
 }
 
-func (g *GitGetter) clone(ctx context.Context, dst, sshKeyFile string, u *url.URL) error {
-	cmd := exec.CommandContext(ctx, "git", "clone", u.String(), dst)
+func (g *GitGetter) clone(ctx context.Context, dst, sshKeyFile string, u *url.URL, depth int) error {
+	args := []string{"clone"}
+
+	if depth > 0 {
+		args = append(args, "--depth", strconv.Itoa(depth))
+	}
+
+	args = append(args, u.String(), dst)
+	cmd := exec.CommandContext(ctx, "git", args...)
 	setupGitEnv(cmd, sshKeyFile)
 	return getRunCommand(cmd)
 }
 
-func (g *GitGetter) update(ctx context.Context, dst, sshKeyFile, ref string) error {
+func (g *GitGetter) update(ctx context.Context, dst, sshKeyFile, ref string, depth int) error {
 	// Determine if we're a branch. If we're NOT a branch, then we just
 	// switch to master prior to checking out
 	cmd := exec.CommandContext(ctx, "git", "show-ref", "-q", "--verify", "refs/heads/"+ref)
@@ -187,15 +201,24 @@ func (g *GitGetter) update(ctx context.Context, dst, sshKeyFile, ref string) err
 		return err
 	}
 
-	cmd = exec.Command("git", "pull", "--ff-only")
+	if depth > 0 {
+		cmd = exec.Command("git", "pull", "--depth", strconv.Itoa(depth), "--ff-only")
+	} else {
+		cmd = exec.Command("git", "pull", "--ff-only")
+	}
+
 	cmd.Dir = dst
 	setupGitEnv(cmd, sshKeyFile)
 	return getRunCommand(cmd)
 }
 
 // fetchSubmodules downloads any configured submodules recursively.
-func (g *GitGetter) fetchSubmodules(ctx context.Context, dst, sshKeyFile string) error {
-	cmd := exec.CommandContext(ctx, "git", "submodule", "update", "--init", "--recursive")
+func (g *GitGetter) fetchSubmodules(ctx context.Context, dst, sshKeyFile string, depth int) error {
+	args := []string{"submodule", "update", "--init", "--recursive"}
+	if depth > 0 {
+		args = append(args, "--depth", strconv.Itoa(depth))
+	}
+	cmd := exec.CommandContext(ctx, "git", args...)
 	cmd.Dir = dst
 	setupGitEnv(cmd, sshKeyFile)
 	return getRunCommand(cmd)
