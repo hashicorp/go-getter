@@ -3,6 +3,7 @@ package getter
 import (
 	"context"
 	"fmt"
+	"log"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -33,24 +34,31 @@ func (g *GCSGetter) ClientMode(u *url.URL) (ClientMode, error) {
 		return 0, err
 	}
 	iter := client.Bucket(bucket).Objects(ctx, &storage.Query{Prefix: object})
+
 	count := 0
 	for {
-		_, err := iter.Next()
+		objAtrr, err := iter.Next()
+
+		if err == iterator.Done {
+			log.Printf("done")
+			break
+		}
 		if err != nil && err != iterator.Done {
 			return 0, err
 		}
+		log.Printf("iter: %+v", *objAtrr)
+		log.Println()
 		count++
-		if err == iterator.Done {
-			break
-		}
+		log.Printf("count: %d", count)
+
 	}
+	log.Println()
 	if count <= 1 {
 		// Return file if there are no matches as well.
 		// GetFile will fail in this case.
 		return ClientModeFile, nil
-	} else {
-		return ClientModeDir, nil
 	}
+	return ClientModeDir, nil
 }
 
 func (g *GCSGetter) Get(dst string, u *url.URL) error {
