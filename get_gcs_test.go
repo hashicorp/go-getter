@@ -8,6 +8,7 @@ import (
 )
 
 func init() {
+	os.Setenv("GOOGLE_APPLICATION_CREDENTIALS", "/PATH/TO/CREDENTIAL.json")
 }
 
 func TestGCSGetter_impl(t *testing.T) {
