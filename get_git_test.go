@@ -1,6 +1,7 @@
 package getter
 
 import (
+	"encoding/base64"
 	"io/ioutil"
 	"net/url"
 	"os"
@@ -227,32 +228,32 @@ func TestGitGetter_gitVersion(t *testing.T) {
 	}
 }
 
-// func TestGitGetter_sshKey(t *testing.T) {
-// 	if !testHasGit {
-// 		t.Log("git not found, skipping")
-// 		t.Skip()
-// 	}
+func TestGitGetter_sshKey(t *testing.T) {
+	if !testHasGit {
+		t.Log("git not found, skipping")
+		t.Skip()
+	}
 
-// 	g := new(GitGetter)
-// 	dst := tempDir(t)
+	g := new(GitGetter)
+	dst := tempDir(t)
 
-// 	encodedKey := base64.StdEncoding.EncodeToString([]byte(testGitToken))
+	encodedKey := base64.StdEncoding.EncodeToString([]byte(testGitToken))
 
-// 	u, err := url.Parse("ssh://git@github.com/hashicorp/test-private-repo" +
-// 		"?sshkey=" + encodedKey)
-// 	if err != nil {
-// 		t.Fatal(err)
-// 	}
+	u, err := url.Parse("ssh://git@github.com/hashicorp/test-private-repo" +
+		"?sshkey=" + encodedKey)
+	if err != nil {
+		t.Fatal(err)
+	}
 
-// 	if err := g.Get(dst, u); err != nil {
-// 		t.Fatalf("err: %s", err)
-// 	}
+	if err := g.Get(dst, u); err != nil {
+		t.Fatalf("err: %s", err)
+	}
 
-// 	readmePath := filepath.Join(dst, "README.md")
-// 	if _, err := os.Stat(readmePath); err != nil {
-// 		t.Fatalf("err: %s", err)
-// 	}
-// }
+	readmePath := filepath.Join(dst, "README.md")
+	if _, err := os.Stat(readmePath); err != nil {
+		t.Fatalf("err: %s", err)
+	}
+}
 
 func TestGitGetter_submodule(t *testing.T) {
 	if !testHasGit {

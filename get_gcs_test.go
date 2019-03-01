@@ -13,6 +13,7 @@ func init() {
 func TestGCSGetter_impl(t *testing.T) {
 	var _ Getter = new(GCSGetter)
 }
+
 func TestGCSGetter(t *testing.T) {
 	g := new(GCSGetter)
 	dst := tempDir(t)
@@ -30,6 +31,7 @@ func TestGCSGetter(t *testing.T) {
 		t.Fatalf("err: %s", err)
 	}
 }
+
 func TestGCSGetter_subdir(t *testing.T) {
 	g := new(GCSGetter)
 	dst := tempDir(t)
@@ -85,7 +87,7 @@ func TestGCSGetter_ClientMode_dir(t *testing.T) {
 
 	// Check client mode on a key prefix with only a single key.
 	mode, err := g.ClientMode(
-		testURL("https://www.googleapis.com/storage/v1/eddie-test-devmvp-1/tf-environments"))
+		testURL("https://www.googleapis.com/storage/v1/hc-oss-test/go-getter/folder/subfolder"))
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
@@ -94,19 +96,34 @@ func TestGCSGetter_ClientMode_dir(t *testing.T) {
 	}
 }
 
-// func TestGCSGetter_ClientMode_file(t *testing.T) {
-// 	g := new(GCSGetter)
+func TestGCSGetter_ClientMode_file(t *testing.T) {
+	g := new(GCSGetter)
 
-// 	// Check client mode on a key prefix which contains sub-keys.
-// 	mode, err := g.ClientMode(
-// 		testURL("https://www.googleapis.com/storage/v1/hc-oss-test/go-getter/folder/main.tf"))
-// 	if err != nil {
-// 		t.Fatalf("err: %s", err)
-// 	}
-// 	if mode != ClientModeFile {
-// 		t.Fatal("expect ClientModeFile")
-// 	}
-// }
+	// Check client mode on a key prefix which contains sub-keys.
+	mode, err := g.ClientMode(
+		testURL("https://www.googleapis.com/storage/v1/hc-oss-test/go-getter/folder/subfolder/sub.tf"))
+	if err != nil {
+		t.Fatalf("err: %s", err)
+	}
+	if mode != ClientModeFile {
+		t.Fatal("expect ClientModeFile")
+	}
+}
+
+func TestGCSGetter_ClientMode_notfound(t *testing.T) {
+	g := new(GCSGetter)
+
+	// Check the client mode when a non-existent key is looked up. This does not
+	// return an error, but rather should just return the file mode.
+	mode, err := g.ClientMode(
+		testURL("https://www.googleapis.com/storage/v1/hc-oss-test/go-getter/foobar"))
+	if err != nil {
+		t.Fatalf("err: %s", err)
+	}
+	if mode != ClientModeFile {
+		t.Fatal("expect ClientModeFile")
+	}
+}
 
 func TestGCSGetter_Url(t *testing.T) {
 	var gcstests = []struct {

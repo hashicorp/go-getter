@@ -3,7 +3,6 @@ package getter
 import (
 	"context"
 	"fmt"
-	"log"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -34,31 +33,27 @@ func (g *GCSGetter) ClientMode(u *url.URL) (ClientMode, error) {
 		return 0, err
 	}
 	iter := client.Bucket(bucket).Objects(ctx, &storage.Query{Prefix: object})
-
-	count := 0
 	for {
-		objAtrr, err := iter.Next()
-
-		if err == iterator.Done {
-			log.Printf("done")
-			break
-		}
+		obj, err := iter.Next()
 		if err != nil && err != iterator.Done {
 			return 0, err
 		}
-		log.Printf("iter: %+v", *objAtrr)
-		log.Println()
-		count++
-		log.Printf("count: %d", count)
 
+		if err == iterator.Done {
+			break
+		}
+		if strings.HasSuffix(obj.Name, "/") {
+			// A directory matched the prefix search, so this must be a directory
+			return ClientModeDir, nil
+		} else if obj.Name != object {
+			// A file matched the prefix search and doesn't have the same name
+			// as the query, so this must be a directory
+			return ClientModeDir, nil
+		}
 	}
-	log.Println()
-	if count <= 1 {
-		// Return file if there are no matches as well.
-		// GetFile will fail in this case.
-		return ClientModeFile, nil
-	}
-	return ClientModeDir, nil
+	// There are no directories or subdirectories, and if a match was returned,
+	// it was exactly equal to the prefix search. So return File mode
+	return ClientModeFile, nil
 }
 
 func (g *GCSGetter) Get(dst string, u *url.URL) error {
@@ -104,16 +99,18 @@ func (g *GCSGetter) Get(dst string, u *url.URL) error {
 			break
 		}
 
-		// Get the object destination path
-		objDst, err := filepath.Rel(object, obj.Name)
-		if err != nil {
-			return err
-		}
-		objDst = filepath.Join(dst, objDst)
-		// Download the matching object.
-		err = g.getObject(ctx, client, objDst, bucket, obj.Name)
-		if err != nil {
-			return err
+		if !strings.HasSuffix(obj.Name, "/") {
+			// Get the object destination path
+			objDst, err := filepath.Rel(object, obj.Name)
+			if err != nil {
+				return err
+			}
+			objDst = filepath.Join(dst, objDst)
+			// Download the matching object.
+			err = g.getObject(ctx, client, objDst, bucket, obj.Name)
+			if err != nil {
+				return err
+			}
 		}
 	}
 	return nil
