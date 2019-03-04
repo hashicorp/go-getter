@@ -7,6 +7,8 @@ import (
 	"os"
 	"path/filepath"
 	"time"
+
+	securejoin "github.com/cyphar/filepath-securejoin"
 )
 
 // untar is a shared helper for untarring an archive. The reader should provide
@@ -43,6 +45,29 @@ func untar(input io.Reader, dst, src string, dir bool) error {
 			}
 
 			path = filepath.Join(path, hdr.Name)
+		}
+
+		if hdr.Typeflag == tar.TypeSymlink {
+			// If the type is a symlink we re-write it and
+			// continue instead of attempting to copy the contents
+
+			// Prevent escaping the dst path
+			link, err := securejoin.SecureJoin(dst, hdr.Linkname)
+			if err != nil {
+				return err
+			}
+
+			// Convert the link destination back into a relative path
+			// relative compared to the destination root
+			rel, err := filepath.Rel(dst, link)
+			if err != nil {
+				return err
+			}
+
+			if err := os.Symlink(rel, path); err != nil {
+				return fmt.Errorf("failed writing symbolic link: %s", err)
+			}
+			continue
 		}
 
 		if hdr.FileInfo().IsDir() {

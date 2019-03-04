@@ -14,6 +14,7 @@ func TestTar(t *testing.T) {
 			true,
 			false,
 			[]string{"directory/", "directory/a", "directory/b"},
+			nil,
 			"",
 			nil,
 		},
@@ -22,6 +23,7 @@ func TestTar(t *testing.T) {
 			true,
 			false,
 			[]string{"directory/", "directory/sub/", "directory/sub/a", "directory/sub/b"},
+			nil,
 			"",
 			nil,
 		},
@@ -30,6 +32,39 @@ func TestTar(t *testing.T) {
 			true,
 			false,
 			[]string{"directory/", "directory/sub/", "directory/sub/a", "directory/sub/b"},
+			nil,
+			"",
+			&mtime,
+		},
+		{
+			"with-symlinks.tar",
+			true,
+			false,
+			[]string{"baz", "foo"},
+			map[string]string{"bar": "baz"},
+			"",
+			&mtime,
+		},
+
+		// These two test cases ensure that symlinks that try to escape the dst
+		// path being extracted to are disallowed. The secure.join.SecureJoin()
+		// library function is used here which doesn't return an error but
+		// guarentees that the resulting path is within the root path (`dst`)
+		{
+			"with-unsafe-symlinks-1.tar",
+			true,
+			false,
+			[]string{"baz", "foo"},
+			map[string]string{"bar": "baz"},
+			"",
+			&mtime,
+		},
+		{
+			"with-unsafe-symlinks-2.tar",
+			true,
+			false,
+			[]string{"baz", "foo"},
+			map[string]string{"bar": "baz"},
 			"",
 			&mtime,
 		},
