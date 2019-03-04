@@ -27,8 +27,7 @@ func (g *GCSGetter) ClientMode(u *url.URL) (ClientMode, error) {
 		return 0, err
 	}
 
-	sctx := context.Background()
-	client, err := storage.NewClient(sctx)
+	client, err := storage.NewClient(ctx)
 	if err != nil {
 		return 0, err
 	}
@@ -82,8 +81,7 @@ func (g *GCSGetter) Get(dst string, u *url.URL) error {
 		return err
 	}
 
-	sctx := context.Background()
-	client, err := storage.NewClient(sctx)
+	client, err := storage.NewClient(ctx)
 	if err != nil {
 		return err
 	}
@@ -125,8 +123,7 @@ func (g *GCSGetter) GetFile(dst string, u *url.URL) error {
 		return err
 	}
 
-	sctx := context.Background()
-	client, err := storage.NewClient(sctx)
+	client, err := storage.NewClient(ctx)
 	if err != nil {
 		return err
 	}
