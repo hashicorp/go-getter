@@ -7,13 +7,29 @@ import (
 	"testing"
 )
 
-// allAuthenticatedUsers can access go-getter-test with read only access
+// initGCPCredentials writes a temporary GCS credentials file if necessary and
+// returns the path and a function to clean it up. allAuthenticatedUsers can
+// access go-getter-test with read only access.
+func initGCPCredentials(t *testing.T) func() {
+	if gc := os.Getenv("GOOGLE_CREDENTIALS"); gc != "" &&
+		os.Getenv("GOOGLE_APPLICATION_CREDENTIALS") == "" {
+		file, cleanup := tempFileContents(t, gc)
+		os.Setenv("GOOGLE_APPLICATION_CREDENTIALS", file)
+		return func() {
+			os.Setenv("GOOGLE_APPLICATION_CREDENTIALS", "")
+			cleanup()
+		}
+	}
+	return func() {}
+}
 
 func TestGCSGetter_impl(t *testing.T) {
 	var _ Getter = new(GCSGetter)
 }
 
 func TestGCSGetter(t *testing.T) {
+	defer initGCPCredentials(t)()
+
 	g := new(GCSGetter)
 	dst := tempDir(t)
 
@@ -32,6 +48,8 @@ func TestGCSGetter(t *testing.T) {
 }
 
 func TestGCSGetter_subdir(t *testing.T) {
+	defer initGCPCredentials(t)()
+
 	g := new(GCSGetter)
 	dst := tempDir(t)
 
@@ -50,6 +68,8 @@ func TestGCSGetter_subdir(t *testing.T) {
 }
 
 func TestGCSGetter_GetFile(t *testing.T) {
+	defer initGCPCredentials(t)()
+
 	g := new(GCSGetter)
 	dst := tempTestFile(t)
 	defer os.RemoveAll(filepath.Dir(dst))
@@ -82,6 +102,8 @@ func TestGCSGetter_GetFile_notfound(t *testing.T) {
 }
 
 func TestGCSGetter_ClientMode_dir(t *testing.T) {
+	defer initGCPCredentials(t)()
+
 	g := new(GCSGetter)
 
 	// Check client mode on a key prefix with only a single key.
@@ -96,6 +118,8 @@ func TestGCSGetter_ClientMode_dir(t *testing.T) {
 }
 
 func TestGCSGetter_ClientMode_file(t *testing.T) {
+	defer initGCPCredentials(t)()
+
 	g := new(GCSGetter)
 
 	// Check client mode on a key prefix which contains sub-keys.
@@ -110,6 +134,8 @@ func TestGCSGetter_ClientMode_file(t *testing.T) {
 }
 
 func TestGCSGetter_ClientMode_notfound(t *testing.T) {
+	defer initGCPCredentials(t)()
+
 	g := new(GCSGetter)
 
 	// Check the client mode when a non-existent key is looked up. This does not
@@ -125,6 +151,8 @@ func TestGCSGetter_ClientMode_notfound(t *testing.T) {
 }
 
 func TestGCSGetter_Url(t *testing.T) {
+	defer initGCPCredentials(t)()
+
 	var gcstests = []struct {
 		name   string
 		url    string
