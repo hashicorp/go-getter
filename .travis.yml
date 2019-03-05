@@ -17,8 +17,6 @@ go:
   - "1.11.x"
 
 before_script:
-  - touch "$GOOGLE_APPLICATION_CREDENTIALS" 
-  - echo $GOOGLE_CREDENTIALS > "$GOOGLE_APPLICATION_CREDENTIALS"
   - go build ./cmd/go-getter
 
 branches:
