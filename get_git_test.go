@@ -1,6 +1,7 @@
 package getter
 
 import (
+	"bytes"
 	"encoding/base64"
 	"io/ioutil"
 	"net/url"
@@ -10,6 +11,8 @@ import (
 	"runtime"
 	"strings"
 	"testing"
+
+	urlhelper "github.com/hashicorp/go-getter/helper/url"
 )
 
 var testHasGit bool
@@ -26,8 +29,7 @@ func TestGitGetter_impl(t *testing.T) {
 
 func TestGitGetter(t *testing.T) {
 	if !testHasGit {
-		t.Log("git not found, skipping")
-		t.Skip()
+		t.Skip("git not found, skipping")
 	}
 
 	g := new(GitGetter)
@@ -50,8 +52,7 @@ func TestGitGetter(t *testing.T) {
 
 func TestGitGetter_branch(t *testing.T) {
 	if !testHasGit {
-		t.Log("git not found, skipping")
-		t.Skip()
+		t.Skip("git not found, skipping")
 	}
 
 	g := new(GitGetter)
@@ -87,10 +88,45 @@ func TestGitGetter_branch(t *testing.T) {
 	}
 }
 
-func TestGitGetter_branchUpdate(t *testing.T) {
+func TestGitGetter_shallowClone(t *testing.T) {
 	if !testHasGit {
 		t.Log("git not found, skipping")
 		t.Skip()
+	}
+
+	g := new(GitGetter)
+	dst := tempDir(t)
+
+	repo := testGitRepo(t, "upstream")
+	repo.commitFile("upstream.txt", "0")
+	repo.commitFile("upstream.txt", "1")
+
+	// Specifiy a clone depth of 1
+	q := repo.url.Query()
+	q.Add("depth", "1")
+	repo.url.RawQuery = q.Encode()
+
+	if err := g.Get(dst, repo.url); err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	// Assert rev-list count is '1'
+	cmd := exec.Command("git", "rev-list", "HEAD", "--count")
+	cmd.Dir = dst
+	b, err := cmd.Output()
+	if err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	out := strings.TrimSpace(string(b))
+	if out != "1" {
+		t.Fatalf("expected rev-list count to be '1' but got %v", out)
+	}
+}
+
+func TestGitGetter_branchUpdate(t *testing.T) {
+	if !testHasGit {
+		t.Skip("git not found, skipping")
 	}
 
 	g := new(GitGetter)
@@ -132,8 +168,7 @@ func TestGitGetter_branchUpdate(t *testing.T) {
 
 func TestGitGetter_tag(t *testing.T) {
 	if !testHasGit {
-		t.Log("git not found, skipping")
-		t.Skip()
+		t.Skip("git not found, skipping")
 	}
 
 	g := new(GitGetter)
@@ -171,8 +206,7 @@ func TestGitGetter_tag(t *testing.T) {
 
 func TestGitGetter_GetFile(t *testing.T) {
 	if !testHasGit {
-		t.Log("git not found, skipping")
-		t.Skip()
+		t.Skip("git not found, skipping")
 	}
 
 	g := new(GitGetter)
@@ -196,6 +230,12 @@ func TestGitGetter_GetFile(t *testing.T) {
 }
 
 func TestGitGetter_gitVersion(t *testing.T) {
+	if !testHasGit {
+		t.Skip("git not found, skipping")
+	}
+	if runtime.GOOS == "windows" {
+		t.Skip("skipping on windows since the test requires sh")
+	}
 	dir, err := ioutil.TempDir("", "go-getter")
 	if err != nil {
 		t.Fatal(err)
@@ -230,8 +270,7 @@ func TestGitGetter_gitVersion(t *testing.T) {
 
 func TestGitGetter_sshKey(t *testing.T) {
 	if !testHasGit {
-		t.Log("git not found, skipping")
-		t.Skip()
+		t.Skip("git not found, skipping")
 	}
 
 	g := new(GitGetter)
@@ -239,7 +278,11 @@ func TestGitGetter_sshKey(t *testing.T) {
 
 	encodedKey := base64.StdEncoding.EncodeToString([]byte(testGitToken))
 
-	u, err := url.Parse("ssh://git@github.com/hashicorp/test-private-repo" +
+	// avoid getting locked by a github authenticity validation prompt
+	os.Setenv("GIT_SSH_COMMAND", "ssh -o StrictHostKeyChecking=no")
+	defer os.Setenv("GIT_SSH_COMMAND", "")
+
+	u, err := urlhelper.Parse("ssh://git@github.com/hashicorp/test-private-repo" +
 		"?sshkey=" + encodedKey)
 	if err != nil {
 		t.Fatal(err)
@@ -257,12 +300,21 @@ func TestGitGetter_sshKey(t *testing.T) {
 
 func TestGitGetter_submodule(t *testing.T) {
 	if !testHasGit {
-		t.Log("git not found, skipping")
-		t.Skip()
+		t.Skip("git not found, skipping")
 	}
 
 	g := new(GitGetter)
 	dst := tempDir(t)
+
+	relpath := func(basepath, targpath string) string {
+		relpath, err := filepath.Rel(basepath, targpath)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return strings.Replace(relpath, `\`, `/`, -1)
+		// on windows git still prefers relatives paths
+		// containing `/` for submodules
+	}
 
 	// Set up the grandchild
 	gc := testGitRepo(t, "grandchild")
@@ -271,13 +323,13 @@ func TestGitGetter_submodule(t *testing.T) {
 	// Set up the child
 	c := testGitRepo(t, "child")
 	c.commitFile("child.txt", "child")
-	c.git("submodule", "add", gc.dir)
+	c.git("submodule", "add", "-f", relpath(c.dir, gc.dir))
 	c.git("commit", "-m", "Add grandchild submodule")
 
 	// Set up the parent
 	p := testGitRepo(t, "parent")
 	p.commitFile("parent.txt", "parent")
-	p.git("submodule", "add", c.dir)
+	p.git("submodule", "add", "-f", relpath(p.dir, c.dir))
 	p.git("commit", "-m", "Add child submodule")
 
 	// Clone the root repository
@@ -299,8 +351,7 @@ func TestGitGetter_submodule(t *testing.T) {
 
 func TestGitGetter_setupGitEnv_sshKey(t *testing.T) {
 	if runtime.GOOS == "windows" {
-		t.Skipf("skipping on windows since the test requires sh")
-		return
+		t.Skip("skipping on windows since the test requires sh")
 	}
 
 	cmd := exec.Command("/bin/sh", "-c", "echo $GIT_SSH_COMMAND")
@@ -362,12 +413,13 @@ func testGitRepo(t *testing.T, name string) *gitRepo {
 		dir: dir,
 	}
 
-	url, err := url.Parse("file://" + r.dir)
+	url, err := urlhelper.Parse("file://" + r.dir)
 	if err != nil {
 		t.Fatal(err)
 	}
 	r.url = url
 
+	t.Logf("initializing git repo in %s", dir)
 	r.git("init")
 	r.git("config", "user.name", "go-getter")
 	r.git("config", "user.email", "go-getter@hashicorp.com")
@@ -379,8 +431,10 @@ func testGitRepo(t *testing.T, name string) *gitRepo {
 func (r *gitRepo) git(args ...string) {
 	cmd := exec.Command("git", args...)
 	cmd.Dir = r.dir
+	bfr := bytes.NewBuffer(nil)
+	cmd.Stderr = bfr
 	if err := cmd.Run(); err != nil {
-		r.t.Fatal(err)
+		r.t.Fatal(err, bfr.String())
 	}
 }
 

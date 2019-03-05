@@ -36,10 +36,10 @@ var parseTests = []parseTest{
 var winParseTests = []parseTest{
 	{
 		rawURL: `C:\`,
-		scheme: ``,
+		scheme: `file`,
 		host:   ``,
 		path:   `C:/`,
-		str:    `C:/`,
+		str:    `file://C:/`,
 		err:    false,
 	},
 	{
