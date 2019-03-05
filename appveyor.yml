@@ -5,9 +5,8 @@ environment:
   GOPATH: c:\gopath
 install:
 - cmd: >-
-    $GOOGLE_CREDENTIALS | Out-File $GOOGLE_APPLICATION_CREDENTIALS
-
     echo %Path%
+    echo %GOOGLE_CREDENTIALS% > %GOOGLE_CREDENTIALS%
 
     go version
 
