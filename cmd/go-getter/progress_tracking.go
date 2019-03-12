@@ -45,8 +45,16 @@ func (cpb *ProgressBar) TrackProgress(src string, currentSize, totalSize int64, 
 	newPb.Set64(currentSize)
 	ProgressBarConfig(newPb, filepath.Base(src))
 	if cpb.pool == nil {
-		cpb.pool = pb.NewPool()
-		cpb.pool.Start()
+		pool := pb.NewPool()
+		err := pool.Start()
+		if err != nil {
+			// here, we probably cannot lock
+			// stdout to show a progress bar.
+			// so let's just return
+			// stream to avoid any error.
+			return stream
+		}
+		cpb.pool = pool
 	}
 	cpb.pool.Add(newPb)
 	reader := newPb.NewProxyReader(stream)
