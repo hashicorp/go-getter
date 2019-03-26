@@ -18,13 +18,12 @@ import (
 
 // TestDecompressCase is a single test case for testing decompressors
 type TestDecompressCase struct {
-	Input    string            // Input is the complete path to the input file
-	Dir      bool              // Dir is whether or not we're testing directory mode
-	Err      bool              // Err is whether we expect an error or not
-	DirList  []string          // DirList is the list of files for Dir mode
-	Symlinks map[string]string // Optional map of symlinks to test
-	FileMD5  string            // FileMD5 is the expected MD5 for a single file
-	Mtime    *time.Time        // Mtime is the optionally expected mtime for a single file (or all files if in Dir mode)
+	Input   string     // Input is the complete path to the input file
+	Dir     bool       // Dir is whether or not we're testing directory mode
+	Err     bool       // Err is whether we expect an error or not
+	DirList []string   // DirList is the list of files for Dir mode
+	FileMD5 string     // FileMD5 is the expected MD5 for a single file
+	Mtime   *time.Time // Mtime is the optionally expected mtime for a single file (or all files if in Dir mode)
 }
 
 // TestDecompressor is a helper function for testing generic decompressors.
@@ -98,17 +97,11 @@ func TestDecompressor(t testing.T, d Decompressor, cases []TestDecompressCase) {
 
 			// Directory, check for the correct contents
 			actual := testListDir(t, dst)
-			if !reflect.DeepEqual(actual.files, expected) {
-				t.Fatalf("bad %s\n\n%#v\n\n%#v", tc.Input, actual.files, expected)
+			if !reflect.DeepEqual(actual, expected) {
+				t.Fatalf("bad %s\n\n%#v\n\n%#v", tc.Input, actual, expected)
 			}
-
-			// Symlinks, check that symlinks match
-			if tc.Symlinks != nil && !reflect.DeepEqual(actual.symlinks, tc.Symlinks) {
-				t.Fatalf("bad %s\n\n%#v\n\n%#v", tc.Input, actual.symlinks, tc.Symlinks)
-			}
-
 			// Check for correct atime/mtime
-			for _, dir := range actual.files {
+			for _, dir := range actual {
 				path := filepath.Join(dst, dir)
 				if tc.Mtime != nil {
 					fi, err := os.Stat(path)
@@ -131,32 +124,8 @@ func TestDecompressor(t testing.T, d Decompressor, cases []TestDecompressCase) {
 	}
 }
 
-type testResult struct {
-	files    []string
-	symlinks map[string]string
-}
-
-func (tr *testResult) AddFile(name string) {
-	tr.files = append(tr.files, name)
-}
-
-func (tr *testResult) AddSymlink(name, link string) {
-	tr.symlinks[name] = link
-}
-
-func (tr *testResult) SortFiles() {
-	sort.Strings(tr.files)
-}
-
-func newTestResult() *testResult {
-	return &testResult{
-		files:    make([]string, 0),
-		symlinks: make(map[string]string),
-	}
-}
-
-func testListDir(t testing.T, path string) *testResult {
-	result := newTestResult()
+func testListDir(t testing.T, path string) []string {
+	var result []string
 	err := filepath.Walk(path, func(sub string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
@@ -171,24 +140,16 @@ func testListDir(t testing.T, path string) *testResult {
 		// If it is a dir, add trailing sep
 		if info.IsDir() {
 			sub += string(os.PathSeparator)
-			result.AddFile(sub)
-		} else if info.Mode()&os.ModeSymlink != 0 {
-			link, err := os.Readlink(filepath.Join(path, info.Name()))
-			if err != nil {
-				return err
-			}
-			result.AddSymlink(sub, link)
-		} else {
-			result.AddFile(sub)
 		}
 
+		result = append(result, sub)
 		return nil
 	})
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
-	result.SortFiles()
+	sort.Strings(result)
 	return result
 }
 
