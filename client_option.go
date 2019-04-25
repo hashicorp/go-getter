@@ -4,14 +4,7 @@ package getter
 type ClientOption func(*Client) error
 
 // Configure configures a client with options.
-func (c *Client) Configure(opts ...ClientOption) error {
-	c.Options = opts
-	for _, opt := range opts {
-		err := opt(c)
-		if err != nil {
-			return err
-		}
-	}
+func (c *Client) Configure() error {
 	// Default decompressor values
 	if c.Decompressors == nil {
 		c.Decompressors = Decompressors

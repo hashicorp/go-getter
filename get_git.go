@@ -28,7 +28,7 @@ func (g *GitGetter) ClientMode(ctx context.Context, u *url.URL) (ClientMode, err
 	return ClientModeDir, nil
 }
 
-func (g *GitGetter) Get(ctx context.Context, dst string, u *url.URL) error {
+func (g *GitGetter) Get(ctx context.Context, req *Request) error {
 	if _, err := exec.LookPath("git"); err != nil {
 		return fmt.Errorf("git must be available and on the PATH")
 	}
@@ -36,7 +36,7 @@ func (g *GitGetter) Get(ctx context.Context, dst string, u *url.URL) error {
 	// Extract some query parameters we use
 	var ref, sshKey string
 	var depth int
-	q := u.Query()
+	q := req.u.Query()
 	if len(q) > 0 {
 		ref = q.Get("ref")
 		q.Del("ref")
@@ -50,9 +50,9 @@ func (g *GitGetter) Get(ctx context.Context, dst string, u *url.URL) error {
 		q.Del("depth")
 
 		// Copy the URL
-		var newU url.URL = *u
-		u = &newU
-		u.RawQuery = q.Encode()
+		var newU url.URL = *req.u
+		req.u = &newU
+		req.u.RawQuery = q.Encode()
 	}
 
 	var sshKeyFile string
@@ -92,32 +92,32 @@ func (g *GitGetter) Get(ctx context.Context, dst string, u *url.URL) error {
 	// For SSH-style URLs, if they use the SCP syntax of host:path, then
 	// the URL will be mangled. We detect that here and correct the path.
 	// Example: host:path/bar will turn into host/path/bar
-	if u.Scheme == "ssh" {
-		if idx := strings.Index(u.Host, ":"); idx > -1 {
+	if req.u.Scheme == "ssh" {
+		if idx := strings.Index(req.u.Host, ":"); idx > -1 {
 			// Copy the URL so we don't modify the input
-			var newU url.URL = *u
-			u = &newU
+			var newU url.URL = *req.u
+			req.u = &newU
 
 			// Path includes the part after the ':'.
-			u.Path = u.Host[idx+1:] + u.Path
-			if u.Path[0] != '/' {
-				u.Path = "/" + u.Path
+			req.u.Path = req.u.Host[idx+1:] + req.u.Path
+			if req.u.Path[0] != '/' {
+				req.u.Path = "/" + req.u.Path
 			}
 
 			// Host trims up to the :
-			u.Host = u.Host[:idx]
+			req.u.Host = req.u.Host[:idx]
 		}
 	}
 
 	// Clone or update the repository
-	_, err := os.Stat(dst)
+	_, err := os.Stat(req.Dst)
 	if err != nil && !os.IsNotExist(err) {
 		return err
 	}
 	if err == nil {
-		err = g.update(ctx, dst, sshKeyFile, ref, depth)
+		err = g.update(ctx, req.Dst, sshKeyFile, ref, depth)
 	} else {
-		err = g.clone(ctx, dst, sshKeyFile, u, depth)
+		err = g.clone(ctx, sshKeyFile, depth, req)
 	}
 	if err != nil {
 		return err
@@ -125,18 +125,18 @@ func (g *GitGetter) Get(ctx context.Context, dst string, u *url.URL) error {
 
 	// Next: check out the proper tag/branch if it is specified, and checkout
 	if ref != "" {
-		if err := g.checkout(dst, ref); err != nil {
+		if err := g.checkout(req.Dst, ref); err != nil {
 			return err
 		}
 	}
 
 	// Lastly, download any/all submodules.
-	return g.fetchSubmodules(ctx, dst, sshKeyFile, depth)
+	return g.fetchSubmodules(ctx, req.Dst, sshKeyFile, depth)
 }
 
 // GetFile for Git doesn't support updating at this time. It will download
 // the file every time.
-func (g *GitGetter) GetFile(ctx context.Context, dst string, u *url.URL) error {
+func (g *GitGetter) GetFile(ctx context.Context, req *Request) error {
 	td, tdcloser, err := safetemp.Dir("", "getter")
 	if err != nil {
 		return err
@@ -145,22 +145,26 @@ func (g *GitGetter) GetFile(ctx context.Context, dst string, u *url.URL) error {
 
 	// Get the filename, and strip the filename from the URL so we can
 	// just get the repository directly.
-	filename := filepath.Base(u.Path)
-	u.Path = filepath.Dir(u.Path)
+	filename := filepath.Base(req.u.Path)
+	req.u.Path = filepath.Dir(req.u.Path)
+	dst := req.Dst
+	req.Dst = td
 
 	// Get the full repository
-	if err := g.Get(ctx, td, u); err != nil {
+	if err := g.Get(ctx, req); err != nil {
 		return err
 	}
 
 	// Copy the single file
-	u, err = urlhelper.Parse(fmtFileURL(filepath.Join(td, filename)))
+	req.u, err = urlhelper.Parse(fmtFileURL(filepath.Join(td, filename)))
 	if err != nil {
 		return err
 	}
 
-	fg := &FileGetter{Copy: true}
-	return fg.GetFile(ctx, dst, u)
+	fg := &FileGetter{}
+	req.Copy = true
+	req.Dst = dst
+	return fg.GetFile(ctx, req)
 }
 
 func (g *GitGetter) checkout(dst string, ref string) error {
@@ -169,14 +173,14 @@ func (g *GitGetter) checkout(dst string, ref string) error {
 	return getRunCommand(cmd)
 }
 
-func (g *GitGetter) clone(ctx context.Context, dst, sshKeyFile string, u *url.URL, depth int) error {
+func (g *GitGetter) clone(ctx context.Context, sshKeyFile string, depth int, req *Request) error {
 	args := []string{"clone"}
 
 	if depth > 0 {
 		args = append(args, "--depth", strconv.Itoa(depth))
 	}
 
-	args = append(args, u.String(), dst)
+	args = append(args, req.u.String(), req.Dst)
 	cmd := exec.CommandContext(ctx, "git", args...)
 	setupGitEnv(cmd, sshKeyFile)
 	return getRunCommand(cmd)

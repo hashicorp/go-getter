@@ -35,9 +35,13 @@ func TestGCSGetter(t *testing.T) {
 	dst := tempDir(t)
 	ctx := context.Background()
 
+	req := &Request{
+		Dst: dst,
+		u:   testURL("https://www.googleapis.com/storage/v1/go-getter-test/go-getter/folder"),
+	}
+
 	// With a dir that doesn't exist
-	err := g.Get(ctx,
-		dst, testURL("https://www.googleapis.com/storage/v1/go-getter-test/go-getter/folder"))
+	err := g.Get(ctx, req)
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
@@ -56,9 +60,13 @@ func TestGCSGetter_subdir(t *testing.T) {
 	dst := tempDir(t)
 	ctx := context.Background()
 
+	req := &Request{
+		Dst: dst,
+		u:   testURL("https://www.googleapis.com/storage/v1/go-getter-test/go-getter/folder/subfolder"),
+	}
+
 	// With a dir that doesn't exist
-	err := g.Get(ctx,
-		dst, testURL("https://www.googleapis.com/storage/v1/go-getter-test/go-getter/folder/subfolder"))
+	err := g.Get(ctx, req)
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
@@ -78,9 +86,13 @@ func TestGCSGetter_GetFile(t *testing.T) {
 	defer os.RemoveAll(filepath.Dir(dst))
 	ctx := context.Background()
 
+	req := &Request{
+		Dst: dst,
+		u:   testURL("https://www.googleapis.com/storage/v1/go-getter-test/go-getter/folder/main.tf"),
+	}
+
 	// Download
-	err := g.GetFile(ctx,
-		dst, testURL("https://www.googleapis.com/storage/v1/go-getter-test/go-getter/folder/main.tf"))
+	err := g.GetFile(ctx, req)
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
@@ -98,9 +110,13 @@ func TestGCSGetter_GetFile_notfound(t *testing.T) {
 	defer os.RemoveAll(filepath.Dir(dst))
 	ctx := context.Background()
 
+	req := &Request{
+		Dst: dst,
+		u:   testURL("https://www.googleapis.com/storage/v1/go-getter-test/go-getter/folder/404.tf"),
+	}
+
 	// Download
-	err := g.GetFile(ctx,
-		dst, testURL("https://www.googleapis.com/storage/v1/go-getter-test/go-getter/folder/404.tf"))
+	err := g.GetFile(ctx, req)
 	if err == nil {
 		t.Fatalf("expected error, got none")
 	}

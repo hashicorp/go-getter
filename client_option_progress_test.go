@@ -50,10 +50,22 @@ func TestGet_progress(t *testing.T) {
 		p := &MockProgressTracking{}
 		dst := tempTestFile(t)
 		defer os.RemoveAll(filepath.Dir(dst))
-		if err := GetFile(ctx, dst, s.URL+"/file?thig=this&that", WithProgress(p)); err != nil {
+		req := &Request{
+			Dst:              dst,
+			Src:              s.URL + "/file?thig=this&that",
+			ProgressListener: p,
+			Dir:              false,
+		}
+		if err := DefaultClient.Get(ctx, req); err != nil {
 			t.Fatalf("download failed: %v", err)
 		}
-		if err := GetFile(ctx, dst, s.URL+"/otherfile?thig=this&that", WithProgress(p)); err != nil {
+		req = &Request{
+			Dst:              dst,
+			Src:              s.URL + "/otherfile?thig=this&that",
+			ProgressListener: p,
+			Dir:              false,
+		}
+		if err := DefaultClient.Get(ctx, req); err != nil {
 			t.Fatalf("download failed: %v", err)
 		}
 

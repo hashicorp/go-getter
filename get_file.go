@@ -12,11 +12,6 @@ import (
 // a file scheme.
 type FileGetter struct {
 	getter
-
-	// Copy, if set to true, will copy data instead of using a symlink. If
-	// false, attempts to symlink to speed up the operation and to lower the
-	// disk space usage. If the symlink fails, may attempt to copy on windows.
-	Copy bool
 }
 
 func (g *FileGetter) ClientMode(ctx context.Context, u *url.URL) (ClientMode, error) {
@@ -38,10 +33,10 @@ func (g *FileGetter) ClientMode(ctx context.Context, u *url.URL) (ClientMode, er
 	return ClientModeFile, nil
 }
 
-func (g *FileGetter) Get(ctx context.Context, dst string, u *url.URL) error {
-	path := u.Path
-	if u.RawPath != "" {
-		path = u.RawPath
+func (g *FileGetter) Get(ctx context.Context, req *Request) error {
+	path := req.u.Path
+	if req.u.RawPath != "" {
+		path = req.u.RawPath
 	}
 
 	// The source path must exist and be a directory to be usable.
@@ -51,7 +46,7 @@ func (g *FileGetter) Get(ctx context.Context, dst string, u *url.URL) error {
 		return fmt.Errorf("source path must be a directory")
 	}
 
-	fi, err := os.Lstat(dst)
+	fi, err := os.Lstat(req.Dst)
 	if err != nil && !os.IsNotExist(err) {
 		return err
 	}
@@ -64,23 +59,23 @@ func (g *FileGetter) Get(ctx context.Context, dst string, u *url.URL) error {
 		}
 
 		// Remove the destination
-		if err := os.Remove(dst); err != nil {
+		if err := os.Remove(req.Dst); err != nil {
 			return err
 		}
 	}
 
 	// Create all the parent directories
-	if err := os.MkdirAll(filepath.Dir(dst), 0755); err != nil {
+	if err := os.MkdirAll(filepath.Dir(req.Dst), 0755); err != nil {
 		return err
 	}
 
-	return os.Symlink(path, dst)
+	return os.Symlink(path, req.Dst)
 }
 
-func (g *FileGetter) GetFile(ctx context.Context, dst string, u *url.URL) error {
-	path := u.Path
-	if u.RawPath != "" {
-		path = u.RawPath
+func (g *FileGetter) GetFile(ctx context.Context, req *Request) error {
+	path := req.u.Path
+	if req.u.RawPath != "" {
+		path = req.u.RawPath
 	}
 
 	// The source path must exist and be a file to be usable.
@@ -90,7 +85,7 @@ func (g *FileGetter) GetFile(ctx context.Context, dst string, u *url.URL) error 
 		return fmt.Errorf("source path must be a file")
 	}
 
-	_, err := os.Lstat(dst)
+	_, err := os.Lstat(req.Dst)
 	if err != nil && !os.IsNotExist(err) {
 		return err
 	}
@@ -98,19 +93,19 @@ func (g *FileGetter) GetFile(ctx context.Context, dst string, u *url.URL) error 
 	// If the destination already exists, it must be a symlink
 	if err == nil {
 		// Remove the destination
-		if err := os.Remove(dst); err != nil {
+		if err := os.Remove(req.Dst); err != nil {
 			return err
 		}
 	}
 
 	// Create all the parent directories
-	if err := os.MkdirAll(filepath.Dir(dst), 0755); err != nil {
+	if err := os.MkdirAll(filepath.Dir(req.Dst), 0755); err != nil {
 		return err
 	}
 
 	// If we're not copying, just symlink and we're done
-	if !g.Copy {
-		return os.Symlink(path, dst)
+	if !req.Copy {
+		return os.Symlink(path, req.Dst)
 	}
 
 	// Copy
@@ -120,7 +115,7 @@ func (g *FileGetter) GetFile(ctx context.Context, dst string, u *url.URL) error 
 	}
 	defer srcF.Close()
 
-	dstF, err := os.Create(dst)
+	dstF, err := os.Create(req.Dst)
 	if err != nil {
 		return err
 	}

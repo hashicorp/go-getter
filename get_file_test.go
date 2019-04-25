@@ -16,8 +16,13 @@ func TestFileGetter(t *testing.T) {
 	dst := tempDir(t)
 	ctx := context.Background()
 
+	req := &Request{
+		Dst: dst,
+		u:   testModuleURL("basic"),
+	}
+
 	// With a dir that doesn't exist
-	if err := g.Get(ctx, dst, testModuleURL("basic")); err != nil {
+	if err := g.Get(ctx, req); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
@@ -45,7 +50,12 @@ func TestFileGetter_sourceFile(t *testing.T) {
 	// With a source URL that is a path to a file
 	u := testModuleURL("basic")
 	u.Path += "/main.tf"
-	if err := g.Get(ctx, dst, u); err == nil {
+
+	req := &Request{
+		Dst: dst,
+		u:   u,
+	}
+	if err := g.Get(ctx, req); err == nil {
 		t.Fatal("should error")
 	}
 }
@@ -58,7 +68,12 @@ func TestFileGetter_sourceNoExist(t *testing.T) {
 	// With a source URL that doesn't exist
 	u := testModuleURL("basic")
 	u.Path += "/main"
-	if err := g.Get(ctx, dst, u); err == nil {
+
+	req := &Request{
+		Dst: dst,
+		u:   u,
+	}
+	if err := g.Get(ctx, req); err == nil {
 		t.Fatal("should error")
 	}
 }
@@ -72,8 +87,12 @@ func TestFileGetter_dir(t *testing.T) {
 		t.Fatalf("err: %s", err)
 	}
 
+	req := &Request{
+		Dst: dst,
+		u:   testModuleURL("basic"),
+	}
 	// With a dir that exists that isn't a symlink
-	if err := g.Get(ctx, dst, testModuleURL("basic")); err == nil {
+	if err := g.Get(ctx, req); err == nil {
 		t.Fatal("should error")
 	}
 }
@@ -98,8 +117,13 @@ func TestFileGetter_dirSymlink(t *testing.T) {
 		t.Fatalf("err: %s", err)
 	}
 
+	req := &Request{
+		Dst: dst,
+		u:   testModuleURL("basic"),
+	}
+
 	// With a dir that exists that isn't a symlink
-	if err := g.Get(ctx, dst, testModuleURL("basic")); err != nil {
+	if err := g.Get(ctx, req); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
@@ -116,8 +140,13 @@ func TestFileGetter_GetFile(t *testing.T) {
 	defer os.RemoveAll(filepath.Dir(dst))
 	ctx := context.Background()
 
+	req := &Request{
+		Dst: dst,
+		u:   testModuleURL("basic-file/foo.txt"),
+	}
+
 	// With a dir that doesn't exist
-	if err := g.GetFile(ctx, dst, testModuleURL("basic-file/foo.txt")); err != nil {
+	if err := g.GetFile(ctx, req); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
@@ -136,14 +165,19 @@ func TestFileGetter_GetFile(t *testing.T) {
 
 func TestFileGetter_GetFile_Copy(t *testing.T) {
 	g := new(FileGetter)
-	g.Copy = true
 
 	dst := tempTestFile(t)
 	defer os.RemoveAll(filepath.Dir(dst))
 	ctx := context.Background()
 
+	req := &Request{
+		Dst:  dst,
+		u:    testModuleURL("basic-file/foo.txt"),
+		Copy: true,
+	}
+
 	// With a dir that doesn't exist
-	if err := g.GetFile(ctx, dst, testModuleURL("basic-file/foo.txt")); err != nil {
+	if err := g.GetFile(ctx, req); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
@@ -166,8 +200,13 @@ func TestFileGetter_percent2F(t *testing.T) {
 	dst := tempDir(t)
 	ctx := context.Background()
 
+	req := &Request{
+		Dst: dst,
+		u:   testModuleURL("basic%2Ftest"),
+	}
+
 	// With a dir that doesn't exist
-	if err := g.Get(ctx, dst, testModuleURL("basic%2Ftest")); err != nil {
+	if err := g.Get(ctx, req); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 

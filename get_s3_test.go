@@ -31,10 +31,12 @@ func TestS3Getter(t *testing.T) {
 
 	g := new(S3Getter)
 	dst := tempDir(t)
-
+	req := &Request{
+		Dst: dst,
+		u:   testURL("https://s3.amazonaws.com/hc-oss-test/go-getter/folder"),
+	}
 	// With a dir that doesn't exist
-	err := g.Get(ctx,
-		dst, testURL("https://s3.amazonaws.com/hc-oss-test/go-getter/folder"))
+	err := g.Get(ctx, req)
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
@@ -51,10 +53,12 @@ func TestS3Getter_subdir(t *testing.T) {
 
 	g := new(S3Getter)
 	dst := tempDir(t)
-
+	req := &Request{
+		Dst: dst,
+		u:   testURL("https://s3.amazonaws.com/hc-oss-test/go-getter/folder/subfolder"),
+	}
 	// With a dir that doesn't exist
-	err := g.Get(ctx,
-		dst, testURL("https://s3.amazonaws.com/hc-oss-test/go-getter/folder/subfolder"))
+	err := g.Get(ctx, req)
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
@@ -73,9 +77,12 @@ func TestS3Getter_GetFile(t *testing.T) {
 	dst := tempTestFile(t)
 	defer os.RemoveAll(filepath.Dir(dst))
 
+	req := &Request{
+		Dst: dst,
+		u:   testURL("https://s3.amazonaws.com/hc-oss-test/go-getter/folder/main.tf"),
+	}
 	// Download
-	err := g.GetFile(ctx,
-		dst, testURL("https://s3.amazonaws.com/hc-oss-test/go-getter/folder/main.tf"))
+	err := g.GetFile(ctx, req)
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
@@ -94,10 +101,13 @@ func TestS3Getter_GetFile_badParams(t *testing.T) {
 	dst := tempTestFile(t)
 	defer os.RemoveAll(filepath.Dir(dst))
 
+	req := &Request{
+		Dst: dst,
+		u:   testURL("https://s3.amazonaws.com/hc-oss-test/go-getter/folder/main.tf?aws_access_key_id=foo&aws_access_key_secret=bar&aws_access_token=baz"),
+	}
+
 	// Download
-	err := g.GetFile(ctx,
-		dst,
-		testURL("https://s3.amazonaws.com/hc-oss-test/go-getter/folder/main.tf?aws_access_key_id=foo&aws_access_key_secret=bar&aws_access_token=baz"))
+	err := g.GetFile(ctx, req)
 	if err == nil {
 		t.Fatalf("expected error, got none")
 	}
@@ -114,9 +124,13 @@ func TestS3Getter_GetFile_notfound(t *testing.T) {
 	dst := tempTestFile(t)
 	defer os.RemoveAll(filepath.Dir(dst))
 
+	req := &Request{
+		Dst: dst,
+		u:   testURL("https://s3.amazonaws.com/hc-oss-test/go-getter/folder/404.tf"),
+	}
+
 	// Download
-	err := g.GetFile(ctx,
-		dst, testURL("https://s3.amazonaws.com/hc-oss-test/go-getter/folder/404.tf"))
+	err := g.GetFile(ctx, req)
 	if err == nil {
 		t.Fatalf("expected error, got none")
 	}

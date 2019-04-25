@@ -41,19 +41,16 @@ func main() {
 		log.Fatalf("Error getting wd: %s", err)
 	}
 
-	opts := []getter.ClientOption{}
-	if *progress {
-		opts = append(opts, getter.WithProgress(defaultProgressBar))
-	}
-
 	ctx, cancel := context.WithCancel(context.Background())
 	// Build the client
-	client := &getter.Client{
-		Src:     args[0],
-		Dst:     args[1],
-		Pwd:     pwd,
-		Mode:    mode,
-		Options: opts,
+	req := &getter.Request{
+		Src:  args[0],
+		Dst:  args[1],
+		Pwd:  pwd,
+		Mode: mode,
+	}
+	if *progress {
+		req.ProgressListener = defaultProgressBar
 	}
 
 	wg := sync.WaitGroup{}
@@ -62,7 +59,7 @@ func main() {
 	go func() {
 		defer wg.Done()
 		defer cancel()
-		if err := client.Get(ctx); err != nil {
+		if err := getter.DefaultClient.Get(ctx, req); err != nil {
 			errChan <- err
 		}
 	}()

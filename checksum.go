@@ -203,17 +203,14 @@ func (c *Client) checksumFromFile(ctx context.Context, checksumFile string, src 
 	}
 	defer os.Remove(tempfile)
 
-	c2 := &Client{
-		Getters:          c.Getters,
-		Decompressors:    c.Decompressors,
-		Detectors:        c.Detectors,
-		Pwd:              c.Pwd,
-		Dir:              false,
-		Src:              checksumFile,
-		Dst:              tempfile,
-		ProgressListener: c.ProgressListener,
+	req := &Request{
+		// Pwd:              c.Pwd, TODO(adrien): pass pwd ?
+		Dir: false,
+		Src: checksumFile,
+		Dst: tempfile,
+		// ProgressListener: c.ProgressListener, TODO(adrien): pass progress bar ?
 	}
-	if err = c2.Get(ctx); err != nil {
+	if err = c.Get(ctx, req); err != nil {
 		return nil, fmt.Errorf(
 			"Error downloading checksum file: %s", err)
 	}

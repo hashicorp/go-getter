@@ -40,8 +40,13 @@ func TestGitGetter(t *testing.T) {
 	repo := testGitRepo(t, "basic")
 	repo.commitFile("foo.txt", "hello")
 
+	req := &Request{
+		Dst: dst,
+		u:   repo.url,
+	}
+
 	// With a dir that doesn't exist
-	if err := g.Get(ctx, dst, repo.url); err != nil {
+	if err := g.Get(ctx, req); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
@@ -69,7 +74,10 @@ func TestGitGetter_branch(t *testing.T) {
 	q.Add("ref", "test-branch")
 	repo.url.RawQuery = q.Encode()
 
-	if err := g.Get(ctx, dst, repo.url); err != nil {
+	if err := g.Get(ctx, &Request{
+		Dst: dst,
+		u:   repo.url,
+	}); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
@@ -80,7 +88,10 @@ func TestGitGetter_branch(t *testing.T) {
 	}
 
 	// Get again should work
-	if err := g.Get(ctx, dst, repo.url); err != nil {
+	if err := g.Get(ctx, &Request{
+		Dst: dst,
+		u:   repo.url,
+	}); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
@@ -110,7 +121,10 @@ func TestGitGetter_shallowClone(t *testing.T) {
 	q.Add("depth", "1")
 	repo.url.RawQuery = q.Encode()
 
-	if err := g.Get(ctx, dst, repo.url); err != nil {
+	if err := g.Get(ctx, &Request{
+		Dst: dst,
+		u:   repo.url,
+	}); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
@@ -146,7 +160,11 @@ func TestGitGetter_branchUpdate(t *testing.T) {
 	q := repo.url.Query()
 	q.Add("ref", "test-branch")
 	repo.url.RawQuery = q.Encode()
-	if err := g.Get(ctx, dst, repo.url); err != nil {
+
+	if err := g.Get(ctx, &Request{
+		Dst: dst,
+		u:   repo.url,
+	}); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
@@ -160,7 +178,10 @@ func TestGitGetter_branchUpdate(t *testing.T) {
 	repo.commitFile("branch-update.txt", "branch-update")
 
 	// Get again should work
-	if err := g.Get(ctx, dst, repo.url); err != nil {
+	if err := g.Get(ctx, &Request{
+		Dst: dst,
+		u:   repo.url,
+	}); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
@@ -188,7 +209,10 @@ func TestGitGetter_tag(t *testing.T) {
 	q.Add("ref", "v1.0")
 	repo.url.RawQuery = q.Encode()
 
-	if err := g.Get(ctx, dst, repo.url); err != nil {
+	if err := g.Get(ctx, &Request{
+		Dst: dst,
+		u:   repo.url,
+	}); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
@@ -199,7 +223,10 @@ func TestGitGetter_tag(t *testing.T) {
 	}
 
 	// Get again should work
-	if err := g.Get(ctx, dst, repo.url); err != nil {
+	if err := g.Get(ctx, &Request{
+		Dst: dst,
+		u:   repo.url,
+	}); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
@@ -225,7 +252,12 @@ func TestGitGetter_GetFile(t *testing.T) {
 
 	// Download the file
 	repo.url.Path = filepath.Join(repo.url.Path, "file.txt")
-	if err := g.GetFile(ctx, dst, repo.url); err != nil {
+	req := &Request{
+		Dst: dst,
+		u:   repo.url,
+	}
+
+	if err := g.GetFile(ctx, req); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
@@ -296,7 +328,12 @@ func TestGitGetter_sshKey(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err := g.Get(ctx, dst, u); err != nil {
+	req := &Request{
+		Dst: dst,
+		u:   u,
+	}
+
+	if err := g.Get(ctx, req); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
@@ -341,8 +378,13 @@ func TestGitGetter_submodule(t *testing.T) {
 	p.git("submodule", "add", "-f", relpath(p.dir, c.dir))
 	p.git("commit", "-m", "Add child submodule")
 
+	req := &Request{
+		Dst: dst,
+		u:   p.url,
+	}
+
 	// Clone the root repository
-	if err := g.Get(ctx, dst, p.url); err != nil {
+	if err := g.Get(ctx, req); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
