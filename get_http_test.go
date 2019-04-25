@@ -1,6 +1,7 @@
 package getter
 
 import (
+	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"errors"
@@ -23,6 +24,7 @@ func TestHttpGetter_impl(t *testing.T) {
 func TestHttpGetter_header(t *testing.T) {
 	ln := testHttpServer(t)
 	defer ln.Close()
+	ctx := context.Background()
 
 	g := new(HttpGetter)
 	dst := tempDir(t)
@@ -34,7 +36,7 @@ func TestHttpGetter_header(t *testing.T) {
 	u.Path = "/header"
 
 	// Get it!
-	if err := g.Get(dst, &u); err != nil {
+	if err := g.Get(ctx, dst, &u); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
@@ -48,6 +50,7 @@ func TestHttpGetter_header(t *testing.T) {
 func TestHttpGetter_requestHeader(t *testing.T) {
 	ln := testHttpServer(t)
 	defer ln.Close()
+	ctx := context.Background()
 
 	g := new(HttpGetter)
 	g.Header = make(http.Header)
@@ -62,7 +65,7 @@ func TestHttpGetter_requestHeader(t *testing.T) {
 	u.RawQuery = "expected=X-Foobar"
 
 	// Get it!
-	if err := g.GetFile(dst, &u); err != nil {
+	if err := g.GetFile(ctx, dst, &u); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
@@ -76,6 +79,7 @@ func TestHttpGetter_requestHeader(t *testing.T) {
 func TestHttpGetter_meta(t *testing.T) {
 	ln := testHttpServer(t)
 	defer ln.Close()
+	ctx := context.Background()
 
 	g := new(HttpGetter)
 	dst := tempDir(t)
@@ -87,7 +91,7 @@ func TestHttpGetter_meta(t *testing.T) {
 	u.Path = "/meta"
 
 	// Get it!
-	if err := g.Get(dst, &u); err != nil {
+	if err := g.Get(ctx, dst, &u); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
@@ -101,6 +105,7 @@ func TestHttpGetter_meta(t *testing.T) {
 func TestHttpGetter_metaSubdir(t *testing.T) {
 	ln := testHttpServer(t)
 	defer ln.Close()
+	ctx := context.Background()
 
 	g := new(HttpGetter)
 	dst := tempDir(t)
@@ -112,7 +117,7 @@ func TestHttpGetter_metaSubdir(t *testing.T) {
 	u.Path = "/meta-subdir"
 
 	// Get it!
-	if err := g.Get(dst, &u); err != nil {
+	if err := g.Get(ctx, dst, &u); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
@@ -126,6 +131,7 @@ func TestHttpGetter_metaSubdir(t *testing.T) {
 func TestHttpGetter_metaSubdirGlob(t *testing.T) {
 	ln := testHttpServer(t)
 	defer ln.Close()
+	ctx := context.Background()
 
 	g := new(HttpGetter)
 	dst := tempDir(t)
@@ -137,7 +143,7 @@ func TestHttpGetter_metaSubdirGlob(t *testing.T) {
 	u.Path = "/meta-subdir-glob"
 
 	// Get it!
-	if err := g.Get(dst, &u); err != nil {
+	if err := g.Get(ctx, dst, &u); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
@@ -151,6 +157,7 @@ func TestHttpGetter_metaSubdirGlob(t *testing.T) {
 func TestHttpGetter_none(t *testing.T) {
 	ln := testHttpServer(t)
 	defer ln.Close()
+	ctx := context.Background()
 
 	g := new(HttpGetter)
 	dst := tempDir(t)
@@ -162,7 +169,7 @@ func TestHttpGetter_none(t *testing.T) {
 	u.Path = "/none"
 
 	// Get it!
-	if err := g.Get(dst, &u); err == nil {
+	if err := g.Get(ctx, dst, &u); err == nil {
 		t.Fatal("should error")
 	}
 }
@@ -201,9 +208,10 @@ func TestHttpGetter_resume(t *testing.T) {
 		RawQuery: "checksum=" + checksum,
 	}
 	t.Logf("url: %s", u.String())
+	ctx := context.Background()
 
 	// Finish getting it!
-	if err := GetFile(dst, u.String()); err != nil {
+	if err := GetFile(ctx, dst, u.String()); err != nil {
 		t.Fatalf("finishing download should not error: %v", err)
 	}
 
@@ -217,7 +225,7 @@ func TestHttpGetter_resume(t *testing.T) {
 	}
 
 	// Get it again
-	if err := GetFile(dst, u.String()); err != nil {
+	if err := GetFile(ctx, dst, u.String()); err != nil {
 		t.Fatalf("should not error: %v", err)
 	}
 }
@@ -225,6 +233,7 @@ func TestHttpGetter_resume(t *testing.T) {
 func TestHttpGetter_file(t *testing.T) {
 	ln := testHttpServer(t)
 	defer ln.Close()
+	ctx := context.Background()
 
 	g := new(HttpGetter)
 	dst := tempTestFile(t)
@@ -236,7 +245,7 @@ func TestHttpGetter_file(t *testing.T) {
 	u.Path = "/file"
 
 	// Get it!
-	if err := g.GetFile(dst, &u); err != nil {
+	if err := g.GetFile(ctx, dst, &u); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
@@ -250,6 +259,7 @@ func TestHttpGetter_file(t *testing.T) {
 func TestHttpGetter_auth(t *testing.T) {
 	ln := testHttpServer(t)
 	defer ln.Close()
+	ctx := context.Background()
 
 	g := new(HttpGetter)
 	dst := tempDir(t)
@@ -262,7 +272,7 @@ func TestHttpGetter_auth(t *testing.T) {
 	u.User = url.UserPassword("foo", "bar")
 
 	// Get it!
-	if err := g.Get(dst, &u); err != nil {
+	if err := g.Get(ctx, dst, &u); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
@@ -276,6 +286,7 @@ func TestHttpGetter_auth(t *testing.T) {
 func TestHttpGetter_authNetrc(t *testing.T) {
 	ln := testHttpServer(t)
 	defer ln.Close()
+	ctx := context.Background()
 
 	g := new(HttpGetter)
 	dst := tempDir(t)
@@ -292,7 +303,7 @@ func TestHttpGetter_authNetrc(t *testing.T) {
 	defer tempEnv(t, "NETRC", path)()
 
 	// Get it!
-	if err := g.Get(dst, &u); err != nil {
+	if err := g.Get(ctx, dst, &u); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
@@ -320,6 +331,7 @@ func TestHttpGetter_cleanhttp(t *testing.T) {
 	defer func() {
 		http.DefaultClient.Transport = http.DefaultTransport
 	}()
+	ctx := context.Background()
 
 	g := new(HttpGetter)
 	dst := tempDir(t)
@@ -331,7 +343,7 @@ func TestHttpGetter_cleanhttp(t *testing.T) {
 	u.Path = "/header"
 
 	// Get it!
-	if err := g.Get(dst, &u); err != nil {
+	if err := g.Get(ctx, dst, &u); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 }

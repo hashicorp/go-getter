@@ -3,6 +3,7 @@ package getter
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"crypto/md5"
 	"crypto/sha1"
 	"crypto/sha256"
@@ -93,7 +94,7 @@ func (c *fileChecksum) checksum(source string) error {
 //  <checksum> *file2
 //
 // see parseChecksumLine for more detail on checksum file parsing
-func (c *Client) extractChecksum(u *url.URL) (*fileChecksum, error) {
+func (c *Client) extractChecksum(ctx context.Context, u *url.URL) (*fileChecksum, error) {
 	q := u.Query()
 	v := q.Get("checksum")
 
@@ -115,7 +116,7 @@ func (c *Client) extractChecksum(u *url.URL) (*fileChecksum, error) {
 
 	switch checksumType {
 	case "file":
-		return c.checksumFromFile(checksumValue, u)
+		return c.checksumFromFile(ctx, checksumValue, u)
 	default:
 		return newChecksumFromType(checksumType, checksumValue, filepath.Base(u.EscapedPath()))
 	}
@@ -190,7 +191,7 @@ func newChecksumFromValue(checksumValue, filename string) (*fileChecksum, error)
 //
 // checksumsFromFile will only return checksums for files that match file
 // behind src
-func (c *Client) checksumFromFile(checksumFile string, src *url.URL) (*fileChecksum, error) {
+func (c *Client) checksumFromFile(ctx context.Context, checksumFile string, src *url.URL) (*fileChecksum, error) {
 	checksumFileURL, err := urlhelper.Parse(checksumFile)
 	if err != nil {
 		return nil, err
@@ -203,7 +204,6 @@ func (c *Client) checksumFromFile(checksumFile string, src *url.URL) (*fileCheck
 	defer os.Remove(tempfile)
 
 	c2 := &Client{
-		Ctx:              c.Ctx,
 		Getters:          c.Getters,
 		Decompressors:    c.Decompressors,
 		Detectors:        c.Detectors,
@@ -213,7 +213,7 @@ func (c *Client) checksumFromFile(checksumFile string, src *url.URL) (*fileCheck
 		Dst:              tempfile,
 		ProgressListener: c.ProgressListener,
 	}
-	if err = c2.Get(); err != nil {
+	if err = c2.Get(ctx); err != nil {
 		return nil, fmt.Errorf(
 			"Error downloading checksum file: %s", err)
 	}

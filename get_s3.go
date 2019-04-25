@@ -22,7 +22,7 @@ type S3Getter struct {
 	getter
 }
 
-func (g *S3Getter) ClientMode(u *url.URL) (ClientMode, error) {
+func (g *S3Getter) ClientMode(ctx context.Context, u *url.URL) (ClientMode, error) {
 	// Parse URL
 	region, bucket, path, _, creds, err := g.parseUrl(u)
 	if err != nil {
@@ -61,9 +61,8 @@ func (g *S3Getter) ClientMode(u *url.URL) (ClientMode, error) {
 	return ClientModeFile, nil
 }
 
-func (g *S3Getter) Get(dst string, u *url.URL) error {
-	ctx := g.Context()
-
+func (g *S3Getter) Get(ctx context.Context, dst string, u *url.URL) error {
+	
 	// Parse URL
 	region, bucket, path, _, creds, err := g.parseUrl(u)
 	if err != nil {
@@ -137,9 +136,8 @@ func (g *S3Getter) Get(dst string, u *url.URL) error {
 	return nil
 }
 
-func (g *S3Getter) GetFile(dst string, u *url.URL) error {
-	ctx := g.Context()
-	region, bucket, path, version, creds, err := g.parseUrl(u)
+func (g *S3Getter) GetFile(ctx context.Context, dst string, u *url.URL) error {
+		region, bucket, path, version, creds, err := g.parseUrl(u)
 	if err != nil {
 		return err
 	}

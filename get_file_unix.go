@@ -3,13 +3,14 @@
 package getter
 
 import (
+	"context"
 	"fmt"
 	"net/url"
 	"os"
 	"path/filepath"
 )
 
-func (g *FileGetter) Get(dst string, u *url.URL) error {
+func (g *FileGetter) Get(ctx context.Context, dst string, u *url.URL) error {
 	path := u.Path
 	if u.RawPath != "" {
 		path = u.RawPath
@@ -48,8 +49,7 @@ func (g *FileGetter) Get(dst string, u *url.URL) error {
 	return os.Symlink(path, dst)
 }
 
-func (g *FileGetter) GetFile(dst string, u *url.URL) error {
-	ctx := g.Context()
+func (g *FileGetter) GetFile(ctx context.Context, dst string, u *url.URL) error {
 	path := u.Path
 	if u.RawPath != "" {
 		path = u.RawPath

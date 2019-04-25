@@ -1,6 +1,7 @@
 package getter
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"testing"
@@ -13,9 +14,10 @@ func TestFileGetter_impl(t *testing.T) {
 func TestFileGetter(t *testing.T) {
 	g := new(FileGetter)
 	dst := tempDir(t)
+	ctx := context.Background()
 
 	// With a dir that doesn't exist
-	if err := g.Get(dst, testModuleURL("basic")); err != nil {
+	if err := g.Get(ctx, dst, testModuleURL("basic")); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
@@ -38,11 +40,12 @@ func TestFileGetter(t *testing.T) {
 func TestFileGetter_sourceFile(t *testing.T) {
 	g := new(FileGetter)
 	dst := tempDir(t)
+	ctx := context.Background()
 
 	// With a source URL that is a path to a file
 	u := testModuleURL("basic")
 	u.Path += "/main.tf"
-	if err := g.Get(dst, u); err == nil {
+	if err := g.Get(ctx, dst, u); err == nil {
 		t.Fatal("should error")
 	}
 }
@@ -50,11 +53,12 @@ func TestFileGetter_sourceFile(t *testing.T) {
 func TestFileGetter_sourceNoExist(t *testing.T) {
 	g := new(FileGetter)
 	dst := tempDir(t)
+	ctx := context.Background()
 
 	// With a source URL that doesn't exist
 	u := testModuleURL("basic")
 	u.Path += "/main"
-	if err := g.Get(dst, u); err == nil {
+	if err := g.Get(ctx, dst, u); err == nil {
 		t.Fatal("should error")
 	}
 }
@@ -62,13 +66,14 @@ func TestFileGetter_sourceNoExist(t *testing.T) {
 func TestFileGetter_dir(t *testing.T) {
 	g := new(FileGetter)
 	dst := tempDir(t)
+	ctx := context.Background()
 
 	if err := os.MkdirAll(dst, 0755); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
 	// With a dir that exists that isn't a symlink
-	if err := g.Get(dst, testModuleURL("basic")); err == nil {
+	if err := g.Get(ctx, dst, testModuleURL("basic")); err == nil {
 		t.Fatal("should error")
 	}
 }
@@ -76,6 +81,8 @@ func TestFileGetter_dir(t *testing.T) {
 func TestFileGetter_dirSymlink(t *testing.T) {
 	g := new(FileGetter)
 	dst := tempDir(t)
+	ctx := context.Background()
+
 	dst2 := tempDir(t)
 
 	// Make parents
@@ -92,7 +99,7 @@ func TestFileGetter_dirSymlink(t *testing.T) {
 	}
 
 	// With a dir that exists that isn't a symlink
-	if err := g.Get(dst, testModuleURL("basic")); err != nil {
+	if err := g.Get(ctx, dst, testModuleURL("basic")); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
@@ -107,9 +114,10 @@ func TestFileGetter_GetFile(t *testing.T) {
 	g := new(FileGetter)
 	dst := tempTestFile(t)
 	defer os.RemoveAll(filepath.Dir(dst))
+	ctx := context.Background()
 
 	// With a dir that doesn't exist
-	if err := g.GetFile(dst, testModuleURL("basic-file/foo.txt")); err != nil {
+	if err := g.GetFile(ctx, dst, testModuleURL("basic-file/foo.txt")); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
@@ -132,9 +140,10 @@ func TestFileGetter_GetFile_Copy(t *testing.T) {
 
 	dst := tempTestFile(t)
 	defer os.RemoveAll(filepath.Dir(dst))
+	ctx := context.Background()
 
 	// With a dir that doesn't exist
-	if err := g.GetFile(dst, testModuleURL("basic-file/foo.txt")); err != nil {
+	if err := g.GetFile(ctx, dst, testModuleURL("basic-file/foo.txt")); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
@@ -155,9 +164,10 @@ func TestFileGetter_GetFile_Copy(t *testing.T) {
 func TestFileGetter_percent2F(t *testing.T) {
 	g := new(FileGetter)
 	dst := tempDir(t)
+	ctx := context.Background()
 
 	// With a dir that doesn't exist
-	if err := g.Get(dst, testModuleURL("basic%2Ftest")); err != nil {
+	if err := g.Get(ctx, dst, testModuleURL("basic%2Ftest")); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
@@ -170,18 +180,20 @@ func TestFileGetter_percent2F(t *testing.T) {
 
 func TestFileGetter_ClientMode_notexist(t *testing.T) {
 	g := new(FileGetter)
+	ctx := context.Background()
 
 	u := testURL("nonexistent")
-	if _, err := g.ClientMode(u); err == nil {
+	if _, err := g.ClientMode(ctx, u); err == nil {
 		t.Fatal("expect source file error")
 	}
 }
 
 func TestFileGetter_ClientMode_file(t *testing.T) {
 	g := new(FileGetter)
+	ctx := context.Background()
 
 	// Check the client mode when pointed at a file.
-	mode, err := g.ClientMode(testModuleURL("basic-file/foo.txt"))
+	mode, err := g.ClientMode(ctx, testModuleURL("basic-file/foo.txt"))
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
@@ -192,9 +204,10 @@ func TestFileGetter_ClientMode_file(t *testing.T) {
 
 func TestFileGetter_ClientMode_dir(t *testing.T) {
 	g := new(FileGetter)
+	ctx := context.Background()
 
 	// Check the client mode when pointed at a directory.
-	mode, err := g.ClientMode(testModuleURL("basic"))
+	mode, err := g.ClientMode(ctx, testModuleURL("basic"))
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}

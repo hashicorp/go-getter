@@ -18,8 +18,7 @@ type GCSGetter struct {
 	getter
 }
 
-func (g *GCSGetter) ClientMode(u *url.URL) (ClientMode, error) {
-	ctx := g.Context()
+func (g *GCSGetter) ClientMode(ctx context.Context, u *url.URL) (ClientMode, error) {
 
 	// Parse URL
 	bucket, object, err := g.parseURL(u)
@@ -55,9 +54,7 @@ func (g *GCSGetter) ClientMode(u *url.URL) (ClientMode, error) {
 	return ClientModeFile, nil
 }
 
-func (g *GCSGetter) Get(dst string, u *url.URL) error {
-	ctx := g.Context()
-
+func (g *GCSGetter) Get(ctx context.Context, dst string, u *url.URL) error {
 	// Parse URL
 	bucket, object, err := g.parseURL(u)
 	if err != nil {
@@ -114,9 +111,7 @@ func (g *GCSGetter) Get(dst string, u *url.URL) error {
 	return nil
 }
 
-func (g *GCSGetter) GetFile(dst string, u *url.URL) error {
-	ctx := g.Context()
-
+func (g *GCSGetter) GetFile(ctx context.Context, dst string, u *url.URL) error {
 	// Parse URL
 	bucket, object, err := g.parseURL(u)
 	if err != nil {

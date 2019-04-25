@@ -12,9 +12,8 @@ import (
 	"syscall"
 )
 
-func (g *FileGetter) Get(dst string, u *url.URL) error {
-	ctx := g.Context()
-	path := u.Path
+func (g *FileGetter) Get(ctx context.Context, dst string, u *url.URL) error {
+		path := u.Path
 	if u.RawPath != "" {
 		path = u.RawPath
 	}
@@ -60,9 +59,8 @@ func (g *FileGetter) Get(dst string, u *url.URL) error {
 	return nil
 }
 
-func (g *FileGetter) GetFile(dst string, u *url.URL) error {
-	ctx := g.Context()
-	path := u.Path
+func (g *FileGetter) GetFile(ctx context.Context, dst string, u *url.URL) error {
+		path := u.Path
 	if u.RawPath != "" {
 		path = u.RawPath
 	}

@@ -13,6 +13,7 @@ package getter
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"net/url"
 	"os/exec"
@@ -31,16 +32,16 @@ type Getter interface {
 	// The directory may already exist (if we're updating). If it is in a
 	// format that isn't understood, an error should be returned. Get shouldn't
 	// simply nuke the directory.
-	Get(string, *url.URL) error
+	Get(context.Context, string, *url.URL) error
 
 	// GetFile downloads the give URL into the given path. The URL must
 	// reference a single file. If possible, the Getter should check if
 	// the remote end contains the same file and no-op this operation.
-	GetFile(string, *url.URL) error
+	GetFile(context.Context, string, *url.URL) error
 
 	// ClientMode returns the mode based on the given URL. This is used to
 	// allow clients to let the getters decide which mode to use.
-	ClientMode(*url.URL) (ClientMode, error)
+	ClientMode(context.Context, *url.URL) (ClientMode, error)
 
 	// SetClient allows a getter to know it's client
 	// in order to access client's Get functions or
@@ -80,13 +81,13 @@ func init() {
 //
 // src is a URL, whereas dst is always just a file path to a folder. This
 // folder doesn't need to exist. It will be created if it doesn't exist.
-func Get(dst, src string, opts ...ClientOption) error {
+func Get(ctx context.Context, dst, src string, opts ...ClientOption) error {
 	return (&Client{
 		Src:     src,
 		Dst:     dst,
 		Dir:     true,
 		Options: opts,
-	}).Get()
+	}).Get(ctx)
 }
 
 // GetAny downloads a URL into the given destination. Unlike Get or
@@ -95,24 +96,24 @@ func Get(dst, src string, opts ...ClientOption) error {
 // dst must be a directory. If src is a file, it will be downloaded
 // into dst with the basename of the URL. If src is a directory or
 // archive, it will be unpacked directly into dst.
-func GetAny(dst, src string, opts ...ClientOption) error {
+func GetAny(ctx context.Context, dst, src string, opts ...ClientOption) error {
 	return (&Client{
 		Src:     src,
 		Dst:     dst,
 		Mode:    ClientModeAny,
 		Options: opts,
-	}).Get()
+	}).Get(ctx)
 }
 
 // GetFile downloads the file specified by src into the path specified by
 // dst.
-func GetFile(dst, src string, opts ...ClientOption) error {
+func GetFile(ctx context.Context, dst, src string, opts ...ClientOption) error {
 	return (&Client{
 		Src:     src,
 		Dst:     dst,
 		Dir:     false,
 		Options: opts,
-	}).Get()
+	}).Get(ctx)
 }
 
 // getRunCommand is a helper that will run a command and capture the output

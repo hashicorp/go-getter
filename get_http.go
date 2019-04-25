@@ -53,15 +53,14 @@ type HttpGetter struct {
 	Header http.Header
 }
 
-func (g *HttpGetter) ClientMode(u *url.URL) (ClientMode, error) {
+func (g *HttpGetter) ClientMode(ctx context.Context, u *url.URL) (ClientMode, error) {
 	if strings.HasSuffix(u.Path, "/") {
 		return ClientModeDir, nil
 	}
 	return ClientModeFile, nil
 }
 
-func (g *HttpGetter) Get(dst string, u *url.URL) error {
-	ctx := g.Context()
+func (g *HttpGetter) Get(ctx context.Context, dst string, u *url.URL) error {
 	// Copy the URL so we can modify it
 	var newU url.URL = *u
 	u = &newU
@@ -121,15 +120,14 @@ func (g *HttpGetter) Get(dst string, u *url.URL) error {
 		if g.client != nil {
 			opts = g.client.Options
 		}
-		return Get(dst, source, opts...)
+		return Get(ctx, dst, source, opts...)
 	}
 
 	// We have a subdir, time to jump some hoops
 	return g.getSubdir(ctx, dst, source, subDir)
 }
 
-func (g *HttpGetter) GetFile(dst string, src *url.URL) error {
-	ctx := g.Context()
+func (g *HttpGetter) GetFile(ctx context.Context, dst string, src *url.URL) error {
 	if g.Netrc {
 		// Add auth from netrc if we can
 		if err := addAuthFromNetrc(src); err != nil {
@@ -231,7 +229,7 @@ func (g *HttpGetter) getSubdir(ctx context.Context, dst, source, subDir string) 
 		opts = g.client.Options
 	}
 	// Download that into the given directory
-	if err := Get(td, source, opts...); err != nil {
+	if err := Get(ctx, td, source, opts...); err != nil {
 		return err
 	}
 
