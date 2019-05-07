@@ -69,7 +69,7 @@ func (g *FileGetter) Get(ctx context.Context, req *Request) error {
 		return err
 	}
 
-	return os.Symlink(path, req.Dst)
+	return SymlinkAny(path, req.Dst)
 }
 
 func (g *FileGetter) GetFile(ctx context.Context, req *Request) error {
@@ -105,7 +105,22 @@ func (g *FileGetter) GetFile(ctx context.Context, req *Request) error {
 
 	// If we're not copying, just symlink and we're done
 	if !req.Copy {
-		return os.Symlink(path, req.Dst)
+		if err = os.Symlink(path, req.Dst); err == nil {
+			return err
+		}
+		lerr, ok := err.(*os.LinkError)
+		if !ok {
+			return err
+		}
+		switch lerr.Err {
+		case ErrUnauthorized:
+			// On windows this  means we don't have
+			// symlink privilege, let's
+			// fallback to a copy to avoid an error.
+			break
+		default:
+			return err
+		}
 	}
 
 	// Copy
