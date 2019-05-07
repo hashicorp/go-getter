@@ -18,7 +18,3 @@ go:
 
 before_script:
   - go build ./cmd/go-getter
-
-branches:
-  only:
-    - master
