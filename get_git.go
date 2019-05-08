@@ -29,7 +29,7 @@ type GitGetter struct {
 var defaultBranchRegexp = regexp.MustCompile(`\s->\sorigin/(.*)`)
 
 func (g *GitGetter) ClientMode(_ context.Context, u *url.URL) (ClientMode, error) {
-	return ClientModeDir, nil
+	return ModeDir, nil
 }
 
 func (g *GitGetter) Get(ctx context.Context, req *Request) error {

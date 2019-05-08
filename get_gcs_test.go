@@ -122,41 +122,41 @@ func TestGCSGetter_GetFile_notfound(t *testing.T) {
 	}
 }
 
-func TestGCSGetter_ClientMode_dir(t *testing.T) {
+func TestGCSGetter_Mode_dir(t *testing.T) {
 	defer initGCPCredentials(t)()
 
 	g := new(GCSGetter)
 	ctx := context.Background()
 
 	// Check client mode on a key prefix with only a single key.
-	mode, err := g.ClientMode(ctx,
+	mode, err := g.Mode(ctx,
 		testURL("https://www.googleapis.com/storage/v1/go-getter-test/go-getter/folder/subfolder"))
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
-	if mode != ClientModeDir {
-		t.Fatal("expect ClientModeDir")
+	if mode != ModeDir {
+		t.Fatal("expect ModeDir")
 	}
 }
 
-func TestGCSGetter_ClientMode_file(t *testing.T) {
+func TestGCSGetter_Mode_file(t *testing.T) {
 	defer initGCPCredentials(t)()
 
 	g := new(GCSGetter)
 	ctx := context.Background()
 
 	// Check client mode on a key prefix which contains sub-keys.
-	mode, err := g.ClientMode(ctx,
+	mode, err := g.Mode(ctx,
 		testURL("https://www.googleapis.com/storage/v1/go-getter-test/go-getter/folder/subfolder/sub.tf"))
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
-	if mode != ClientModeFile {
-		t.Fatal("expect ClientModeFile")
+	if mode != ModeFile {
+		t.Fatal("expect ModeFile")
 	}
 }
 
-func TestGCSGetter_ClientMode_notfound(t *testing.T) {
+func TestGCSGetter_Mode_notfound(t *testing.T) {
 	defer initGCPCredentials(t)()
 
 	g := new(GCSGetter)
@@ -164,13 +164,13 @@ func TestGCSGetter_ClientMode_notfound(t *testing.T) {
 
 	// Check the client mode when a non-existent key is looked up. This does not
 	// return an error, but rather should just return the file mode.
-	mode, err := g.ClientMode(ctx,
+	mode, err := g.Mode(ctx,
 		testURL("https://www.googleapis.com/storage/v1/go-getter-test/go-getter/foobar"))
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
-	if mode != ClientModeFile {
-		t.Fatal("expect ClientModeFile")
+	if mode != ModeFile {
+		t.Fatal("expect ModeFile")
 	}
 }
 

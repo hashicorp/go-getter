@@ -16,9 +16,9 @@ type Request struct {
 	Dst string
 	Pwd string
 
-	// Mode is the method of download the client will use. See ClientMode
+	// Mode is the method of download the client will use. See Mode
 	// for documentation.
-	Mode ClientMode
+	Mode Mode
 
 	// Copy, in local file mode if set to true, will copy data instead of using
 	// a symlink. If false, attempts to symlink to speed up the operation and

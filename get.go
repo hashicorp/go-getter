@@ -39,9 +39,9 @@ type Getter interface {
 	// the remote end contains the same file and no-op this operation.
 	GetFile(context.Context, *Request) error
 
-	// ClientMode returns the mode based on the given URL. This is used to
+	// Mode returns the mode based on the given URL. This is used to
 	// allow clients to let the getters decide which mode to use.
-	ClientMode(context.Context, *url.URL) (ClientMode, error)
+	Mode(context.Context, *url.URL) (Mode, error)
 
 	// SetClient allows a getter to know it's client
 	// in order to access client's Get functions or
@@ -89,9 +89,9 @@ func init() {
 // folder doesn't need to exist. It will be created if it doesn't exist.
 func Get(ctx context.Context, dst, src string) (*GetResult, error) {
 	req := &Request{
-		Src: src,
-		Dst: dst,
-		Dir: true,
+		Src:  src,
+		Dst:  dst,
+		Mode: ModeDir,
 	}
 	return DefaultClient.Get(ctx, req)
 }
@@ -106,7 +106,7 @@ func GetAny(ctx context.Context, dst, src string) (*GetResult, error) {
 	req := &Request{
 		Src:  src,
 		Dst:  dst,
-		Mode: ClientModeAny,
+		Mode: ModeAny,
 	}
 	return DefaultClient.Get(ctx, req)
 }
@@ -115,9 +115,9 @@ func GetAny(ctx context.Context, dst, src string) (*GetResult, error) {
 // dst.
 func GetFile(ctx context.Context, dst, src string) (*GetResult, error) {
 	req := &Request{
-		Src: src,
-		Dst: dst,
-		Dir: false,
+		Src:  src,
+		Dst:  dst,
+		Mode: ModeFile,
 	}
 	return DefaultClient.Get(ctx, req)
 }

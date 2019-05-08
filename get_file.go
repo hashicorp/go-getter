@@ -14,7 +14,7 @@ type FileGetter struct {
 	getter
 }
 
-func (g *FileGetter) ClientMode(ctx context.Context, u *url.URL) (ClientMode, error) {
+func (g *FileGetter) Mode(ctx context.Context, u *url.URL) (Mode, error) {
 	path := u.Path
 	if u.RawPath != "" {
 		path = u.RawPath
@@ -27,10 +27,10 @@ func (g *FileGetter) ClientMode(ctx context.Context, u *url.URL) (ClientMode, er
 
 	// Check if the source is a directory.
 	if fi.IsDir() {
-		return ClientModeDir, nil
+		return ModeDir, nil
 	}
 
-	return ClientModeFile, nil
+	return ModeFile, nil
 }
 
 func (g *FileGetter) Get(ctx context.Context, req *Request) error {
