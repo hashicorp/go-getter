@@ -51,6 +51,11 @@ func (g *FileGetter) Get(ctx context.Context, req *Request) error {
 		return err
 	}
 
+	if req.Inplace {
+		req.Dst = path
+		return nil
+	}
+
 	// If the destination already exists, it must be a symlink
 	if err == nil {
 		mode := fi.Mode()
@@ -101,6 +106,11 @@ func (g *FileGetter) GetFile(ctx context.Context, req *Request) error {
 	// Create all the parent directories
 	if err := os.MkdirAll(filepath.Dir(req.Dst), 0755); err != nil {
 		return err
+	}
+
+	if req.Inplace {
+		req.Dst = path
+		return nil
 	}
 
 	// If we're not copying, just symlink and we're done

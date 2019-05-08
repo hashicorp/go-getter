@@ -26,6 +26,11 @@ type Request struct {
 	// on windows.
 	Copy bool
 
+	// Inplace, in local file mode if set to true, do nothing and the returned
+	// operation will simply contain the source file path. Inplace has precedence
+	// over Copy.
+	Inplace bool
+
 	// ProgressListener allows to track file downloads.
 	// By default a no op progress listener is used.
 	ProgressListener ProgressTracker
