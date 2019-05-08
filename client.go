@@ -34,9 +34,9 @@ type Client struct {
 }
 
 // Get downloads the configured source to the destination.
-func (c *Client) Get(ctx context.Context, req *Request) error {
+func (c *Client) Get(ctx context.Context, req *Request) (*Operation, error) {
 	if err := c.Configure(); err != nil {
-		return err
+		return nil, err
 	}
 
 	// Store this locally since there are cases we swap this
@@ -51,7 +51,7 @@ func (c *Client) Get(ctx context.Context, req *Request) error {
 	var err error
 	req.Src, err = Detect(req.Src, req.Pwd, c.Detectors)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	var force string
@@ -65,7 +65,7 @@ func (c *Client) Get(ctx context.Context, req *Request) error {
 	if subDir != "" {
 		td, tdcloser, err := safetemp.Dir("", "getter")
 		if err != nil {
-			return err
+			return nil, err
 		}
 		defer tdcloser.Close()
 
@@ -75,7 +75,7 @@ func (c *Client) Get(ctx context.Context, req *Request) error {
 
 	req.u, err = urlhelper.Parse(req.Src)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if force == "" {
 		force = req.u.Scheme
@@ -83,7 +83,7 @@ func (c *Client) Get(ctx context.Context, req *Request) error {
 
 	g, ok := c.Getters[force]
 	if !ok {
-		return fmt.Errorf(
+		return nil, fmt.Errorf(
 			"download not supported for scheme '%s'", force)
 	}
 
@@ -126,7 +126,7 @@ func (c *Client) Get(ctx context.Context, req *Request) error {
 		// this at the end of everything.
 		td, err := ioutil.TempDir("", "getter")
 		if err != nil {
-			return fmt.Errorf(
+			return nil, fmt.Errorf(
 				"Error creating temporary directory for archive: %s", err)
 		}
 		defer os.RemoveAll(td)
@@ -142,7 +142,7 @@ func (c *Client) Get(ctx context.Context, req *Request) error {
 	// Determine checksum if we have one
 	checksum, err := c.extractChecksum(ctx, req.u)
 	if err != nil {
-		return fmt.Errorf("invalid checksum: %s", err)
+		return nil, fmt.Errorf("invalid checksum: %s", err)
 	}
 
 	// Delete the query parameter if we have it.
@@ -153,7 +153,7 @@ func (c *Client) Get(ctx context.Context, req *Request) error {
 		// Ask the getter which client mode to use
 		req.Mode, err = g.ClientMode(ctx, req.u)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		// Destination is the base name of the URL path in "any" mode when
@@ -187,12 +187,12 @@ func (c *Client) Get(ctx context.Context, req *Request) error {
 		if getFile {
 			err := g.GetFile(ctx, req)
 			if err != nil {
-				return err
+				return nil, err
 			}
 
 			if checksum != nil {
 				if err := checksum.checksum(req.Dst); err != nil {
-					return err
+					return nil, err
 				}
 			}
 		}
@@ -202,7 +202,7 @@ func (c *Client) Get(ctx context.Context, req *Request) error {
 			// into the final destination with the proper mode.
 			err := decompressor.Decompress(decompressDst, req.Dst, decompressDir)
 			if err != nil {
-				return err
+				return nil, err
 			}
 
 			// Swap the information back
@@ -218,7 +218,7 @@ func (c *Client) Get(ctx context.Context, req *Request) error {
 		// if we were unarchiving. If we're still only Get-ing a file, then
 		// we're done.
 		if req.Mode == ClientModeFile {
-			return nil
+			return &Operation{req.Dst}, nil
 		}
 	}
 
@@ -230,7 +230,7 @@ func (c *Client) Get(ctx context.Context, req *Request) error {
 		// If we're getting a directory, then this is an error. You cannot
 		// checksum a directory. TODO: test
 		if checksum != nil {
-			return fmt.Errorf(
+			return nil, fmt.Errorf(
 				"checksum cannot be specified for directory download")
 		}
 
@@ -239,27 +239,27 @@ func (c *Client) Get(ctx context.Context, req *Request) error {
 		err := g.Get(ctx, req)
 		if err != nil {
 			err = fmt.Errorf("error downloading '%s': %s", req.Src, err)
-			return err
+			return nil, err
 		}
 	}
 
 	// If we have a subdir, copy that over
 	if subDir != "" {
 		if err := os.RemoveAll(realDst); err != nil {
-			return err
+			return nil, err
 		}
 		if err := os.MkdirAll(realDst, 0755); err != nil {
-			return err
+			return nil, err
 		}
 
 		// Process any globs
 		subDir, err := SubdirGlob(req.Dst, subDir)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
-		return copyDir(ctx, realDst, subDir, false)
+		return &Operation{realDst}, copyDir(ctx, realDst, subDir, false)
 	}
 
-	return nil
+	return &Operation{req.Dst}, nil
 }

@@ -210,7 +210,7 @@ func (c *Client) checksumFromFile(ctx context.Context, checksumFile string, src 
 		Dst: tempfile,
 		// ProgressListener: c.ProgressListener, TODO(adrien): pass progress bar ?
 	}
-	if err = c.Get(ctx, req); err != nil {
+	if _, err = c.Get(ctx, req); err != nil {
 		return nil, fmt.Errorf(
 			"Error downloading checksum file: %s", err)
 	}

@@ -55,7 +55,8 @@ func (s *FolderStorage) Get(ctx context.Context, key string, source string, upda
 	}
 
 	// Get the source. This always forces an update.
-	return Get(ctx, dir, source)
+	_, err := Get(ctx, dir, source)
+	return err
 }
 
 // dir returns the directory name internally that we'll use to map to
