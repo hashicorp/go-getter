@@ -6,6 +6,8 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/google/go-cmp/cmp"
 )
 
 func TestGet_badSchema(t *testing.T) {
@@ -15,8 +17,12 @@ func TestGet_badSchema(t *testing.T) {
 	u := testModule("basic")
 	u = strings.Replace(u, "file", "nope", -1)
 
-	if _, err := Get(ctx, dst, u); err == nil {
+	op, err := Get(ctx, dst, u)
+	if err == nil {
 		t.Fatal("should error")
+	}
+	if op != nil {
+		t.Fatal("op should be nil")
 	}
 }
 
@@ -26,8 +32,12 @@ func TestGet_file(t *testing.T) {
 	dst := tempDir(t)
 	u := testModule("basic")
 
-	if _, err := Get(ctx, dst, u); err != nil {
+	op, err := Get(ctx, dst, u)
+	if err != nil {
 		t.Fatalf("err: %s", err)
+	}
+	if diff := cmp.Diff(&Operation{Dst: dst}, op); diff != "" {
+		t.Fatalf("unexpected op: %s", diff)
 	}
 
 	mainPath := filepath.Join(dst, "main.tf")
@@ -43,8 +53,12 @@ func TestGet_fileDecompressorExt(t *testing.T) {
 	dst := tempDir(t)
 	u := testModule("basic-tgz")
 
-	if _, err := Get(ctx, dst, u); err != nil {
+	op, err := Get(ctx, dst, u)
+	if err != nil {
 		t.Fatalf("err: %s", err)
+	}
+	if diff := cmp.Diff(&Operation{Dst: dst}, op); diff != "" {
+		t.Fatalf("unexpected op: %s", diff)
 	}
 
 	mainPath := filepath.Join(dst, "main.tf")
@@ -60,8 +74,12 @@ func TestGet_filePercent2F(t *testing.T) {
 	dst := tempDir(t)
 	u := testModule("basic%2Ftest")
 
-	if _, err := Get(ctx, dst, u); err != nil {
+	op, err := Get(ctx, dst, u)
+	if err != nil {
 		t.Fatalf("err: %s", err)
+	}
+	if diff := cmp.Diff(&Operation{Dst: dst}, op); diff != "" {
+		t.Fatalf("unexpected op: %s", diff)
 	}
 
 	mainPath := filepath.Join(dst, "main.tf")
@@ -92,8 +110,12 @@ func TestGet_fileDetect(t *testing.T) {
 		t.Fatalf("configure: %s", err)
 	}
 
-	if _, err := client.Get(ctx, req); err != nil {
+	op, err := client.Get(ctx, req)
+	if err != nil {
 		t.Fatalf("get: %s", err)
+	}
+	if diff := cmp.Diff(&Operation{Dst: dst}, op); diff != "" {
+		t.Fatalf("unexpected op: %s", diff)
 	}
 
 	mainPath := filepath.Join(dst, "main.tf")
@@ -109,8 +131,12 @@ func TestGet_fileForced(t *testing.T) {
 	u := testModule("basic")
 	u = "file::" + u
 
-	if _, err := Get(ctx, dst, u); err != nil {
+	op, err := Get(ctx, dst, u)
+	if err != nil {
 		t.Fatalf("err: %s", err)
+	}
+	if diff := cmp.Diff(&Operation{Dst: dst}, op); diff != "" {
+		t.Fatalf("unexpected op: %s", diff)
 	}
 
 	mainPath := filepath.Join(dst, "main.tf")
@@ -125,8 +151,12 @@ func TestGet_fileSubdir(t *testing.T) {
 	dst := tempDir(t)
 	u := testModule("basic//subdir")
 
-	if _, err := Get(ctx, dst, u); err != nil {
+	op, err := Get(ctx, dst, u)
+	if err != nil {
 		t.Fatalf("err: %s", err)
+	}
+	if diff := cmp.Diff(&Operation{Dst: dst}, op); diff != "" {
+		t.Fatalf("unexpected op: %s", diff)
 	}
 
 	mainPath := filepath.Join(dst, "sub.tf")
@@ -142,8 +172,12 @@ func TestGet_archive(t *testing.T) {
 	u := filepath.Join("./test-fixtures", "archive.tar.gz")
 	u, _ = filepath.Abs(u)
 
-	if _, err := Get(ctx, dst, u); err != nil {
+	op, err := Get(ctx, dst, u)
+	if err != nil {
 		t.Fatalf("err: %s", err)
+	}
+	if diff := cmp.Diff(&Operation{Dst: dst}, op); diff != "" {
+		t.Fatalf("unexpected op: %s", diff)
 	}
 
 	mainPath := filepath.Join(dst, "main.tf")
@@ -159,8 +193,12 @@ func TestGetAny_archive(t *testing.T) {
 	u := filepath.Join("./test-fixtures", "archive.tar.gz")
 	u, _ = filepath.Abs(u)
 
-	if _, err := GetAny(ctx, dst, u); err != nil {
+	op, err := GetAny(ctx, dst, u)
+	if err != nil {
 		t.Fatalf("err: %s", err)
+	}
+	if diff := cmp.Diff(&Operation{Dst: dst}, op); diff != "" {
+		t.Fatalf("unexpected op: %s", diff)
 	}
 
 	mainPath := filepath.Join(dst, "main.tf")
@@ -174,8 +212,12 @@ func TestGet_archiveRooted(t *testing.T) {
 
 	dst := tempDir(t)
 	u := testModule("archive-rooted/archive.tar.gz")
-	if _, err := Get(ctx, dst, u); err != nil {
+	op, err := Get(ctx, dst, u)
+	if err != nil {
 		t.Fatalf("err: %s", err)
+	}
+	if diff := cmp.Diff(&Operation{Dst: dst}, op); diff != "" {
+		t.Fatalf("unexpected op: %s", diff)
 	}
 
 	mainPath := filepath.Join(dst, "root", "hello.txt")
@@ -190,8 +232,12 @@ func TestGet_archiveSubdirWild(t *testing.T) {
 	dst := tempDir(t)
 	u := testModule("archive-rooted/archive.tar.gz")
 	u += "//*"
-	if _, err := Get(ctx, dst, u); err != nil {
+	op, err := Get(ctx, dst, u)
+	if err != nil {
 		t.Fatalf("err: %s", err)
+	}
+	if diff := cmp.Diff(&Operation{Dst: dst}, op); diff != "" {
+		t.Fatalf("unexpected op: %s", diff)
 	}
 
 	mainPath := filepath.Join(dst, "hello.txt")
@@ -206,10 +252,17 @@ func TestGet_archiveSubdirWildMultiMatch(t *testing.T) {
 	dst := tempDir(t)
 	u := testModule("archive-rooted-multi/archive.tar.gz")
 	u += "//*"
-	if _, err := Get(ctx, dst, u); err == nil {
+	op, err := Get(ctx, dst, u)
+	switch err {
+	case nil:
 		t.Fatal("should error")
-	} else if !strings.Contains(err.Error(), "multiple") {
-		t.Fatalf("err: %s", err)
+	default:
+		if !strings.Contains(err.Error(), "multiple") {
+			t.Fatalf("err: %s", err)
+		}
+		if op != nil {
+			t.Fatal("operation should be nil")
+		}
 	}
 }
 
@@ -236,8 +289,12 @@ func TestGetAny_dir(t *testing.T) {
 	u := filepath.Join("./test-fixtures", "basic")
 	u, _ = filepath.Abs(u)
 
-	if _, err := GetAny(ctx, dst, u); err != nil {
+	op, err := GetAny(ctx, dst, u)
+	if err != nil {
 		t.Fatalf("err: %s", err)
+	}
+	if diff := cmp.Diff(&Operation{Dst: dst}, op); diff != "" {
+		t.Fatalf("unexpected op: %s", diff)
 	}
 
 	check := []string{
@@ -260,8 +317,12 @@ func TestGetFile(t *testing.T) {
 	defer os.RemoveAll(filepath.Dir(dst))
 	u := testModule("basic-file/foo.txt")
 
-	if _, err := GetFile(ctx, dst, u); err != nil {
+	op, err := GetFile(ctx, dst, u)
+	if err != nil {
 		t.Fatalf("err: %s", err)
+	}
+	if diff := cmp.Diff(&Operation{Dst: dst}, op); diff != "" {
+		t.Fatalf("unexpected op: %s", diff)
 	}
 
 	// Verify the main file exists
@@ -275,8 +336,12 @@ func TestGetFile_archive(t *testing.T) {
 	defer os.RemoveAll(filepath.Dir(dst))
 	u := testModule("basic-file-archive/archive.tar.gz")
 
-	if _, err := GetFile(ctx, dst, u); err != nil {
+	op, err := GetFile(ctx, dst, u)
+	if err != nil {
 		t.Fatalf("err: %s", err)
+	}
+	if diff := cmp.Diff(&Operation{Dst: dst}, op); diff != "" {
+		t.Fatalf("unexpected op: %s", diff)
 	}
 
 	// Verify the main file exists
@@ -291,8 +356,12 @@ func TestGetFile_archiveChecksum(t *testing.T) {
 	u := testModule(
 		"basic-file-archive/archive.tar.gz?checksum=md5:fbd90037dacc4b1ab40811d610dde2f0")
 
-	if _, err := GetFile(ctx, dst, u); err != nil {
+	op, err := GetFile(ctx, dst, u)
+	if err != nil {
 		t.Fatalf("err: %s", err)
+	}
+	if diff := cmp.Diff(&Operation{Dst: dst}, op); diff != "" {
+		t.Fatalf("unexpected op: %s", diff)
 	}
 
 	// Verify the main file exists
@@ -307,8 +376,12 @@ func TestGetFile_archiveNoUnarchive(t *testing.T) {
 	u := testModule("basic-file-archive/archive.tar.gz")
 	u += "?archive=false"
 
-	if _, err := GetFile(ctx, dst, u); err != nil {
+	op, err := GetFile(ctx, dst, u)
+	if err != nil {
 		t.Fatalf("err: %s", err)
+	}
+	if diff := cmp.Diff(&Operation{Dst: dst}, op); diff != "" {
+		t.Fatalf("unexpected op: %s", diff)
 	}
 
 	// Verify the main file exists
@@ -394,8 +467,14 @@ func TestGetFile_checksum(t *testing.T) {
 		func() {
 			dst := tempTestFile(t)
 			defer os.RemoveAll(filepath.Dir(dst))
-			if _, err := GetFile(ctx, dst, u); (err != nil) != tc.Err {
+			op, err := GetFile(ctx, dst, u)
+			if (err != nil) != tc.Err {
 				t.Fatalf("append: %s\n\nerr: %s", tc.Append, err)
+			}
+			if err == nil {
+				if diff := cmp.Diff(&Operation{Dst: dst}, op); diff != "" {
+					t.Fatalf("unexpected dst: %s", diff)
+				}
 			}
 
 			// Verify the main file exists
@@ -477,8 +556,14 @@ func TestGetFile_checksum_from_file(t *testing.T) {
 
 			dst := tempTestFile(t)
 			defer os.RemoveAll(filepath.Dir(dst))
-			if _, err := GetFile(ctx, dst, u); (err != nil) != tc.WantErr {
+			op, err := GetFile(ctx, dst, u)
+			if (err != nil) != tc.WantErr {
 				t.Fatalf("append: %s\n\nerr: %s", tc.Append, err)
+			}
+			if err == nil {
+				if diff := cmp.Diff(&Operation{Dst: dst}, op); diff != "" {
+					t.Fatalf("unexpected dst: %s", diff)
+				}
 			}
 
 			if tc.WantTransfer {
@@ -508,8 +593,12 @@ func TestGetFile_checksumURL(t *testing.T) {
 		},
 	}
 
-	if _, err := client.Get(ctx, req); err != nil {
+	op, err := client.Get(ctx, req)
+	if err != nil {
 		t.Fatalf("err: %s", err)
+	}
+	if diff := cmp.Diff(&Operation{Dst: dst}, op); diff != "" {
+		t.Fatalf("unexpected op: %s", diff)
 	}
 
 	if v := getter.GetFileURL.Query().Get("checksum"); v != "" {
@@ -524,12 +613,17 @@ func TestGetFile_filename(t *testing.T) {
 	u := testModule("basic-file/foo.txt")
 
 	u += "?filename=bar.txt"
+	realDst := filepath.Join(dst, "bar.txt")
 
-	if _, err := GetAny(ctx, dst, u); err != nil {
+	op, err := GetAny(ctx, dst, u)
+	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
+	if diff := cmp.Diff(realDst, op.Dst); diff != "" {
+		t.Fatalf("unexpected op: %s", diff)
+	}
 
-	mainPath := filepath.Join(dst, "bar.txt")
+	mainPath := realDst
 	if _, err := os.Stat(mainPath); err != nil {
 		t.Fatalf("err: %s", err)
 	}
@@ -555,8 +649,12 @@ func TestGetFile_checksumSkip(t *testing.T) {
 	}
 
 	// get the file
-	if _, err := client.Get(ctx, req); err != nil {
+	op, err := client.Get(ctx, req)
+	if err != nil {
 		t.Fatalf("err: %s", err)
+	}
+	if diff := cmp.Diff(&Operation{Dst: dst}, op); diff != "" {
+		t.Fatalf("unexpected op: %s", diff)
 	}
 
 	if v := getter.GetFileURL.Query().Get("checksum"); v != "" {
@@ -567,8 +665,12 @@ func TestGetFile_checksumSkip(t *testing.T) {
 	getter.Proxy = nil
 	getter.GetFileCalled = false
 
-	if _, err := client.Get(ctx, req); err != nil {
+	op, err = client.Get(ctx, req)
+	if err != nil {
 		t.Fatalf("err: %s", err)
+	}
+	if diff := cmp.Diff(&Operation{Dst: dst}, op); diff != "" {
+		t.Fatalf("unexpected op: %s", diff)
 	}
 
 	if getter.GetFileCalled {
