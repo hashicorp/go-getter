@@ -87,7 +87,7 @@ func init() {
 //
 // src is a URL, whereas dst is always just a file path to a folder. This
 // folder doesn't need to exist. It will be created if it doesn't exist.
-func Get(ctx context.Context, dst, src string) error {
+func Get(ctx context.Context, dst, src string) (*Operation, error) {
 	req := &Request{
 		Src: src,
 		Dst: dst,
@@ -102,7 +102,7 @@ func Get(ctx context.Context, dst, src string) error {
 // dst must be a directory. If src is a file, it will be downloaded
 // into dst with the basename of the URL. If src is a directory or
 // archive, it will be unpacked directly into dst.
-func GetAny(ctx context.Context, dst, src string) error {
+func GetAny(ctx context.Context, dst, src string) (*Operation, error) {
 	req := &Request{
 		Src:  src,
 		Dst:  dst,
@@ -113,7 +113,7 @@ func GetAny(ctx context.Context, dst, src string) error {
 
 // GetFile downloads the file specified by src into the path specified by
 // dst.
-func GetFile(ctx context.Context, dst, src string) error {
+func GetFile(ctx context.Context, dst, src string) (*Operation, error) {
 	req := &Request{
 		Src: src,
 		Dst: dst,
