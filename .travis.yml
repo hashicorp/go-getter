@@ -14,7 +14,7 @@ os:
   - osx
 
 go:
-  - "1.11.x"
+  - "1.12.x"
 
 before_script:
   - go build ./cmd/go-getter
