@@ -727,3 +727,33 @@ func TestGetFile_inplace(t *testing.T) {
 		t.Fatalf("get should not have been called")
 	}
 }
+
+func TestGetFile_inplace_badChecksum(t *testing.T) {
+	ctx := context.Background()
+
+	dst := tempTestFile(t)
+	defer os.RemoveAll(filepath.Dir(dst))
+	src := testModule("basic-file/foo.txt")
+
+	getter := &MockGetter{Proxy: new(FileGetter)}
+	req := &Request{
+		Src:     src + "?checksum=md5:09f7e02f1290be211da707a266f153b4",
+		Dst:     dst,
+		Mode:    ClientModeFile,
+		Inplace: true,
+	}
+	client := &Client{
+		Getters: map[string]Getter{
+			"file": getter,
+		},
+	}
+
+	// get the file
+	op, err := client.Get(ctx, req)
+	if err == nil {
+		t.Fatalf("err is nil")
+	}
+	if op != nil {
+		t.Fatalf("op is not nil")
+	}
+}
