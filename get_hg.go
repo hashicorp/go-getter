@@ -19,8 +19,8 @@ type HgGetter struct {
 	getter
 }
 
-func (g *HgGetter) ClientMode(ctx context.Context, _ *url.URL) (ClientMode, error) {
-	return ClientModeDir, nil
+func (g *HgGetter) Mode(ctx context.Context, _ *url.URL) (Mode, error) {
+	return ModeDir, nil
 }
 
 func (g *HgGetter) Get(ctx context.Context, req *Request) error {

@@ -47,9 +47,9 @@ func (g *MockGetter) GetFile(ctx context.Context, req *Request) error {
 	return g.GetFileErr
 }
 
-func (g *MockGetter) ClientMode(ctx context.Context, u *url.URL) (ClientMode, error) {
+func (g *MockGetter) Mode(ctx context.Context, u *url.URL) (Mode, error) {
 	if l := len(u.Path); l > 0 && u.Path[l-1:] == "/" {
-		return ClientModeDir, nil
+		return ModeDir, nil
 	}
-	return ClientModeFile, nil
+	return ModeFile, nil
 }

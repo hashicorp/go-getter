@@ -102,7 +102,7 @@ func TestGet_fileDetect(t *testing.T) {
 		Src:  u,
 		Dst:  dst,
 		Pwd:  pwd,
-		Mode: ClientModeAny,
+		Mode: ModeAny,
 	}
 	client := &Client{}
 
@@ -585,7 +585,7 @@ func TestGetFile_checksumURL(t *testing.T) {
 	req := &Request{
 		Src:  u,
 		Dst:  dst,
-		Mode: ClientModeFile,
+		Mode: ModeFile,
 	}
 	client := &Client{
 		Getters: map[string]Getter{
@@ -640,7 +640,7 @@ func TestGetFile_checksumSkip(t *testing.T) {
 	req := &Request{
 		Src:  u,
 		Dst:  dst,
-		Mode: ClientModeFile,
+		Mode: ModeFile,
 	}
 	client := &Client{
 		Getters: map[string]Getter{
@@ -689,7 +689,7 @@ func TestGetFile_inplace(t *testing.T) {
 	req := &Request{
 		Src:     src + "?checksum=md5:09f7e02f1290be211da707a266f153b3",
 		Dst:     dst,
-		Mode:    ClientModeFile,
+		Mode:    ModeFile,
 		Inplace: true,
 	}
 	client := &Client{
@@ -739,7 +739,7 @@ func TestGetFile_inplace_badChecksum(t *testing.T) {
 	req := &Request{
 		Src:     src + "?checksum=md5:09f7e02f1290be211da707a266f153b4",
 		Dst:     dst,
-		Mode:    ClientModeFile,
+		Mode:    ModeFile,
 		Inplace: true,
 	}
 	client := &Client{

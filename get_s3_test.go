@@ -136,39 +136,39 @@ func TestS3Getter_GetFile_notfound(t *testing.T) {
 	}
 }
 
-func TestS3Getter_ClientMode_dir(t *testing.T) {
+func TestS3Getter_Mode_dir(t *testing.T) {
 	ctx := context.Background()
 
 	g := new(S3Getter)
 
 	// Check client mode on a key prefix with only a single key.
-	mode, err := g.ClientMode(ctx,
+	mode, err := g.Mode(ctx,
 		testURL("https://s3.amazonaws.com/hc-oss-test/go-getter/folder"))
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
-	if mode != ClientModeDir {
-		t.Fatal("expect ClientModeDir")
+	if mode != ModeDir {
+		t.Fatal("expect ModeDir")
 	}
 }
 
-func TestS3Getter_ClientMode_file(t *testing.T) {
+func TestS3Getter_Mode_file(t *testing.T) {
 	ctx := context.Background()
 
 	g := new(S3Getter)
 
 	// Check client mode on a key prefix which contains sub-keys.
-	mode, err := g.ClientMode(ctx,
+	mode, err := g.Mode(ctx,
 		testURL("https://s3.amazonaws.com/hc-oss-test/go-getter/folder/main.tf"))
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
-	if mode != ClientModeFile {
-		t.Fatal("expect ClientModeFile")
+	if mode != ModeFile {
+		t.Fatal("expect ModeFile")
 	}
 }
 
-func TestS3Getter_ClientMode_notfound(t *testing.T) {
+func TestS3Getter_Mode_notfound(t *testing.T) {
 	ctx := context.Background()
 
 	g := new(S3Getter)
@@ -178,30 +178,30 @@ func TestS3Getter_ClientMode_notfound(t *testing.T) {
 	// can return an appropriate error later on. This also checks that the
 	// prefix is handled properly (e.g., "/fold" and "/folder" don't put the
 	// client mode into "dir".
-	mode, err := g.ClientMode(ctx,
+	mode, err := g.Mode(ctx,
 		testURL("https://s3.amazonaws.com/hc-oss-test/go-getter/fold"))
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
-	if mode != ClientModeFile {
-		t.Fatal("expect ClientModeFile")
+	if mode != ModeFile {
+		t.Fatal("expect ModeFile")
 	}
 }
 
-func TestS3Getter_ClientMode_collision(t *testing.T) {
+func TestS3Getter_Mode_collision(t *testing.T) {
 	ctx := context.Background()
 
 	g := new(S3Getter)
 
 	// Check that the client mode is "file" if there is both an object and a
 	// folder with a common prefix (i.e., a "collision" in the namespace).
-	mode, err := g.ClientMode(ctx,
+	mode, err := g.Mode(ctx,
 		testURL("https://s3.amazonaws.com/hc-oss-test/go-getter/collision/foo"))
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
-	if mode != ClientModeFile {
-		t.Fatal("expect ClientModeFile")
+	if mode != ModeFile {
+		t.Fatal("expect ModeFile")
 	}
 }
 

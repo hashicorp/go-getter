@@ -205,7 +205,7 @@ func (c *Client) checksumFromFile(ctx context.Context, checksumFile string, src 
 
 	req := &Request{
 		// Pwd:              c.Pwd, TODO(adrien): pass pwd ?
-		Mode: ClientModeFile,
+		Mode: ModeFile,
 		Src:  checksumFile,
 		Dst:  tempfile,
 		// ProgressListener: c.ProgressListener, TODO(adrien): pass progress bar ?

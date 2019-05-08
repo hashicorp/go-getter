@@ -125,9 +125,9 @@ func (c *Client) Get(ctx context.Context, req *Request) (*Operation, error) {
 		// Swap the download directory to be our temporary path and
 		// store the old values.
 		decompressDst = req.Dst
-		decompressDir = req.Mode != ClientModeFile
+		decompressDir = req.Mode != ModeFile
 		req.Dst = filepath.Join(td, "archive")
-		req.Mode = ClientModeFile
+		req.Mode = ModeFile
 	}
 
 	// Determine checksum if we have one
@@ -140,16 +140,16 @@ func (c *Client) Get(ctx context.Context, req *Request) (*Operation, error) {
 	q.Del("checksum")
 	req.u.RawQuery = q.Encode()
 
-	if req.Mode == ClientModeAny {
+	if req.Mode == ModeAny {
 		// Ask the getter which client mode to use
-		req.Mode, err = g.ClientMode(ctx, req.u)
+		req.Mode, err = g.Mode(ctx, req.u)
 		if err != nil {
 			return nil, err
 		}
 
 		// Destination is the base name of the URL path in "any" mode when
 		// a file source is detected.
-		if req.Mode == ClientModeFile {
+		if req.Mode == ModeFile {
 			filename := filepath.Base(req.u.Path)
 
 			// Determine if we have a custom file name
@@ -167,7 +167,7 @@ func (c *Client) Get(ctx context.Context, req *Request) (*Operation, error) {
 
 	// If we're not downloading a directory, then just download the file
 	// and return.
-	if req.Mode == ClientModeFile {
+	if req.Mode == ModeFile {
 		getFile := true
 		if checksum != nil {
 			if err := checksum.checksum(req.Dst); err == nil {
@@ -199,16 +199,16 @@ func (c *Client) Get(ctx context.Context, req *Request) (*Operation, error) {
 			// Swap the information back
 			req.Dst = decompressDst
 			if decompressDir {
-				req.Mode = ClientModeAny
+				req.Mode = ModeAny
 			} else {
-				req.Mode = ClientModeFile
+				req.Mode = ModeFile
 			}
 		}
 
 		// We check the dir value again because it can be switched back
 		// if we were unarchiving. If we're still only Get-ing a file, then
 		// we're done.
-		if req.Mode == ClientModeFile {
+		if req.Mode == ModeFile {
 			return &Operation{req.Dst}, nil
 		}
 	}

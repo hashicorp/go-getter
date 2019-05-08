@@ -24,8 +24,8 @@ type GitGetter struct {
 	getter
 }
 
-func (g *GitGetter) ClientMode(ctx context.Context, u *url.URL) (ClientMode, error) {
-	return ClientModeDir, nil
+func (g *GitGetter) Mode(ctx context.Context, u *url.URL) (Mode, error) {
+	return ModeDir, nil
 }
 
 func (g *GitGetter) Get(ctx context.Context, req *Request) error {

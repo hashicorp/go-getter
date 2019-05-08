@@ -217,40 +217,40 @@ func TestFileGetter_percent2F(t *testing.T) {
 	}
 }
 
-func TestFileGetter_ClientMode_notexist(t *testing.T) {
+func TestFileGetter_Mode_notexist(t *testing.T) {
 	g := new(FileGetter)
 	ctx := context.Background()
 
 	u := testURL("nonexistent")
-	if _, err := g.ClientMode(ctx, u); err == nil {
+	if _, err := g.Mode(ctx, u); err == nil {
 		t.Fatal("expect source file error")
 	}
 }
 
-func TestFileGetter_ClientMode_file(t *testing.T) {
+func TestFileGetter_Mode_file(t *testing.T) {
 	g := new(FileGetter)
 	ctx := context.Background()
 
 	// Check the client mode when pointed at a file.
-	mode, err := g.ClientMode(ctx, testModuleURL("basic-file/foo.txt"))
+	mode, err := g.Mode(ctx, testModuleURL("basic-file/foo.txt"))
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
-	if mode != ClientModeFile {
-		t.Fatal("expect ClientModeFile")
+	if mode != ModeFile {
+		t.Fatal("expect ModeFile")
 	}
 }
 
-func TestFileGetter_ClientMode_dir(t *testing.T) {
+func TestFileGetter_Mode_dir(t *testing.T) {
 	g := new(FileGetter)
 	ctx := context.Background()
 
 	// Check the client mode when pointed at a directory.
-	mode, err := g.ClientMode(ctx, testModuleURL("basic"))
+	mode, err := g.Mode(ctx, testModuleURL("basic"))
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
-	if mode != ClientModeDir {
-		t.Fatal("expect ClientModeDir")
+	if mode != ModeDir {
+		t.Fatal("expect ModeDir")
 	}
 }

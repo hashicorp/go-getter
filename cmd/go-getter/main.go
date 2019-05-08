@@ -22,14 +22,14 @@ func main() {
 	}
 
 	// Get the mode
-	var mode getter.ClientMode
+	var mode getter.Mode
 	switch *modeRaw {
 	case "any":
-		mode = getter.ClientModeAny
+		mode = getter.ModeAny
 	case "file":
-		mode = getter.ClientModeFile
+		mode = getter.ModeFile
 	case "dir":
-		mode = getter.ClientModeDir
+		mode = getter.ModeDir
 	default:
 		log.Fatalf("Invalid client mode, must be 'any', 'file', or 'dir': %s", *modeRaw)
 		os.Exit(1)
