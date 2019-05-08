@@ -116,9 +116,9 @@ func (g *HttpGetter) Get(ctx context.Context, req *Request) error {
 	// into a temporary directory, then copy over the proper subdir.
 	source, subDir := SourceDirSubdir(source)
 	req = &Request{
-		Dir: true,
-		Src: source,
-		Dst: req.Dst,
+		Mode: ClientModeDir,
+		Src:  source,
+		Dst:  req.Dst,
 	}
 	if subDir == "" {
 		_, err = DefaultClient.Get(ctx, req)

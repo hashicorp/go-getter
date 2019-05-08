@@ -205,9 +205,9 @@ func (c *Client) checksumFromFile(ctx context.Context, checksumFile string, src 
 
 	req := &Request{
 		// Pwd:              c.Pwd, TODO(adrien): pass pwd ?
-		Dir: false,
-		Src: checksumFile,
-		Dst: tempfile,
+		Mode: ClientModeFile,
+		Src:  checksumFile,
+		Dst:  tempfile,
 		// ProgressListener: c.ProgressListener, TODO(adrien): pass progress bar ?
 	}
 	if _, err = c.Get(ctx, req); err != nil {

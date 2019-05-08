@@ -26,14 +26,6 @@ type Request struct {
 	// on windows.
 	Copy bool
 
-	// Dir, if true, tells the Client it is downloading a directory (versus
-	// a single file). This distinction is necessary since filenames and
-	// directory names follow the same format so disambiguating is impossible
-	// without knowing ahead of time.
-	//
-	// WARNING: deprecated. If Mode is set, that will take precedence.
-	Dir bool
-
 	// ProgressListener allows to track file downloads.
 	// By default a no op progress listener is used.
 	ProgressListener ProgressTracker

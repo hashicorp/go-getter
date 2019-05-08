@@ -4,13 +4,11 @@ package getter
 type ClientMode uint
 
 const (
-	ClientModeInvalid ClientMode = iota
-
 	// ClientModeAny downloads anything it can. In this mode, dst must
 	// be a directory. If src is a file, it is saved into the directory
 	// with the basename of the URL. If src is a directory or archive,
 	// it is unpacked directly into dst.
-	ClientModeAny
+	ClientModeAny ClientMode = iota
 
 	// ClientModeFile downloads a single file. In this mode, dst must
 	// be a file path (doesn't have to exist). src must point to a single

@@ -38,16 +38,7 @@ func (c *Client) Get(ctx context.Context, req *Request) (*Operation, error) {
 	if err := c.Configure(); err != nil {
 		return nil, err
 	}
-
-	// Store this locally since there are cases we swap this
-	if req.Mode == ClientModeInvalid {
-		if req.Dir {
-			req.Mode = ClientModeDir
-		} else {
-			req.Mode = ClientModeFile
-		}
-	}
-
+	
 	var err error
 	req.Src, err = Detect(req.Src, req.Pwd, c.Detectors)
 	if err != nil {

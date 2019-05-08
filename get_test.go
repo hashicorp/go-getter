@@ -99,10 +99,10 @@ func TestGet_fileDetect(t *testing.T) {
 	}
 
 	req := &Request{
-		Src: u,
-		Dst: dst,
-		Pwd: pwd,
-		Dir: true,
+		Src:  u,
+		Dst:  dst,
+		Pwd:  pwd,
+		Mode: ClientModeAny,
 	}
 	client := &Client{}
 
@@ -583,9 +583,9 @@ func TestGetFile_checksumURL(t *testing.T) {
 
 	getter := &MockGetter{Proxy: new(FileGetter)}
 	req := &Request{
-		Src: u,
-		Dst: dst,
-		Dir: false,
+		Src:  u,
+		Dst:  dst,
+		Mode: ClientModeFile,
 	}
 	client := &Client{
 		Getters: map[string]Getter{
@@ -638,9 +638,9 @@ func TestGetFile_checksumSkip(t *testing.T) {
 
 	getter := &MockGetter{Proxy: new(FileGetter)}
 	req := &Request{
-		Src: u,
-		Dst: dst,
-		Dir: false,
+		Src:  u,
+		Dst:  dst,
+		Mode: ClientModeFile,
 	}
 	client := &Client{
 		Getters: map[string]Getter{

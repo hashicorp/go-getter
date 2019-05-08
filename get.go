@@ -89,9 +89,9 @@ func init() {
 // folder doesn't need to exist. It will be created if it doesn't exist.
 func Get(ctx context.Context, dst, src string) (*Operation, error) {
 	req := &Request{
-		Src: src,
-		Dst: dst,
-		Dir: true,
+		Src:  src,
+		Dst:  dst,
+		Mode: ClientModeDir,
 	}
 	return DefaultClient.Get(ctx, req)
 }
@@ -115,9 +115,9 @@ func GetAny(ctx context.Context, dst, src string) (*Operation, error) {
 // dst.
 func GetFile(ctx context.Context, dst, src string) (*Operation, error) {
 	req := &Request{
-		Src: src,
-		Dst: dst,
-		Dir: false,
+		Src:  src,
+		Dst:  dst,
+		Mode: ClientModeFile,
 	}
 	return DefaultClient.Get(ctx, req)
 }
