@@ -9,7 +9,10 @@ func TestGitDetector(t *testing.T) {
 		Input  string
 		Output string
 	}{
-		{"git@github.com:hashicorp/foo.git", "git::ssh://git@github.com/hashicorp/foo.git"},
+		{
+			"git@github.com:hashicorp/foo.git",
+			"git::ssh://git@github.com/hashicorp/foo.git",
+		},
 		{
 			"git@github.com:org/project.git?ref=test-branch",
 			"git::ssh://git@github.com/org/project.git?ref=test-branch",
@@ -38,21 +41,35 @@ func TestGitDetector(t *testing.T) {
 			"git@github.xyz.com:org/project.git//module/a?ref=test-branch",
 			"git::ssh://git@github.xyz.com/org/project.git//module/a?ref=test-branch",
 		},
+		{
+			// Using the scp-like form with the ssh:// prefix is invalid, so
+			// it passes through as-is.
+			"git::ssh://git@github.xyz.com:org/project.git",
+			"git::ssh://git@github.xyz.com:org/project.git",
+		},
+		{
+			// Already in the canonical form, so no rewriting required
+			// When the ssh: protocol is used explicitly, we recognize it as
+			// URL form rather than SCP-like form, so the part after the colon
+			// is a port number, not part of the path.
+			"git::ssh://git@git.example.com:2222/hashicorp/foo.git",
+			"git::ssh://git@git.example.com:2222/hashicorp/foo.git",
+		},
 	}
 
 	pwd := "/pwd"
 	f := new(GitDetector)
-	for i, tc := range cases {
-		output, ok, err := f.Detect(tc.Input, pwd)
-		if err != nil {
-			t.Fatalf("err: %s", err)
-		}
-		if !ok {
-			t.Fatal("not ok")
-		}
+	ds := []Detector{f}
+	for _, tc := range cases {
+		t.Run(tc.Input, func (t *testing.T) {
+			output, err := Detect(tc.Input, pwd, ds)
+			if err != nil {
+				t.Fatalf("unexpected error: %s", err)
+			}
 
-		if output != tc.Output {
-			t.Fatalf("%d: bad: %#v", i, output)
-		}
+			if output != tc.Output {
+				t.Errorf("wrong result\ninput: %s\ngot:   %s\nwant:  %s", tc.Input, output, tc.Output)
+			}
+		})
 	}
 }
