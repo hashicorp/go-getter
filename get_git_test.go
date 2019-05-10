@@ -298,6 +298,130 @@ func TestGitGetter_sshKey(t *testing.T) {
 	}
 }
 
+func TestGitGetter_sshSCPStyle(t *testing.T) {
+	if !testHasGit {
+		t.Skip("git not found, skipping")
+	}
+
+	g := new(GitGetter)
+	dst := tempDir(t)
+
+	encodedKey := base64.StdEncoding.EncodeToString([]byte(testGitToken))
+
+	// avoid getting locked by a github authenticity validation prompt
+	os.Setenv("GIT_SSH_COMMAND", "ssh -o StrictHostKeyChecking=no")
+	defer os.Setenv("GIT_SSH_COMMAND", "")
+
+	// This test exercises the combination of the git detector and the
+	// git getter, to make sure that together they make scp-style URLs work.
+	client := &Client{
+		Src: "git@github.com:hashicorp/test-private-repo?sshkey=" + encodedKey,
+		Dst: dst,
+		Pwd: ".",
+
+		Mode: ClientModeDir,
+
+		Detectors: []Detector{
+			new(GitDetector),
+		},
+		Getters: map[string]Getter{
+			"git": g,
+		},
+	}
+
+	if err := client.Get(); err != nil {
+		t.Fatalf("client.Get failed: %s", err)
+	}
+
+	readmePath := filepath.Join(dst, "README.md")
+	if _, err := os.Stat(readmePath); err != nil {
+		t.Fatalf("err: %s", err)
+	}
+}
+
+func TestGitGetter_sshExplicitPort(t *testing.T) {
+	if !testHasGit {
+		t.Skip("git not found, skipping")
+	}
+
+	g := new(GitGetter)
+	dst := tempDir(t)
+
+	encodedKey := base64.StdEncoding.EncodeToString([]byte(testGitToken))
+
+	// avoid getting locked by a github authenticity validation prompt
+	os.Setenv("GIT_SSH_COMMAND", "ssh -o StrictHostKeyChecking=no")
+	defer os.Setenv("GIT_SSH_COMMAND", "")
+
+	// This test exercises the combination of the git detector and the
+	// git getter, to make sure that together they make scp-style URLs work.
+	client := &Client{
+		Src: "git::ssh://git@github.com:22/hashicorp/test-private-repo?sshkey=" + encodedKey,
+		Dst: dst,
+		Pwd: ".",
+
+		Mode: ClientModeDir,
+
+		Detectors: []Detector{
+			new(GitDetector),
+		},
+		Getters: map[string]Getter{
+			"git": g,
+		},
+	}
+
+	if err := client.Get(); err != nil {
+		t.Fatalf("client.Get failed: %s", err)
+	}
+
+	readmePath := filepath.Join(dst, "README.md")
+	if _, err := os.Stat(readmePath); err != nil {
+		t.Fatalf("err: %s", err)
+	}
+}
+
+
+func TestGitGetter_sshSCPStyleInvalidScheme(t *testing.T) {
+	if !testHasGit {
+		t.Skip("git not found, skipping")
+	}
+
+	g := new(GitGetter)
+	dst := tempDir(t)
+
+	encodedKey := base64.StdEncoding.EncodeToString([]byte(testGitToken))
+
+	// avoid getting locked by a github authenticity validation prompt
+	os.Setenv("GIT_SSH_COMMAND", "ssh -o StrictHostKeyChecking=no")
+	defer os.Setenv("GIT_SSH_COMMAND", "")
+
+	// This test exercises the combination of the git detector and the
+	// git getter, to make sure that together they make scp-style URLs work.
+	client := &Client{
+		Src: "git::ssh://git@github.com:hashicorp/test-private-repo?sshkey=" + encodedKey,
+		Dst: dst,
+		Pwd: ".",
+
+		Mode: ClientModeDir,
+
+		Detectors: []Detector{
+			new(GitDetector),
+		},
+		Getters: map[string]Getter{
+			"git": g,
+		},
+	}
+
+	err := client.Get()
+	if err == nil {
+		t.Fatalf("get succeeded; want error")
+	}
+
+	if got, want := err.Error(), `invalid port number "hashicorp"`; !strings.Contains(got, want) {
+		t.Fatalf("wrong error\ngot:  %s\nwant: %s", got, want)
+	}
+}
+
 func TestGitGetter_submodule(t *testing.T) {
 	if !testHasGit {
 		t.Skip("git not found, skipping")
