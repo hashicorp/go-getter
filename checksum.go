@@ -115,7 +115,7 @@ func (c *Client) extractChecksum(u *url.URL) (*fileChecksum, error) {
 
 	switch checksumType {
 	case "file":
-		return c.checksumFromFile(checksumValue, u)
+		return c.ChecksumFromFile(checksumValue, u)
 	default:
 		return newChecksumFromType(checksumType, checksumValue, filepath.Base(u.EscapedPath()))
 	}
@@ -190,7 +190,7 @@ func newChecksumFromValue(checksumValue, filename string) (*fileChecksum, error)
 //
 // checksumsFromFile will only return checksums for files that match file
 // behind src
-func (c *Client) checksumFromFile(checksumFile string, src *url.URL) (*fileChecksum, error) {
+func (c *Client) ChecksumFromFile(checksumFile string, src *url.URL) (*fileChecksum, error) {
 	checksumFileURL, err := urlhelper.Parse(checksumFile)
 	if err != nil {
 		return nil, err
