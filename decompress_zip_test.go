@@ -91,7 +91,7 @@ func TestZipDecompressor(t *testing.T) {
 	}
 
 	for i, tc := range cases {
-		cases[i].Input = filepath.Join("./test-fixtures", "decompress-zip", tc.Input)
+		cases[i].Input = filepath.Join("./testdata", "decompress-zip", tc.Input)
 	}
 
 	TestDecompressor(t, new(ZipDecompressor), cases)

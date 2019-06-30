@@ -27,7 +27,7 @@ func TestGzipDecompressor(t *testing.T) {
 	}
 
 	for i, tc := range cases {
-		cases[i].Input = filepath.Join("./test-fixtures", "decompress-gz", tc.Input)
+		cases[i].Input = filepath.Join("./testdata", "decompress-gz", tc.Input)
 	}
 
 	TestDecompressor(t, new(GzipDecompressor), cases)

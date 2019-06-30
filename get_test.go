@@ -63,7 +63,7 @@ func TestGet_filePercent2F(t *testing.T) {
 
 func TestGet_fileDetect(t *testing.T) {
 	dst := tempDir(t)
-	u := filepath.Join(".", "test-fixtures", "basic")
+	u := filepath.Join(".", "testdata", "basic")
 	pwd, err := os.Getwd()
 	if err != nil {
 		t.Fatalf("err: %s", err)
@@ -121,7 +121,7 @@ func TestGet_fileSubdir(t *testing.T) {
 
 func TestGet_archive(t *testing.T) {
 	dst := tempDir(t)
-	u := filepath.Join("./test-fixtures", "archive.tar.gz")
+	u := filepath.Join("./testdata", "archive.tar.gz")
 	u, _ = filepath.Abs(u)
 
 	if err := Get(dst, u); err != nil {
@@ -136,7 +136,7 @@ func TestGet_archive(t *testing.T) {
 
 func TestGetAny_archive(t *testing.T) {
 	dst := tempDir(t)
-	u := filepath.Join("./test-fixtures", "archive.tar.gz")
+	u := filepath.Join("./testdata", "archive.tar.gz")
 	u, _ = filepath.Abs(u)
 
 	if err := GetAny(dst, u); err != nil {
@@ -203,7 +203,7 @@ func TestGetAny_file(t *testing.T) {
 
 func TestGetAny_dir(t *testing.T) {
 	dst := tempDir(t)
-	u := filepath.Join("./test-fixtures", "basic")
+	u := filepath.Join("./testdata", "basic")
 	u, _ = filepath.Abs(u)
 
 	if err := GetAny(dst, u); err != nil {

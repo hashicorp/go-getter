@@ -6,7 +6,7 @@ import (
 )
 
 func TestAddAuthFromNetrc(t *testing.T) {
-	defer tempEnv(t, "NETRC", "./test-fixtures/netrc/basic")()
+	defer tempEnv(t, "NETRC", "./testdata/netrc/basic")()
 
 	u, err := url.Parse("http://example.com")
 	if err != nil {
@@ -25,7 +25,7 @@ func TestAddAuthFromNetrc(t *testing.T) {
 }
 
 func TestAddAuthFromNetrc_hasAuth(t *testing.T) {
-	defer tempEnv(t, "NETRC", "./test-fixtures/netrc/basic")()
+	defer tempEnv(t, "NETRC", "./testdata/netrc/basic")()
 
 	u, err := url.Parse("http://username:password@example.com")
 	if err != nil {
@@ -44,7 +44,7 @@ func TestAddAuthFromNetrc_hasAuth(t *testing.T) {
 }
 
 func TestAddAuthFromNetrc_hasUsername(t *testing.T) {
-	defer tempEnv(t, "NETRC", "./test-fixtures/netrc/basic")()
+	defer tempEnv(t, "NETRC", "./testdata/netrc/basic")()
 
 	u, err := url.Parse("http://username@example.com")
 	if err != nil {

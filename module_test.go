@@ -13,7 +13,7 @@ import (
 	urlhelper "github.com/hashicorp/go-getter/helper/url"
 )
 
-const fixtureDir = "./test-fixtures"
+const fixtureDir = "./testdata"
 
 func tempDir(t *testing.T) string {
 	dir, err := ioutil.TempDir("", "tf")

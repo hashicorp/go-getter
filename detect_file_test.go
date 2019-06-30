@@ -21,8 +21,8 @@ var fileTests = []fileTest{
 }
 
 var unixFileTests = []fileTest{
-	{"./foo", "test-fixtures/detect-file-symlink-pwd/syml/pwd",
-		"test-fixtures/detect-file-symlink-pwd/real/foo", false},
+	{"./foo", "testdata/detect-file-symlink-pwd/syml/pwd",
+		"testdata/detect-file-symlink-pwd/real/foo", false},
 
 	{"/foo", "/pwd", "file:///foo", false},
 	{"/foo?bar=baz", "/pwd", "file:///foo?bar=baz", false},
