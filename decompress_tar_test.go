@@ -36,7 +36,7 @@ func TestTar(t *testing.T) {
 	}
 
 	for i, tc := range cases {
-		cases[i].Input = filepath.Join("./test-fixtures", "decompress-tar", tc.Input)
+		cases[i].Input = filepath.Join("./testdata", "decompress-tar", tc.Input)
 	}
 
 	TestDecompressor(t, new(tarDecompressor), cases)

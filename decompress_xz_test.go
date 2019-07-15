@@ -27,7 +27,7 @@ func TestXzDecompressor(t *testing.T) {
 	}
 
 	for i, tc := range cases {
-		cases[i].Input = filepath.Join("./test-fixtures", "decompress-xz", tc.Input)
+		cases[i].Input = filepath.Join("./testdata", "decompress-xz", tc.Input)
 	}
 
 	TestDecompressor(t, new(XzDecompressor), cases)
