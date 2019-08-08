@@ -181,11 +181,11 @@ func (g *HttpGetter) getSubdir(dst, source, subDir string) error {
 	}
 
 	// Make the final destination
-	if err := os.MkdirAll(dst, 0755); err != nil {
+	if err := os.MkdirAll(dst, g.client.mode(0755)); err != nil {
 		return err
 	}
 
-	return copyDir(dst, sourcePath, false)
+	return copyDir(dst, sourcePath, false, g.client.umask())
 }
 
 // parseMeta looks for the first meta tag in the given reader that

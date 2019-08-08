@@ -1,7 +1,9 @@
 package getter
 
 import (
+	"os"
 	"path/filepath"
+	"runtime"
 	"testing"
 )
 
@@ -95,4 +97,35 @@ func TestZipDecompressor(t *testing.T) {
 	}
 
 	TestDecompressor(t, new(ZipDecompressor), cases)
+}
+
+func TestDecompressZipPermissions(t *testing.T) {
+	d := new(ZipDecompressor)
+	input := "./test-fixtures/decompress-zip/permissions.zip"
+
+	var expected map[string]int
+	var masked int
+
+	if runtime.GOOS == "windows" {
+		expected = map[string]int{
+			"directory/public":  0666,
+			"directory/private": 0666,
+			"directory/exec":    0666,
+			"directory/setuid":  0666,
+		}
+		masked = 0666
+	} else {
+		expected = map[string]int{
+			"directory/public":  0666,
+			"directory/private": 0600,
+			"directory/exec":    0755,
+			"directory/setuid":  040000755,
+		}
+		masked = 0755
+	}
+
+	testDecompressorPermissions(t, d, input, expected, os.FileMode(0))
+
+	expected["directory/setuid"] = masked
+	testDecompressorPermissions(t, d, input, expected, os.FileMode(060000000))
 }
