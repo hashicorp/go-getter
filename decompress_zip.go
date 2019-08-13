@@ -3,7 +3,6 @@ package getter
 import (
 	"archive/zip"
 	"fmt"
-	"io"
 	"os"
 	"path/filepath"
 )
@@ -78,21 +77,10 @@ func (d *ZipDecompressor) Decompress(dst, src string, dir bool) error {
 			return err
 		}
 
-		// Open the file for writing
-		dstF, err := os.Create(path)
-		if err != nil {
-			srcF.Close()
-			return err
-		}
-		_, err = io.Copy(dstF, srcF)
+		// Copy the file
+		err = copyReader(path, srcF, f.Mode())
 		srcF.Close()
-		dstF.Close()
 		if err != nil {
-			return err
-		}
-
-		// Chmod the file
-		if err := os.Chmod(path, f.Mode()); err != nil {
 			return err
 		}
 	}

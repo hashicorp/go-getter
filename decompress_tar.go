@@ -81,19 +81,9 @@ func untar(input io.Reader, dst, src string, dir bool) error {
 		// Mark that we're done so future in single file mode errors
 		done = true
 
-		// Open the file for writing
-		dstF, err := os.Create(path)
+		// Copy the file
+		err = copyReader(path, tarR, hdr.FileInfo().Mode())
 		if err != nil {
-			return err
-		}
-		_, err = io.Copy(dstF, tarR)
-		dstF.Close()
-		if err != nil {
-			return err
-		}
-
-		// Chmod the file
-		if err := os.Chmod(path, hdr.FileInfo().Mode()); err != nil {
 			return err
 		}
 
