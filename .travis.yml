@@ -17,6 +17,7 @@ go:
 branches:
   only:
     - master
+    - /^release-.*/
 
 matrix:
   allow_failures:
