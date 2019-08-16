@@ -6,22 +6,22 @@ import (
 )
 
 // copyReader copies from an io.Reader into a file, using umask to create the dst file
-func copyReader(dst string, src io.Reader, fmode, umask os.FileMode) error {
+func copyReader(dst string, src io.Reader, fmode, umask os.FileMode) (int64, error) {
 	dstF, err := os.OpenFile(dst, os.O_RDWR|os.O_CREATE|os.O_TRUNC, fmode)
 	if err != nil {
-		return err
+		return 0, err
 	}
 	defer dstF.Close()
 
-	_, err = io.Copy(dstF, src)
+	count, err := io.Copy(dstF, src)
 	if err != nil {
-		return err
+		return 0, err
 	}
 
 	// Explicitly chmod; the process umask is unconditionally applied otherwise.
 	// We'll mask the mode with our own umask, but that may be different than
 	// the process umask
-	return os.Chmod(dst, mode(fmode, umask))
+	return count, os.Chmod(dst, mode(fmode, umask))
 }
 
 // copyFile copies a file in chunks from src path to dst path, using umask to create the dst file

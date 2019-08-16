@@ -33,5 +33,6 @@ func (d *Bzip2Decompressor) Decompress(dst, src string, dir bool, umask os.FileM
 	bzipR := bzip2.NewReader(f)
 
 	// Copy it out
-	return copyReader(dst, bzipR, 0622, umask)
+	_, err = copyReader(dst, bzipR, 0622, umask)
+	return err
 }

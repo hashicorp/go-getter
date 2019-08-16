@@ -29,7 +29,7 @@ func TestHttpGetter_header(t *testing.T) {
 	u.Path = "/header"
 
 	// Get it!
-	if err := g.Get(dst, &u); err != nil {
+	if err := g.Get(dst, &u, 0); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
@@ -54,7 +54,7 @@ func TestHttpGetter_meta(t *testing.T) {
 	u.Path = "/meta"
 
 	// Get it!
-	if err := g.Get(dst, &u); err != nil {
+	if err := g.Get(dst, &u, 0); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
@@ -79,7 +79,7 @@ func TestHttpGetter_metaSubdir(t *testing.T) {
 	u.Path = "/meta-subdir"
 
 	// Get it!
-	if err := g.Get(dst, &u); err != nil {
+	if err := g.Get(dst, &u, 0); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
@@ -104,7 +104,7 @@ func TestHttpGetter_metaSubdirGlob(t *testing.T) {
 	u.Path = "/meta-subdir-glob"
 
 	// Get it!
-	if err := g.Get(dst, &u); err != nil {
+	if err := g.Get(dst, &u, 0); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
@@ -129,7 +129,7 @@ func TestHttpGetter_none(t *testing.T) {
 	u.Path = "/none"
 
 	// Get it!
-	if err := g.Get(dst, &u); err == nil {
+	if err := g.Get(dst, &u, 0); err == nil {
 		t.Fatal("should error")
 	}
 }
@@ -148,7 +148,7 @@ func TestHttpGetter_file(t *testing.T) {
 	u.Path = "/file"
 
 	// Get it!
-	if err := g.GetFile(dst, &u); err != nil {
+	if err := g.GetFile(dst, &u, 0); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
@@ -174,7 +174,7 @@ func TestHttpGetter_auth(t *testing.T) {
 	u.User = url.UserPassword("foo", "bar")
 
 	// Get it!
-	if err := g.Get(dst, &u); err != nil {
+	if err := g.Get(dst, &u, 0); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
@@ -204,7 +204,7 @@ func TestHttpGetter_authNetrc(t *testing.T) {
 	defer tempEnv(t, "NETRC", path)()
 
 	// Get it!
-	if err := g.Get(dst, &u); err != nil {
+	if err := g.Get(dst, &u, 0); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
@@ -243,7 +243,7 @@ func TestHttpGetter_cleanhttp(t *testing.T) {
 	u.Path = "/header"
 
 	// Get it!
-	if err := g.Get(dst, &u); err != nil {
+	if err := g.Get(dst, &u, 0); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 }

@@ -31,7 +31,7 @@ func TestS3Getter(t *testing.T) {
 
 	// With a dir that doesn't exist
 	err := g.Get(
-		dst, testURL("https://s3.amazonaws.com/hc-oss-test/go-getter/folder"))
+		dst, testURL("https://s3.amazonaws.com/hc-oss-test/go-getter/folder"), 0)
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
@@ -49,7 +49,7 @@ func TestS3Getter_subdir(t *testing.T) {
 
 	// With a dir that doesn't exist
 	err := g.Get(
-		dst, testURL("https://s3.amazonaws.com/hc-oss-test/go-getter/folder/subfolder"))
+		dst, testURL("https://s3.amazonaws.com/hc-oss-test/go-getter/folder/subfolder"), 0)
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
@@ -67,7 +67,7 @@ func TestS3Getter_GetFile(t *testing.T) {
 
 	// Download
 	err := g.GetFile(
-		dst, testURL("https://s3.amazonaws.com/hc-oss-test/go-getter/folder/main.tf"))
+		dst, testURL("https://s3.amazonaws.com/hc-oss-test/go-getter/folder/main.tf"), 0)
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
@@ -86,7 +86,9 @@ func TestS3Getter_GetFile_badParams(t *testing.T) {
 	// Download
 	err := g.GetFile(
 		dst,
-		testURL("https://s3.amazonaws.com/hc-oss-test/go-getter/folder/main.tf?aws_access_key_id=foo&aws_access_key_secret=bar&aws_access_token=baz"))
+		testURL("https://s3.amazonaws.com/hc-oss-test/go-getter/folder/main.tf?aws_access_key_id=foo&aws_access_key_secret=bar&aws_access_token=baz"),
+		0,
+	)
 	if err == nil {
 		t.Fatalf("expected error, got none")
 	}
@@ -102,7 +104,7 @@ func TestS3Getter_GetFile_notfound(t *testing.T) {
 
 	// Download
 	err := g.GetFile(
-		dst, testURL("https://s3.amazonaws.com/hc-oss-test/go-getter/folder/404.tf"))
+		dst, testURL("https://s3.amazonaws.com/hc-oss-test/go-getter/folder/404.tf"), 0)
 	if err == nil {
 		t.Fatalf("expected error, got none")
 	}

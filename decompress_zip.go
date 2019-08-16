@@ -78,7 +78,7 @@ func (d *ZipDecompressor) Decompress(dst, src string, dir bool, umask os.FileMod
 			return err
 		}
 
-		err = copyReader(path, srcF, f.Mode(), umask)
+		_, err = copyReader(path, srcF, f.Mode(), umask)
 		srcF.Close()
 		if err != nil {
 			return err

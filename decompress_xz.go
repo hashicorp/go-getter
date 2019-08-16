@@ -37,5 +37,6 @@ func (d *XzDecompressor) Decompress(dst, src string, dir bool, umask os.FileMode
 	}
 
 	// Copy it out
-	return copyReader(dst, xzR, 0622, umask)
+	_, err = copyReader(dst, xzR, 0622, umask)
+	return err
 }

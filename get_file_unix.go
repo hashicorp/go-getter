@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 )
 
-func (g *FileGetter) Get(dst string, u *url.URL) error {
+func (g *FileGetter) Get(dst string, u *url.URL, umask os.FileMode) error {
 	path := u.Path
 	if u.RawPath != "" {
 		path = u.RawPath
@@ -41,14 +41,14 @@ func (g *FileGetter) Get(dst string, u *url.URL) error {
 	}
 
 	// Create all the parent directories
-	if err := os.MkdirAll(filepath.Dir(dst), g.client.mode(0755)); err != nil {
+	if err := os.MkdirAll(filepath.Dir(dst), mode(0755, umask)); err != nil {
 		return err
 	}
 
 	return os.Symlink(path, dst)
 }
 
-func (g *FileGetter) GetFile(dst string, u *url.URL) error {
+func (g *FileGetter) GetFile(dst string, u *url.URL, umask os.FileMode) error {
 	path := u.Path
 	if u.RawPath != "" {
 		path = u.RawPath
@@ -77,7 +77,7 @@ func (g *FileGetter) GetFile(dst string, u *url.URL) error {
 	}
 
 	// Create all the parent directories
-	if err = os.MkdirAll(filepath.Dir(dst), g.client.mode(0755)); err != nil {
+	if err = os.MkdirAll(filepath.Dir(dst), mode(0755, umask)); err != nil {
 		return err
 	}
 
@@ -87,6 +87,6 @@ func (g *FileGetter) GetFile(dst string, u *url.URL) error {
 	}
 
 	// Copy
-	_, err = copyFile(ctx, dst, path, fi.Mode(), g.client.umask())
+	_, err = copyFile(dst, path, fi.Mode(), umask)
 	return err
 }

@@ -37,5 +37,6 @@ func (d *GzipDecompressor) Decompress(dst, src string, dir bool, umask os.FileMo
 	defer gzipR.Close()
 
 	// Copy it out
-	return copyReader(dst, gzipR, 0622, umask)
+	_, err = copyReader(dst, gzipR, 0622, umask)
+	return err
 }
