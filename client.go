@@ -266,7 +266,7 @@ func (c *Client) Get() error {
 	// If we're not downloading a directory, then just download the file
 	// and return.
 	if mode == ClientModeFile {
-		err := g.GetFile(dst, u, c.Umask)
+		err := g.GetFile(dst, u, c.umask())
 		if err != nil {
 			return err
 		}
@@ -316,7 +316,7 @@ func (c *Client) Get() error {
 
 		// We're downloading a directory, which might require a bit more work
 		// if we're specifying a subdir.
-		err := g.Get(dst, u, c.Umask)
+		err := g.Get(dst, u, c.umask())
 		if err != nil {
 			err = fmt.Errorf("error downloading '%s': %s", src, err)
 			return err
