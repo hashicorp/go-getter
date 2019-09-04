@@ -20,3 +20,5 @@ require (
 	google.golang.org/api v0.1.0
 	gopkg.in/cheggaaa/pb.v1 v1.0.27 // indirect
 )
+
+replace git.apache.org/thrift.git => github.com/apache/thrift v0.0.0-20180902110319-2566ecd5d999
