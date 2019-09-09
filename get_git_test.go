@@ -380,7 +380,6 @@ func TestGitGetter_sshExplicitPort(t *testing.T) {
 	}
 }
 
-
 func TestGitGetter_sshSCPStyleInvalidScheme(t *testing.T) {
 	if !testHasGit {
 		t.Skip("git not found, skipping")
@@ -417,8 +416,10 @@ func TestGitGetter_sshSCPStyleInvalidScheme(t *testing.T) {
 		t.Fatalf("get succeeded; want error")
 	}
 
-	if got, want := err.Error(), `invalid port number "hashicorp"`; !strings.Contains(got, want) {
-		t.Fatalf("wrong error\ngot:  %s\nwant: %s", got, want)
+	got := err.Error()
+	want1, want2 := `invalid source string`, `invalid port number "hashicorp"`
+	if !(strings.Contains(got, want1) || strings.Contains(got, want2)) {
+		t.Fatalf("wrong error\ngot:  %s\nwant: %q or %q", got, want1, want2)
 	}
 }
 

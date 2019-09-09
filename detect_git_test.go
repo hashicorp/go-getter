@@ -42,12 +42,6 @@ func TestGitDetector(t *testing.T) {
 			"git::ssh://git@github.xyz.com/org/project.git//module/a?ref=test-branch",
 		},
 		{
-			// Using the scp-like form with the ssh:// prefix is invalid, so
-			// it passes through as-is.
-			"git::ssh://git@github.xyz.com:org/project.git",
-			"git::ssh://git@github.xyz.com:org/project.git",
-		},
-		{
 			// Already in the canonical form, so no rewriting required
 			// When the ssh: protocol is used explicitly, we recognize it as
 			// URL form rather than SCP-like form, so the part after the colon
@@ -61,7 +55,7 @@ func TestGitDetector(t *testing.T) {
 	f := new(GitDetector)
 	ds := []Detector{f}
 	for _, tc := range cases {
-		t.Run(tc.Input, func (t *testing.T) {
+		t.Run(tc.Input, func(t *testing.T) {
 			output, err := Detect(tc.Input, pwd, ds)
 			if err != nil {
 				t.Fatalf("unexpected error: %s", err)
