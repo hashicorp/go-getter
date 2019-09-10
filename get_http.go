@@ -88,7 +88,10 @@ func (g *HttpGetter) Get(dst string, u *url.URL) error {
 		return err
 	}
 
-	req.Header = g.Header
+	if g.Header != nil {
+		req.Header = g.Header
+	}
+
 	resp, err := g.Client.Do(req)
 	if err != nil {
 		return err
