@@ -1,3 +1,5 @@
+// +build !go_getter_nogcs
+
 package getter
 
 import (

@@ -1,3 +1,5 @@
+// +build !go_getter_nos3
+
 package getter
 
 import (
