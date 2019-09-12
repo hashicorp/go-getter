@@ -279,7 +279,7 @@ func TestGitGetter_sshKey(t *testing.T) {
 	encodedKey := base64.StdEncoding.EncodeToString([]byte(testGitToken))
 
 	// avoid getting locked by a github authenticity validation prompt
-	os.Setenv("GIT_SSH_COMMAND", "ssh -o StrictHostKeyChecking=no")
+	os.Setenv("GIT_SSH_COMMAND", "ssh -o StrictHostKeyChecking=no -o IdentitiesOnly=yes")
 	defer os.Setenv("GIT_SSH_COMMAND", "")
 
 	u, err := urlhelper.Parse("ssh://git@github.com/hashicorp/test-private-repo" +
@@ -309,7 +309,7 @@ func TestGitGetter_sshSCPStyle(t *testing.T) {
 	encodedKey := base64.StdEncoding.EncodeToString([]byte(testGitToken))
 
 	// avoid getting locked by a github authenticity validation prompt
-	os.Setenv("GIT_SSH_COMMAND", "ssh -o StrictHostKeyChecking=no")
+	os.Setenv("GIT_SSH_COMMAND", "ssh -o StrictHostKeyChecking=no -o IdentitiesOnly=yes")
 	defer os.Setenv("GIT_SSH_COMMAND", "")
 
 	// This test exercises the combination of the git detector and the
@@ -350,7 +350,7 @@ func TestGitGetter_sshExplicitPort(t *testing.T) {
 	encodedKey := base64.StdEncoding.EncodeToString([]byte(testGitToken))
 
 	// avoid getting locked by a github authenticity validation prompt
-	os.Setenv("GIT_SSH_COMMAND", "ssh -o StrictHostKeyChecking=no")
+	os.Setenv("GIT_SSH_COMMAND", "ssh -o StrictHostKeyChecking=no -o IdentitiesOnly=yes")
 	defer os.Setenv("GIT_SSH_COMMAND", "")
 
 	// This test exercises the combination of the git detector and the
@@ -391,7 +391,7 @@ func TestGitGetter_sshSCPStyleInvalidScheme(t *testing.T) {
 	encodedKey := base64.StdEncoding.EncodeToString([]byte(testGitToken))
 
 	// avoid getting locked by a github authenticity validation prompt
-	os.Setenv("GIT_SSH_COMMAND", "ssh -o StrictHostKeyChecking=no")
+	os.Setenv("GIT_SSH_COMMAND", "ssh -o StrictHostKeyChecking=no -o IdentitiesOnly=yes")
 	defer os.Setenv("GIT_SSH_COMMAND", "")
 
 	// This test exercises the combination of the git detector and the
@@ -499,7 +499,7 @@ func TestGitGetter_setupGitEnvWithExisting_sshKey(t *testing.T) {
 	}
 
 	// start with an existing ssh command configuration
-	os.Setenv("GIT_SSH_COMMAND", "ssh -o StrictHostKeyChecking=no")
+	os.Setenv("GIT_SSH_COMMAND", "ssh -o StrictHostKeyChecking=no -o IdentitiesOnly=yes")
 	defer os.Setenv("GIT_SSH_COMMAND", "")
 
 	cmd := exec.Command("/bin/sh", "-c", "echo $GIT_SSH_COMMAND")
@@ -510,7 +510,7 @@ func TestGitGetter_setupGitEnvWithExisting_sshKey(t *testing.T) {
 	}
 
 	actual := strings.TrimSpace(string(out))
-	if actual != "ssh -o StrictHostKeyChecking=no -i /tmp/foo.pem" {
+	if actual != "ssh -o StrictHostKeyChecking=no -o IdentitiesOnly=yes -i /tmp/foo.pem" {
 		t.Fatalf("unexpected GIT_SSH_COMMAND: %q", actual)
 	}
 }
