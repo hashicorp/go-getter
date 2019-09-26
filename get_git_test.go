@@ -88,6 +88,44 @@ func TestGitGetter_branch(t *testing.T) {
 	}
 }
 
+func TestGitGetter_remoteWithoutMaster(t *testing.T) {
+	if !testHasGit {
+		t.Log("git not found, skipping")
+		t.Skip()
+	}
+
+	g := new(GitGetter)
+	dst := tempDir(t)
+
+	repo := testGitRepo(t, "branch")
+	repo.git("checkout", "-b", "test-branch")
+	repo.commitFile("branch.txt", "branch")
+
+	q := repo.url.Query()
+	repo.url.RawQuery = q.Encode()
+
+	if err := g.Get(dst, repo.url); err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	// Verify the main file exists
+	mainPath := filepath.Join(dst, "branch.txt")
+	if _, err := os.Stat(mainPath); err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	// Get again should work
+	if err := g.Get(dst, repo.url); err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	// Verify the main file exists
+	mainPath = filepath.Join(dst, "branch.txt")
+	if _, err := os.Stat(mainPath); err != nil {
+		t.Fatalf("err: %s", err)
+	}
+}
+
 func TestGitGetter_shallowClone(t *testing.T) {
 	if !testHasGit {
 		t.Log("git not found, skipping")
@@ -379,6 +417,7 @@ func TestGitGetter_sshExplicitPort(t *testing.T) {
 		t.Fatalf("err: %s", err)
 	}
 }
+
 
 func TestGitGetter_sshSCPStyleInvalidScheme(t *testing.T) {
 	if !testHasGit {
