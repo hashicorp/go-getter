@@ -1,0 +1,62 @@
+version: 2.1
+
+references:
+    images:
+        go: &GOLANG_IMAGE circleci/golang:latest
+
+# reusable 'executor' object for jobs
+executors:
+  go:
+    docker:
+      - image: *GOLANG_IMAGE
+    environment:
+      - TEST_RESULTS: /tmp/test-results # path to where test results are saved
+
+jobs:
+  go-fmt-and-vet:
+    executor: go
+    steps:
+      - checkout
+
+      # Restore go module cache if there is one
+      - restore_cache:
+          keys:
+            - go-getter-modcache-v1-{{ checksum "go.mod" }}
+
+      - run: go mod download
+
+      # Save go module cache if the go.mod file has changed
+      - save_cache:
+          key: go-getter-modcache-v1-{{ checksum "go.mod" }}
+          paths:
+            - "/go/pkg/mod"
+
+      # check go fmt output because it does not report non-zero when there are fmt changes
+      - run:
+          name: check go fmt
+          command: |
+            files=$(go fmt ./...)
+            if [ -n "$files" ]; then
+              echo "The following file(s) do not conform to go fmt:"
+              echo "$files"
+              exit 1
+            fi
+      - run: go vet ./...
+
+  go-build:
+    executor: go
+    steps:
+      - checkout
+      - restore_cache: # restore cache from dev-build job
+        keys:
+          - go-getter-modcache-v1-{{ checksum "go.mod" }}
+      - run: go build ./cmd/go-getter
+
+workflows:
+  version: 2
+  test-and-build:
+    jobs:
+      - go-fmt-and-vet
+      - go-build:
+          requires:
+            - go-fmt-and-vet
