@@ -1,8 +1,8 @@
 version: 2.1
 
 references:
-    images:
-        go: &GOLANG_IMAGE circleci/golang:latest
+  images:
+    go: &GOLANG_IMAGE circleci/golang:latest
 
 # reusable 'executor' object for jobs
 executors:
@@ -48,25 +48,19 @@ jobs:
     steps:
       - checkout
       - run: mkdir -p $TEST_RESULTS
+
       - restore_cache: # restore cache from dev-build job
-        keys:
-          - go-getter-modcache-v1-{{ checksum "go.mod" }}
+          keys:
+            - go-getter-modcache-v1-{{ checksum "go.mod" }}
+
+      # run go tests with gotestsum
       - run: |
           PACKAGE_NAMES=$(go list ./...)
           gotestsum --format=short-verbose --junitfile $TEST_RESULTS/gotestsum-report.xml -- $PACKAGE_NAMES
       - store_test_results:
-        path: /tmp/test-results
+          path: /tmp/test-results
       - store_artifacts:
-        path: /tmp/test-results 
-
-  go-build:
-    executor: go
-    steps:
-      - checkout
-      - restore_cache: # restore cache from dev-build job
-        keys:
-          - go-getter-modcache-v1-{{ checksum "go.mod" }}
-      - run: go build ./cmd/go-getter
+          path: /tmp/test-results
 
 workflows:
   version: 2
@@ -74,8 +68,5 @@ workflows:
     jobs:
       - go-fmt-and-vet
       - go-test:
-          requires:
-            - go-fmt-and-vet
-      - go-build:
           requires:
             - go-fmt-and-vet
