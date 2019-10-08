@@ -356,3 +356,7 @@ In order to access to GCS, authentication credentials should be provided. More i
 - gcs::https://www.googleapis.com/storage/v1/bucket
 - gcs::https://www.googleapis.com/storage/v1/bucket/foo.zip
 - www.googleapis.com/storage/v1/bucket/foo
+
+#### GCS Testing
+
+The tests for `get_gcs.go` require you to have GCP credentials in the HashiCorp organization, because they reach out to a bucket owned by HashiCorp.  Because of this, `get_gcs_test.go` will fail for external contributors.  The CircleCI environment has the appropriate access to successfully run tests.
