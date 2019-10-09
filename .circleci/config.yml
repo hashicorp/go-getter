@@ -25,12 +25,7 @@ jobs:
       - restore_cache:
           keys:
             - go-getter-modcache-v1-{{ checksum "go.mod" }}
-
-      # Save go module cache if the go.mod file has changed
-      - save_cache:
-          key: go-getter-modcache-v1-{{ checksum "go.mod" }}
-          paths:
-            - "/go/pkg/mod"
+            - go-getter-modcache-v1
 
       # check go fmt output because it does not report non-zero when there are fmt changes
       - run:
@@ -51,6 +46,12 @@ jobs:
           path: *TEST_RESULTS_PATH
       - store_artifacts:
           path: *TEST_RESULTS_PATH
+
+      # Save go module cache if the go.mod file has changed
+      - save_cache:
+          key: go-getter-modcache-v1-{{ checksum "go.mod" }}
+          paths:
+            - "/go/pkg/mod"
 
 workflows:
   version: 2
