@@ -418,7 +418,6 @@ func TestGitGetter_sshExplicitPort(t *testing.T) {
 	}
 }
 
-
 func TestGitGetter_sshSCPStyleInvalidScheme(t *testing.T) {
 	if !testHasGit {
 		t.Skip("git not found, skipping")
