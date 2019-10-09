@@ -359,4 +359,4 @@ In order to access to GCS, authentication credentials should be provided. More i
 
 #### GCS Testing
 
-The tests for `get_gcs.go` require you to have GCP credentials in the HashiCorp organization, because they reach out to a bucket owned by HashiCorp.  Because of this, `get_gcs_test.go` will fail for external contributors.  The CircleCI environment has the appropriate access to successfully run tests.
+The tests for `get_gcs.go` require you to have GCP credentials set in your environment.  These credentials can have any level of permissions to any project, they just need to exist.  This means setting `GOOGLE_APPLICATION_CREDENTIALS="~/path/to/credentials.json"` or `GOOGLE_CREDENTIALS="{stringified-credentials-json}"`.  Due to this configuration, `get_gcs_test.go` will fail for external contributors in CircleCI.
