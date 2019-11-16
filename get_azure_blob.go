@@ -2,12 +2,13 @@ package getter
 
 import (
 	"fmt"
-	//"io"
+	"io"
 	"net/url"
-	//"os"
-	//"path/filepath"
+	"os"
+	"path/filepath"
 	"strings"
-	//"log"
+	"log"
+	"bytes"
 	//
 	"github.com/Azure/azure-storage-blob-go/azblob"
 )
@@ -205,44 +206,78 @@ func (g *AzureBlobGetter) GetFile(dst string, u *url.URL) error {
 	return g.getObject(client, dst, containerName, blobPath)
 }
 
-func (g *AzureBlobGetter) getObject(client *azblob.SharedKeyCredential, dst, container, blobName string) error {
+func (g *AzureBlobGetter) getObject(serviceURL azblob.ServiceURL, dst, container, blobName string) error {
+	// All HTTP operations allow you to specify a Go context.Context object to control cancellation/timeout.
+	//ctx := context.Background() // This example uses a never-expiring context.
+
+	// This example shows several common operations just to get you started.
+
+	// Create a URL that references a to-be-created container in your Azure Storage account.
+	// This returns a ContainerURL object that wraps the container's URL and a request pipeline (inherited from serviceURL)
+	containerURL := serviceURL.NewContainerURL(container) // Container names require lowercase
+
+	//// Create the container on the service (with no metadata and no public access)
+	//_, err = containerURL.Create(ctx, azblob.Metadata{}, azblob.PublicAccessNone)
+	//if err != nil {
+	//	log.Fatal(err)
+	//}
+
+	// Create a URL that references a to-be-created blob in your Azure Storage account's container.
+	// This returns a BlockBlobURL object that wraps the blob's URL and a request pipeline (inherited from containerURL)
+	blobURL := containerURL.NewBlockBlobURL(blobName) // Blob names can be mixed case
+
+	// Download the blob's contents and verify that it worked correctly
+	get, err := blobURL.Download(nil, 0, 0, azblob.BlobAccessConditions{}, false)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	downloadedData := &bytes.Buffer{}
+	reader := get.Body(azblob.RetryReaderOptions{})
+	downloadedData.ReadFrom(reader)
+	reader.Close() // The client must close the response body when finished with it
+
 	//r, err := client(container, blobName)
 	//if err != nil {
 	//	return err
 	//}
 	//
-	//// Create all the parent directories
-	//if err := os.MkdirAll(filepath.Dir(dst), 0755); err != nil {
-	//	return err
-	//}
-	//
-	//f, err := os.Create(dst)
-	//if err != nil {
-	//	return err
-	//}
-	//defer f.Close()
-	//
-	//_, err = io.Copy(f, r)
-	//return err
-	return nil
+
+	// Create all the parent directories
+	if err := os.MkdirAll(filepath.Dir(dst), 0755); err != nil {
+		return err
+	}
+
+	f, err := os.Create(dst)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	_, err = io.Copy(f, downloadedData)
+	return err
 }
 
-func (g *AzureBlobGetter) getBobClient(accountName string, baseURL string, accountKey string) (*azblob.SharedKeyCredential, error) {
-	var b *azblob.SharedKeyCredential
-	//
-	//if accountKey == "" {
-	//	accountKey = os.Getenv("ARM_ACCESS_KEY")
-	//}
-	//
-	//c, err := storage.NewClient(accountName, accountKey, baseURL, storage.DefaultAPIVersion, true)
-	//if err != nil {
-	//	return b, err
-	//}
-	//
-	//b = c.GetBlobService()
-	//
-	//return b, nil
-	return b, nil
+func (g *AzureBlobGetter) getBobClient(accountName string, baseURL string, accountKey string) (azblob.ServiceURL, error) {
+	// Use your Storage account's name and key to create a credential object; this is used to access your account.
+	credential, err := azblob.NewSharedKeyCredential(accountName, accountKey)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Create a request pipeline that is used to process HTTP(S) requests and responses. It requires
+	// your account credentials. In more advanced scenarios, you can configure telemetry, retry policies,
+	// logging, and other options. Also, you can configure multiple request pipelines for different scenarios.
+	p := azblob.NewPipeline(credential, azblob.PipelineOptions{})
+
+	// From the Azure portal, get your Storage account blob service URL endpoint.
+	// The URL typically looks like this:
+	u, _ := url.Parse(fmt.Sprintf("https://%s.blob.core.windows.net", accountName))
+
+	// Create an ServiceURL object that wraps the service URL and a request pipeline.
+	serviceURL := azblob.NewServiceURL(*u, p)
+
+	return serviceURL, nil
 }
 
 func (g *AzureBlobGetter) parseUrl(u *url.URL) (accountName, baseURL, container, blobPath, accessKey string, err error) {
