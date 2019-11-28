@@ -174,6 +174,10 @@ func (g *GitGetter) clone(ctx context.Context, dst, sshKeyFile string, u *url.UR
 	}
 
 	// TODO : What if ref is not a branch ?!
+	// Another (slower) suggestion would be using :
+	// args = append(args, "--no-single-branch")
+	// when ref != "" and depth > 0
+
 	if ref != "" {
 		args = append(args, "--branch", ref)
 	}
