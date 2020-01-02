@@ -24,6 +24,10 @@ func TestGitHubDetector(t *testing.T) {
 			"github.com/hashicorp/foo.git?foo=bar",
 			"git::https://github.com/hashicorp/foo.git?foo=bar",
 		},
+		{
+			"github.com/hashicorp/foo?foo=bar/baz",
+			"git::https://github.com/hashicorp/foo.git?foo=bar/baz",
+		},
 	}
 
 	pwd := "/pwd"

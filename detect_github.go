@@ -23,13 +23,30 @@ func (d *GitHubDetector) Detect(src, _ string) (string, bool, error) {
 }
 
 func (d *GitHubDetector) detectHTTP(src string) (string, bool, error) {
-	parts := strings.Split(src, "/")
+	var hostAndPath, query string
+
+	parts := strings.Split(src, "?")
+	if len(parts) > 2 {
+		return "", false, fmt.Errorf("URLs may have only one query string")
+	}
+
+	hostAndPath = parts[0]
+	if len(parts) > 1 {
+		query = parts[1]
+	}
+
+	parts = strings.Split(hostAndPath, "/")
 	if len(parts) < 3 {
 		return "", false, fmt.Errorf(
 			"GitHub URLs should be github.com/username/repo")
 	}
 
 	urlStr := fmt.Sprintf("https://%s", strings.Join(parts[:3], "/"))
+
+	if query != "" {
+		urlStr += "?" + query
+	}
+
 	url, err := url.Parse(urlStr)
 	if err != nil {
 		return "", true, fmt.Errorf("error parsing GitHub URL: %s", err)
