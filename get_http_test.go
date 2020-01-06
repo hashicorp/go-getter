@@ -222,6 +222,57 @@ func TestHttpGetter_resume(t *testing.T) {
 	}
 }
 
+// The server may support Byte-Range, but has no size for the requested object
+func TestHttpGetter_resumeNoRange(t *testing.T) {
+	load := []byte(testHttpMetaStr)
+	sha := sha256.New()
+	if n, err := sha.Write(load); n != len(load) || err != nil {
+		t.Fatalf("sha write failed: %d, %s", n, err)
+	}
+	checksum := hex.EncodeToString(sha.Sum(nil))
+	downloadFrom := len(load) / 2
+
+	ln := testHttpServer(t)
+	defer ln.Close()
+
+	dst := tempDir(t)
+	defer os.RemoveAll(dst)
+
+	dst = filepath.Join(dst, "..", "range")
+	f, err := os.Create(dst)
+	if err != nil {
+		t.Fatalf("create: %v", err)
+	}
+	if n, err := f.Write(load[:downloadFrom]); n != downloadFrom || err != nil {
+		t.Fatalf("partial file write failed: %d, %s", n, err)
+	}
+	if err := f.Close(); err != nil {
+		t.Fatalf("close failed: %s", err)
+	}
+
+	u := url.URL{
+		Scheme:   "http",
+		Host:     ln.Addr().String(),
+		Path:     "/no-range",
+		RawQuery: "checksum=" + checksum,
+	}
+	t.Logf("url: %s", u.String())
+
+	// Finish getting it!
+	if err := GetFile(dst, u.String()); err != nil {
+		t.Fatalf("finishing download should not error: %v", err)
+	}
+
+	b, err := ioutil.ReadFile(dst)
+	if err != nil {
+		t.Fatalf("readfile failed: %v", err)
+	}
+
+	if string(b) != string(load) {
+		t.Fatalf("file differs: got:\n%s\n expected:\n%s\n", string(b), string(load))
+	}
+}
+
 func TestHttpGetter_file(t *testing.T) {
 	ln := testHttpServer(t)
 	defer ln.Close()
@@ -351,6 +402,7 @@ func testHttpServer(t *testing.T) net.Listener {
 	mux.HandleFunc("/meta-subdir", testHttpHandlerMetaSubdir)
 	mux.HandleFunc("/meta-subdir-glob", testHttpHandlerMetaSubdirGlob)
 	mux.HandleFunc("/range", testHttpHandlerRange)
+	mux.HandleFunc("/no-range", testHttpHandlerNoRange)
 
 	var server http.Server
 	server.Handler = mux
@@ -425,6 +477,20 @@ func testHttpHandlerRange(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "", http.StatusBadRequest)
 		}
 		w.Write(load[rng:])
+	}
+}
+
+func testHttpHandlerNoRange(w http.ResponseWriter, r *http.Request) {
+	load := []byte(testHttpMetaStr)
+	switch r.Method {
+	case "HEAD":
+		// we support range, but the object size isn't known
+		w.Header().Add("accept-ranges", "bytes")
+	default:
+		if r.Header.Get("Range") != "" {
+			http.Error(w, "range not supported", http.StatusBadRequest)
+		}
+		w.Write(load)
 	}
 }
 
