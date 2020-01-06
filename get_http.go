@@ -88,7 +88,7 @@ func (g *HttpGetter) Get(dst string, u *url.URL) error {
 	}
 
 	if g.Header != nil {
-		req.Header = g.Header.Clone()
+		req.Header = g.Header
 	}
 
 	resp, err := g.Client.Do(req)
@@ -169,7 +169,7 @@ func (g *HttpGetter) GetFile(dst string, src *url.URL) error {
 		return err
 	}
 	if g.Header != nil {
-		req.Header = g.Header.Clone()
+		req.Header = g.Header
 	}
 	headResp, err := g.Client.Do(req)
 	if err == nil {
