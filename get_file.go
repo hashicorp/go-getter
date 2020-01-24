@@ -90,6 +90,11 @@ func (g *FileGetter) GetFile(ctx context.Context, req *Request) error {
 		return fmt.Errorf("source path must be a file")
 	}
 
+	if req.Inplace {
+		req.Dst = path
+		return nil
+	}
+
 	_, err := os.Lstat(req.Dst)
 	if err != nil && !os.IsNotExist(err) {
 		return err
@@ -106,11 +111,6 @@ func (g *FileGetter) GetFile(ctx context.Context, req *Request) error {
 	// Create all the parent directories
 	if err := os.MkdirAll(filepath.Dir(req.Dst), 0755); err != nil {
 		return err
-	}
-
-	if req.Inplace {
-		req.Dst = path
-		return nil
 	}
 
 	// If we're not copying, just symlink and we're done
