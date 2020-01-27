@@ -754,7 +754,7 @@ func TestGetFile_inplace_badChecksum(t *testing.T) {
 		t.Fatalf("err is nil")
 	}
 	_, ok := err.(*ChecksumError)
-	if ok == false {
+	if _, ok := err.(*ChecksumError); !ok {
 		t.Fatalf("err is not a checksum error: %v", err)
 	}
 	if op != nil {
