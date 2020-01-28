@@ -88,7 +88,7 @@ func TestTarGzipDecompressor(t *testing.T) {
 	}
 
 	for i, tc := range cases {
-		cases[i].Input = filepath.Join("./testdata", "decompress-tgz", tc.Input)
+		cases[i].Input = filepath.Join("./test-fixtures", "decompress-tgz", tc.Input)
 	}
 
 	TestDecompressor(t, new(TarGzipDecompressor), cases)

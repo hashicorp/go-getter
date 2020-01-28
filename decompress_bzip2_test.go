@@ -27,7 +27,7 @@ func TestBzip2Decompressor(t *testing.T) {
 	}
 
 	for i, tc := range cases {
-		cases[i].Input = filepath.Join("./testdata", "decompress-bz2", tc.Input)
+		cases[i].Input = filepath.Join("./test-fixtures", "decompress-bz2", tc.Input)
 	}
 
 	TestDecompressor(t, new(Bzip2Decompressor), cases)

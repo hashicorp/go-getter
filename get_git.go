@@ -1,7 +1,6 @@
 package getter
 
 import (
-	"bytes"
 	"context"
 	"encoding/base64"
 	"fmt"
@@ -10,7 +9,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"regexp"
 	"runtime"
 	"strconv"
 	"strings"
@@ -26,27 +24,13 @@ type GitGetter struct {
 	getter
 }
 
-var defaultBranchRegexp = regexp.MustCompile(`\s->\sorigin/(.*)`)
-
-func (g *GitGetter) ClientMode(_ context.Context, u *url.URL) (ClientMode, error) {
+func (g *GitGetter) ClientMode(ctx context.Context, u *url.URL) (ClientMode, error) {
 	return ClientModeDir, nil
 }
 
 func (g *GitGetter) Get(ctx context.Context, req *Request) error {
 	if _, err := exec.LookPath("git"); err != nil {
 		return fmt.Errorf("git must be available and on the PATH")
-	}
-
-	// The port number must be parseable as an integer. If not, the user
-	// was probably trying to use a scp-style address, in which case the
-	// ssh:// prefix must be removed to indicate that.
-	//
-	// This is not necessary in versions of Go which have patched
-	// CVE-2019-14809 (e.g. Go 1.12.8+)
-	if portStr := u.Port(); portStr != "" {
-		if _, err := strconv.ParseUint(portStr, 10, 16); err != nil {
-			return fmt.Errorf("invalid port number %q; if using the \"scp-like\" git address scheme where a colon introduces the path instead, remove the ssh:// portion and use just the git:: prefix", portStr)
-		}
 	}
 
 	// Extract some query parameters we use
@@ -102,6 +86,26 @@ func (g *GitGetter) Get(ctx context.Context, req *Request) error {
 		fh.Close()
 		if err != nil {
 			return err
+		}
+	}
+
+	// For SSH-style URLs, if they use the SCP syntax of host:path, then
+	// the URL will be mangled. We detect that here and correct the path.
+	// Example: host:path/bar will turn into host/path/bar
+	if req.u.Scheme == "ssh" {
+		if idx := strings.Index(req.u.Host, ":"); idx > -1 {
+			// Copy the URL so we don't modify the input
+			var newU url.URL = *req.u
+			req.u = &newU
+
+			// Path includes the part after the ':'.
+			req.u.Path = req.u.Host[idx+1:] + req.u.Path
+			if req.u.Path[0] != '/' {
+				req.u.Path = "/" + req.u.Path
+			}
+
+			// Host trims up to the :
+			req.u.Host = req.u.Host[:idx]
 		}
 	}
 
@@ -189,10 +193,10 @@ func (g *GitGetter) update(ctx context.Context, dst, sshKeyFile, ref string, dep
 	cmd.Dir = dst
 
 	if getRunCommand(cmd) != nil {
-		// Not a branch, switch to default branch. This will also catch
-		// non-existent branches, in which case we want to switch to default
-		// and then checkout the proper branch later.
-		ref = findDefaultBranch(dst)
+		// Not a branch, switch to master. This will also catch non-existent
+		// branches, in which case we want to switch to master and then
+		// checkout the proper branch later.
+		ref = "master"
 	}
 
 	// We have to be on a branch to pull
@@ -221,22 +225,6 @@ func (g *GitGetter) fetchSubmodules(ctx context.Context, dst, sshKeyFile string,
 	cmd.Dir = dst
 	setupGitEnv(cmd, sshKeyFile)
 	return getRunCommand(cmd)
-}
-
-// findDefaultBranch checks the repo's origin remote for its default branch
-// (generally "master"). "master" is returned if an origin default branch
-// can't be determined.
-func findDefaultBranch(dst string) string {
-	var stdoutbuf bytes.Buffer
-	cmd := exec.Command("git", "branch", "-r", "--points-at", "refs/remotes/origin/HEAD")
-	cmd.Dir = dst
-	cmd.Stdout = &stdoutbuf
-	err := cmd.Run()
-	matches := defaultBranchRegexp.FindStringSubmatch(stdoutbuf.String())
-	if err != nil || matches == nil {
-		return "master"
-	}
-	return matches[len(matches)-1]
 }
 
 // setupGitEnv sets up the environment for the given command. This is used to

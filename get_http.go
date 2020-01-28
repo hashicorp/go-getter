@@ -9,6 +9,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	safetemp "github.com/hashicorp/go-safetemp"
@@ -86,9 +87,7 @@ func (g *HttpGetter) Get(ctx context.Context, req *Request) error {
 		return err
 	}
 
-	if g.Header != nil {
-		httpReq.Header = g.Header.Clone()
-	}
+	httpReq.Header = g.Header
 	resp, err := g.Client.Do(httpReq)
 	if err != nil {
 		return err
@@ -122,18 +121,13 @@ func (g *HttpGetter) Get(ctx context.Context, req *Request) error {
 		Dst: req.Dst,
 	}
 	if subDir == "" {
-		return DefaultClient.Get(ctx, req)
+		_, err = DefaultClient.Get(ctx, req)
+		return err
 	}
 	// We have a subdir, time to jump some hoops
 	return g.getSubdir(ctx, req.Dst, source, subDir)
 }
 
-// GetFile fetches the file from src and stores it at dst.
-// If the server supports Accept-Range, HttpGetter will attempt a range
-// request. This means it is the caller's responsibility to ensure that an
-// older version of the destination file does not exist, else it will be either
-// falsely identified as being replaced, or corrupted with extra bytes
-// appended.
 func (g *HttpGetter) GetFile(ctx context.Context, req *Request) error {
 	if g.Netrc {
 		// Add auth from netrc if we can
@@ -141,6 +135,7 @@ func (g *HttpGetter) GetFile(ctx context.Context, req *Request) error {
 			return err
 		}
 	}
+
 	// Create all the parent directories if needed
 	if err := os.MkdirAll(filepath.Dir(req.Dst), 0755); err != nil {
 		return err
@@ -166,20 +161,21 @@ func (g *HttpGetter) GetFile(ctx context.Context, req *Request) error {
 		return err
 	}
 	if g.Header != nil {
-		httpReq.Header = g.Header.Clone()
+		httpReq.Header = g.Header
 	}
 	headResp, err := g.Client.Do(httpReq)
-	if err == nil {
+	if err == nil && headResp != nil {
 		headResp.Body.Close()
 		if headResp.StatusCode == 200 {
 			// If the HEAD request succeeded, then attempt to set the range
 			// query if we can.
-			if headResp.Header.Get("Accept-Ranges") == "bytes" && headResp.ContentLength >= 0 {
+			if headResp.Header.Get("Accept-Ranges") == "bytes" {
 				if fi, err := f.Stat(); err == nil {
-					if _, err = f.Seek(0, io.SeekEnd); err == nil {
+					if _, err = f.Seek(0, os.SEEK_END); err == nil {
+						httpReq.Header.Set("Range", fmt.Sprintf("bytes=%d-", fi.Size()))
 						currentFileSize = fi.Size()
-						httpReq.Header.Set("Range", fmt.Sprintf("bytes=%d-", currentFileSize))
-						if currentFileSize >= headResp.ContentLength {
+						totalFileSize, _ := strconv.ParseInt(headResp.Header.Get("Content-Length"), 10, 64)
+						if currentFileSize >= totalFileSize {
 							// file already present
 							return nil
 						}
@@ -230,7 +226,7 @@ func (g *HttpGetter) getSubdir(ctx context.Context, dst, source, subDir string) 
 	defer tdcloser.Close()
 
 	// Download that into the given directory
-	if err := Get(ctx, td, source); err != nil {
+	if _, err := Get(ctx, td, source); err != nil {
 		return err
 	}
 

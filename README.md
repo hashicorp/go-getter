@@ -1,10 +1,10 @@
 # go-getter
 
-[![CircleCI](https://circleci.com/gh/hashicorp/go-getter/tree/master.svg?style=svg)][circleci]
+[![Build Status](http://img.shields.io/travis/hashicorp/go-getter.svg?style=flat-square)][travis]
 [![Build status](https://ci.appveyor.com/api/projects/status/ulq3qr43n62croyq/branch/master?svg=true)][appveyor]
 [![Go Documentation](http://img.shields.io/badge/go-documentation-blue.svg?style=flat-square)][godocs]
 
-[circleci]: https://circleci.com/gh/hashicorp/go-getter/tree/master
+[travis]: http://travis-ci.org/hashicorp/go-getter
 [godocs]: http://godoc.org/github.com/hashicorp/go-getter
 [appveyor]: https://ci.appveyor.com/project/hashicorp/go-getter/branch/master
 
@@ -128,14 +128,14 @@ go-getter will first download the URL specified _before_ the double-slash
 path after the double slash into the target directory.
 
 For example, if you're downloading this GitHub repository, but you only
-want to download the `testdata` directory, you can do the following:
+want to download the `test-fixtures` directory, you can do the following:
 
 ```
-https://github.com/hashicorp/go-getter.git//testdata
+https://github.com/hashicorp/go-getter.git//test-fixtures
 ```
 
 If you downloaded this to the `/tmp` directory, then the file
-`/tmp/archive.gz` would exist. Notice that this file is in the `testdata`
+`/tmp/archive.gz` would exist. Notice that this file is in the `test-fixtures`
 directory in this repository, but because we specified a subdirectory,
 go-getter automatically copied only that directory contents.
 
@@ -280,16 +280,6 @@ None
   * `depth` - The Git clone depth. The provided number specifies the last `n`
     revisions to clone from the repository.
 
-
-The `git` getter accepts both URL-style SSH addresses like
-`git::ssh://git@example.com/foo/bar`, and "scp-style" addresses like
-`git::git@example.com/foo/bar`. In the latter case, omitting the `git::`
-force prefix is allowed if the username prefix is exactly `git@`.
-
-The "scp-style" addresses _cannot_ be used in conjunction with the `ssh://`
-scheme prefix, because in that case the colon is used to mark an optional
-port number to connect on, rather than to delimit the path from the host.
-
 ### Mercurial (`hg`)
 
   * `rev` - The Mercurial revision to checkout.
@@ -356,7 +346,3 @@ In order to access to GCS, authentication credentials should be provided. More i
 - gcs::https://www.googleapis.com/storage/v1/bucket
 - gcs::https://www.googleapis.com/storage/v1/bucket/foo.zip
 - www.googleapis.com/storage/v1/bucket/foo
-
-#### GCS Testing
-
-The tests for `get_gcs.go` require you to have GCP credentials set in your environment.  These credentials can have any level of permissions to any project, they just need to exist.  This means setting `GOOGLE_APPLICATION_CREDENTIALS="~/path/to/credentials.json"` or `GOOGLE_CREDENTIALS="{stringified-credentials-json}"`.  Due to this configuration, `get_gcs_test.go` will fail for external contributors in CircleCI.
