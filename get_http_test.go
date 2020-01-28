@@ -298,7 +298,7 @@ func TestHttpGetter_resumeNoRange(t *testing.T) {
 	ctx := context.Background()
 
 	// Finish getting it!
-	if err := GetFile(ctx, dst, u.String()); err != nil {
+	if _, err := GetFile(ctx, dst, u.String()); err != nil {
 		t.Fatalf("finishing download should not error: %v", err)
 	}
 

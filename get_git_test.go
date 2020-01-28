@@ -420,7 +420,7 @@ func TestGitGetter_sshSCPStyle(t *testing.T) {
 		},
 	}
 
-	if err := client.Get(ctx, req); err != nil {
+	if _, err := client.Get(ctx, req); err != nil {
 		t.Fatalf("client.Get failed: %s", err)
 	}
 
@@ -464,7 +464,7 @@ func TestGitGetter_sshExplicitPort(t *testing.T) {
 		},
 	}
 
-	if err := client.Get(ctx, req); err != nil {
+	if _, err := client.Get(ctx, req); err != nil {
 		t.Fatalf("client.Get failed: %s", err)
 	}
 
@@ -508,7 +508,7 @@ func TestGitGetter_sshSCPStyleInvalidScheme(t *testing.T) {
 		},
 	}
 
-	err := client.Get(ctx, req)
+	_, err := client.Get(ctx, req)
 	if err == nil {
 		t.Fatalf("get succeeded; want error")
 	}
