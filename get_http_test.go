@@ -295,9 +295,10 @@ func TestHttpGetter_resumeNoRange(t *testing.T) {
 		RawQuery: "checksum=" + checksum,
 	}
 	t.Logf("url: %s", u.String())
+	ctx := context.Background()
 
 	// Finish getting it!
-	if err := GetFile(dst, u.String()); err != nil {
+	if err := GetFile(ctx, dst, u.String()); err != nil {
 		t.Fatalf("finishing download should not error: %v", err)
 	}
 

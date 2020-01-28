@@ -43,7 +43,7 @@ func (g *GitGetter) Get(ctx context.Context, req *Request) error {
 	//
 	// This is not necessary in versions of Go which have patched
 	// CVE-2019-14809 (e.g. Go 1.12.8+)
-	if portStr := u.Port(); portStr != "" {
+	if portStr := req.u.Port(); portStr != "" {
 		if _, err := strconv.ParseUint(portStr, 10, 16); err != nil {
 			return fmt.Errorf("invalid port number %q; if using the \"scp-like\" git address scheme where a colon introduces the path instead, remove the ssh:// portion and use just the git:: prefix", portStr)
 		}

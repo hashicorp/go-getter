@@ -108,6 +108,7 @@ func TestGitGetter_remoteWithoutMaster(t *testing.T) {
 		t.Skip()
 	}
 
+	ctx := context.Background()
 	g := new(GitGetter)
 	dst := tempDir(t)
 
@@ -117,8 +118,13 @@ func TestGitGetter_remoteWithoutMaster(t *testing.T) {
 
 	q := repo.url.Query()
 	repo.url.RawQuery = q.Encode()
+	req := &Request{
+		Src: repo.url.String(),
+		u:   repo.url,
+		Dst: dst,
+	}
 
-	if err := g.Get(dst, repo.url); err != nil {
+	if err := g.Get(ctx, req); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
@@ -129,7 +135,7 @@ func TestGitGetter_remoteWithoutMaster(t *testing.T) {
 	}
 
 	// Get again should work
-	if err := g.Get(dst, repo.url); err != nil {
+	if err := g.Get(ctx, req); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
@@ -386,6 +392,7 @@ func TestGitGetter_sshSCPStyle(t *testing.T) {
 		t.Skip("git not found, skipping")
 	}
 
+	ctx := context.Background()
 	g := new(GitGetter)
 	dst := tempDir(t)
 
@@ -397,13 +404,14 @@ func TestGitGetter_sshSCPStyle(t *testing.T) {
 
 	// This test exercises the combination of the git detector and the
 	// git getter, to make sure that together they make scp-style URLs work.
-	client := &Client{
+	req := &Request{
 		Src: "git@github.com:hashicorp/test-private-repo?sshkey=" + encodedKey,
 		Dst: dst,
 		Pwd: ".",
 
 		Mode: ClientModeDir,
-
+	}
+	client := &Client{
 		Detectors: []Detector{
 			new(GitDetector),
 		},
@@ -412,7 +420,7 @@ func TestGitGetter_sshSCPStyle(t *testing.T) {
 		},
 	}
 
-	if err := client.Get(); err != nil {
+	if err := client.Get(ctx, req); err != nil {
 		t.Fatalf("client.Get failed: %s", err)
 	}
 
@@ -427,6 +435,7 @@ func TestGitGetter_sshExplicitPort(t *testing.T) {
 		t.Skip("git not found, skipping")
 	}
 
+	ctx := context.Background()
 	g := new(GitGetter)
 	dst := tempDir(t)
 
@@ -438,12 +447,14 @@ func TestGitGetter_sshExplicitPort(t *testing.T) {
 
 	// This test exercises the combination of the git detector and the
 	// git getter, to make sure that together they make scp-style URLs work.
-	client := &Client{
+	req := &Request{
 		Src: "git::ssh://git@github.com:22/hashicorp/test-private-repo?sshkey=" + encodedKey,
 		Dst: dst,
 		Pwd: ".",
 
 		Mode: ClientModeDir,
+	}
+	client := &Client{
 
 		Detectors: []Detector{
 			new(GitDetector),
@@ -453,7 +464,7 @@ func TestGitGetter_sshExplicitPort(t *testing.T) {
 		},
 	}
 
-	if err := client.Get(); err != nil {
+	if err := client.Get(ctx, req); err != nil {
 		t.Fatalf("client.Get failed: %s", err)
 	}
 
@@ -468,6 +479,7 @@ func TestGitGetter_sshSCPStyleInvalidScheme(t *testing.T) {
 		t.Skip("git not found, skipping")
 	}
 
+	ctx := context.Background()
 	g := new(GitGetter)
 	dst := tempDir(t)
 
@@ -479,13 +491,15 @@ func TestGitGetter_sshSCPStyleInvalidScheme(t *testing.T) {
 
 	// This test exercises the combination of the git detector and the
 	// git getter, to make sure that together they make scp-style URLs work.
-	client := &Client{
+	req := &Request{
 		Src: "git::ssh://git@github.com:hashicorp/test-private-repo?sshkey=" + encodedKey,
 		Dst: dst,
 		Pwd: ".",
 
 		Mode: ClientModeDir,
+	}
 
+	client := &Client{
 		Detectors: []Detector{
 			new(GitDetector),
 		},
@@ -494,7 +508,7 @@ func TestGitGetter_sshSCPStyleInvalidScheme(t *testing.T) {
 		},
 	}
 
-	err := client.Get()
+	err := client.Get(ctx, req)
 	if err == nil {
 		t.Fatalf("get succeeded; want error")
 	}
