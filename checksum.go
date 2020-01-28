@@ -3,6 +3,7 @@ package getter
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"crypto/md5"
 	"crypto/sha1"
 	"crypto/sha256"
@@ -93,7 +94,7 @@ func (c *FileChecksum) checksum(source string) error {
 //  <checksum> *file2
 //
 // see parseChecksumLine for more detail on checksum file parsing
-func (c *Client) extractChecksum(u *url.URL) (*FileChecksum, error) {
+func (c *Client) extractChecksum(ctx context.Context, u *url.URL) (*FileChecksum, error) {
 	q := u.Query()
 	v := q.Get("checksum")
 
@@ -115,7 +116,7 @@ func (c *Client) extractChecksum(u *url.URL) (*FileChecksum, error) {
 
 	switch checksumType {
 	case "file":
-		return c.ChecksumFromFile(checksumValue, u)
+		return c.ChecksumFromFile(ctx, checksumValue, u)
 	default:
 		return newChecksumFromType(checksumType, checksumValue, filepath.Base(u.EscapedPath()))
 	}
@@ -190,7 +191,7 @@ func newChecksumFromValue(checksumValue, filename string) (*FileChecksum, error)
 //
 // ChecksumFromFile will only return checksums for files that match file
 // behind src
-func (c *Client) ChecksumFromFile(checksumFile string, src *url.URL) (*FileChecksum, error) {
+func (c *Client) ChecksumFromFile(ctx context.Context, checksumFile string, src *url.URL) (*FileChecksum, error) {
 	checksumFileURL, err := urlhelper.Parse(checksumFile)
 	if err != nil {
 		return nil, err
@@ -202,18 +203,14 @@ func (c *Client) ChecksumFromFile(checksumFile string, src *url.URL) (*FileCheck
 	}
 	defer os.Remove(tempfile)
 
-	c2 := &Client{
-		Ctx:              c.Ctx,
-		Getters:          c.Getters,
-		Decompressors:    c.Decompressors,
-		Detectors:        c.Detectors,
-		Pwd:              c.Pwd,
-		Dir:              false,
-		Src:              checksumFile,
-		Dst:              tempfile,
-		ProgressListener: c.ProgressListener,
+	req := &Request{
+		// Pwd:              c.Pwd, TODO(adrien): pass pwd ?
+		Dir: false,
+		Src: checksumFile,
+		Dst: tempfile,
+		// ProgressListener: c.ProgressListener, TODO(adrien): pass progress bar ?
 	}
-	if err = c2.Get(); err != nil {
+	if err = c.Get(ctx, req); err != nil {
 		return nil, fmt.Errorf(
 			"Error downloading checksum file: %s", err)
 	}

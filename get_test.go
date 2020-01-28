@@ -1,6 +1,7 @@
 package getter
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"strings"
@@ -8,20 +9,24 @@ import (
 )
 
 func TestGet_badSchema(t *testing.T) {
+	ctx := context.Background()
+
 	dst := tempDir(t)
 	u := testModule("basic")
 	u = strings.Replace(u, "file", "nope", -1)
 
-	if err := Get(dst, u); err == nil {
+	if err := Get(ctx, dst, u); err == nil {
 		t.Fatal("should error")
 	}
 }
 
 func TestGet_file(t *testing.T) {
+	ctx := context.Background()
+
 	dst := tempDir(t)
 	u := testModule("basic")
 
-	if err := Get(dst, u); err != nil {
+	if err := Get(ctx, dst, u); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
@@ -33,10 +38,12 @@ func TestGet_file(t *testing.T) {
 
 // https://github.com/hashicorp/terraform/issues/11438
 func TestGet_fileDecompressorExt(t *testing.T) {
+	ctx := context.Background()
+
 	dst := tempDir(t)
 	u := testModule("basic-tgz")
 
-	if err := Get(dst, u); err != nil {
+	if err := Get(ctx, dst, u); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
@@ -48,10 +55,12 @@ func TestGet_fileDecompressorExt(t *testing.T) {
 
 // https://github.com/hashicorp/terraform/issues/8418
 func TestGet_filePercent2F(t *testing.T) {
+	ctx := context.Background()
+
 	dst := tempDir(t)
 	u := testModule("basic%2Ftest")
 
-	if err := Get(dst, u); err != nil {
+	if err := Get(ctx, dst, u); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
@@ -62,6 +71,8 @@ func TestGet_filePercent2F(t *testing.T) {
 }
 
 func TestGet_fileDetect(t *testing.T) {
+	ctx := context.Background()
+
 	dst := tempDir(t)
 	u := filepath.Join(".", "testdata", "basic")
 	pwd, err := os.Getwd()
@@ -69,18 +80,19 @@ func TestGet_fileDetect(t *testing.T) {
 		t.Fatalf("err: %s", err)
 	}
 
-	client := &Client{
+	req := &Request{
 		Src: u,
 		Dst: dst,
 		Pwd: pwd,
 		Dir: true,
 	}
+	client := &Client{}
 
 	if err := client.Configure(); err != nil {
 		t.Fatalf("configure: %s", err)
 	}
 
-	if err := client.Get(); err != nil {
+	if err := client.Get(ctx, req); err != nil {
 		t.Fatalf("get: %s", err)
 	}
 
@@ -91,11 +103,13 @@ func TestGet_fileDetect(t *testing.T) {
 }
 
 func TestGet_fileForced(t *testing.T) {
+	ctx := context.Background()
+
 	dst := tempDir(t)
 	u := testModule("basic")
 	u = "file::" + u
 
-	if err := Get(dst, u); err != nil {
+	if err := Get(ctx, dst, u); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
@@ -106,10 +120,12 @@ func TestGet_fileForced(t *testing.T) {
 }
 
 func TestGet_fileSubdir(t *testing.T) {
+	ctx := context.Background()
+
 	dst := tempDir(t)
 	u := testModule("basic//subdir")
 
-	if err := Get(dst, u); err != nil {
+	if err := Get(ctx, dst, u); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
@@ -120,11 +136,13 @@ func TestGet_fileSubdir(t *testing.T) {
 }
 
 func TestGet_archive(t *testing.T) {
+	ctx := context.Background()
+
 	dst := tempDir(t)
 	u := filepath.Join("./testdata", "archive.tar.gz")
 	u, _ = filepath.Abs(u)
 
-	if err := Get(dst, u); err != nil {
+	if err := Get(ctx, dst, u); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
@@ -135,11 +153,13 @@ func TestGet_archive(t *testing.T) {
 }
 
 func TestGetAny_archive(t *testing.T) {
+	ctx := context.Background()
+
 	dst := tempDir(t)
 	u := filepath.Join("./testdata", "archive.tar.gz")
 	u, _ = filepath.Abs(u)
 
-	if err := GetAny(dst, u); err != nil {
+	if err := GetAny(ctx, dst, u); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
@@ -150,9 +170,11 @@ func TestGetAny_archive(t *testing.T) {
 }
 
 func TestGet_archiveRooted(t *testing.T) {
+	ctx := context.Background()
+
 	dst := tempDir(t)
 	u := testModule("archive-rooted/archive.tar.gz")
-	if err := Get(dst, u); err != nil {
+	if err := Get(ctx, dst, u); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
@@ -163,10 +185,12 @@ func TestGet_archiveRooted(t *testing.T) {
 }
 
 func TestGet_archiveSubdirWild(t *testing.T) {
+	ctx := context.Background()
+
 	dst := tempDir(t)
 	u := testModule("archive-rooted/archive.tar.gz")
 	u += "//*"
-	if err := Get(dst, u); err != nil {
+	if err := Get(ctx, dst, u); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
@@ -177,10 +201,12 @@ func TestGet_archiveSubdirWild(t *testing.T) {
 }
 
 func TestGet_archiveSubdirWildMultiMatch(t *testing.T) {
+	ctx := context.Background()
+
 	dst := tempDir(t)
 	u := testModule("archive-rooted-multi/archive.tar.gz")
 	u += "//*"
-	if err := Get(dst, u); err == nil {
+	if err := Get(ctx, dst, u); err == nil {
 		t.Fatal("should error")
 	} else if !strings.Contains(err.Error(), "multiple") {
 		t.Fatalf("err: %s", err)
@@ -188,10 +214,12 @@ func TestGet_archiveSubdirWildMultiMatch(t *testing.T) {
 }
 
 func TestGetAny_file(t *testing.T) {
+	ctx := context.Background()
+
 	dst := tempDir(t)
 	u := testModule("basic-file/foo.txt")
 
-	if err := GetAny(dst, u); err != nil {
+	if err := GetAny(ctx, dst, u); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
@@ -202,11 +230,13 @@ func TestGetAny_file(t *testing.T) {
 }
 
 func TestGetAny_dir(t *testing.T) {
+	ctx := context.Background()
+
 	dst := tempDir(t)
 	u := filepath.Join("./testdata", "basic")
 	u, _ = filepath.Abs(u)
 
-	if err := GetAny(dst, u); err != nil {
+	if err := GetAny(ctx, dst, u); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
@@ -224,11 +254,13 @@ func TestGetAny_dir(t *testing.T) {
 }
 
 func TestGetFile(t *testing.T) {
+	ctx := context.Background()
+
 	dst := tempTestFile(t)
 	defer os.RemoveAll(filepath.Dir(dst))
 	u := testModule("basic-file/foo.txt")
 
-	if err := GetFile(dst, u); err != nil {
+	if err := GetFile(ctx, dst, u); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
@@ -237,11 +269,13 @@ func TestGetFile(t *testing.T) {
 }
 
 func TestGetFile_archive(t *testing.T) {
+	ctx := context.Background()
+
 	dst := tempTestFile(t)
 	defer os.RemoveAll(filepath.Dir(dst))
 	u := testModule("basic-file-archive/archive.tar.gz")
 
-	if err := GetFile(dst, u); err != nil {
+	if err := GetFile(ctx, dst, u); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
@@ -250,12 +284,14 @@ func TestGetFile_archive(t *testing.T) {
 }
 
 func TestGetFile_archiveChecksum(t *testing.T) {
+	ctx := context.Background()
+
 	dst := tempTestFile(t)
 	defer os.RemoveAll(filepath.Dir(dst))
 	u := testModule(
 		"basic-file-archive/archive.tar.gz?checksum=md5:fbd90037dacc4b1ab40811d610dde2f0")
 
-	if err := GetFile(dst, u); err != nil {
+	if err := GetFile(ctx, dst, u); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
@@ -264,12 +300,14 @@ func TestGetFile_archiveChecksum(t *testing.T) {
 }
 
 func TestGetFile_archiveNoUnarchive(t *testing.T) {
+	ctx := context.Background()
+
 	dst := tempTestFile(t)
 	defer os.RemoveAll(filepath.Dir(dst))
 	u := testModule("basic-file-archive/archive.tar.gz")
 	u += "?archive=false"
 
-	if err := GetFile(dst, u); err != nil {
+	if err := GetFile(ctx, dst, u); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
@@ -282,6 +320,8 @@ func TestGetFile_archiveNoUnarchive(t *testing.T) {
 }
 
 func TestGetFile_checksum(t *testing.T) {
+	ctx := context.Background()
+
 	cases := []struct {
 		Append string
 		Err    bool
@@ -354,7 +394,7 @@ func TestGetFile_checksum(t *testing.T) {
 		func() {
 			dst := tempTestFile(t)
 			defer os.RemoveAll(filepath.Dir(dst))
-			if err := GetFile(dst, u); (err != nil) != tc.Err {
+			if err := GetFile(ctx, dst, u); (err != nil) != tc.Err {
 				t.Fatalf("append: %s\n\nerr: %s", tc.Append, err)
 			}
 
@@ -365,6 +405,7 @@ func TestGetFile_checksum(t *testing.T) {
 }
 
 func TestGetFile_checksum_from_file(t *testing.T) {
+
 	checksums := testModule("checksum-file")
 	httpChecksums := httpTestModule("checksum-file")
 	defer httpChecksums.Close()
@@ -432,9 +473,11 @@ func TestGetFile_checksum_from_file(t *testing.T) {
 	for _, tc := range cases {
 		u := checksums + "/content.txt" + tc.Append
 		t.Run(tc.Append, func(t *testing.T) {
+			ctx := context.Background()
+
 			dst := tempTestFile(t)
 			defer os.RemoveAll(filepath.Dir(dst))
-			if err := GetFile(dst, u); (err != nil) != tc.WantErr {
+			if err := GetFile(ctx, dst, u); (err != nil) != tc.WantErr {
 				t.Fatalf("append: %s\n\nerr: %s", tc.Append, err)
 			}
 
@@ -447,21 +490,25 @@ func TestGetFile_checksum_from_file(t *testing.T) {
 }
 
 func TestGetFile_checksumURL(t *testing.T) {
+	ctx := context.Background()
+
 	dst := tempTestFile(t)
 	defer os.RemoveAll(filepath.Dir(dst))
 	u := testModule("basic-file/foo.txt") + "?checksum=md5:09f7e02f1290be211da707a266f153b3"
 
 	getter := &MockGetter{Proxy: new(FileGetter)}
-	client := &Client{
+	req := &Request{
 		Src: u,
 		Dst: dst,
 		Dir: false,
+	}
+	client := &Client{
 		Getters: map[string]Getter{
 			"file": getter,
 		},
 	}
 
-	if err := client.Get(); err != nil {
+	if err := client.Get(ctx, req); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
@@ -471,12 +518,14 @@ func TestGetFile_checksumURL(t *testing.T) {
 }
 
 func TestGetFile_filename(t *testing.T) {
+	ctx := context.Background()
+
 	dst := tempDir(t)
 	u := testModule("basic-file/foo.txt")
 
 	u += "?filename=bar.txt"
 
-	if err := GetAny(dst, u); err != nil {
+	if err := GetAny(ctx, dst, u); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
@@ -487,22 +536,26 @@ func TestGetFile_filename(t *testing.T) {
 }
 
 func TestGetFile_checksumSkip(t *testing.T) {
+	ctx := context.Background()
+
 	dst := tempTestFile(t)
 	defer os.RemoveAll(filepath.Dir(dst))
 	u := testModule("basic-file/foo.txt") + "?checksum=md5:09f7e02f1290be211da707a266f153b3"
 
 	getter := &MockGetter{Proxy: new(FileGetter)}
-	client := &Client{
+	req := &Request{
 		Src: u,
 		Dst: dst,
 		Dir: false,
+	}
+	client := &Client{
 		Getters: map[string]Getter{
 			"file": getter,
 		},
 	}
 
 	// get the file
-	if err := client.Get(); err != nil {
+	if err := client.Get(ctx, req); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
@@ -514,7 +567,7 @@ func TestGetFile_checksumSkip(t *testing.T) {
 	getter.Proxy = nil
 	getter.GetFileCalled = false
 
-	if err := client.Get(); err != nil {
+	if err := client.Get(ctx, req); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 

@@ -1,6 +1,7 @@
 package getter
 
 import (
+	"context"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -32,10 +33,15 @@ func TestGCSGetter(t *testing.T) {
 
 	g := new(GCSGetter)
 	dst := tempDir(t)
+	ctx := context.Background()
+
+	req := &Request{
+		Dst: dst,
+		u:   testURL("https://www.googleapis.com/storage/v1/go-getter-test/go-getter/folder"),
+	}
 
 	// With a dir that doesn't exist
-	err := g.Get(
-		dst, testURL("https://www.googleapis.com/storage/v1/go-getter-test/go-getter/folder"))
+	err := g.Get(ctx, req)
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
@@ -52,10 +58,15 @@ func TestGCSGetter_subdir(t *testing.T) {
 
 	g := new(GCSGetter)
 	dst := tempDir(t)
+	ctx := context.Background()
+
+	req := &Request{
+		Dst: dst,
+		u:   testURL("https://www.googleapis.com/storage/v1/go-getter-test/go-getter/folder/subfolder"),
+	}
 
 	// With a dir that doesn't exist
-	err := g.Get(
-		dst, testURL("https://www.googleapis.com/storage/v1/go-getter-test/go-getter/folder/subfolder"))
+	err := g.Get(ctx, req)
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
@@ -73,10 +84,15 @@ func TestGCSGetter_GetFile(t *testing.T) {
 	g := new(GCSGetter)
 	dst := tempTestFile(t)
 	defer os.RemoveAll(filepath.Dir(dst))
+	ctx := context.Background()
+
+	req := &Request{
+		Dst: dst,
+		u:   testURL("https://www.googleapis.com/storage/v1/go-getter-test/go-getter/folder/main.tf"),
+	}
 
 	// Download
-	err := g.GetFile(
-		dst, testURL("https://www.googleapis.com/storage/v1/go-getter-test/go-getter/folder/main.tf"))
+	err := g.GetFile(ctx, req)
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
@@ -92,10 +108,15 @@ func TestGCSGetter_GetFile_notfound(t *testing.T) {
 	g := new(GCSGetter)
 	dst := tempTestFile(t)
 	defer os.RemoveAll(filepath.Dir(dst))
+	ctx := context.Background()
+
+	req := &Request{
+		Dst: dst,
+		u:   testURL("https://www.googleapis.com/storage/v1/go-getter-test/go-getter/folder/404.tf"),
+	}
 
 	// Download
-	err := g.GetFile(
-		dst, testURL("https://www.googleapis.com/storage/v1/go-getter-test/go-getter/folder/404.tf"))
+	err := g.GetFile(ctx, req)
 	if err == nil {
 		t.Fatalf("expected error, got none")
 	}
@@ -105,9 +126,10 @@ func TestGCSGetter_ClientMode_dir(t *testing.T) {
 	defer initGCPCredentials(t)()
 
 	g := new(GCSGetter)
+	ctx := context.Background()
 
 	// Check client mode on a key prefix with only a single key.
-	mode, err := g.ClientMode(
+	mode, err := g.ClientMode(ctx,
 		testURL("https://www.googleapis.com/storage/v1/go-getter-test/go-getter/folder/subfolder"))
 	if err != nil {
 		t.Fatalf("err: %s", err)
@@ -121,9 +143,10 @@ func TestGCSGetter_ClientMode_file(t *testing.T) {
 	defer initGCPCredentials(t)()
 
 	g := new(GCSGetter)
+	ctx := context.Background()
 
 	// Check client mode on a key prefix which contains sub-keys.
-	mode, err := g.ClientMode(
+	mode, err := g.ClientMode(ctx,
 		testURL("https://www.googleapis.com/storage/v1/go-getter-test/go-getter/folder/subfolder/sub.tf"))
 	if err != nil {
 		t.Fatalf("err: %s", err)
@@ -137,10 +160,11 @@ func TestGCSGetter_ClientMode_notfound(t *testing.T) {
 	defer initGCPCredentials(t)()
 
 	g := new(GCSGetter)
+	ctx := context.Background()
 
 	// Check the client mode when a non-existent key is looked up. This does not
 	// return an error, but rather should just return the file mode.
-	mode, err := g.ClientMode(
+	mode, err := g.ClientMode(ctx,
 		testURL("https://www.googleapis.com/storage/v1/go-getter-test/go-getter/foobar"))
 	if err != nil {
 		t.Fatalf("err: %s", err)

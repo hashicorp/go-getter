@@ -1,6 +1,7 @@
 package getter
 
 import (
+	"context"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -24,12 +25,18 @@ func TestHgGetter(t *testing.T) {
 		t.Log("hg not found, skipping")
 		t.Skip()
 	}
+	ctx := context.Background()
 
 	g := new(HgGetter)
 	dst := tempDir(t)
 
+	req := &Request{
+		Dst: dst,
+		u:   testModuleURL("basic-hg"),
+	}
+
 	// With a dir that doesn't exist
-	if err := g.Get(dst, testModuleURL("basic-hg")); err != nil {
+	if err := g.Get(ctx, req); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
@@ -45,6 +52,7 @@ func TestHgGetter_branch(t *testing.T) {
 		t.Log("hg not found, skipping")
 		t.Skip()
 	}
+	ctx := context.Background()
 
 	g := new(HgGetter)
 	dst := tempDir(t)
@@ -54,7 +62,12 @@ func TestHgGetter_branch(t *testing.T) {
 	q.Add("rev", "test-branch")
 	url.RawQuery = q.Encode()
 
-	if err := g.Get(dst, url); err != nil {
+	req := &Request{
+		Dst: dst,
+		u:   url,
+	}
+
+	if err := g.Get(ctx, req); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
@@ -65,7 +78,7 @@ func TestHgGetter_branch(t *testing.T) {
 	}
 
 	// Get again should work
-	if err := g.Get(dst, url); err != nil {
+	if err := g.Get(ctx, req); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
@@ -81,13 +94,19 @@ func TestHgGetter_GetFile(t *testing.T) {
 		t.Log("hg not found, skipping")
 		t.Skip()
 	}
+	ctx := context.Background()
 
 	g := new(HgGetter)
 	dst := tempTestFile(t)
 	defer os.RemoveAll(filepath.Dir(dst))
 
+	req := &Request{
+		Dst: dst,
+		u:   testModuleURL("basic-hg/foo.txt"),
+	}
+
 	// Download
-	if err := g.GetFile(dst, testModuleURL("basic-hg/foo.txt")); err != nil {
+	if err := g.GetFile(ctx, req); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
