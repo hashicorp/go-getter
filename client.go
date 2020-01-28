@@ -46,12 +46,8 @@ func (c *Client) Get(ctx context.Context, req *Request) (*GetResult, error) {
 	}
 
 	// Store this locally since there are cases we swap this
-	if req.Mode == ClientModeInvalid {
-		if req.Dir {
-			req.Mode = ClientModeDir
-		} else {
-			req.Mode = ClientModeFile
-		}
+	if req.Mode == ModeInvalid {
+		req.Mode = ModeAny
 	}
 
 	var err error

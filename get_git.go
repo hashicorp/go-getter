@@ -28,7 +28,7 @@ type GitGetter struct {
 
 var defaultBranchRegexp = regexp.MustCompile(`\s->\sorigin/(.*)`)
 
-func (g *GitGetter) ClientMode(_ context.Context, u *url.URL) (ClientMode, error) {
+func (g *GitGetter) Mode(_ context.Context, u *url.URL) (Mode, error) {
 	return ModeDir, nil
 }
 
