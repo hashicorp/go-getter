@@ -122,7 +122,8 @@ func (g *HttpGetter) Get(ctx context.Context, req *Request) error {
 		Dst: req.Dst,
 	}
 	if subDir == "" {
-		return DefaultClient.Get(ctx, req)
+		_, err = DefaultClient.Get(ctx, req)
+		return err
 	}
 	// We have a subdir, time to jump some hoops
 	return g.getSubdir(ctx, req.Dst, source, subDir)
@@ -230,7 +231,7 @@ func (g *HttpGetter) getSubdir(ctx context.Context, dst, source, subDir string) 
 	defer tdcloser.Close()
 
 	// Download that into the given directory
-	if err := Get(ctx, td, source); err != nil {
+	if _, err := Get(ctx, td, source); err != nil {
 		return err
 	}
 

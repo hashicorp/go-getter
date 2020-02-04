@@ -55,13 +55,17 @@ func main() {
 
 	wg := sync.WaitGroup{}
 	wg.Add(1)
+
 	errChan := make(chan error, 2)
 	go func() {
 		defer wg.Done()
 		defer cancel()
-		if err := getter.DefaultClient.Get(ctx, req); err != nil {
+		res, err := getter.DefaultClient.Get(ctx, req)
+		if err != nil {
 			errChan <- err
+			return
 		}
+		log.Printf("-> %s", res.Dst)
 	}()
 
 	c := make(chan os.Signal)
@@ -75,7 +79,6 @@ func main() {
 		log.Printf("signal %v", sig)
 	case <-ctx.Done():
 		wg.Wait()
-		log.Printf("success!")
 	case err := <-errChan:
 		wg.Wait()
 		log.Fatalf("Error downloading: %s", err)
