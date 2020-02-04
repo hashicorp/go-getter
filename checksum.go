@@ -116,7 +116,7 @@ func (c *Client) extractChecksum(ctx context.Context, u *url.URL) (*FileChecksum
 
 	switch checksumType {
 	case "file":
-		return c.ChecksumFromFile(ctx, checksumValue, u)
+		return c.ChecksumFromFile(ctx, checksumValue, u.Path)
 	default:
 		return newChecksumFromType(checksumType, checksumValue, filepath.Base(u.EscapedPath()))
 	}
@@ -184,15 +184,15 @@ func newChecksumFromValue(checksumValue, filename string) (*FileChecksum, error)
 	return c, nil
 }
 
-// ChecksumFromFile will return all the FileChecksums found in file
+// ChecksumFromFile will return the first FileChecksums found in file.
 //
-// ChecksumFromFile will try to guess the hashing algorithm based on content
-// of checksum file
+// ChecksumFromFile will try to guess the hashing algorithm based on the
+// content of a checksum file.
 //
-// ChecksumFromFile will only return checksums for files that match file
-// behind src
-func (c *Client) ChecksumFromFile(ctx context.Context, checksumFile string, src *url.URL) (*FileChecksum, error) {
-	checksumFileURL, err := urlhelper.Parse(checksumFile)
+// ChecksumFromFile will only return checksums for files that match
+// checksummedURL, which is the object being checksummed.
+func (c *Client) ChecksumFromFile(ctx context.Context, checksumURL, checksummedURL string) (*FileChecksum, error) {
+	checksumFileURL, err := urlhelper.Parse(checksumURL)
 	if err != nil {
 		return nil, err
 	}
@@ -206,7 +206,7 @@ func (c *Client) ChecksumFromFile(ctx context.Context, checksumFile string, src 
 	req := &Request{
 		// Pwd:              c.Pwd, TODO(adrien): pass pwd ?
 		Dir: false,
-		Src: checksumFile,
+		Src: checksumURL,
 		Dst: tempfile,
 		// ProgressListener: c.ProgressListener, TODO(adrien): pass progress bar ?
 	}
@@ -215,8 +215,8 @@ func (c *Client) ChecksumFromFile(ctx context.Context, checksumFile string, src 
 			"Error downloading checksum file: %s", err)
 	}
 
-	filename := filepath.Base(src.Path)
-	absPath, err := filepath.Abs(src.Path)
+	filename := filepath.Base(checksummedURL)
+	absPath, err := filepath.Abs(checksummedURL)
 	if err != nil {
 		return nil, err
 	}
@@ -274,7 +274,7 @@ func (c *Client) ChecksumFromFile(ctx context.Context, checksumFile string, src 
 			}
 		}
 	}
-	return nil, fmt.Errorf("no checksum found in: %s", checksumFile)
+	return nil, fmt.Errorf("no checksum found in: %s", checksumURL)
 }
 
 // parseChecksumLine takes a line from a checksum file and returns
