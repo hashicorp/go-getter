@@ -261,7 +261,7 @@ func TestGet_archiveSubdirWildMultiMatch(t *testing.T) {
 			t.Fatalf("err: %s", err)
 		}
 		if op != nil {
-			t.Fatal("operation should be nil")
+			t.Fatal("GetResult should be nil")
 		}
 	}
 }
@@ -675,5 +675,88 @@ func TestGetFile_checksumSkip(t *testing.T) {
 
 	if getter.GetFileCalled {
 		t.Fatalf("get should not have been called")
+	}
+}
+
+func TestGetFile_inplace(t *testing.T) {
+	ctx := context.Background()
+
+	dst := tempTestFile(t)
+	defer os.RemoveAll(filepath.Dir(dst))
+	src := testModule("basic-file/foo.txt")
+
+	getter := &MockGetter{Proxy: new(FileGetter)}
+	req := &Request{
+		Src:     src + "?checksum=md5:09f7e02f1290be211da707a266f153b3",
+		Dst:     dst,
+		Mode:    ModeFile,
+		Inplace: true,
+	}
+	client := &Client{
+		Getters: map[string]Getter{
+			"file": getter,
+		},
+	}
+
+	// get the file
+	op, err := client.Get(ctx, req)
+	if err != nil {
+		t.Fatalf("err: %s", err)
+	}
+	if diff := cmp.Diff(&GetResult{Dst: strings.ReplaceAll(src, "file://", "")}, op); diff != "" {
+		t.Fatalf("unexpected op: %s", diff)
+	}
+
+	if v := getter.GetFileURL.Query().Get("checksum"); v != "" {
+		t.Fatalf("bad: %s", v)
+	}
+
+	// remove proxy file getter and reset GetFileCalled so that we can re-test.
+	getter.Proxy = nil
+	getter.GetFileCalled = false
+
+	op, err = client.Get(ctx, req)
+	if err != nil {
+		t.Fatalf("err: %s", err)
+	}
+	if diff := cmp.Diff(&GetResult{Dst: strings.ReplaceAll(src, "file://", "")}, op); diff != "" {
+		t.Fatalf("unexpected op: %s", diff)
+	}
+
+	if getter.GetFileCalled {
+		t.Fatalf("get should not have been called")
+	}
+}
+
+func TestGetFile_inplace_badChecksum(t *testing.T) {
+	ctx := context.Background()
+
+	dst := tempTestFile(t)
+	defer os.RemoveAll(filepath.Dir(dst))
+	src := testModule("basic-file/foo.txt")
+
+	getter := &MockGetter{Proxy: new(FileGetter)}
+	req := &Request{
+		Src:     src + "?checksum=md5:09f7e02f1290be211da707a266f153b4",
+		Dst:     dst,
+		Mode:    ModeFile,
+		Inplace: true,
+	}
+	client := &Client{
+		Getters: map[string]Getter{
+			"file": getter,
+		},
+	}
+
+	// get the file
+	op, err := client.Get(ctx, req)
+	if err == nil {
+		t.Fatalf("err is nil")
+	}
+	if _, ok := err.(*ChecksumError); !ok {
+		t.Fatalf("err is not a checksum error: %v", err)
+	}
+	if op != nil {
+		t.Fatalf("op is not nil")
 	}
 }
