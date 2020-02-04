@@ -14,7 +14,7 @@ type FileGetter struct {
 	getter
 }
 
-func (g *FileGetter) ClientMode(ctx context.Context, u *url.URL) (ClientMode, error) {
+func (g *FileGetter) Mode(ctx context.Context, u *url.URL) (Mode, error) {
 	path := u.Path
 	if u.RawPath != "" {
 		path = u.RawPath
@@ -27,10 +27,10 @@ func (g *FileGetter) ClientMode(ctx context.Context, u *url.URL) (ClientMode, er
 
 	// Check if the source is a directory.
 	if fi.IsDir() {
-		return ClientModeDir, nil
+		return ModeDir, nil
 	}
 
-	return ClientModeFile, nil
+	return ModeFile, nil
 }
 
 func (g *FileGetter) Get(ctx context.Context, req *Request) error {
@@ -49,6 +49,11 @@ func (g *FileGetter) Get(ctx context.Context, req *Request) error {
 	fi, err := os.Lstat(req.Dst)
 	if err != nil && !os.IsNotExist(err) {
 		return err
+	}
+
+	if req.Inplace {
+		req.Dst = path
+		return nil
 	}
 
 	// If the destination already exists, it must be a symlink
@@ -83,6 +88,11 @@ func (g *FileGetter) GetFile(ctx context.Context, req *Request) error {
 		return fmt.Errorf("source path error: %s", err)
 	} else if fi.IsDir() {
 		return fmt.Errorf("source path must be a file")
+	}
+
+	if req.Inplace {
+		req.Dst = path
+		return nil
 	}
 
 	_, err := os.Lstat(req.Dst)

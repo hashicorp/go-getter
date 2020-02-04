@@ -52,11 +52,11 @@ type HttpGetter struct {
 	Header http.Header
 }
 
-func (g *HttpGetter) ClientMode(ctx context.Context, u *url.URL) (ClientMode, error) {
+func (g *HttpGetter) Mode(ctx context.Context, u *url.URL) (Mode, error) {
 	if strings.HasSuffix(u.Path, "/") {
-		return ClientModeDir, nil
+		return ModeDir, nil
 	}
-	return ClientModeFile, nil
+	return ModeFile, nil
 }
 
 func (g *HttpGetter) Get(ctx context.Context, req *Request) error {
@@ -117,9 +117,9 @@ func (g *HttpGetter) Get(ctx context.Context, req *Request) error {
 	// into a temporary directory, then copy over the proper subdir.
 	source, subDir := SourceDirSubdir(source)
 	req = &Request{
-		Dir: true,
-		Src: source,
-		Dst: req.Dst,
+		Mode: ModeDir,
+		Src:  source,
+		Dst:  req.Dst,
 	}
 	if subDir == "" {
 		_, err = DefaultClient.Get(ctx, req)

@@ -16,9 +16,9 @@ type Request struct {
 	Dst string
 	Pwd string
 
-	// Mode is the method of download the client will use. See ClientMode
+	// Mode is the method of download the client will use. See Mode
 	// for documentation.
-	Mode ClientMode
+	Mode Mode
 
 	// Copy, in local file mode if set to true, will copy data instead of using
 	// a symlink. If false, attempts to symlink to speed up the operation and
@@ -26,13 +26,10 @@ type Request struct {
 	// on windows.
 	Copy bool
 
-	// Dir, if true, tells the Client it is downloading a directory (versus
-	// a single file). This distinction is necessary since filenames and
-	// directory names follow the same format so disambiguating is impossible
-	// without knowing ahead of time.
-	//
-	// WARNING: deprecated. If Mode is set, that will take precedence.
-	Dir bool
+	// Inplace, in local file mode if set to true, do nothing and the returned
+	// operation will simply contain the source file path. Inplace has precedence
+	// over Copy.
+	Inplace bool
 
 	// ProgressListener allows to track file downloads.
 	// By default a no op progress listener is used.

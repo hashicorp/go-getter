@@ -54,7 +54,6 @@ func TestGet_progress(t *testing.T) {
 			Dst:              dst,
 			Src:              s.URL + "/file?thig=this&that",
 			ProgressListener: p,
-			Dir:              false,
 		}
 		if _, err := DefaultClient.Get(ctx, req); err != nil {
 			t.Fatalf("download failed: %v", err)
@@ -63,7 +62,6 @@ func TestGet_progress(t *testing.T) {
 			Dst:              dst,
 			Src:              s.URL + "/otherfile?thig=this&that",
 			ProgressListener: p,
-			Dir:              false,
 		}
 		if _, err := DefaultClient.Get(ctx, req); err != nil {
 			t.Fatalf("download failed: %v", err)

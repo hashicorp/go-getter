@@ -22,7 +22,7 @@ type S3Getter struct {
 	getter
 }
 
-func (g *S3Getter) ClientMode(ctx context.Context, u *url.URL) (ClientMode, error) {
+func (g *S3Getter) Mode(ctx context.Context, u *url.URL) (Mode, error) {
 	// Parse URL
 	region, bucket, path, _, creds, err := g.parseUrl(u)
 	if err != nil {
@@ -47,18 +47,18 @@ func (g *S3Getter) ClientMode(ctx context.Context, u *url.URL) (ClientMode, erro
 	for _, o := range resp.Contents {
 		// Use file mode on exact match.
 		if *o.Key == path {
-			return ClientModeFile, nil
+			return ModeFile, nil
 		}
 
 		// Use dir mode if child keys are found.
 		if strings.HasPrefix(*o.Key, path+"/") {
-			return ClientModeDir, nil
+			return ModeDir, nil
 		}
 	}
 
 	// There was no match, so just return file mode. The download is going
 	// to fail but we will let S3 return the proper error later.
-	return ClientModeFile, nil
+	return ModeFile, nil
 }
 
 func (g *S3Getter) Get(ctx context.Context, req *Request) error {

@@ -3,12 +3,12 @@ package getter
 import (
 	"fmt"
 	"os/exec"
-	"strings"
+	"path/filepath"
 	"syscall"
 )
 
 func SymlinkAny(oldname, newname string) error {
-	sourcePath := toBackslash(oldname)
+	sourcePath := filepath.FromSlash(oldname)
 
 	// Use mklink to create a junction point
 	output, err := exec.Command("cmd", "/c", "mklink", "/J", newname, sourcePath).CombinedOutput()
@@ -19,10 +19,3 @@ func SymlinkAny(oldname, newname string) error {
 }
 
 var ErrUnauthorized = syscall.ERROR_PRIVILEGE_NOT_HELD
-
-// toBackslash returns the result of replacing each slash character
-// in path with a backslash ('\') character. Multiple separators are
-// replaced by multiple backslashes.
-func toBackslash(path string) string {
-	return strings.Replace(path, "/", "\\", -1)
-}

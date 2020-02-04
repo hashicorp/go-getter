@@ -18,7 +18,7 @@ type GCSGetter struct {
 	getter
 }
 
-func (g *GCSGetter) ClientMode(ctx context.Context, u *url.URL) (ClientMode, error) {
+func (g *GCSGetter) Mode(ctx context.Context, u *url.URL) (Mode, error) {
 
 	// Parse URL
 	bucket, object, err := g.parseURL(u)
@@ -42,16 +42,16 @@ func (g *GCSGetter) ClientMode(ctx context.Context, u *url.URL) (ClientMode, err
 		}
 		if strings.HasSuffix(obj.Name, "/") {
 			// A directory matched the prefix search, so this must be a directory
-			return ClientModeDir, nil
+			return ModeDir, nil
 		} else if obj.Name != object {
 			// A file matched the prefix search and doesn't have the same name
 			// as the query, so this must be a directory
-			return ClientModeDir, nil
+			return ModeDir, nil
 		}
 	}
 	// There are no directories or subdirectories, and if a match was returned,
 	// it was exactly equal to the prefix search. So return File mode
-	return ClientModeFile, nil
+	return ModeFile, nil
 }
 
 func (g *GCSGetter) Get(ctx context.Context, req *Request) error {
