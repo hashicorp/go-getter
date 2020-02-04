@@ -33,8 +33,14 @@ type Client struct {
 	Getters map[string]Getter
 }
 
+// GetResult is the result of a Client.Get
+type GetResult struct {
+	// Local destination of the gotten object.
+	Dst string
+}
+
 // Get downloads the configured source to the destination.
-func (c *Client) Get(ctx context.Context, req *Request) (*Operation, error) {
+func (c *Client) Get(ctx context.Context, req *Request) (*GetResult, error) {
 	if err := c.configure(); err != nil {
 		return nil, err
 	}
@@ -218,7 +224,7 @@ func (c *Client) Get(ctx context.Context, req *Request) (*Operation, error) {
 		// if we were unarchiving. If we're still only Get-ing a file, then
 		// we're done.
 		if req.Mode == ClientModeFile {
-			return &Operation{req.Dst}, nil
+			return &GetResult{req.Dst}, nil
 		}
 	}
 
@@ -258,8 +264,8 @@ func (c *Client) Get(ctx context.Context, req *Request) (*Operation, error) {
 			return nil, err
 		}
 
-		return &Operation{realDst}, copyDir(ctx, realDst, subDir, false)
+		return &GetResult{realDst}, copyDir(ctx, realDst, subDir, false)
 	}
 
-	return &Operation{req.Dst}, nil
+	return &GetResult{req.Dst}, nil
 }

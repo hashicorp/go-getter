@@ -36,7 +36,7 @@ func TestGet_file(t *testing.T) {
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
-	if diff := cmp.Diff(&Operation{Dst: dst}, op); diff != "" {
+	if diff := cmp.Diff(&GetResult{Dst: dst}, op); diff != "" {
 		t.Fatalf("unexpected op: %s", diff)
 	}
 
@@ -57,7 +57,7 @@ func TestGet_fileDecompressorExt(t *testing.T) {
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
-	if diff := cmp.Diff(&Operation{Dst: dst}, op); diff != "" {
+	if diff := cmp.Diff(&GetResult{Dst: dst}, op); diff != "" {
 		t.Fatalf("unexpected op: %s", diff)
 	}
 
@@ -78,7 +78,7 @@ func TestGet_filePercent2F(t *testing.T) {
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
-	if diff := cmp.Diff(&Operation{Dst: dst}, op); diff != "" {
+	if diff := cmp.Diff(&GetResult{Dst: dst}, op); diff != "" {
 		t.Fatalf("unexpected op: %s", diff)
 	}
 
@@ -114,7 +114,7 @@ func TestGet_fileDetect(t *testing.T) {
 	if err != nil {
 		t.Fatalf("get: %s", err)
 	}
-	if diff := cmp.Diff(&Operation{Dst: dst}, op); diff != "" {
+	if diff := cmp.Diff(&GetResult{Dst: dst}, op); diff != "" {
 		t.Fatalf("unexpected op: %s", diff)
 	}
 
@@ -135,7 +135,7 @@ func TestGet_fileForced(t *testing.T) {
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
-	if diff := cmp.Diff(&Operation{Dst: dst}, op); diff != "" {
+	if diff := cmp.Diff(&GetResult{Dst: dst}, op); diff != "" {
 		t.Fatalf("unexpected op: %s", diff)
 	}
 
@@ -155,7 +155,7 @@ func TestGet_fileSubdir(t *testing.T) {
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
-	if diff := cmp.Diff(&Operation{Dst: dst}, op); diff != "" {
+	if diff := cmp.Diff(&GetResult{Dst: dst}, op); diff != "" {
 		t.Fatalf("unexpected op: %s", diff)
 	}
 
@@ -176,7 +176,7 @@ func TestGet_archive(t *testing.T) {
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
-	if diff := cmp.Diff(&Operation{Dst: dst}, op); diff != "" {
+	if diff := cmp.Diff(&GetResult{Dst: dst}, op); diff != "" {
 		t.Fatalf("unexpected op: %s", diff)
 	}
 
@@ -197,7 +197,7 @@ func TestGetAny_archive(t *testing.T) {
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
-	if diff := cmp.Diff(&Operation{Dst: dst}, op); diff != "" {
+	if diff := cmp.Diff(&GetResult{Dst: dst}, op); diff != "" {
 		t.Fatalf("unexpected op: %s", diff)
 	}
 
@@ -216,7 +216,7 @@ func TestGet_archiveRooted(t *testing.T) {
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
-	if diff := cmp.Diff(&Operation{Dst: dst}, op); diff != "" {
+	if diff := cmp.Diff(&GetResult{Dst: dst}, op); diff != "" {
 		t.Fatalf("unexpected op: %s", diff)
 	}
 
@@ -236,7 +236,7 @@ func TestGet_archiveSubdirWild(t *testing.T) {
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
-	if diff := cmp.Diff(&Operation{Dst: dst}, op); diff != "" {
+	if diff := cmp.Diff(&GetResult{Dst: dst}, op); diff != "" {
 		t.Fatalf("unexpected op: %s", diff)
 	}
 
@@ -293,7 +293,7 @@ func TestGetAny_dir(t *testing.T) {
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
-	if diff := cmp.Diff(&Operation{Dst: dst}, op); diff != "" {
+	if diff := cmp.Diff(&GetResult{Dst: dst}, op); diff != "" {
 		t.Fatalf("unexpected op: %s", diff)
 	}
 
@@ -321,7 +321,7 @@ func TestGetFile(t *testing.T) {
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
-	if diff := cmp.Diff(&Operation{Dst: dst}, op); diff != "" {
+	if diff := cmp.Diff(&GetResult{Dst: dst}, op); diff != "" {
 		t.Fatalf("unexpected op: %s", diff)
 	}
 
@@ -340,7 +340,7 @@ func TestGetFile_archive(t *testing.T) {
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
-	if diff := cmp.Diff(&Operation{Dst: dst}, op); diff != "" {
+	if diff := cmp.Diff(&GetResult{Dst: dst}, op); diff != "" {
 		t.Fatalf("unexpected op: %s", diff)
 	}
 
@@ -360,7 +360,7 @@ func TestGetFile_archiveChecksum(t *testing.T) {
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
-	if diff := cmp.Diff(&Operation{Dst: dst}, op); diff != "" {
+	if diff := cmp.Diff(&GetResult{Dst: dst}, op); diff != "" {
 		t.Fatalf("unexpected op: %s", diff)
 	}
 
@@ -380,7 +380,7 @@ func TestGetFile_archiveNoUnarchive(t *testing.T) {
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
-	if diff := cmp.Diff(&Operation{Dst: dst}, op); diff != "" {
+	if diff := cmp.Diff(&GetResult{Dst: dst}, op); diff != "" {
 		t.Fatalf("unexpected op: %s", diff)
 	}
 
@@ -472,7 +472,7 @@ func TestGetFile_checksum(t *testing.T) {
 				t.Fatalf("append: %s\n\nerr: %s", tc.Append, err)
 			}
 			if err == nil {
-				if diff := cmp.Diff(&Operation{Dst: dst}, op); diff != "" {
+				if diff := cmp.Diff(&GetResult{Dst: dst}, op); diff != "" {
 					t.Fatalf("unexpected dst: %s", diff)
 				}
 			}
@@ -561,7 +561,7 @@ func TestGetFile_checksum_from_file(t *testing.T) {
 				t.Fatalf("append: %s\n\nerr: %s", tc.Append, err)
 			}
 			if err == nil {
-				if diff := cmp.Diff(&Operation{Dst: dst}, op); diff != "" {
+				if diff := cmp.Diff(&GetResult{Dst: dst}, op); diff != "" {
 					t.Fatalf("unexpected dst: %s", diff)
 				}
 			}
@@ -597,7 +597,7 @@ func TestGetFile_checksumURL(t *testing.T) {
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
-	if diff := cmp.Diff(&Operation{Dst: dst}, op); diff != "" {
+	if diff := cmp.Diff(&GetResult{Dst: dst}, op); diff != "" {
 		t.Fatalf("unexpected op: %s", diff)
 	}
 
@@ -653,7 +653,7 @@ func TestGetFile_checksumSkip(t *testing.T) {
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
-	if diff := cmp.Diff(&Operation{Dst: dst}, op); diff != "" {
+	if diff := cmp.Diff(&GetResult{Dst: dst}, op); diff != "" {
 		t.Fatalf("unexpected op: %s", diff)
 	}
 
@@ -669,7 +669,7 @@ func TestGetFile_checksumSkip(t *testing.T) {
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
-	if diff := cmp.Diff(&Operation{Dst: dst}, op); diff != "" {
+	if diff := cmp.Diff(&GetResult{Dst: dst}, op); diff != "" {
 		t.Fatalf("unexpected op: %s", diff)
 	}
 
