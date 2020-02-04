@@ -1,8 +1,5 @@
 package getter
 
-// A ClientOption allows to configure a client
-type ClientOption func(*Client) error
-
 // Configure configures a client with options.
 func (c *Client) Configure() error {
 	// Default decompressor values
