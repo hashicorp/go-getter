@@ -22,7 +22,7 @@ type S3Getter struct {
 	getter
 }
 
-func (g *S3Getter) ClientMode(u *url.URL) (ClientMode, error) {
+func (g *S3Getter) ClientMode(ctx context.Context, u *url.URL) (ClientMode, error) {
 	// Parse URL
 	region, bucket, path, _, creds, err := g.parseUrl(u)
 	if err != nil {
@@ -61,34 +61,33 @@ func (g *S3Getter) ClientMode(u *url.URL) (ClientMode, error) {
 	return ClientModeFile, nil
 }
 
-func (g *S3Getter) Get(dst string, u *url.URL) error {
-	ctx := g.Context()
+func (g *S3Getter) Get(ctx context.Context, req *Request) error {
 
 	// Parse URL
-	region, bucket, path, _, creds, err := g.parseUrl(u)
+	region, bucket, path, _, creds, err := g.parseUrl(req.u)
 	if err != nil {
 		return err
 	}
 
 	// Remove destination if it already exists
-	_, err = os.Stat(dst)
+	_, err = os.Stat(req.Dst)
 	if err != nil && !os.IsNotExist(err) {
 		return err
 	}
 
 	if err == nil {
 		// Remove the destination
-		if err := os.RemoveAll(dst); err != nil {
+		if err := os.RemoveAll(req.Dst); err != nil {
 			return err
 		}
 	}
 
 	// Create all the parent directories
-	if err := os.MkdirAll(filepath.Dir(dst), 0755); err != nil {
+	if err := os.MkdirAll(filepath.Dir(req.Dst), 0755); err != nil {
 		return err
 	}
 
-	config := g.getAWSConfig(region, u, creds)
+	config := g.getAWSConfig(region, req.u, creds)
 	sess := session.New(config)
 	client := s3.New(sess)
 
@@ -96,15 +95,15 @@ func (g *S3Getter) Get(dst string, u *url.URL) error {
 	lastMarker := ""
 	hasMore := true
 	for hasMore {
-		req := &s3.ListObjectsInput{
+		s3Req := &s3.ListObjectsInput{
 			Bucket: aws.String(bucket),
 			Prefix: aws.String(path),
 		}
 		if lastMarker != "" {
-			req.Marker = aws.String(lastMarker)
+			s3Req.Marker = aws.String(lastMarker)
 		}
 
-		resp, err := client.ListObjects(req)
+		resp, err := client.ListObjects(s3Req)
 		if err != nil {
 			return err
 		}
@@ -126,7 +125,7 @@ func (g *S3Getter) Get(dst string, u *url.URL) error {
 			if err != nil {
 				return err
 			}
-			objDst = filepath.Join(dst, objDst)
+			objDst = filepath.Join(req.Dst, objDst)
 
 			if err := g.getObject(ctx, client, objDst, bucket, objPath, ""); err != nil {
 				return err
@@ -137,17 +136,16 @@ func (g *S3Getter) Get(dst string, u *url.URL) error {
 	return nil
 }
 
-func (g *S3Getter) GetFile(dst string, u *url.URL) error {
-	ctx := g.Context()
-	region, bucket, path, version, creds, err := g.parseUrl(u)
+func (g *S3Getter) GetFile(ctx context.Context, req *Request) error {
+	region, bucket, path, version, creds, err := g.parseUrl(req.u)
 	if err != nil {
 		return err
 	}
 
-	config := g.getAWSConfig(region, u, creds)
+	config := g.getAWSConfig(region, req.u, creds)
 	sess := session.New(config)
 	client := s3.New(sess)
-	return g.getObject(ctx, client, dst, bucket, path, version)
+	return g.getObject(ctx, client, req.Dst, bucket, path, version)
 }
 
 func (g *S3Getter) getObject(ctx context.Context, client *s3.S3, dst, bucket, key, version string) error {

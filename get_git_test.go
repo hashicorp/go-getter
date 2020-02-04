@@ -2,6 +2,7 @@ package getter
 
 import (
 	"bytes"
+	"context"
 	"encoding/base64"
 	"io/ioutil"
 	"net/url"
@@ -31,6 +32,7 @@ func TestGitGetter(t *testing.T) {
 	if !testHasGit {
 		t.Skip("git not found, skipping")
 	}
+	ctx := context.Background()
 
 	g := new(GitGetter)
 	dst := tempDir(t)
@@ -38,8 +40,13 @@ func TestGitGetter(t *testing.T) {
 	repo := testGitRepo(t, "basic")
 	repo.commitFile("foo.txt", "hello")
 
+	req := &Request{
+		Dst: dst,
+		u:   repo.url,
+	}
+
 	// With a dir that doesn't exist
-	if err := g.Get(dst, repo.url); err != nil {
+	if err := g.Get(ctx, req); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
@@ -54,6 +61,7 @@ func TestGitGetter_branch(t *testing.T) {
 	if !testHasGit {
 		t.Skip("git not found, skipping")
 	}
+	ctx := context.Background()
 
 	g := new(GitGetter)
 	dst := tempDir(t)
@@ -66,7 +74,10 @@ func TestGitGetter_branch(t *testing.T) {
 	q.Add("ref", "test-branch")
 	repo.url.RawQuery = q.Encode()
 
-	if err := g.Get(dst, repo.url); err != nil {
+	if err := g.Get(ctx, &Request{
+		Dst: dst,
+		u:   repo.url,
+	}); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
@@ -77,7 +88,10 @@ func TestGitGetter_branch(t *testing.T) {
 	}
 
 	// Get again should work
-	if err := g.Get(dst, repo.url); err != nil {
+	if err := g.Get(ctx, &Request{
+		Dst: dst,
+		u:   repo.url,
+	}); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
@@ -94,6 +108,7 @@ func TestGitGetter_remoteWithoutMaster(t *testing.T) {
 		t.Skip()
 	}
 
+	ctx := context.Background()
 	g := new(GitGetter)
 	dst := tempDir(t)
 
@@ -103,8 +118,13 @@ func TestGitGetter_remoteWithoutMaster(t *testing.T) {
 
 	q := repo.url.Query()
 	repo.url.RawQuery = q.Encode()
+	req := &Request{
+		Src: repo.url.String(),
+		u:   repo.url,
+		Dst: dst,
+	}
 
-	if err := g.Get(dst, repo.url); err != nil {
+	if err := g.Get(ctx, req); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
@@ -115,7 +135,7 @@ func TestGitGetter_remoteWithoutMaster(t *testing.T) {
 	}
 
 	// Get again should work
-	if err := g.Get(dst, repo.url); err != nil {
+	if err := g.Get(ctx, req); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
@@ -131,6 +151,7 @@ func TestGitGetter_shallowClone(t *testing.T) {
 		t.Log("git not found, skipping")
 		t.Skip()
 	}
+	ctx := context.Background()
 
 	g := new(GitGetter)
 	dst := tempDir(t)
@@ -144,7 +165,10 @@ func TestGitGetter_shallowClone(t *testing.T) {
 	q.Add("depth", "1")
 	repo.url.RawQuery = q.Encode()
 
-	if err := g.Get(dst, repo.url); err != nil {
+	if err := g.Get(ctx, &Request{
+		Dst: dst,
+		u:   repo.url,
+	}); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
@@ -166,6 +190,7 @@ func TestGitGetter_branchUpdate(t *testing.T) {
 	if !testHasGit {
 		t.Skip("git not found, skipping")
 	}
+	ctx := context.Background()
 
 	g := new(GitGetter)
 	dst := tempDir(t)
@@ -179,7 +204,11 @@ func TestGitGetter_branchUpdate(t *testing.T) {
 	q := repo.url.Query()
 	q.Add("ref", "test-branch")
 	repo.url.RawQuery = q.Encode()
-	if err := g.Get(dst, repo.url); err != nil {
+
+	if err := g.Get(ctx, &Request{
+		Dst: dst,
+		u:   repo.url,
+	}); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
@@ -193,7 +222,10 @@ func TestGitGetter_branchUpdate(t *testing.T) {
 	repo.commitFile("branch-update.txt", "branch-update")
 
 	// Get again should work
-	if err := g.Get(dst, repo.url); err != nil {
+	if err := g.Get(ctx, &Request{
+		Dst: dst,
+		u:   repo.url,
+	}); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
@@ -208,6 +240,7 @@ func TestGitGetter_tag(t *testing.T) {
 	if !testHasGit {
 		t.Skip("git not found, skipping")
 	}
+	ctx := context.Background()
 
 	g := new(GitGetter)
 	dst := tempDir(t)
@@ -220,7 +253,10 @@ func TestGitGetter_tag(t *testing.T) {
 	q.Add("ref", "v1.0")
 	repo.url.RawQuery = q.Encode()
 
-	if err := g.Get(dst, repo.url); err != nil {
+	if err := g.Get(ctx, &Request{
+		Dst: dst,
+		u:   repo.url,
+	}); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
@@ -231,7 +267,10 @@ func TestGitGetter_tag(t *testing.T) {
 	}
 
 	// Get again should work
-	if err := g.Get(dst, repo.url); err != nil {
+	if err := g.Get(ctx, &Request{
+		Dst: dst,
+		u:   repo.url,
+	}); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
@@ -246,6 +285,7 @@ func TestGitGetter_GetFile(t *testing.T) {
 	if !testHasGit {
 		t.Skip("git not found, skipping")
 	}
+	ctx := context.Background()
 
 	g := new(GitGetter)
 	dst := tempTestFile(t)
@@ -256,7 +296,12 @@ func TestGitGetter_GetFile(t *testing.T) {
 
 	// Download the file
 	repo.url.Path = filepath.Join(repo.url.Path, "file.txt")
-	if err := g.GetFile(dst, repo.url); err != nil {
+	req := &Request{
+		Dst: dst,
+		u:   repo.url,
+	}
+
+	if err := g.GetFile(ctx, req); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
@@ -310,6 +355,7 @@ func TestGitGetter_sshKey(t *testing.T) {
 	if !testHasGit {
 		t.Skip("git not found, skipping")
 	}
+	ctx := context.Background()
 
 	g := new(GitGetter)
 	dst := tempDir(t)
@@ -326,7 +372,12 @@ func TestGitGetter_sshKey(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err := g.Get(dst, u); err != nil {
+	req := &Request{
+		Dst: dst,
+		u:   u,
+	}
+
+	if err := g.Get(ctx, req); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
@@ -341,6 +392,7 @@ func TestGitGetter_sshSCPStyle(t *testing.T) {
 		t.Skip("git not found, skipping")
 	}
 
+	ctx := context.Background()
 	g := new(GitGetter)
 	dst := tempDir(t)
 
@@ -352,13 +404,14 @@ func TestGitGetter_sshSCPStyle(t *testing.T) {
 
 	// This test exercises the combination of the git detector and the
 	// git getter, to make sure that together they make scp-style URLs work.
-	client := &Client{
+	req := &Request{
 		Src: "git@github.com:hashicorp/test-private-repo?sshkey=" + encodedKey,
 		Dst: dst,
 		Pwd: ".",
 
 		Mode: ClientModeDir,
-
+	}
+	client := &Client{
 		Detectors: []Detector{
 			new(GitDetector),
 		},
@@ -367,7 +420,7 @@ func TestGitGetter_sshSCPStyle(t *testing.T) {
 		},
 	}
 
-	if err := client.Get(); err != nil {
+	if err := client.Get(ctx, req); err != nil {
 		t.Fatalf("client.Get failed: %s", err)
 	}
 
@@ -382,6 +435,7 @@ func TestGitGetter_sshExplicitPort(t *testing.T) {
 		t.Skip("git not found, skipping")
 	}
 
+	ctx := context.Background()
 	g := new(GitGetter)
 	dst := tempDir(t)
 
@@ -393,12 +447,14 @@ func TestGitGetter_sshExplicitPort(t *testing.T) {
 
 	// This test exercises the combination of the git detector and the
 	// git getter, to make sure that together they make scp-style URLs work.
-	client := &Client{
+	req := &Request{
 		Src: "git::ssh://git@github.com:22/hashicorp/test-private-repo?sshkey=" + encodedKey,
 		Dst: dst,
 		Pwd: ".",
 
 		Mode: ClientModeDir,
+	}
+	client := &Client{
 
 		Detectors: []Detector{
 			new(GitDetector),
@@ -408,7 +464,7 @@ func TestGitGetter_sshExplicitPort(t *testing.T) {
 		},
 	}
 
-	if err := client.Get(); err != nil {
+	if err := client.Get(ctx, req); err != nil {
 		t.Fatalf("client.Get failed: %s", err)
 	}
 
@@ -423,6 +479,7 @@ func TestGitGetter_sshSCPStyleInvalidScheme(t *testing.T) {
 		t.Skip("git not found, skipping")
 	}
 
+	ctx := context.Background()
 	g := new(GitGetter)
 	dst := tempDir(t)
 
@@ -434,13 +491,15 @@ func TestGitGetter_sshSCPStyleInvalidScheme(t *testing.T) {
 
 	// This test exercises the combination of the git detector and the
 	// git getter, to make sure that together they make scp-style URLs work.
-	client := &Client{
+	req := &Request{
 		Src: "git::ssh://git@github.com:hashicorp/test-private-repo?sshkey=" + encodedKey,
 		Dst: dst,
 		Pwd: ".",
 
 		Mode: ClientModeDir,
+	}
 
+	client := &Client{
 		Detectors: []Detector{
 			new(GitDetector),
 		},
@@ -449,7 +508,7 @@ func TestGitGetter_sshSCPStyleInvalidScheme(t *testing.T) {
 		},
 	}
 
-	err := client.Get()
+	err := client.Get(ctx, req)
 	if err == nil {
 		t.Fatalf("get succeeded; want error")
 	}
@@ -465,6 +524,7 @@ func TestGitGetter_submodule(t *testing.T) {
 	if !testHasGit {
 		t.Skip("git not found, skipping")
 	}
+	ctx := context.Background()
 
 	g := new(GitGetter)
 	dst := tempDir(t)
@@ -495,8 +555,13 @@ func TestGitGetter_submodule(t *testing.T) {
 	p.git("submodule", "add", "-f", relpath(p.dir, c.dir))
 	p.git("commit", "-m", "Add child submodule")
 
+	req := &Request{
+		Dst: dst,
+		u:   p.url,
+	}
+
 	// Clone the root repository
-	if err := g.Get(dst, p.url); err != nil {
+	if err := g.Get(ctx, req); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 

@@ -1,6 +1,7 @@
 package getter
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"testing"
@@ -12,6 +13,7 @@ func TestFolderStorage_impl(t *testing.T) {
 
 func TestFolderStorage(t *testing.T) {
 	s := &FolderStorage{StorageDir: tempDir(t)}
+	ctx := context.Background()
 
 	module := testModule("basic")
 
@@ -27,7 +29,7 @@ func TestFolderStorage(t *testing.T) {
 	key := "foo"
 
 	// We can get it
-	err = s.Get(key, module, false)
+	err = s.Get(ctx, key, module, false)
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
