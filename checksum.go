@@ -184,10 +184,11 @@ func newChecksumFromValue(checksumValue, filename string) (*FileChecksum, error)
 	return c, nil
 }
 
-// ChecksumFromFile will return the first FileChecksums found in file.
+// ChecksumFromFile will return the first file checksum found in the
+// `checksumURL` file that corresponds to the `checksummedURL` path.
 //
-// ChecksumFromFile will try to guess the hashing algorithm based on the
-// content of a checksum file.
+// ChecksumFromFile will infer the hashing algorithm based on the checksumURL
+// file content.
 //
 // ChecksumFromFile will only return checksums for files that match
 // checksummedURL, which is the object being checksummed.
