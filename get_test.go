@@ -88,7 +88,7 @@ func TestGet_fileDetect(t *testing.T) {
 	}
 	client := &Client{}
 
-	if err := client.Configure(); err != nil {
+	if err := client.configure(); err != nil {
 		t.Fatalf("configure: %s", err)
 	}
 

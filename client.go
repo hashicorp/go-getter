@@ -35,7 +35,7 @@ type Client struct {
 
 // Get downloads the configured source to the destination.
 func (c *Client) Get(ctx context.Context, req *Request) error {
-	if err := c.Configure(); err != nil {
+	if err := c.configure(); err != nil {
 		return err
 	}
 
