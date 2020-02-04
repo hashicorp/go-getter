@@ -185,14 +185,14 @@ func newChecksumFromValue(checksumValue, filename string) (*FileChecksum, error)
 }
 
 // ChecksumFromFile will return the first file checksum found in the
-// `checksumURL` file that corresponds to the `checksummedURL` path.
+// `checksumURL` file that corresponds to the `checksummedPath` path.
 //
 // ChecksumFromFile will infer the hashing algorithm based on the checksumURL
 // file content.
 //
 // ChecksumFromFile will only return checksums for files that match
-// checksummedURL, which is the object being checksummed.
-func (c *Client) ChecksumFromFile(ctx context.Context, checksumURL, checksummedURL string) (*FileChecksum, error) {
+// checksummedPath, which is the object being checksummed.
+func (c *Client) ChecksumFromFile(ctx context.Context, checksumURL, checksummedPath string) (*FileChecksum, error) {
 	checksumFileURL, err := urlhelper.Parse(checksumURL)
 	if err != nil {
 		return nil, err
@@ -216,8 +216,8 @@ func (c *Client) ChecksumFromFile(ctx context.Context, checksumURL, checksummedU
 			"Error downloading checksum file: %s", err)
 	}
 
-	filename := filepath.Base(checksummedURL)
-	absPath, err := filepath.Abs(checksummedURL)
+	filename := filepath.Base(checksummedPath)
+	absPath, err := filepath.Abs(checksummedPath)
 	if err != nil {
 		return nil, err
 	}
