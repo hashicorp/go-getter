@@ -1,4 +1,4 @@
-module github.com/hashicorp/go-getter
+module github.com/hashicorp/go-getter/v2
 
 require (
 	cloud.google.com/go v0.45.1
