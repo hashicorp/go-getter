@@ -11,9 +11,9 @@ import (
 )
 
 // addAuthFromNetrc adds auth information to the URL from the user's
-// netrc file if it can be found. This will only add the auth info
-// if the URL doesn't already have auth info specified and the
-// the username is blank.
+// netrc file if it can be found and read. This will only add the
+// auth info if the URL doesn't already have auth info specified
+// and the the username is blank.
 func addAuthFromNetrc(u *url.URL) error {
 	// If the URL already has auth information, do nothing
 	if u.User != nil && u.User.Username() != "" {
@@ -52,6 +52,11 @@ func addAuthFromNetrc(u *url.URL) error {
 	// Load up the netrc file
 	net, err := netrc.ParseFile(path)
 	if err != nil {
+		// File is inaccessible, do nothing
+		if os.IsPermission(err) {
+			return nil
+		}
+
 		return fmt.Errorf("Error parsing netrc file at %q: %s", path, err)
 	}
 
