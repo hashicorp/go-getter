@@ -6,7 +6,7 @@ import (
 	"sync"
 
 	"github.com/cheggaaa/pb"
-	getter "github.com/hashicorp/go-getter"
+	getter "github.com/hashicorp/go-getter/v2"
 )
 
 // defaultProgressBar is the default instance of a cheggaaa
