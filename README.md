@@ -139,8 +139,8 @@ If you downloaded this to the `/tmp` directory, then the file
 directory in this repository, but because we specified a subdirectory,
 go-getter automatically copied only that directory contents.
 
-Subdirectory paths may contain may also use filesystem glob patterns.
-The path must match _exactly one_ entry or go-getter will return an error.
+Subdirectory paths may also use filesystem glob patterns. The path must
+match _exactly one_ entry or go-getter will return an error.
 This is useful if you're not sure the exact directory name but it follows
 a predictable naming structure.
 
