@@ -10,7 +10,7 @@ import (
 	"reflect"
 	"testing"
 
-	urlhelper "github.com/hashicorp/go-getter/helper/url"
+	urlhelper "github.com/hashicorp/go-getter/v2/helper/url"
 )
 
 const fixtureDir = "./testdata"
