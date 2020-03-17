@@ -216,22 +216,12 @@ func (c *Client) ChecksumFromFile(ctx context.Context, checksumURL, checksummedP
 			"Error downloading checksum file: %s", err)
 	}
 
-	checksumFileDir := filepath.Dir(checksumFileURL.Path)
-	checksummedDir, filename := filepath.Split(checksummedPath)
-
-	// Sometimes the iso name can contain a sub folder. Ex:
-	// 27c39bac2cf4640c00cacfc8982b0ba39e7b7f96  ./netboot/mini.iso
-	// a264b6b009dfaa16286fdfd046a156a43587333b  ./hwe-netboot/mini.iso
-	// Here we try to get /netboot or /hwe-netboot depending on the checksummed file directory
-	checksummedSubDir := ""
-	if i := strings.LastIndex(checksummedDir, checksumFileDir); i > -1 {
-		checksummedSubDir =  checksummedDir[i + len(checksumFileDir):len(checksummedDir)-1]
-	}
-
+	filename := filepath.Base(checksummedPath)
 	absPath, err := filepath.Abs(checksummedPath)
 	if err != nil {
 		return nil, err
 	}
+	checksumFileDir := filepath.Dir(checksumFileURL.Path)
 	relpath, err := filepath.Rel(checksumFileDir, absPath)
 	switch {
 	case err == nil ||
@@ -251,8 +241,6 @@ func (c *Client) ChecksumFromFile(ctx context.Context, checksumURL, checksummedP
 		relpath,        // dir/ubuntu-14.04.1-server-amd64.iso
 		"./" + relpath, // ./dir/ubuntu-14.04.1-server-amd64.iso
 		absPath,        // fullpath; set if local
-		checksummedSubDir + "/" + filename, // subDir/ubuntu-14.04.1-server-amd64.iso
-		"." + checksummedSubDir + "/" + filename, // ./subDir/ubuntu-14.04.1-server-amd64.iso
 	}
 
 	f, err := os.Open(tempfile)
@@ -285,6 +273,13 @@ func (c *Client) ChecksumFromFile(ctx context.Context, checksumURL, checksummedP
 				// any checksum will work so we return the first one
 				return checksum, nil
 			}
+		}
+		// The checksum filename can contain a sub folder to differ versions.
+		// e.g. ./netboot/mini.iso and ./hwe-netboot/mini.iso
+		// In this case we remove root folder characters to compare with the checksummed path
+		fn := strings.TrimLeft(checksum.Filename, "./")
+		if strings.Contains(checksummedPath, fn) {
+			return checksum, nil
 		}
 	}
 	return nil, fmt.Errorf("no checksum found in: %s", checksumURL)
