@@ -83,7 +83,7 @@ func TestSmbGetter_GetFile(t *testing.T) {
 func TestSmbGetter_Mode(t *testing.T) {
 	g := new(SmbGetter)
 	ctx := context.Background()
-	
+
 	// no hostname provided
 	url, err := urlhelper.Parse("smb://")
 	if err != nil {

@@ -11,6 +11,7 @@ import (
 type SmbGetter struct {
 	getter
 }
+
 const pathError = "samba path should contain valid Host and filepath (smb://<host>/<file_path>)"
 
 func (g *SmbGetter) Mode(ctx context.Context, u *url.URL) (Mode, error) {
@@ -25,7 +26,7 @@ func (g *SmbGetter) Mode(ctx context.Context, u *url.URL) (Mode, error) {
 }
 
 func (g *SmbGetter) Get(ctx context.Context, req *Request) error {
-	if req.u.Host == "" || req.u.Path == ""{
+	if req.u.Host == "" || req.u.Path == "" {
 		return fmt.Errorf(pathError)
 	}
 	path := "//" + req.u.Host + req.u.Path
@@ -36,7 +37,7 @@ func (g *SmbGetter) Get(ctx context.Context, req *Request) error {
 }
 
 func (g *SmbGetter) GetFile(ctx context.Context, req *Request) error {
-	if req.u.Host == "" || req.u.Path == ""{
+	if req.u.Host == "" || req.u.Path == "" {
 		return fmt.Errorf(pathError)
 	}
 	path := "//" + req.u.Host + req.u.Path
