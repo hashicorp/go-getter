@@ -73,7 +73,7 @@ jobs:
           command: |
             docker-compose up -d samba
       - run: sleep 60
-        -
+      
       - run:
           name: Start go-getter container
           command: |
