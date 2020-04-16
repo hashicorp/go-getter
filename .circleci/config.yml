@@ -11,8 +11,6 @@ executors:
   go:
     docker:
       - image: *GOLANG_IMAGE
-    environment:
-      - TEST_RESULTS: *TEST_RESULTS_PATH
 
 jobs:
   go-fmt:
@@ -36,7 +34,9 @@ jobs:
     steps:
       - checkout
       - setup_remote_docker
-      - run: mkdir -p $TEST_RESULTS_PATH
+      - run: |
+         TEST_RESULTS_PATH=/tmp/test-results
+         mkdir -p $TEST_RESULTS_PATH
 
       # Restore go module cache if there is one
       - restore_cache:
