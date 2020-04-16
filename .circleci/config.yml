@@ -36,7 +36,7 @@ jobs:
     steps:
       - checkout
       - setup_remote_docker
-      - run: mkdir -p $TEST_RESULTS
+      - run: mkdir -p $TEST_RESULTS_PATH
 
       # Restore go module cache if there is one
       - restore_cache:
@@ -65,7 +65,7 @@ jobs:
           command: |
             docker run -v $(pwd):/go-getter \
             -v $TEST_RESULTS:$TEST_RESULTS \
-            --env TEST_RESULTS \
+            --env TEST_RESULTS_PATH \
             --env PACKAGE_NAMES=$(go list ./...)
             -w="/go-getter" \
             --link samba -t -d --name gogetter \
@@ -81,7 +81,7 @@ jobs:
 
       # run go tests with gotestsum
       - run: |
-          docker exec -it gogetter bash -c "gotestsum --format=short-verbose --junitfile $TEST_RESULTS/gotestsum-report.xml -- $PACKAGE_NAMES"
+          docker exec -it gogetter bash -c "gotestsum --format=short-verbose --junitfile $TEST_RESULTS_PATH/gotestsum-report.xml -- $PACKAGE_NAMES"
 
       - store_test_results:
           path: *TEST_RESULTS_PATH
