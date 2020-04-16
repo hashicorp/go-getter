@@ -64,7 +64,7 @@ jobs:
           name: Start go-getter container
           command: |
             docker run -v $(pwd):/go-getter \
-            -v $(TEST_RESULTS_PATH):$(TEST_RESULTS_PATH) \
+            -v /tmp/test-results:/tmp/test-results \
             --env TEST_RESULTS_PATH \
             -w="/go-getter" \
             --link samba -t -d --name gogetter \
