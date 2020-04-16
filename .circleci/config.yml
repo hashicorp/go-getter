@@ -90,9 +90,7 @@ jobs:
 
       - run: docker exec -it gogetter bash -c "sudo apt-get -y install smbclient"
 
-      # run go tests with gotestsum
-      - run: |
-          docker exec -it gogetter bash -c "go test ./... -run=TestSmbGetter_"
+      - run: docker exec -it gogetter bash -c "ls -la"
 
 
 workflows:

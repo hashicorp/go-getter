@@ -3,7 +3,6 @@ package getter
 import (
 	"context"
 	"fmt"
-	"log"
 	"net/url"
 	"os/exec"
 	"regexp"
@@ -34,7 +33,6 @@ func (g *SmbGetter) Mode(ctx context.Context, u *url.URL) (Mode, error) {
 // TODO: also copy directory
 func (g *SmbGetter) Get(ctx context.Context, req *Request) error {
 	hostPath, filePath, err := g.findHostAndFilePath(req)
-	log.Printf("MOSS hostPath %s filepath %s", hostPath, filePath)
 	if err == nil {
 		err = g.smbclientGetFile(hostPath, filePath, req)
 	}
@@ -115,7 +113,6 @@ func (g *SmbGetter) smbclientGetFile(hostPath string, fileDir string, req *Reque
 	// Execute smbclient command
 	getCommand := fmt.Sprintf("'get %s'", file)
 	cmd := exec.Command("smbclient", "-U", auth, hostPath, "--directory", fileDir, "-c", getCommand)
-	log.Printf("Moss BEFORE EXECUTING COMMANDS")
 	cmd.Dir = req.Dst
 	return getRunCommand(cmd)
 }
