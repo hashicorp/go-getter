@@ -1,0 +1,38 @@
+version: '3.2'
+
+services:
+  samba:
+    image: dperson/samba
+    container_name: samba
+    restart: unless-stopped
+    environment:
+      USERID: "0"
+      GROUPID: "0"
+    networks:
+      - default
+    ports:
+      - "137:137/udp" # required to advertise shares (NMBD)
+      - "138:138/udp" # required to advertise shares (NMBD)
+      - "139:139/tcp" # default smb port
+      - "445:445/tcp" # default smb port
+    read_only: false
+    tmpfs:
+      - /tmp
+    volumes:
+      - /mnt:/mnt:z # :z allows share to be used by multiple containers
+    command: '-s "shared;/data"'
+
+  gogetter:
+    image: circleci/golang:latest
+    container_name: gogetter
+    depends_on:
+      - samba
+    networks:
+      - default
+    volumes:
+      - /go-getter:/go-getter
+    working_dir: /go-getter
+    command: bash -c "go mod download && sudo apt-get -y install smbclient && go test ./... -run=TestSmbGetter_"
+
+networks:
+  default:

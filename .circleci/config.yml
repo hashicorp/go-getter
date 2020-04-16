@@ -57,43 +57,27 @@ jobs:
   go-smb-test:
     working_directory: /go-getter
     docker:
-      - image: docker:18.03.0-ce-git
+      - image: docker:17.05.0-ce-git
     steps:
       - checkout
       - setup_remote_docker
-
+      - run:
+          name: Install dependencies
+          command: |
+            apk add --no-cache \
+              py-pip=9.0.0-r1
+            pip install \
+              docker-compose==1.12.0
       - run:
           name: Start smb server
           command: |
-            docker run -d --name samba \
-              -e USERID=0 \
-              -e GROUPID=0 \
-              -p 137:137/udp \
-              -p 138:138/udp \
-              -p 139:139 \
-              -p 445:445 \
-              dperson/samba \
-              -n \
-              -u "username;password" \
-              -s "shared;/data"
-            docker exec -it samba bash -c "cd data && touch file.txt"
-            docker exec -it samba bash -c "cd data && mkdir subdir && cd subdir && touch file.txt"
-            docker exec -it samba bash -c "ls data"
-
-      - run:
-          name: Start go-getter container
-          command: |
-            docker run -v /go-getter:/go-getter \
-            -v /tmp/test-results:/tmp/test-results \
-            -w="/go-getter" \
-            --link samba -t -d --name gogetter \
-            circleci/golang:latest
-
-      - run: docker exec -it gogetter bash -c "ls /go-getter"
-
+            docker-compose up -d samba
+      - run: sleep 60
       - run:
           name: Run smb tests
-          command: docker exec -it gogetter bash -c "go test ./... -run=TestSmbGetter_"
+          command: |
+            docker exec -it samba bash -c "cd data && mkdir subdir && cd subdir && touch file.txt"
+            docker-compose up gogetter
 
 
 workflows:
