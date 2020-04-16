@@ -57,7 +57,7 @@ func TestAzureBlobGetter_subdir(t *testing.T) {
 
 func TestAzureBlobGetter_GetFile(t *testing.T) {
 	g := new(AzureBlobGetter)
-	dst := tempFile(t)
+	dst := tempTestFile(t)
 
 	// Download
 	err := g.GetFile(
@@ -75,7 +75,7 @@ func TestAzureBlobGetter_GetFile(t *testing.T) {
 
 func TestAzureBlobGetter_GetFile_badParams(t *testing.T) {
 	g := new(AzureBlobGetter)
-	dst := tempFile(t)
+	dst := tempTestFile(t)
 
 	// Download
 	err := g.GetFile(
@@ -88,7 +88,7 @@ func TestAzureBlobGetter_GetFile_badParams(t *testing.T) {
 
 func TestAzureBlobGetter_GetFile_notfound(t *testing.T) {
 	g := new(AzureBlobGetter)
-	dst := tempFile(t)
+	dst := tempTestFile(t)
 
 	// Download
 	err := g.GetFile(
