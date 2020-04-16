@@ -92,4 +92,5 @@ workflows:
   version: 2
   test-and-build:
     jobs:
-      - go-fmt-and-test
+      - go-fmt
+      - go-test
