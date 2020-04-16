@@ -32,7 +32,6 @@ services:
     volumes:
       - /go-getter:/go-getter
     working_dir: /go-getter
-    command: bash -c "ls"
 
 networks:
   default:

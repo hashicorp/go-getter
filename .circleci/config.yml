@@ -59,7 +59,6 @@ jobs:
     docker:
       - image: docker:17.05.0-ce-git
     steps:
-      - checkout
       - setup_remote_docker
       - run:
           name: Install dependencies
@@ -68,17 +67,24 @@ jobs:
               py-pip=9.0.0-r1
             pip install \
               docker-compose==1.12.0
+
       - run:
           name: Start smb server
           command: |
             docker-compose up -d samba
       - run: sleep 60
+        -
       - run:
-          name: Run smb tests
+          name: Start go-getter container
+          command: |
+            docker-compose -t -d up gogetter
+
+      - checkout
+      - run:
+          name: run tests
           command: |
             docker exec -it samba bash -c "cd data && mkdir subdir && cd subdir && touch file.txt"
-            docker exec -it samba bash -c "ls data"
-            docker-compose --verbose up gogetter
+            docker exec -it gogetter bash -c "ls && go mod download && apt-get update && apt-get -y install smbclient && go test ./... -run=TestSmbGetter_"
 
 workflows:
   version: 2
