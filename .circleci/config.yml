@@ -70,7 +70,7 @@ jobs:
             --link samba -t -d --name gogetter \
             circleci/golang:latest
 
-      - run: docker exec -it gogetter bash -c "cd /go-getter && go mod download && sudo apt-get -y install smbclient"
+      - run: docker exec -it gogetter bash -c "sudo apt-get -y install smbclient"
 
       # Save go module cache if the go.mod file has changed
       - save_cache:
