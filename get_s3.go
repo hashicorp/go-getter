@@ -188,18 +188,16 @@ func (g *S3Getter) getAWSConfig(region string, url *url.URL, creds *credentials.
 			metadataURL = "http://169.254.169.254:80/latest"
 		}
 
-		creds = credentials.NewChainCredentials(
-			[]credentials.Provider{
-				&credentials.EnvProvider{},
-				&credentials.SharedCredentialsProvider{Filename: "", Profile: ""},
-				&ec2rolecreds.EC2RoleProvider{
-					Client: ec2metadata.New(session.New(&aws.Config{
-						Endpoint: aws.String(metadataURL),
-					})),
-				},
-			})
+		ec2RoleCreds := credentials.NewCredentials(&ec2rolecreds.EC2RoleProvider{
+			Client: ec2metadata.New(session.New(&aws.Config{
+				Endpoint: aws.String(metadataURL),
+			})),
+		})
+		if _, err := ec2RoleCreds.Get(); err == nil  {
+			conf.WithCredentials(ec2RoleCreds)
+		}
 	}
-
+	
 	if creds != nil {
 		conf.Endpoint = &url.Host
 		conf.S3ForcePathStyle = aws.Bool(true)
@@ -208,7 +206,6 @@ func (g *S3Getter) getAWSConfig(region string, url *url.URL, creds *credentials.
 		}
 	}
 
-	conf.Credentials = creds
 	if region != "" {
 		conf.Region = aws.String(region)
 	}
