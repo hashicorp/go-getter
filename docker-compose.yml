@@ -23,7 +23,7 @@ services:
     command: '-s "shared;/data"'
 
   gogetter:
-    image: circleci/golang:latest
+    image: golang:latest
     container_name: gogetter
     depends_on:
       - samba
