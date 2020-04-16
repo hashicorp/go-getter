@@ -59,6 +59,7 @@ jobs:
     docker:
       - image: docker:17.05.0-ce-git
     steps:
+      - checkout
       - setup_remote_docker
       - run:
           name: Install dependencies
@@ -73,16 +74,16 @@ jobs:
           command: |
             docker-compose up -d samba
       - run: sleep 60
-      
+
       - run:
           name: Start go-getter container
           command: |
             docker-compose -t -d up gogetter
 
-      - checkout
       - run:
           name: run tests
           command: |
+            docker cp /go-getter/. gogetter:/go-getter/
             docker exec -it samba bash -c "cd data && mkdir subdir && cd subdir && touch file.txt"
             docker exec -it gogetter bash -c "ls && go mod download && apt-get update && apt-get -y install smbclient && go test ./... -run=TestSmbGetter_"
 
