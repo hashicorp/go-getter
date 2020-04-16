@@ -89,7 +89,7 @@ jobs:
             --link samba -t -d --name gogetter \
             circleci/golang:latest
 
-      - run: docker exec -it gogetter bash -c "ls && cd /go-getter && ls"
+      - run: docker exec -it gogetter bash -c "ls /go-getter"
 
       - run:
           name: Run smb tests
