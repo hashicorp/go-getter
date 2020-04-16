@@ -77,7 +77,8 @@ jobs:
           name: Run smb tests
           command: |
             docker exec -it samba bash -c "cd data && mkdir subdir && cd subdir && touch file.txt"
-            docker-compose up gogetter
+            docker exec -it samba bash -c "ls data"
+            docker-compose up --verbose gogetter
 
 workflows:
   version: 2
