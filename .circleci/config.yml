@@ -78,7 +78,7 @@ jobs:
           command: |
             docker exec -it samba bash -c "cd data && mkdir subdir && cd subdir && touch file.txt"
             docker exec -it samba bash -c "ls data"
-            docker-compose up --verbose gogetter
+            docker-compose --verbose up gogetter
 
 workflows:
   version: 2
