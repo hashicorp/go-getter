@@ -66,7 +66,6 @@ jobs:
             docker run -v $(pwd):/go-getter \
             -v $TEST_RESULTS:$TEST_RESULTS \
             --env TEST_RESULTS_PATH \
-            --env PACKAGE_NAMES=$(go list ./...)
             -w="/go-getter" \
             --link samba -t -d --name gogetter \
             circleci/golang:latest
@@ -81,7 +80,7 @@ jobs:
 
       # run go tests with gotestsum
       - run: |
-          docker exec -it gogetter bash -c "gotestsum --format=short-verbose --junitfile $TEST_RESULTS_PATH/gotestsum-report.xml -- $PACKAGE_NAMES"
+          docker exec -it gogetter bash -c "gotestsum --format=short-verbose --junitfile $TEST_RESULTS_PATH/gotestsum-report.xml -- $(go list ./...)"
 
       - store_test_results:
           path: *TEST_RESULTS_PATH
