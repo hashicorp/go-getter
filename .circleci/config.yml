@@ -15,25 +15,10 @@ executors:
       - TEST_RESULTS: *TEST_RESULTS_PATH
 
 jobs:
-  go-fmt-and-test:
+  go-fmt:
     executor: go
     steps:
       - checkout
-      - run: mkdir -p $TEST_RESULTS
-
-      # Restore go module cache if there is one
-      - restore_cache:
-          keys:
-            - go-getter-modcache-v1-{{ checksum "go.mod" }}
-
-      - run: go mod download
-
-      # Save go module cache if the go.mod file has changed
-      - save_cache:
-          key: go-getter-modcache-v1-{{ checksum "go.mod" }}
-          paths:
-            - "/go/pkg/mod"
-
       # check go fmt output because it does not report non-zero when there are fmt changes
       - run:
           name: check go fmt
@@ -45,14 +30,65 @@ jobs:
               exit 1
             fi
 
-      # run go tests with gotestsum
-      - run: |
-          PACKAGE_NAMES=$(go list ./...)
-          gotestsum --format=short-verbose --junitfile $TEST_RESULTS/gotestsum-report.xml -- $PACKAGE_NAMES
-      - store_test_results:
-          path: *TEST_RESULTS_PATH
-      - store_artifacts:
-          path: *TEST_RESULTS_PATH
+  go-test:
+    executor: go
+    steps:
+      docker:
+        - image: docker:18.03.0-ce-git
+        steps:
+          - checkout
+          - setup_remote_docker
+          - run: mkdir -p $TEST_RESULTS
+
+          # Restore go module cache if there is one
+          - restore_cache:
+              keys:
+                - go-getter-modcache-v1-{{ checksum "go.mod" }}
+
+          - run:
+              name: Start smb server
+              command: |
+                docker run -d --name samba \
+                  -e USERID=0 \
+                  -e GROUPID=0 \
+                  -p 137:137/udp \
+                  -p 138:138/udp \
+                  -p 139:139 \
+                  -p 445:445 \
+                  dperson/samba \
+                  -n \
+                  -u "username;password" \
+                  -s "shared;/data"
+                docker exec -it samba bash -c "cd data && touch file.txt"
+                docker exec -it samba bash -c "cd data && mkdir subdir && cd subdir && touch file.txt"
+
+          - run:
+              name: Start go-getter container
+              command: |
+                docker run -v $(pwd):/go-getter \
+                -v $TEST_RESULTS:$TEST_RESULTS \
+                --env TEST_RESULTS \
+                --env PACKAGE_NAMES=$(go list ./...)
+                -w="/go-getter" \
+                --link samba -t -d --name gogetter \
+                circleci/golang:latest
+
+          - run: docker exec -it gogetter bash -c "go mod download && sudo apt-get -y install smbclient"
+
+          # Save go module cache if the go.mod file has changed
+          - save_cache:
+              key: go-getter-modcache-v1-{{ checksum "go.mod" }}
+              paths:
+                - "/go/pkg/mod"
+
+          # run go tests with gotestsum
+          - run: |
+              docker exec -it gogetter bash -c "gotestsum --format=short-verbose --junitfile $TEST_RESULTS/gotestsum-report.xml -- $PACKAGE_NAMES"
+
+          - store_test_results:
+              path: *TEST_RESULTS_PATH
+          - store_artifacts:
+              path: *TEST_RESULTS_PATH
 
 workflows:
   version: 2
