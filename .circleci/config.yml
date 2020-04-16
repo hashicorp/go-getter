@@ -11,9 +11,11 @@ executors:
   go:
     docker:
       - image: *GOLANG_IMAGE
+    environment:
+      - TEST_RESULTS: *TEST_RESULTS_PATH
 
 jobs:
-  go-fmt-test:
+  go-fmt-and-test:
     executor: go
     steps:
       - checkout
@@ -97,5 +99,5 @@ workflows:
   version: 2
   test-and-build:
     jobs:
-      - go-fmt-test
+      - go-fmt-and-test
       - go-smb-test
