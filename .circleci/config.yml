@@ -55,6 +55,7 @@ jobs:
           path: *TEST_RESULTS_PATH
 
   go-smb-test:
+    working_directory: /go-getter
     docker:
       - image: docker:18.03.0-ce-git
     steps:
@@ -82,15 +83,17 @@ jobs:
       - run:
           name: Start go-getter container
           command: |
-            docker run -v $(pwd):/go-getter \
+            docker run -v /go-getter:/go-getter \
             -v /tmp/test-results:/tmp/test-results \
             -w="/go-getter" \
             --link samba -t -d --name gogetter \
             circleci/golang:latest
 
-      - run: docker exec -it gogetter bash -c "sudo apt-get -y install smbclient"
+      - run: docker exec -it gogetter bash -c "ls && cd /go-getter && ls"
 
-      - run: docker exec -it gogetter bash -c "ls -la"
+      - run:
+          name: Run smb tests
+          command: docker exec -it gogetter bash -c "go test ./... -run=TestSmbGetter_"
 
 
 workflows:
