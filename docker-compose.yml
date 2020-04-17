@@ -29,9 +29,8 @@ services:
       - samba
     networks:
       - default
-    volumes:
-      - /go-getter:/go-getter
     working_dir: /go-getter
+    command: tail -f /dev/null
 
 networks:
   default:
