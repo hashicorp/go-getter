@@ -17,7 +17,7 @@ type SmbGetter struct {
 	getter
 }
 
-const basePathError = "samba path should contain valid Host and filepath (smb://<host>/<file_path>)"
+const basePathError = "samba path should contain valid host, filepath, and authentication if necessary (smb://<user>:<password>@<host>/<file_path>)"
 
 func (g *SmbGetter) Mode(ctx context.Context, u *url.URL) (Mode, error) {
 	// TODO: validate mode from smb path instead of stat
@@ -28,16 +28,25 @@ func (g *SmbGetter) Mode(ctx context.Context, u *url.URL) (Mode, error) {
 func (g *SmbGetter) Get(ctx context.Context, req *Request) error {
 	hostPath, filePath, err := g.findHostAndFilePath(req)
 
+	dstExisted := false
+	if req.Dst != "" {
+		if _, err := os.Lstat(req.Dst); err == nil {
+			dstExisted = true
+		}
+	}
+
 	if err == nil {
 		err = g.smbclientGetFile(hostPath, filePath, req)
 		if err == nil {
 			return nil
 		}
 	}
-	os.RemoveAll(req.Dst)
 
-	if err.Error() == basePathError {
-		return err
+	if !dstExisted {
+		// Remove the destination created for smbclient files
+		if err := os.Remove(req.Dst); err != nil {
+			return err
+		}
 	}
 
 	// Look for local mount of shared folder
@@ -49,8 +58,7 @@ func (g *SmbGetter) Get(ctx context.Context, req *Request) error {
 		return nil
 	}
 
-	// TODO throw error msg to install smbclient or mount shared folder
-	return err
+	return fmt.Errorf("one of the options should be available: \n 1. local mount of the smb shared folder or; \n 2. smbclient cli installed. \n err: %s", err.Error())
 }
 
 func (g *SmbGetter) GetFile(ctx context.Context, req *Request) error {

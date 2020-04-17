@@ -86,8 +86,6 @@ func TestSmbGetter_Get(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-
 			if tt.createFile != "" {
 				// mock mounted folder by creating one
 				err := os.MkdirAll(tt.createFile, os.ModePerm)
