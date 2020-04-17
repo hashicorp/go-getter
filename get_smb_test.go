@@ -4,6 +4,7 @@ import (
 	"context"
 	urlhelper "github.com/hashicorp/go-getter/helper/url"
 	"os"
+	"path/filepath"
 	"testing"
 )
 
@@ -11,59 +12,132 @@ func TestSmbGetter_impl(t *testing.T) {
 	var _ Getter = new(SmbGetter)
 }
 
-// make the structure
+// TODO:
+// tests:
+// fails both local and smbclient
+// save tests results on circleci
+// allow download directory (?)
+// update Mode to return right mode
+// write GetFile tests
+// write higher level tests
+
+type smbTest struct {
+	name       string
+	rawURL     string
+	file       string
+	createFile string
+	fail       bool
+}
+
 func TestSmbGetter_Get(t *testing.T) {
 	smbTestsPreCheck(t)
 
-	g := new(SmbGetter)
-	ctx := context.Background()
+	tests := []smbTest{
+		 {
+		 	"smbclient with authentication",
+			"smb://vagrant:vagrant@samba/shared/file.txt",
+			"file.txt",
+			"",
+			false,
+		 },
+		{
+			"smbclient with authentication and subdir",
+			"smb://vagrant:vagrant@samba/shared/subdir/file.txt",
+			"file.txt",
+			"",
+			false,
+		},
+		{
+			"smbclient with only username authentication",
+			"smb://vagrant@samba/shared/file.txt",
+			"file.txt",
+			"",
+			false,
+		},
+		{
+			"smbclient without authentication",
+			"smb://samba/shared/file.txt",
+			"file.txt",
+			"",
+			false,
+		},
+		{
+			"local mounted smb shared file",
+			"smb://samba/shared/mounted.txt",
+			"mounted.txt",
+			"/samba/shared/mounted.txt",
+			false,
+		},
+		{
+			"no hostname provided",
+			"smb://",
+			"",
+			"",
+			true,
+		},
+		{
+			"no filepath provided",
+			"smb://samba",
+			"",
+			"",
+			true,
+		},
+	}
 
-	// correct url with auth data
-	url, err := urlhelper.Parse("smb://vagrant:vagrant@samba/shared/file.txt")
-	if err != nil {
-		t.Fatalf("err: %s", err.Error())
-	}
-	req := &Request{
-		u: url,
-	}
-	if err := g.Get(ctx, req); err == nil {
-		t.Fatalf("err: should not fail TEST MOSS")
-	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.createFile != "" {
+				// mock mounted folder by creating one
+				err := os.MkdirAll(tt.createFile, os.ModePerm)
+				if err != nil {
+					t.Fatalf("err: %s", err.Error())
+				}
+				defer os.RemoveAll(tt.createFile)
+			}
 
-	//correct url with auth data and subdir
-	url, err = urlhelper.Parse("smb://vagrant:vagrant@samba/shared/subdir/file.txt")
-	if err != nil {
-		t.Fatalf("err: %s", err.Error())
-	}
-	req = &Request{
-		u: url,
-	}
-	if err := g.Get(ctx, req); err != nil {
-		t.Fatalf("err: should not fail: %s", err.Error())
-	}
+			dst := tempDir(t)
+			defer os.RemoveAll(dst)
 
-	// no hostname provided
-	url, err = urlhelper.Parse("smb://")
-	if err != nil {
-		t.Fatalf("err: %s", err.Error())
-	}
-	req = &Request{
-		u: url,
-	}
-	if err := g.Get(ctx, req); err == nil {
-		t.Fatalf("err: should fail when request url doesn't have a Host")
-	}
+			url, err := urlhelper.Parse(tt.rawURL)
+			if err != nil {
+				t.Fatalf("err: %s", err.Error())
+			}
+			req := &Request{
+				Dst: dst,
+				u: url,
+			}
 
-	// no filepath provided
-	url, err = urlhelper.Parse("smb://host")
-	if err != nil {
-		t.Fatalf("err: %s", err.Error())
-	}
-	req = &Request{
-		u: url,
-	}
-	if err := g.Get(ctx, req); err == nil {
-		t.Fatalf("err: should fail when request url doesn't have a Host")
+			g := new(SmbGetter)
+			ctx := context.Background()
+			err = g.Get(ctx, req)
+			fail := err != nil
+
+			if tt.fail != fail {
+				if fail {
+					t.Fatalf("err: unexpected error %s", err.Error())
+				}
+				t.Fatalf("err: expecting to fail but it did not")
+			}
+
+			if !tt.fail {
+				if tt.createFile != "" {
+					// Verify the destination folder is a symlink to mounted folder
+					fi, err := os.Lstat(dst)
+					if err != nil {
+						t.Fatalf("err: %s", err)
+					}
+					if fi.Mode()&os.ModeSymlink == 0 {
+						t.Fatal("destination is not a symlink")
+					}
+				}
+
+				// Verify the file exists at the destination folder
+				mainPath := filepath.Join(dst, tt.file)
+				if _, err := os.Stat(mainPath); err != nil {
+					t.Fatalf("err: %s", err)
+				}
+			}
+		})
 	}
 }
 

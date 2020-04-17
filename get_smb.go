@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/url"
+	"os"
 	"os/exec"
 	"regexp"
 	"runtime"
@@ -33,20 +34,29 @@ func (g *SmbGetter) Mode(ctx context.Context, u *url.URL) (Mode, error) {
 // TODO: also copy directory
 func (g *SmbGetter) Get(ctx context.Context, req *Request) error {
 	hostPath, filePath, err := g.findHostAndFilePath(req)
+
 	if err == nil {
 		err = g.smbclientGetFile(hostPath, filePath, req)
+		if err == nil {
+			return nil
+		}
 	}
+	os.RemoveAll(req.Dst)
 
-	if err != nil && err.Error() == basePathError {
+	if err.Error() == basePathError {
 		return err
 	}
 
 	// Look for local mount of shared folder
-	if err != nil && runtime.GOOS == "windows" {
-		err = get(hostPath, req)
+	if runtime.GOOS == "linux" {
+		hostPath = strings.TrimPrefix(hostPath, "/")
+	}
+	err = get(hostPath, req)
+	if err == nil {
+		return nil
 	}
 
-	// throw error msg to install smbclient or mount shared folder
+	// TODO throw error msg to install smbclient or mount shared folder
 	return err
 }
 
@@ -97,22 +107,43 @@ func (g *SmbGetter) smbclientGetFile(hostPath string, fileDir string, req *Reque
 	file := ""
 	if strings.Contains(fileDir, "/") {
 		i := strings.LastIndex(fileDir, "/")
-		file = fileDir[i+1 : len(fileDir)-1]
-		fileDir = fileDir[0:i]
+		file = fileDir[i+1:]
+		fileDir = fileDir[:i]
 	} else {
 		file = fileDir
 		fileDir = "."
 	}
 
+	smbcmd := "smbclient -N"
+
 	// Get auth user and password
 	auth := req.u.User.Username()
-	if password, ok := req.u.User.Password(); ok {
-		auth = auth + "%" + password
+	if auth != "" {
+		if password, ok := req.u.User.Password(); ok {
+			auth = auth + "%" + password
+		}
+		smbcmd = smbcmd + " -U " + auth
+	}
+
+	getFile := fmt.Sprintf("'get %s'", file)
+	smbcmd = smbcmd + " " + hostPath+ " --directory " + fileDir + " --command "+ getFile
+	cmd := exec.Command("bash","-c",  smbcmd)
+
+	if req.Dst != "" {
+		_, err := os.Lstat(req.Dst)
+		if err != nil {
+			if os.IsNotExist(err) {
+				// Create destination folder if it doesn't exists
+				if err := os.MkdirAll(req.Dst, os.ModePerm); err != nil {
+					return fmt.Errorf("failed to creat destination path: %s", err.Error())
+				}
+			} else {
+				return err
+			}
+		}
+		cmd.Dir = req.Dst
 	}
 
 	// Execute smbclient command
-	getCommand := fmt.Sprintf("'get %s'", file)
-	cmd := exec.Command("smbclient", "-U", auth, hostPath, "--directory", fileDir, "-c", getCommand)
-	cmd.Dir = req.Dst
 	return getRunCommand(cmd)
 }
