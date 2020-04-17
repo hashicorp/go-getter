@@ -80,8 +80,8 @@ jobs:
           name: run tests
           command: |
             docker cp ./ gogetter:/go-getter/
-            docker exec -it samba bash -c "cd data && touch file.txt && mkdir subdir && cd subdir && touch file.txt"
-            docker exec -it gogetter bash -c "ls && go mod download && apt-get update && apt-get -y install smbclient && env ACC_SMB_TEST=1 go test ./... -run=TestSmbGetter_"
+            docker exec -it samba bash -c "touch data/file.txt && mkdir -p data/subdir && touch data/subdir/file.txt"
+            docker exec -it gogetter bash -c "go mod download && apt-get update && apt-get -y install smbclient && env ACC_SMB_TEST=1 go test ./... -run=TestSmbGetter_"
 
 workflows:
   version: 2

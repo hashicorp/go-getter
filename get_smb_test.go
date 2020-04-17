@@ -26,8 +26,8 @@ func TestSmbGetter_Get(t *testing.T) {
 	req := &Request{
 		u: url,
 	}
-	if err := g.Get(ctx, req); err != nil {
-		t.Fatalf("err: should not fail %s", err.Error())
+	if err := g.Get(ctx, req); err == nil {
+		t.Fatalf("err: should not fail TEST MOSS")
 	}
 
 	//correct url with auth data and subdir
