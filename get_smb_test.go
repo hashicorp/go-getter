@@ -33,13 +33,13 @@ func TestSmbGetter_Get(t *testing.T) {
 	smbTestsPreCheck(t)
 
 	tests := []smbTest{
-		 {
-		 	"smbclient with authentication",
+		{
+			"smbclient with authentication",
 			"smb://vagrant:vagrant@samba/shared/file.txt",
 			"file.txt",
 			"",
 			false,
-		 },
+		},
 		{
 			"smbclient with authentication and subdir",
 			"smb://vagrant:vagrant@samba/shared/subdir/file.txt",
@@ -86,6 +86,8 @@ func TestSmbGetter_Get(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			if tt.createFile != "" {
 				// mock mounted folder by creating one
 				err := os.MkdirAll(tt.createFile, os.ModePerm)
@@ -104,7 +106,7 @@ func TestSmbGetter_Get(t *testing.T) {
 			}
 			req := &Request{
 				Dst: dst,
-				u: url,
+				u:   url,
 			}
 
 			g := new(SmbGetter)

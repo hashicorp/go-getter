@@ -19,10 +19,7 @@ func (g *FileGetter) Mode(ctx context.Context, u *url.URL) (Mode, error) {
 	if u.RawPath != "" {
 		path = u.RawPath
 	}
-	return mode(path)
-}
 
-func mode(path string) (Mode, error) {
 	fi, err := os.Stat(path)
 	if err != nil {
 		return 0, err

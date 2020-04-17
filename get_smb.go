@@ -19,16 +19,9 @@ type SmbGetter struct {
 
 const basePathError = "samba path should contain valid Host and filepath (smb://<host>/<file_path>)"
 
-// TODO: validate mode from smb path instead of stat
 func (g *SmbGetter) Mode(ctx context.Context, u *url.URL) (Mode, error) {
-	if u.Host == "" || u.Path == "" {
-		return ModeFile, fmt.Errorf(basePathError)
-	}
-	path := "//" + u.Host + u.Path
-	if u.RawPath != "" {
-		path = u.RawPath
-	}
-	return mode(path)
+	// TODO: validate mode from smb path instead of stat
+	return ModeFile, nil
 }
 
 // TODO: also copy directory
@@ -126,8 +119,8 @@ func (g *SmbGetter) smbclientGetFile(hostPath string, fileDir string, req *Reque
 	}
 
 	getFile := fmt.Sprintf("'get %s'", file)
-	smbcmd = smbcmd + " " + hostPath+ " --directory " + fileDir + " --command "+ getFile
-	cmd := exec.Command("bash","-c",  smbcmd)
+	smbcmd = smbcmd + " " + hostPath + " --directory " + fileDir + " --command " + getFile
+	cmd := exec.Command("bash", "-c", smbcmd)
 
 	if req.Dst != "" {
 		_, err := os.Lstat(req.Dst)
