@@ -3,6 +3,7 @@ package getter
 import (
 	"context"
 	urlhelper "github.com/hashicorp/go-getter/helper/url"
+	"os"
 	"testing"
 )
 
@@ -12,6 +13,8 @@ func TestSmbGetter_impl(t *testing.T) {
 
 // make the structure
 func TestSmbGetter_Get(t *testing.T) {
+	smbTestsPreCheck(t)
+
 	g := new(SmbGetter)
 	ctx := context.Background()
 
@@ -61,6 +64,13 @@ func TestSmbGetter_Get(t *testing.T) {
 	}
 	if err := g.Get(ctx, req); err == nil {
 		t.Fatalf("err: should fail when request url doesn't have a Host")
+	}
+}
+
+func smbTestsPreCheck(t *testing.T) {
+	r := os.Getenv("ACC_SMB_TEST")
+	if r != "1" {
+		t.Skip("Smb getter tests won't run. ACC_SMB_TEST not set")
 	}
 }
 
