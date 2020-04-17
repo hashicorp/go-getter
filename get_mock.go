@@ -7,7 +7,6 @@ import (
 
 // MockGetter is an implementation of Getter that can be used for tests.
 type MockGetter struct {
-	getter
 
 	// Proxy, if set, will be called after recording the calls below.
 	// If it isn't set, then the *Err values will be returned.
@@ -27,7 +26,7 @@ type MockGetter struct {
 func (g *MockGetter) Get(ctx context.Context, req *Request) error {
 	g.GetCalled = true
 	g.GetDst = req.Dst
-	g.GetURL = req.u
+	g.GetURL = req.URL
 
 	if g.Proxy != nil {
 		return g.Proxy.Get(ctx, req)
@@ -39,7 +38,7 @@ func (g *MockGetter) Get(ctx context.Context, req *Request) error {
 func (g *MockGetter) GetFile(ctx context.Context, req *Request) error {
 	g.GetFileCalled = true
 	g.GetFileDst = req.Dst
-	g.GetFileURL = req.u
+	g.GetFileURL = req.URL
 
 	if g.Proxy != nil {
 		return g.Proxy.GetFile(ctx, req)

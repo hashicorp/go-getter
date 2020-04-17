@@ -6,6 +6,8 @@ import (
 	"os/exec"
 	"path/filepath"
 	"testing"
+
+	testing_helper "github.com/hashicorp/go-getter/v2/helper/testing"
 )
 
 var testHasHg bool
@@ -28,11 +30,11 @@ func TestHgGetter(t *testing.T) {
 	ctx := context.Background()
 
 	g := new(HgGetter)
-	dst := tempDir(t)
+	dst := testing_helper.TempDir(t)
 
 	req := &Request{
 		Dst: dst,
-		u:   testModuleURL("basic-hg"),
+		URL: testModuleURL("basic-hg"),
 	}
 
 	// With a dir that doesn't exist
@@ -55,7 +57,7 @@ func TestHgGetter_branch(t *testing.T) {
 	ctx := context.Background()
 
 	g := new(HgGetter)
-	dst := tempDir(t)
+	dst := testing_helper.TempDir(t)
 
 	url := testModuleURL("basic-hg")
 	q := url.Query()
@@ -64,7 +66,7 @@ func TestHgGetter_branch(t *testing.T) {
 
 	req := &Request{
 		Dst: dst,
-		u:   url,
+		URL: url,
 	}
 
 	if err := g.Get(ctx, req); err != nil {
@@ -97,12 +99,12 @@ func TestHgGetter_GetFile(t *testing.T) {
 	ctx := context.Background()
 
 	g := new(HgGetter)
-	dst := tempTestFile(t)
+	dst := testing_helper.TempTestFile(t)
 	defer os.RemoveAll(filepath.Dir(dst))
 
 	req := &Request{
 		Dst: dst,
-		u:   testModuleURL("basic-hg/foo.txt"),
+		URL: testModuleURL("basic-hg/foo.txt"),
 	}
 
 	// Download
@@ -114,5 +116,5 @@ func TestHgGetter_GetFile(t *testing.T) {
 	if _, err := os.Stat(dst); err != nil {
 		t.Fatalf("err: %s", err)
 	}
-	assertContents(t, dst, "Hello\n")
+	testing_helper.AssertContents(t, dst, "Hello\n")
 }

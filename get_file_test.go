@@ -5,6 +5,9 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+
+	testing_helper "github.com/hashicorp/go-getter/v2/helper/testing"
+	urlhelper "github.com/hashicorp/go-getter/v2/helper/url"
 )
 
 func TestFileGetter_impl(t *testing.T) {
@@ -13,12 +16,12 @@ func TestFileGetter_impl(t *testing.T) {
 
 func TestFileGetter(t *testing.T) {
 	g := new(FileGetter)
-	dst := tempDir(t)
+	dst := testing_helper.TempDir(t)
 	ctx := context.Background()
 
 	req := &Request{
 		Dst: dst,
-		u:   testModuleURL("basic"),
+		URL: testModuleURL("basic"),
 	}
 
 	// With a dir that doesn't exist
@@ -44,7 +47,7 @@ func TestFileGetter(t *testing.T) {
 
 func TestFileGetter_sourceFile(t *testing.T) {
 	g := new(FileGetter)
-	dst := tempDir(t)
+	dst := testing_helper.TempDir(t)
 	ctx := context.Background()
 
 	// With a source URL that is a path to a file
@@ -53,7 +56,7 @@ func TestFileGetter_sourceFile(t *testing.T) {
 
 	req := &Request{
 		Dst: dst,
-		u:   u,
+		URL: u,
 	}
 	if err := g.Get(ctx, req); err == nil {
 		t.Fatal("should error")
@@ -62,7 +65,7 @@ func TestFileGetter_sourceFile(t *testing.T) {
 
 func TestFileGetter_sourceNoExist(t *testing.T) {
 	g := new(FileGetter)
-	dst := tempDir(t)
+	dst := testing_helper.TempDir(t)
 	ctx := context.Background()
 
 	// With a source URL that doesn't exist
@@ -71,7 +74,7 @@ func TestFileGetter_sourceNoExist(t *testing.T) {
 
 	req := &Request{
 		Dst: dst,
-		u:   u,
+		URL: u,
 	}
 	if err := g.Get(ctx, req); err == nil {
 		t.Fatal("should error")
@@ -80,7 +83,7 @@ func TestFileGetter_sourceNoExist(t *testing.T) {
 
 func TestFileGetter_dir(t *testing.T) {
 	g := new(FileGetter)
-	dst := tempDir(t)
+	dst := testing_helper.TempDir(t)
 	ctx := context.Background()
 
 	if err := os.MkdirAll(dst, 0755); err != nil {
@@ -89,7 +92,7 @@ func TestFileGetter_dir(t *testing.T) {
 
 	req := &Request{
 		Dst: dst,
-		u:   testModuleURL("basic"),
+		URL: testModuleURL("basic"),
 	}
 	// With a dir that exists that isn't a symlink
 	if err := g.Get(ctx, req); err == nil {
@@ -99,10 +102,10 @@ func TestFileGetter_dir(t *testing.T) {
 
 func TestFileGetter_dirSymlink(t *testing.T) {
 	g := new(FileGetter)
-	dst := tempDir(t)
+	dst := testing_helper.TempDir(t)
 	ctx := context.Background()
 
-	dst2 := tempDir(t)
+	dst2 := testing_helper.TempDir(t)
 
 	// Make parents
 	if err := os.MkdirAll(filepath.Dir(dst), 0755); err != nil {
@@ -119,7 +122,7 @@ func TestFileGetter_dirSymlink(t *testing.T) {
 
 	req := &Request{
 		Dst: dst,
-		u:   testModuleURL("basic"),
+		URL: testModuleURL("basic"),
 	}
 
 	// With a dir that exists that isn't a symlink
@@ -136,13 +139,13 @@ func TestFileGetter_dirSymlink(t *testing.T) {
 
 func TestFileGetter_GetFile(t *testing.T) {
 	g := new(FileGetter)
-	dst := tempTestFile(t)
+	dst := testing_helper.TempTestFile(t)
 	defer os.RemoveAll(filepath.Dir(dst))
 	ctx := context.Background()
 
 	req := &Request{
 		Dst: dst,
-		u:   testModuleURL("basic-file/foo.txt"),
+		URL: testModuleURL("basic-file/foo.txt"),
 	}
 
 	// With a dir that doesn't exist
@@ -160,19 +163,19 @@ func TestFileGetter_GetFile(t *testing.T) {
 	}
 
 	// Verify the main file exists
-	assertContents(t, dst, "Hello\n")
+	testing_helper.AssertContents(t, dst, "Hello\n")
 }
 
 func TestFileGetter_GetFile_Copy(t *testing.T) {
 	g := new(FileGetter)
 
-	dst := tempTestFile(t)
+	dst := testing_helper.TempTestFile(t)
 	defer os.RemoveAll(filepath.Dir(dst))
 	ctx := context.Background()
 
 	req := &Request{
 		Dst:  dst,
-		u:    testModuleURL("basic-file/foo.txt"),
+		URL:  testModuleURL("basic-file/foo.txt"),
 		Copy: true,
 	}
 
@@ -191,18 +194,18 @@ func TestFileGetter_GetFile_Copy(t *testing.T) {
 	}
 
 	// Verify the main file exists
-	assertContents(t, dst, "Hello\n")
+	testing_helper.AssertContents(t, dst, "Hello\n")
 }
 
 // https://github.com/hashicorp/terraform/issues/8418
 func TestFileGetter_percent2F(t *testing.T) {
 	g := new(FileGetter)
-	dst := tempDir(t)
+	dst := testing_helper.TempDir(t)
 	ctx := context.Background()
 
 	req := &Request{
 		Dst: dst,
-		u:   testModuleURL("basic%2Ftest"),
+		URL: testModuleURL("basic%2Ftest"),
 	}
 
 	// With a dir that doesn't exist
@@ -221,7 +224,7 @@ func TestFileGetter_Mode_notexist(t *testing.T) {
 	g := new(FileGetter)
 	ctx := context.Background()
 
-	u := testURL("nonexistent")
+	u := urlhelper.MustParse("nonexistent")
 	if _, err := g.Mode(ctx, u); err == nil {
 		t.Fatal("expect source file error")
 	}

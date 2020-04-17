@@ -35,5 +35,5 @@ type Request struct {
 	// By default a no op progress listener is used.
 	ProgressListener ProgressTracker
 
-	u *url.URL
+	URL *url.URL
 }

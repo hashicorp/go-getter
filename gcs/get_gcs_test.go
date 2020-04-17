@@ -1,4 +1,4 @@
-package getter
+package gcs
 
 import (
 	"context"
@@ -6,6 +6,11 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/hashicorp/go-getter/v2"
+
+	testing_helper "github.com/hashicorp/go-getter/v2/helper/testing"
+	urlhelper "github.com/hashicorp/go-getter/v2/helper/url"
 )
 
 // initGCPCredentials writes a temporary GCS credentials file if necessary and
@@ -14,7 +19,7 @@ import (
 func initGCPCredentials(t *testing.T) func() {
 	if gc := os.Getenv("GOOGLE_CREDENTIALS"); gc != "" &&
 		os.Getenv("GOOGLE_APPLICATION_CREDENTIALS") == "" {
-		file, cleanup := tempFileContents(t, gc)
+		file, cleanup := testing_helper.TempFileWithContent(t, gc)
 		os.Setenv("GOOGLE_APPLICATION_CREDENTIALS", file)
 		return func() {
 			os.Setenv("GOOGLE_APPLICATION_CREDENTIALS", "")
@@ -24,20 +29,20 @@ func initGCPCredentials(t *testing.T) func() {
 	return func() {}
 }
 
-func TestGCSGetter_impl(t *testing.T) {
-	var _ Getter = new(GCSGetter)
+func TestGetter_impl(t *testing.T) {
+	var _ getter.Getter = new(Getter)
 }
 
-func TestGCSGetter(t *testing.T) {
+func TestGetter(t *testing.T) {
 	defer initGCPCredentials(t)()
 
-	g := new(GCSGetter)
-	dst := tempDir(t)
+	g := new(Getter)
+	dst := testing_helper.TempDir(t)
 	ctx := context.Background()
 
-	req := &Request{
+	req := &getter.Request{
 		Dst: dst,
-		u:   testURL("https://www.googleapis.com/storage/v1/go-getter-test/go-getter/folder"),
+		URL: urlhelper.MustParse("https://www.googleapis.com/storage/v1/go-getter-test/go-getter/folder"),
 	}
 
 	// With a dir that doesn't exist
@@ -53,16 +58,16 @@ func TestGCSGetter(t *testing.T) {
 	}
 }
 
-func TestGCSGetter_subdir(t *testing.T) {
+func TestGetter_subdir(t *testing.T) {
 	defer initGCPCredentials(t)()
 
-	g := new(GCSGetter)
-	dst := tempDir(t)
+	g := new(Getter)
+	dst := testing_helper.TempDir(t)
 	ctx := context.Background()
 
-	req := &Request{
+	req := &getter.Request{
 		Dst: dst,
-		u:   testURL("https://www.googleapis.com/storage/v1/go-getter-test/go-getter/folder/subfolder"),
+		URL: urlhelper.MustParse("https://www.googleapis.com/storage/v1/go-getter-test/go-getter/folder/subfolder"),
 	}
 
 	// With a dir that doesn't exist
@@ -78,17 +83,17 @@ func TestGCSGetter_subdir(t *testing.T) {
 	}
 }
 
-func TestGCSGetter_GetFile(t *testing.T) {
+func TestGetter_GetFile(t *testing.T) {
 	defer initGCPCredentials(t)()
 
-	g := new(GCSGetter)
-	dst := tempTestFile(t)
+	g := new(Getter)
+	dst := testing_helper.TempTestFile(t)
 	defer os.RemoveAll(filepath.Dir(dst))
 	ctx := context.Background()
 
-	req := &Request{
+	req := &getter.Request{
 		Dst: dst,
-		u:   testURL("https://www.googleapis.com/storage/v1/go-getter-test/go-getter/folder/main.tf"),
+		URL: urlhelper.MustParse("https://www.googleapis.com/storage/v1/go-getter-test/go-getter/folder/main.tf"),
 	}
 
 	// Download
@@ -101,18 +106,18 @@ func TestGCSGetter_GetFile(t *testing.T) {
 	if _, err := os.Stat(dst); err != nil {
 		t.Fatalf("err: %s", err)
 	}
-	assertContents(t, dst, "# Main\n")
+	testing_helper.AssertContents(t, dst, "# Main\n")
 }
 
-func TestGCSGetter_GetFile_notfound(t *testing.T) {
-	g := new(GCSGetter)
-	dst := tempTestFile(t)
+func TestGetter_GetFile_notfound(t *testing.T) {
+	g := new(Getter)
+	dst := testing_helper.TempTestFile(t)
 	defer os.RemoveAll(filepath.Dir(dst))
 	ctx := context.Background()
 
-	req := &Request{
+	req := &getter.Request{
 		Dst: dst,
-		u:   testURL("https://www.googleapis.com/storage/v1/go-getter-test/go-getter/folder/404.tf"),
+		URL: urlhelper.MustParse("https://www.googleapis.com/storage/v1/go-getter-test/go-getter/folder/404.tf"),
 	}
 
 	// Download
@@ -122,59 +127,59 @@ func TestGCSGetter_GetFile_notfound(t *testing.T) {
 	}
 }
 
-func TestGCSGetter_Mode_dir(t *testing.T) {
+func TestGetter_Mode_dir(t *testing.T) {
 	defer initGCPCredentials(t)()
 
-	g := new(GCSGetter)
+	g := new(Getter)
 	ctx := context.Background()
 
 	// Check client mode on a key prefix with only a single key.
 	mode, err := g.Mode(ctx,
-		testURL("https://www.googleapis.com/storage/v1/go-getter-test/go-getter/folder/subfolder"))
+		urlhelper.MustParse("https://www.googleapis.com/storage/v1/go-getter-test/go-getter/folder/subfolder"))
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
-	if mode != ModeDir {
+	if mode != getter.ModeDir {
 		t.Fatal("expect ModeDir")
 	}
 }
 
-func TestGCSGetter_Mode_file(t *testing.T) {
+func TestGetter_Mode_file(t *testing.T) {
 	defer initGCPCredentials(t)()
 
-	g := new(GCSGetter)
+	g := new(Getter)
 	ctx := context.Background()
 
 	// Check client mode on a key prefix which contains sub-keys.
 	mode, err := g.Mode(ctx,
-		testURL("https://www.googleapis.com/storage/v1/go-getter-test/go-getter/folder/subfolder/sub.tf"))
+		urlhelper.MustParse("https://www.googleapis.com/storage/v1/go-getter-test/go-getter/folder/subfolder/sub.tf"))
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
-	if mode != ModeFile {
+	if mode != getter.ModeFile {
 		t.Fatal("expect ModeFile")
 	}
 }
 
-func TestGCSGetter_Mode_notfound(t *testing.T) {
+func TestGetter_Mode_notfound(t *testing.T) {
 	defer initGCPCredentials(t)()
 
-	g := new(GCSGetter)
+	g := new(Getter)
 	ctx := context.Background()
 
 	// Check the client mode when a non-existent key is looked up. This does not
 	// return an error, but rather should just return the file mode.
 	mode, err := g.Mode(ctx,
-		testURL("https://www.googleapis.com/storage/v1/go-getter-test/go-getter/foobar"))
+		urlhelper.MustParse("https://www.googleapis.com/storage/v1/go-getter-test/go-getter/foobar"))
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
-	if mode != ModeFile {
+	if mode != getter.ModeFile {
 		t.Fatal("expect ModeFile")
 	}
 }
 
-func TestGCSGetter_Url(t *testing.T) {
+func TestGetter_Url(t *testing.T) {
 	defer initGCPCredentials(t)()
 
 	var gcstests = []struct {
@@ -193,8 +198,8 @@ func TestGCSGetter_Url(t *testing.T) {
 
 	for i, pt := range gcstests {
 		t.Run(pt.name, func(t *testing.T) {
-			g := new(GCSGetter)
-			forced, src := getForcedGetter(pt.url)
+			g := new(Getter)
+			forced, src := getter.GetForcedGetter(pt.url)
 			u, err := url.Parse(src)
 
 			if err != nil {

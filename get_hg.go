@@ -16,7 +16,6 @@ import (
 // HgGetter is a Getter implementation that will download a module from
 // a Mercurial repository.
 type HgGetter struct {
-	getter
 }
 
 func (g *HgGetter) Mode(ctx context.Context, _ *url.URL) (Mode, error) {
@@ -28,7 +27,7 @@ func (g *HgGetter) Get(ctx context.Context, req *Request) error {
 		return fmt.Errorf("hg must be available and on the PATH")
 	}
 
-	newURL, err := urlhelper.Parse(req.u.String())
+	newURL, err := urlhelper.Parse(req.URL.String())
 	if err != nil {
 		return err
 	}
@@ -77,14 +76,14 @@ func (g *HgGetter) GetFile(ctx context.Context, req *Request) error {
 
 	// Get the filename, and strip the filename from the URL so we can
 	// just get the repository directly.
-	filename := filepath.Base(req.u.Path)
-	req.u.Path = filepath.Dir(req.u.Path)
+	filename := filepath.Base(req.URL.Path)
+	req.URL.Path = filepath.Dir(req.URL.Path)
 	dst := req.Dst
 	req.Dst = td
 
 	// If we're on Windows, we need to set the host to "localhost" for hg
 	if runtime.GOOS == "windows" {
-		req.u.Host = "localhost"
+		req.URL.Host = "localhost"
 	}
 
 	// Get the full repository
@@ -93,7 +92,7 @@ func (g *HgGetter) GetFile(ctx context.Context, req *Request) error {
 	}
 
 	// Copy the single file
-	req.u, err = urlhelper.Parse(fmtFileURL(filepath.Join(td, filename)))
+	req.URL, err = urlhelper.Parse(fmtFileURL(filepath.Join(td, filename)))
 	if err != nil {
 		return err
 	}

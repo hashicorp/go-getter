@@ -9,6 +9,8 @@ import (
 	"path/filepath"
 	"sync"
 	"testing"
+
+	testing_helper "github.com/hashicorp/go-getter/v2/helper/testing"
 )
 
 type MockProgressTracking struct {
@@ -39,7 +41,7 @@ func TestGet_progress(t *testing.T) {
 	ctx := context.Background()
 
 	{ // dl without tracking
-		dst := tempTestFile(t)
+		dst := testing_helper.TempTestFile(t)
 		defer os.RemoveAll(filepath.Dir(dst))
 		if _, err := GetFile(ctx, dst, s.URL+"/file?thig=this&that"); err != nil {
 			t.Fatalf("download failed: %v", err)
@@ -48,7 +50,7 @@ func TestGet_progress(t *testing.T) {
 
 	{ // tracking
 		p := &MockProgressTracking{}
-		dst := tempTestFile(t)
+		dst := testing_helper.TempTestFile(t)
 		defer os.RemoveAll(filepath.Dir(dst))
 		req := &Request{
 			Dst:              dst,

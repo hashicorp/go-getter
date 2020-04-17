@@ -8,6 +8,8 @@ import (
 	"os/signal"
 	"sync"
 
+	gcs "github.com/hashicorp/go-getter/gcs/v2"
+	s3 "github.com/hashicorp/go-getter/s3/v2"
 	getter "github.com/hashicorp/go-getter/v2"
 )
 
@@ -55,6 +57,11 @@ func main() {
 
 	wg := sync.WaitGroup{}
 	wg.Add(1)
+
+	client := getter.DefaultClient
+
+	client.Getters["gcs"] = new(gcs.Getter)
+	client.Getters["s3"] = new(s3.Getter)
 
 	errChan := make(chan error, 2)
 	go func() {

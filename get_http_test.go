@@ -15,6 +15,8 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+
+	testing_helper "github.com/hashicorp/go-getter/v2/helper/testing"
 )
 
 func TestHttpGetter_impl(t *testing.T) {
@@ -27,7 +29,7 @@ func TestHttpGetter_header(t *testing.T) {
 	ctx := context.Background()
 
 	g := new(HttpGetter)
-	dst := tempDir(t)
+	dst := testing_helper.TempDir(t)
 	defer os.RemoveAll(dst)
 
 	var u url.URL
@@ -37,7 +39,7 @@ func TestHttpGetter_header(t *testing.T) {
 
 	req := &Request{
 		Dst: dst,
-		u:   &u,
+		URL: &u,
 	}
 
 	// Get it!
@@ -60,7 +62,7 @@ func TestHttpGetter_requestHeader(t *testing.T) {
 	g := new(HttpGetter)
 	g.Header = make(http.Header)
 	g.Header.Add("X-Foobar", "foobar")
-	dst := tempDir(t)
+	dst := testing_helper.TempDir(t)
 	defer os.RemoveAll(dst)
 
 	var u url.URL
@@ -71,7 +73,7 @@ func TestHttpGetter_requestHeader(t *testing.T) {
 
 	req := &Request{
 		Dst: dst,
-		u:   &u,
+		URL: &u,
 	}
 
 	// Get it!
@@ -83,7 +85,7 @@ func TestHttpGetter_requestHeader(t *testing.T) {
 	if _, err := os.Stat(dst); err != nil {
 		t.Fatalf("err: %s", err)
 	}
-	assertContents(t, dst, "Hello\n")
+	testing_helper.AssertContents(t, dst, "Hello\n")
 }
 
 func TestHttpGetter_meta(t *testing.T) {
@@ -92,7 +94,7 @@ func TestHttpGetter_meta(t *testing.T) {
 	ctx := context.Background()
 
 	g := new(HttpGetter)
-	dst := tempDir(t)
+	dst := testing_helper.TempDir(t)
 	defer os.RemoveAll(dst)
 
 	var u url.URL
@@ -102,7 +104,7 @@ func TestHttpGetter_meta(t *testing.T) {
 
 	req := &Request{
 		Dst: dst,
-		u:   &u,
+		URL: &u,
 	}
 
 	// Get it!
@@ -123,7 +125,7 @@ func TestHttpGetter_metaSubdir(t *testing.T) {
 	ctx := context.Background()
 
 	g := new(HttpGetter)
-	dst := tempDir(t)
+	dst := testing_helper.TempDir(t)
 	defer os.RemoveAll(dst)
 
 	var u url.URL
@@ -133,7 +135,7 @@ func TestHttpGetter_metaSubdir(t *testing.T) {
 
 	req := &Request{
 		Dst: dst,
-		u:   &u,
+		URL: &u,
 	}
 
 	// Get it!
@@ -154,7 +156,7 @@ func TestHttpGetter_metaSubdirGlob(t *testing.T) {
 	ctx := context.Background()
 
 	g := new(HttpGetter)
-	dst := tempDir(t)
+	dst := testing_helper.TempDir(t)
 	defer os.RemoveAll(dst)
 
 	var u url.URL
@@ -164,7 +166,7 @@ func TestHttpGetter_metaSubdirGlob(t *testing.T) {
 
 	req := &Request{
 		Dst: dst,
-		u:   &u,
+		URL: &u,
 	}
 
 	// Get it!
@@ -185,7 +187,7 @@ func TestHttpGetter_none(t *testing.T) {
 	ctx := context.Background()
 
 	g := new(HttpGetter)
-	dst := tempDir(t)
+	dst := testing_helper.TempDir(t)
 	defer os.RemoveAll(dst)
 
 	var u url.URL
@@ -195,7 +197,7 @@ func TestHttpGetter_none(t *testing.T) {
 
 	req := &Request{
 		Dst: dst,
-		u:   &u,
+		URL: &u,
 	}
 
 	// Get it!
@@ -216,7 +218,7 @@ func TestHttpGetter_resume(t *testing.T) {
 	ln := testHttpServer(t)
 	defer ln.Close()
 
-	dst := tempDir(t)
+	dst := testing_helper.TempDir(t)
 	defer os.RemoveAll(dst)
 
 	dst = filepath.Join(dst, "..", "range")
@@ -273,7 +275,7 @@ func TestHttpGetter_resumeNoRange(t *testing.T) {
 	ln := testHttpServer(t)
 	defer ln.Close()
 
-	dst := tempDir(t)
+	dst := testing_helper.TempDir(t)
 	defer os.RemoveAll(dst)
 
 	dst = filepath.Join(dst, "..", "range")
@@ -318,7 +320,7 @@ func TestHttpGetter_file(t *testing.T) {
 	ctx := context.Background()
 
 	g := new(HttpGetter)
-	dst := tempTestFile(t)
+	dst := testing_helper.TempTestFile(t)
 	defer os.RemoveAll(filepath.Dir(dst))
 
 	var u url.URL
@@ -328,7 +330,7 @@ func TestHttpGetter_file(t *testing.T) {
 
 	req := &Request{
 		Dst: dst,
-		u:   &u,
+		URL: &u,
 	}
 
 	// Get it!
@@ -340,7 +342,7 @@ func TestHttpGetter_file(t *testing.T) {
 	if _, err := os.Stat(dst); err != nil {
 		t.Fatalf("err: %s", err)
 	}
-	assertContents(t, dst, "Hello\n")
+	testing_helper.AssertContents(t, dst, "Hello\n")
 }
 
 func TestHttpGetter_auth(t *testing.T) {
@@ -349,7 +351,7 @@ func TestHttpGetter_auth(t *testing.T) {
 	ctx := context.Background()
 
 	g := new(HttpGetter)
-	dst := tempDir(t)
+	dst := testing_helper.TempDir(t)
 	defer os.RemoveAll(dst)
 
 	var u url.URL
@@ -360,7 +362,7 @@ func TestHttpGetter_auth(t *testing.T) {
 
 	req := &Request{
 		Dst: dst,
-		u:   &u,
+		URL: &u,
 	}
 
 	// Get it!
@@ -381,7 +383,7 @@ func TestHttpGetter_authNetrc(t *testing.T) {
 	ctx := context.Background()
 
 	g := new(HttpGetter)
-	dst := tempDir(t)
+	dst := testing_helper.TempDir(t)
 	defer os.RemoveAll(dst)
 
 	var u url.URL
@@ -390,13 +392,13 @@ func TestHttpGetter_authNetrc(t *testing.T) {
 	u.Path = "/meta"
 
 	// Write the netrc file
-	path, closer := tempFileContents(t, fmt.Sprintf(testHttpNetrc, ln.Addr().String()))
+	path, closer := testing_helper.TempFileWithContent(t, fmt.Sprintf(testHttpNetrc, ln.Addr().String()))
 	defer closer()
 	defer tempEnv(t, "NETRC", path)()
 
 	req := &Request{
 		Dst: dst,
-		u:   &u,
+		URL: &u,
 	}
 
 	// Get it!
@@ -431,7 +433,7 @@ func TestHttpGetter_cleanhttp(t *testing.T) {
 	ctx := context.Background()
 
 	g := new(HttpGetter)
-	dst := tempDir(t)
+	dst := testing_helper.TempDir(t)
 	defer os.RemoveAll(dst)
 
 	var u url.URL
@@ -441,7 +443,7 @@ func TestHttpGetter_cleanhttp(t *testing.T) {
 
 	req := &Request{
 		Dst: dst,
-		u:   &u,
+		URL: &u,
 	}
 
 	// Get it!

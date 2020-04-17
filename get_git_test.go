@@ -13,6 +13,7 @@ import (
 	"strings"
 	"testing"
 
+	testing_helper "github.com/hashicorp/go-getter/v2/helper/testing"
 	urlhelper "github.com/hashicorp/go-getter/v2/helper/url"
 )
 
@@ -35,14 +36,14 @@ func TestGitGetter(t *testing.T) {
 	ctx := context.Background()
 
 	g := new(GitGetter)
-	dst := tempDir(t)
+	dst := testing_helper.TempDir(t)
 
 	repo := testGitRepo(t, "basic")
 	repo.commitFile("foo.txt", "hello")
 
 	req := &Request{
 		Dst: dst,
-		u:   repo.url,
+		URL: repo.url,
 	}
 
 	// With a dir that doesn't exist
@@ -64,7 +65,7 @@ func TestGitGetter_branch(t *testing.T) {
 	ctx := context.Background()
 
 	g := new(GitGetter)
-	dst := tempDir(t)
+	dst := testing_helper.TempDir(t)
 
 	repo := testGitRepo(t, "branch")
 	repo.git("checkout", "-b", "test-branch")
@@ -76,7 +77,7 @@ func TestGitGetter_branch(t *testing.T) {
 
 	if err := g.Get(ctx, &Request{
 		Dst: dst,
-		u:   repo.url,
+		URL: repo.url,
 	}); err != nil {
 		t.Fatalf("err: %s", err)
 	}
@@ -90,7 +91,7 @@ func TestGitGetter_branch(t *testing.T) {
 	// Get again should work
 	if err := g.Get(ctx, &Request{
 		Dst: dst,
-		u:   repo.url,
+		URL: repo.url,
 	}); err != nil {
 		t.Fatalf("err: %s", err)
 	}
@@ -110,7 +111,7 @@ func TestGitGetter_remoteWithoutMaster(t *testing.T) {
 
 	ctx := context.Background()
 	g := new(GitGetter)
-	dst := tempDir(t)
+	dst := testing_helper.TempDir(t)
 
 	repo := testGitRepo(t, "branch")
 	repo.git("checkout", "-b", "test-branch")
@@ -120,7 +121,7 @@ func TestGitGetter_remoteWithoutMaster(t *testing.T) {
 	repo.url.RawQuery = q.Encode()
 	req := &Request{
 		Src: repo.url.String(),
-		u:   repo.url,
+		URL: repo.url,
 		Dst: dst,
 	}
 
@@ -154,7 +155,7 @@ func TestGitGetter_shallowClone(t *testing.T) {
 	ctx := context.Background()
 
 	g := new(GitGetter)
-	dst := tempDir(t)
+	dst := testing_helper.TempDir(t)
 
 	repo := testGitRepo(t, "upstream")
 	repo.commitFile("upstream.txt", "0")
@@ -167,7 +168,7 @@ func TestGitGetter_shallowClone(t *testing.T) {
 
 	if err := g.Get(ctx, &Request{
 		Dst: dst,
-		u:   repo.url,
+		URL: repo.url,
 	}); err != nil {
 		t.Fatalf("err: %s", err)
 	}
@@ -193,7 +194,7 @@ func TestGitGetter_branchUpdate(t *testing.T) {
 	ctx := context.Background()
 
 	g := new(GitGetter)
-	dst := tempDir(t)
+	dst := testing_helper.TempDir(t)
 
 	// First setup the state with a fresh branch
 	repo := testGitRepo(t, "branch-update")
@@ -207,7 +208,7 @@ func TestGitGetter_branchUpdate(t *testing.T) {
 
 	if err := g.Get(ctx, &Request{
 		Dst: dst,
-		u:   repo.url,
+		URL: repo.url,
 	}); err != nil {
 		t.Fatalf("err: %s", err)
 	}
@@ -224,7 +225,7 @@ func TestGitGetter_branchUpdate(t *testing.T) {
 	// Get again should work
 	if err := g.Get(ctx, &Request{
 		Dst: dst,
-		u:   repo.url,
+		URL: repo.url,
 	}); err != nil {
 		t.Fatalf("err: %s", err)
 	}
@@ -243,7 +244,7 @@ func TestGitGetter_tag(t *testing.T) {
 	ctx := context.Background()
 
 	g := new(GitGetter)
-	dst := tempDir(t)
+	dst := testing_helper.TempDir(t)
 
 	repo := testGitRepo(t, "tag")
 	repo.commitFile("tag.txt", "tag")
@@ -255,7 +256,7 @@ func TestGitGetter_tag(t *testing.T) {
 
 	if err := g.Get(ctx, &Request{
 		Dst: dst,
-		u:   repo.url,
+		URL: repo.url,
 	}); err != nil {
 		t.Fatalf("err: %s", err)
 	}
@@ -269,7 +270,7 @@ func TestGitGetter_tag(t *testing.T) {
 	// Get again should work
 	if err := g.Get(ctx, &Request{
 		Dst: dst,
-		u:   repo.url,
+		URL: repo.url,
 	}); err != nil {
 		t.Fatalf("err: %s", err)
 	}
@@ -288,7 +289,7 @@ func TestGitGetter_GetFile(t *testing.T) {
 	ctx := context.Background()
 
 	g := new(GitGetter)
-	dst := tempTestFile(t)
+	dst := testing_helper.TempTestFile(t)
 	defer os.RemoveAll(filepath.Dir(dst))
 
 	repo := testGitRepo(t, "file")
@@ -298,7 +299,7 @@ func TestGitGetter_GetFile(t *testing.T) {
 	repo.url.Path = filepath.Join(repo.url.Path, "file.txt")
 	req := &Request{
 		Dst: dst,
-		u:   repo.url,
+		URL: repo.url,
 	}
 
 	if err := g.GetFile(ctx, req); err != nil {
@@ -309,7 +310,7 @@ func TestGitGetter_GetFile(t *testing.T) {
 	if _, err := os.Stat(dst); err != nil {
 		t.Fatalf("err: %s", err)
 	}
-	assertContents(t, dst, "hello")
+	testing_helper.AssertContents(t, dst, "hello")
 }
 
 func TestGitGetter_gitVersion(t *testing.T) {
@@ -358,7 +359,7 @@ func TestGitGetter_sshKey(t *testing.T) {
 	ctx := context.Background()
 
 	g := new(GitGetter)
-	dst := tempDir(t)
+	dst := testing_helper.TempDir(t)
 
 	encodedKey := base64.StdEncoding.EncodeToString([]byte(testGitToken))
 
@@ -374,7 +375,7 @@ func TestGitGetter_sshKey(t *testing.T) {
 
 	req := &Request{
 		Dst: dst,
-		u:   u,
+		URL: u,
 	}
 
 	if err := g.Get(ctx, req); err != nil {
@@ -394,7 +395,7 @@ func TestGitGetter_sshSCPStyle(t *testing.T) {
 
 	ctx := context.Background()
 	g := new(GitGetter)
-	dst := tempDir(t)
+	dst := testing_helper.TempDir(t)
 
 	encodedKey := base64.StdEncoding.EncodeToString([]byte(testGitToken))
 
@@ -437,7 +438,7 @@ func TestGitGetter_sshExplicitPort(t *testing.T) {
 
 	ctx := context.Background()
 	g := new(GitGetter)
-	dst := tempDir(t)
+	dst := testing_helper.TempDir(t)
 
 	encodedKey := base64.StdEncoding.EncodeToString([]byte(testGitToken))
 
@@ -481,7 +482,7 @@ func TestGitGetter_sshSCPStyleInvalidScheme(t *testing.T) {
 
 	ctx := context.Background()
 	g := new(GitGetter)
-	dst := tempDir(t)
+	dst := testing_helper.TempDir(t)
 
 	encodedKey := base64.StdEncoding.EncodeToString([]byte(testGitToken))
 
@@ -527,7 +528,7 @@ func TestGitGetter_submodule(t *testing.T) {
 	ctx := context.Background()
 
 	g := new(GitGetter)
-	dst := tempDir(t)
+	dst := testing_helper.TempDir(t)
 
 	relpath := func(basepath, targpath string) string {
 		relpath, err := filepath.Rel(basepath, targpath)
@@ -557,7 +558,7 @@ func TestGitGetter_submodule(t *testing.T) {
 
 	req := &Request{
 		Dst: dst,
-		u:   p.url,
+		URL: p.url,
 	}
 
 	// Clone the root repository
