@@ -39,7 +39,7 @@ func TestHttpGetter_header(t *testing.T) {
 
 	req := &Request{
 		Dst: dst,
-		URL: &u,
+		url: &u,
 	}
 
 	// Get it!
@@ -73,7 +73,7 @@ func TestHttpGetter_requestHeader(t *testing.T) {
 
 	req := &Request{
 		Dst: dst,
-		URL: &u,
+		url: &u,
 	}
 
 	// Get it!
@@ -104,7 +104,7 @@ func TestHttpGetter_meta(t *testing.T) {
 
 	req := &Request{
 		Dst: dst,
-		URL: &u,
+		url: &u,
 	}
 
 	// Get it!
@@ -135,7 +135,7 @@ func TestHttpGetter_metaSubdir(t *testing.T) {
 
 	req := &Request{
 		Dst: dst,
-		URL: &u,
+		url: &u,
 	}
 
 	// Get it!
@@ -166,7 +166,7 @@ func TestHttpGetter_metaSubdirGlob(t *testing.T) {
 
 	req := &Request{
 		Dst: dst,
-		URL: &u,
+		url: &u,
 	}
 
 	// Get it!
@@ -197,7 +197,7 @@ func TestHttpGetter_none(t *testing.T) {
 
 	req := &Request{
 		Dst: dst,
-		URL: &u,
+		url: &u,
 	}
 
 	// Get it!
@@ -330,7 +330,7 @@ func TestHttpGetter_file(t *testing.T) {
 
 	req := &Request{
 		Dst: dst,
-		URL: &u,
+		url: &u,
 	}
 
 	// Get it!
@@ -362,7 +362,7 @@ func TestHttpGetter_auth(t *testing.T) {
 
 	req := &Request{
 		Dst: dst,
-		URL: &u,
+		url: &u,
 	}
 
 	// Get it!
@@ -398,7 +398,7 @@ func TestHttpGetter_authNetrc(t *testing.T) {
 
 	req := &Request{
 		Dst: dst,
-		URL: &u,
+		url: &u,
 	}
 
 	// Get it!
@@ -443,7 +443,7 @@ func TestHttpGetter_cleanhttp(t *testing.T) {
 
 	req := &Request{
 		Dst: dst,
-		URL: &u,
+		url: &u,
 	}
 
 	// Get it!

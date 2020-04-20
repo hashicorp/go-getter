@@ -75,12 +75,12 @@ func (c *Client) Get(ctx context.Context, req *Request) (*GetResult, error) {
 		req.Dst = td
 	}
 
-	req.URL, err = urlhelper.Parse(req.Src)
+	req.url, err = urlhelper.Parse(req.Src)
 	if err != nil {
 		return nil, err
 	}
 	if force == "" {
-		force = req.URL.Scheme
+		force = req.url.Scheme
 	}
 
 	g, ok := c.Getters[force]
@@ -90,7 +90,7 @@ func (c *Client) Get(ctx context.Context, req *Request) (*GetResult, error) {
 	}
 
 	// We have magic query parameters that we use to signal different features
-	q := req.URL.Query()
+	q := req.url.Query()
 
 	// Determine if we have an archive type
 	archiveV := q.Get("archive")
@@ -98,7 +98,7 @@ func (c *Client) Get(ctx context.Context, req *Request) (*GetResult, error) {
 		// Delete the paramter since it is a magic parameter we don't
 		// want to pass on to the Getter
 		q.Del("archive")
-		req.URL.RawQuery = q.Encode()
+		req.url.RawQuery = q.Encode()
 
 		// If we can parse the value as a bool and it is false, then
 		// set the archive to "-" which should never map to a decompressor
@@ -110,7 +110,7 @@ func (c *Client) Get(ctx context.Context, req *Request) (*GetResult, error) {
 		// We don't appear to... but is it part of the filename?
 		matchingLen := 0
 		for k := range c.Decompressors {
-			if strings.HasSuffix(req.URL.Path, "."+k) && len(k) > matchingLen {
+			if strings.HasSuffix(req.url.Path, "."+k) && len(k) > matchingLen {
 				archiveV = k
 				matchingLen = len(k)
 			}
@@ -142,18 +142,18 @@ func (c *Client) Get(ctx context.Context, req *Request) (*GetResult, error) {
 	}
 
 	// Determine checksum if we have one
-	checksum, err := c.extractChecksum(ctx, req.URL)
+	checksum, err := c.extractChecksum(ctx, req.url)
 	if err != nil {
 		return nil, fmt.Errorf("invalid checksum: %s", err)
 	}
 
 	// Delete the query parameter if we have it.
 	q.Del("checksum")
-	req.URL.RawQuery = q.Encode()
+	req.url.RawQuery = q.Encode()
 
 	if req.Mode == ModeAny {
 		// Ask the getter which client mode to use
-		req.Mode, err = g.Mode(ctx, req.URL)
+		req.Mode, err = g.Mode(ctx, req.url)
 		if err != nil {
 			return nil, err
 		}
@@ -161,13 +161,13 @@ func (c *Client) Get(ctx context.Context, req *Request) (*GetResult, error) {
 		// Destination is the base name of the URL path in "any" mode when
 		// a file source is detected.
 		if req.Mode == ModeFile {
-			filename := filepath.Base(req.URL.Path)
+			filename := filepath.Base(req.url.Path)
 
 			// Determine if we have a custom file name
 			if v := q.Get("filename"); v != "" {
 				// Delete the query parameter if we have it.
 				q.Del("filename")
-				req.URL.RawQuery = q.Encode()
+				req.url.RawQuery = q.Encode()
 
 				filename = v
 			}

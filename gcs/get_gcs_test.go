@@ -41,12 +41,16 @@ func TestGetter(t *testing.T) {
 	ctx := context.Background()
 
 	req := &getter.Request{
+		Src: "https://www.googleapis.com/storage/v1/go-getter-test/go-getter/folder",
 		Dst: dst,
-		URL: urlhelper.MustParse("https://www.googleapis.com/storage/v1/go-getter-test/go-getter/folder"),
+	}
+
+	c := getter.Client{
+		Getters: map[string]getter.Getter{"gcs": g},
 	}
 
 	// With a dir that doesn't exist
-	err := g.Get(ctx, req)
+	err, _ := c.Get(ctx, req)
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
@@ -66,12 +70,16 @@ func TestGetter_subdir(t *testing.T) {
 	ctx := context.Background()
 
 	req := &getter.Request{
+		Src: "https://www.googleapis.com/storage/v1/go-getter-test/go-getter/folder/subfolder",
 		Dst: dst,
-		URL: urlhelper.MustParse("https://www.googleapis.com/storage/v1/go-getter-test/go-getter/folder/subfolder"),
+	}
+
+	c := getter.Client{
+		Getters: map[string]getter.Getter{"gcs": g},
 	}
 
 	// With a dir that doesn't exist
-	err := g.Get(ctx, req)
+	err, _ := c.Get(ctx, req)
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
@@ -92,12 +100,16 @@ func TestGetter_GetFile(t *testing.T) {
 	ctx := context.Background()
 
 	req := &getter.Request{
+		Src: "https://www.googleapis.com/storage/v1/go-getter-test/go-getter/folder/main.tf",
 		Dst: dst,
-		URL: urlhelper.MustParse("https://www.googleapis.com/storage/v1/go-getter-test/go-getter/folder/main.tf"),
+	}
+
+	c := getter.Client{
+		Getters: map[string]getter.Getter{"gcs": g},
 	}
 
 	// Download
-	err := g.GetFile(ctx, req)
+	err, _ := c.Get(ctx, req)
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
@@ -116,12 +128,16 @@ func TestGetter_GetFile_notfound(t *testing.T) {
 	ctx := context.Background()
 
 	req := &getter.Request{
+		Src: "https://www.googleapis.com/storage/v1/go-getter-test/go-getter/folder/404.tf",
 		Dst: dst,
-		URL: urlhelper.MustParse("https://www.googleapis.com/storage/v1/go-getter-test/go-getter/folder/404.tf"),
+	}
+
+	c := getter.Client{
+		Getters: map[string]getter.Getter{"gcs": g},
 	}
 
 	// Download
-	err := g.GetFile(ctx, req)
+	err, _ := c.Get(ctx, req)
 	if err == nil {
 		t.Fatalf("expected error, got none")
 	}

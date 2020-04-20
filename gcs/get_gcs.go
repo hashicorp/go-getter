@@ -56,7 +56,7 @@ func (g *Getter) Mode(ctx context.Context, u *url.URL) (getter.Mode, error) {
 
 func (g *Getter) Get(ctx context.Context, req *getter.Request) error {
 	// Parse URL
-	bucket, object, err := g.parseURL(req.URL)
+	bucket, object, err := g.parseURL(req.URL())
 	if err != nil {
 		return err
 	}
@@ -113,7 +113,7 @@ func (g *Getter) Get(ctx context.Context, req *getter.Request) error {
 
 func (g *Getter) GetFile(ctx context.Context, req *getter.Request) error {
 	// Parse URL
-	bucket, object, err := g.parseURL(req.URL)
+	bucket, object, err := g.parseURL(req.URL())
 	if err != nil {
 		return err
 	}

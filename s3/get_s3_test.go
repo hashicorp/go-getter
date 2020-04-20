@@ -36,11 +36,16 @@ func TestGetter(t *testing.T) {
 	g := new(Getter)
 	dst := testing_helper.TempDir(t)
 	req := &getter.Request{
+		Src: "https://s3.amazonaws.com/hc-oss-test/go-getter/folder",
 		Dst: dst,
-		URL: urlhelper.MustParse("https://s3.amazonaws.com/hc-oss-test/go-getter/folder"),
 	}
+
+	c := getter.Client{
+		Getters: map[string]getter.Getter{"s3": g},
+	}
+
 	// With a dir that doesn't exist
-	err := g.Get(ctx, req)
+	err, _ := c.Get(ctx, req)
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
@@ -58,11 +63,16 @@ func TestGetter_subdir(t *testing.T) {
 	g := new(Getter)
 	dst := testing_helper.TempDir(t)
 	req := &getter.Request{
+		Src: "https://s3.amazonaws.com/hc-oss-test/go-getter/folder/subfolder",
 		Dst: dst,
-		URL: urlhelper.MustParse("https://s3.amazonaws.com/hc-oss-test/go-getter/folder/subfolder"),
 	}
+
+	c := getter.Client{
+		Getters: map[string]getter.Getter{"s3": g},
+	}
+
 	// With a dir that doesn't exist
-	err := g.Get(ctx, req)
+	err, _ := c.Get(ctx, req)
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
@@ -83,10 +93,15 @@ func TestGetter_GetFile(t *testing.T) {
 
 	req := &getter.Request{
 		Dst: dst,
-		URL: urlhelper.MustParse("https://s3.amazonaws.com/hc-oss-test/go-getter/folder/main.tf"),
+		Src: "https://s3.amazonaws.com/hc-oss-test/go-getter/folder/main.tf",
 	}
+
+	c := getter.Client{
+		Getters: map[string]getter.Getter{"gcs": g},
+	}
+
 	// Download
-	err := g.GetFile(ctx, req)
+	err, _ := c.Get(ctx, req)
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
@@ -106,8 +121,8 @@ func TestGetter_GetFile_badParams(t *testing.T) {
 	defer os.RemoveAll(filepath.Dir(dst))
 
 	req := &getter.Request{
+		Src: "https://s3.amazonaws.com/hc-oss-test/go-getter/folder/main.tf?aws_access_key_id=foo&aws_access_key_secret=bar&aws_access_token=baz",
 		Dst: dst,
-		URL: urlhelper.MustParse("https://s3.amazonaws.com/hc-oss-test/go-getter/folder/main.tf?aws_access_key_id=foo&aws_access_key_secret=bar&aws_access_token=baz"),
 	}
 
 	// Download
@@ -129,8 +144,8 @@ func TestGetter_GetFile_notfound(t *testing.T) {
 	defer os.RemoveAll(filepath.Dir(dst))
 
 	req := &getter.Request{
+		Src: "https://s3.amazonaws.com/hc-oss-test/go-getter/folder/404.tf",
 		Dst: dst,
-		URL: urlhelper.MustParse("https://s3.amazonaws.com/hc-oss-test/go-getter/folder/404.tf"),
 	}
 
 	// Download

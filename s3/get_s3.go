@@ -65,7 +65,7 @@ func (g *Getter) Mode(ctx context.Context, u *url.URL) (getter.Mode, error) {
 func (g *Getter) Get(ctx context.Context, req *getter.Request) error {
 
 	// Parse URL
-	region, bucket, path, _, creds, err := g.parseUrl(req.URL)
+	region, bucket, path, _, creds, err := g.parseUrl(req.URL())
 	if err != nil {
 		return err
 	}
@@ -88,7 +88,7 @@ func (g *Getter) Get(ctx context.Context, req *getter.Request) error {
 		return err
 	}
 
-	config := g.getAWSConfig(region, req.URL, creds)
+	config := g.getAWSConfig(region, req.URL(), creds)
 	sess := session.New(config)
 	client := s3.New(sess)
 
@@ -138,12 +138,12 @@ func (g *Getter) Get(ctx context.Context, req *getter.Request) error {
 }
 
 func (g *Getter) GetFile(ctx context.Context, req *getter.Request) error {
-	region, bucket, path, version, creds, err := g.parseUrl(req.URL)
+	region, bucket, path, version, creds, err := g.parseUrl(req.URL())
 	if err != nil {
 		return err
 	}
 
-	config := g.getAWSConfig(region, req.URL, creds)
+	config := g.getAWSConfig(region, req.URL(), creds)
 	sess := session.New(config)
 	client := s3.New(sess)
 	return g.getObject(ctx, client, req.Dst, bucket, path, version)

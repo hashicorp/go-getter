@@ -1,6 +1,8 @@
 package getter
 
-import "net/url"
+import (
+	"net/url"
+)
 
 type Request struct {
 	// Src is the source URL to get.
@@ -35,5 +37,9 @@ type Request struct {
 	// By default a no op progress listener is used.
 	ProgressListener ProgressTracker
 
-	URL *url.URL
+	url *url.URL
+}
+
+func (req *Request) URL() *url.URL {
+	return req.url
 }

@@ -34,7 +34,7 @@ func TestHgGetter(t *testing.T) {
 
 	req := &Request{
 		Dst: dst,
-		URL: testModuleURL("basic-hg"),
+		url: testModuleURL("basic-hg"),
 	}
 
 	// With a dir that doesn't exist
@@ -66,7 +66,7 @@ func TestHgGetter_branch(t *testing.T) {
 
 	req := &Request{
 		Dst: dst,
-		URL: url,
+		url: url,
 	}
 
 	if err := g.Get(ctx, req); err != nil {
@@ -104,7 +104,7 @@ func TestHgGetter_GetFile(t *testing.T) {
 
 	req := &Request{
 		Dst: dst,
-		URL: testModuleURL("basic-hg/foo.txt"),
+		url: testModuleURL("basic-hg/foo.txt"),
 	}
 
 	// Download
