@@ -159,93 +159,116 @@ func TestSmbGetter_GetFile(t *testing.T) {
 	smbTestsPreCheck(t)
 
 	tests := []struct {
-		name    string
-		rawURL  string
-		file    string
-		mounted bool
-		fail    bool
+		name       string
+		rawURL     string
+		file       string
+		createFile string
+		fail       bool
 	}{
 		{
 			"smbclient with authentication",
 			"smb://vagrant:vagrant@samba/shared/file.txt",
 			"file.txt",
-			false,
+			"",
 			false,
 		},
 		{
 			"smbclient with authentication and subdirectory",
 			"smb://vagrant:vagrant@samba/shared/subdir/file.txt",
 			"file.txt",
-			false,
+			"",
 			false,
 		},
 		{
 			"smbclient with only username authentication",
 			"smb://vagrant@samba/shared/file.txt",
 			"file.txt",
-			false,
+			"",
 			false,
 		},
 		{
 			"smbclient without authentication",
 			"smb://samba/shared/file.txt",
 			"file.txt",
-			false,
+			"",
 			false,
 		},
 		{
 			"smbclient get directory",
 			"smb://vagrant:vagrant@samba/shared/subdir",
 			"",
-			false,
+			"",
 			true,
 		},
-		//{
-		//	"local mounted smb shared file",
-		//	"smb://mnt/shared/file.txt",
-		//	"file.txt",
-		//	true,
-		//	false,
-		//},
+		{
+			"local mounted smb shared file",
+			"smb://mnt/shared/file.txt",
+			"file.txt",
+			"/mnt/shared/file.txt",
+			false,
+		},
 		//{
 		//	"local mounted smb shared directory",
 		//	"smb://mnt/shared/subdir",
 		//	"",
-		//	true,
+		//	"//mnt/shared/subdir",
 		//	true,
 		//},
 		{
 			"non existent file",
 			"smb://vagrant:vagrant@samba/shared/invalidfile.txt",
 			"",
-			false,
+			"",
 			true,
 		},
 		{
 			"non existent directory",
 			"smb://vagrant:vagrant@samba/shared/invaliddir",
 			"",
-			false,
+			"",
 			true,
 		},
 		{
 			"no hostname provided",
 			"smb://",
 			"",
-			false,
+			"",
 			true,
 		},
 		{
 			"no filepath provided",
 			"smb://samba",
 			"",
-			false,
+			"",
 			true,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			if tt.createFile != "" {
+				// mock mounted folder by creating one
+				err := os.MkdirAll(filepath.Dir(tt.createFile), 0755)
+				if err != nil {
+					t.Fatalf("err: %s", err.Error())
+				}
+
+				f, err := os.Create(tt.createFile)
+				if err != nil {
+					t.Fatalf("err: %s", err.Error())
+				}
+				defer f.Close()
+
+				// Write content to assert later
+				_, err = f.WriteString("Hello\n")
+				if err != nil {
+					t.Fatalf("err: %s", err.Error())
+				}
+				f.Sync()
+
+				defer os.RemoveAll(tt.createFile)
+			}
+
 			dst := tempDir(t)
 			defer os.RemoveAll(dst)
 
@@ -270,7 +293,7 @@ func TestSmbGetter_GetFile(t *testing.T) {
 			}
 
 			if !tt.fail {
-				if tt.mounted {
+				if tt.createFile != "" {
 					// Verify the destination folder is a symlink to the mounted one
 					fi, err := os.Lstat(dst)
 					if err != nil {
@@ -301,55 +324,70 @@ func TestSmbGetter_Mode(t *testing.T) {
 		name         string
 		rawURL       string
 		expectedMode Mode
-		mounted      bool
+		createFile   string
 		fail         bool
 	}{
 		{
 			"smbclient modefile for existing file",
 			"smb://vagrant:vagrant@samba/shared/file.txt",
 			ModeFile,
-			false,
+			"",
 			false,
 		},
 		{
 			"smbclient modedir for existing directory",
 			"smb://vagrant:vagrant@samba/shared/subdir",
 			ModeDir,
-			false,
+			"",
 			false,
 		},
 		{
 			"mode fail for non existent directory",
 			"smb://vagrant:vagrant@samba/shared/invaliddir",
 			0,
-			false,
+			"",
 			true,
 		},
 		{
 			"mode fail for non existent file",
 			"smb://vagrant:vagrant@samba/shared/invalidfile.txt",
 			0,
-			false,
+			"",
 			true,
 		},
-		//{
-		//	"local mount modefile for existing file",
-		//	"smb://mnt/shared/file.txt",
-		//	ModeFile,
-		//	true,
-		//	false,
-		//},
+		{
+			"local mount modefile for existing file",
+			"smb://mnt/shared/file.txt",
+			ModeFile,
+			"/mnt/shared/file.txt",
+			false,
+		},
 		//{
 		//	"local mount modedir for existing directory",
 		//	"smb://mnt/shared/subdir",
 		//	ModeDir,
-		//	true,
+		//	"/mnt/shared/subdir",
 		//	false,
 		//},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			if tt.createFile != "" {
+				// mock mounted folder by creating one
+				err := os.MkdirAll(filepath.Dir(tt.createFile), 0755)
+				if err != nil {
+					t.Fatalf("err: %s", err.Error())
+				}
+
+				_, err = os.Create(tt.createFile)
+				if err != nil {
+					t.Fatalf("err: %s", err.Error())
+				}
+
+				//defer os.RemoveAll(tt.createFile)
+			}
+
 			url, err := urlhelper.Parse(tt.rawURL)
 			if err != nil {
 				t.Fatalf("err: %s", err.Error())

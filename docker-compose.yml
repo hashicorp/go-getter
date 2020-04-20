@@ -24,9 +24,6 @@ services:
       - default
     working_dir: /go-getter
     command: tail -f /dev/null
-    cap_add:
-      - SYS_ADMIN
-      - DAC_READ_SEARCH
 
 networks:
   default:
