@@ -25,7 +25,8 @@ func (g *SmbGetter) Mode(ctx context.Context, u *url.URL) (Mode, error) {
 	if u.Host == "" || u.Path == "" {
 		return 0, fmt.Errorf(basePathError)
 	}
-	// Look in possible local mount of shared folder
+
+	// Look in a possible local mount of shared folder
 	path := "/" + u.Host + u.Path
 	if runtime.GOOS == "windows" {
 		path = "/" + path
@@ -34,8 +35,13 @@ func (g *SmbGetter) Mode(ctx context.Context, u *url.URL) (Mode, error) {
 		return m, nil
 	}
 
-	// TODO write propper error msg
-	return g.smbClientMode(u)
+	// If not mounted, use smbclient cli to verify mode
+	mode, err := g.smbClientMode(u)
+	if err == nil {
+		return mode, nil
+	}
+
+	return 0, fmt.Errorf("one of the options should be available: \n 1. local mount of the smb shared folder or; \n 2. smbclient cli installed. \n err: %s", err.Error())
 }
 
 func (g *SmbGetter) smbClientMode(u *url.URL) (Mode, error) {
@@ -121,6 +127,7 @@ func (g *SmbGetter) GetFile(ctx context.Context, req *Request) error {
 	if req.u.Host == "" || req.u.Path == "" {
 		return fmt.Errorf(basePathError)
 	}
+
 	dstExisted := false
 	if req.Dst != "" {
 		if _, err := os.Lstat(req.Dst); err == nil {
@@ -137,7 +144,7 @@ func (g *SmbGetter) GetFile(ctx context.Context, req *Request) error {
 		return nil
 	}
 
-	// Look for the file using smbclient cli
+	// If not mounted, try downloading the file using smbclient cli
 	err := g.smbclientGetFile(req)
 	if err == nil {
 		return nil
@@ -146,7 +153,7 @@ func (g *SmbGetter) GetFile(ctx context.Context, req *Request) error {
 	err = fmt.Errorf("one of the options should be available: \n 1. local mount of the smb shared folder or; \n 2. smbclient cli installed. \n err: %s", err.Error())
 
 	if !dstExisted {
-		// Remove the destination created for smbclient files
+		// Remove the destination created for smbclient
 		if rerr := os.Remove(req.Dst); rerr != nil {
 			err = fmt.Errorf("%s \n failed to remove created destination folder: %s", err.Error(), rerr.Error())
 		}
@@ -160,8 +167,9 @@ func (g *SmbGetter) smbclientGetFile(req *Request) error {
 	if err != nil {
 		return err
 	}
-	file := ""
+
 	// Get file and subdirectory name when existent
+	file := ""
 	if strings.Contains(fileDir, "/") {
 		i := strings.LastIndex(fileDir, "/")
 		file = fileDir[i+1:]
@@ -190,7 +198,7 @@ func (g *SmbGetter) smbclientGetFile(req *Request) error {
 		return err
 	}
 	if isDir {
-		return fmt.Errorf("%s is a directory", file)
+		return fmt.Errorf("%s source path must be a file", file)
 	}
 
 	// download file
@@ -244,6 +252,9 @@ func isDirectory(baseCmd string, file string) (bool, error) {
 	if err != nil {
 		return false, err
 	}
+	if strings.Contains(output, "OBJECT_NAME_NOT_FOUND") {
+		return false, fmt.Errorf("source path not found: %s", output)
+	}
 	return strings.Contains(output, "attributes: D"), nil
 }
 
@@ -252,6 +263,9 @@ func runSmbClientCommand(cmd *exec.Cmd) (string, error) {
 	cmd.Stdout = &buf
 	cmd.Stderr = &buf
 	err := cmd.Run()
+	if err == nil {
+		return buf.String(), nil
+	}
 	if exiterr, ok := err.(*exec.ExitError); ok {
 		// The program has exited with an exit code != 0
 		if status, ok := exiterr.Sys().(syscall.WaitStatus); ok {
@@ -262,5 +276,5 @@ func runSmbClientCommand(cmd *exec.Cmd) (string, error) {
 				buf.String())
 		}
 	}
-	return buf.String(), nil
+	return buf.String(), fmt.Errorf("error running %s: %s", cmd.Path, buf.String())
 }

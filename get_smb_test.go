@@ -14,23 +14,22 @@ func TestSmbGetter_impl(t *testing.T) {
 }
 
 // TODO:
-// tests:
 // allow download directory (?)
 // write higher level tests
 // save tests results on circleci
-
-type smbTest struct {
-	name       string
-	rawURL     string
-	file       string
-	createFile string
-	fail       bool
-}
+// write docs of how to run tests locally (makefile?)
+// mount folder for testing
 
 func TestSmbGetter_Get(t *testing.T) {
 	smbTestsPreCheck(t)
 
-	tests := []smbTest{
+	tests := []struct{
+		name       string
+		rawURL     string
+		file       string
+		createFile string
+		fail       bool
+	}{
 		{
 			"smbclient with authentication",
 			"smb://vagrant:vagrant@samba/shared/file.txt",
@@ -160,7 +159,13 @@ func TestSmbGetter_Get(t *testing.T) {
 func TestSmbGetter_GetFile(t *testing.T) {
 	smbTestsPreCheck(t)
 
-	tests := []smbTest{
+	tests := []struct{
+		name       string
+		rawURL     string
+		file       string
+		createFile string
+		fail       bool
+	}{
 		{
 			"smbclient with authentication",
 			"smb://vagrant:vagrant@samba/shared/file.txt",
@@ -301,38 +306,69 @@ func TestSmbGetter_GetFile(t *testing.T) {
 	}
 }
 
+func TestSmbGetter_Mode(t *testing.T) {
+	smbTestsPreCheck(t)
+
+	tests := []struct {
+		name string
+		rawURL string
+		expectedMode Mode
+		fail bool
+	}{
+		{
+			"smbclient modefile for existing file",
+			"smb://vagrant:vagrant@samba/shared/file.txt",
+			ModeFile,
+			false,
+		},
+		{
+			"smbclient modedir for existing directory",
+			"smb://vagrant:vagrant@samba/shared/subdir",
+			ModeDir,
+			false,
+		},
+		{
+			"smbclient mode fail for unexisting directory",
+			"smb://vagrant:vagrant@samba/shared/invaliddir",
+			0,
+			true,
+		},
+		{
+			"smbclient mode fail for unexisting file",
+			"smb://vagrant:vagrant@samba/shared/invalidfile.txt",
+			0,
+			true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			url, err := urlhelper.Parse(tt.rawURL)
+			if err != nil {
+				t.Fatalf("err: %s", err.Error())
+			}
+
+			g := new(SmbGetter)
+			mode, err := g.Mode(context.Background(), url)
+
+			fail := err != nil
+			if tt.fail != fail {
+				if fail {
+					t.Fatalf("err: unexpected error %s", err.Error())
+				}
+				t.Fatalf("err: expecting to fail but it did not")
+			}
+
+			if mode != tt.expectedMode {
+				t.Fatalf("err: expeting mode %d, actual mode %d", tt.expectedMode, mode)
+			}
+		})
+	}
+}
+
 func smbTestsPreCheck(t *testing.T) {
 	r := os.Getenv("ACC_SMB_TEST")
 	if r != "1" {
 		t.Skip("Smb getter tests won't run. ACC_SMB_TEST not set")
 	}
 }
-
-//func TestSmbGetter_Mode(t *testing.T) {
-//	g := new(SmbGetter)
-//	ctx := context.Background()
-//
-//	// no hostname provided
-//	url, err := urlhelper.Parse("smb://")
-//	if err != nil {
-//		t.Fatalf("err: %s", err.Error())
-//	}
-//	if _, err := g.Mode(ctx, url); err == nil {
-//		t.Fatalf("err: should fail when request url doesn't have a Host")
-//	}
-//	if _, err := g.Mode(ctx, url); err != nil && err.Error() != basePathError {
-//		t.Fatalf("err: expected error: %s\n but error was: %s", basePathError, err.Error())
-//	}
-//
-//	// no filepath provided
-//	url, err = urlhelper.Parse("smb://")
-//	if err != nil {
-//		t.Fatalf("err: %s", err.Error())
-//	}
-//	if _, err := g.Mode(ctx, url); err == nil {
-//		t.Fatalf("err: should fail when request url doesn't have a Host")
-//	}
-//	if _, err := g.Mode(ctx, url); err != nil && err.Error() != basePathError {
-//		t.Fatalf("err: expected error: %s\n but error was: %s", basePathError, err.Error())
-//	}
-//}

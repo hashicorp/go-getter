@@ -72,6 +72,7 @@ can be augmented at runtime by implementing the `Getter` interface.
   * HTTP
   * Amazon S3
   * Google GCP
+  * SMB
 
 In addition to the above protocols, go-getter has what are called "detectors."
 These take a URL and attempt to automatically choose the best protocol for
