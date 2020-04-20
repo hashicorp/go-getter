@@ -761,3 +761,49 @@ func TestGetFile_inplace_badChecksum(t *testing.T) {
 		t.Fatalf("op is not nil")
 	}
 }
+
+func TestgetForcedGetter(t *testing.T) {
+	type args struct {
+		src string
+	}
+	tests := []struct {
+		name  string
+		args  args
+		want  string
+		want1 string
+	}{
+		{"s3 AWSv1234",
+			args{src: "s3::https://s3-eu-west-1.amazonaws.com/bucket/foo/bar.baz?version=1234"},
+			"s3", "https://s3-eu-west-1.amazonaws.com/bucket/foo/bar.baz?version=1234",
+		},
+		{"s3 localhost-1",
+			args{src: "s3::http://127.0.0.1:9000/test-bucket/hello.txt?aws_access_key_id=TESTID&aws_access_key_secret=TestSecret&region=us-east-2&version=1"},
+			"s3", "http://127.0.0.1:9000/test-bucket/hello.txt?aws_access_key_id=TESTID&aws_access_key_secret=TestSecret&region=us-east-2&version=1",
+		},
+		{"s3 localhost-2",
+			args{src: "s3::http://127.0.0.1:9000/test-bucket/hello.txt?aws_access_key_id=TESTID&aws_access_key_secret=TestSecret&version=1"},
+			"s3", "http://127.0.0.1:9000/test-bucket/hello.txt?aws_access_key_id=TESTID&aws_access_key_secret=TestSecret&version=1",
+		},
+		{"s3 localhost-3",
+			args{src: "s3::http://127.0.0.1:9000/test-bucket/hello.txt?aws_access_key_id=TESTID&aws_access_key_secret=TestSecret"},
+			"s3", "http://127.0.0.1:9000/test-bucket/hello.txt?aws_access_key_id=TESTID&aws_access_key_secret=TestSecret",
+		},
+
+		{
+			"gcs test1",
+			args{"gcs::https://www.googleapis.com/storage/v1/go-getter-test/go-getter/foo/null.zip"},
+			"gcs", "https://www.googleapis.com/storage/v1/go-getter-test/go-getter/foo/null.zip",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, got1 := getForcedGetter(tt.args.src)
+			if got != tt.want {
+				t.Errorf("getForcedGetter() got = %v, want %v", got, tt.want)
+			}
+			if got1 != tt.want1 {
+				t.Errorf("getForcedGetter() got1 = %v, want %v", got1, tt.want1)
+			}
+		})
+	}
+}

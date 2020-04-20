@@ -190,7 +190,7 @@ func TestGetter_Url(t *testing.T) {
 	}{
 		{
 			name:   "test1",
-			url:    "gcs::https://www.googleapis.com/storage/v1/go-getter-test/go-getter/foo/null.zip",
+			url:    "https://www.googleapis.com/storage/v1/go-getter-test/go-getter/foo/null.zip",
 			bucket: "go-getter-test",
 			path:   "go-getter/foo/null.zip",
 		},
@@ -199,14 +199,11 @@ func TestGetter_Url(t *testing.T) {
 	for i, pt := range gcstests {
 		t.Run(pt.name, func(t *testing.T) {
 			g := new(Getter)
-			forced, src := getter.GetForcedGetter(pt.url)
+			src := pt.url
 			u, err := url.Parse(src)
 
 			if err != nil {
 				t.Errorf("test %d: unexpected error: %s", i, err)
-			}
-			if forced != "gcs" {
-				t.Fatalf("expected forced protocol to be gcs")
 			}
 
 			bucket, path, err := g.parseURL(u)

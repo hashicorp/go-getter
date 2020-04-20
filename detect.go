@@ -41,7 +41,7 @@ func init() {
 // This is safe to be called with an already valid source string: Detect
 // will just return it.
 func Detect(src string, pwd string, ds []Detector) (string, error) {
-	getForce, getSrc := GetForcedGetter(src)
+	getForce, getSrc := getForcedGetter(src)
 
 	// Separate out the subdir if there is one, we don't pass that to detect
 	getSrc, subDir := SourceDirSubdir(getSrc)
@@ -62,7 +62,7 @@ func Detect(src string, pwd string, ds []Detector) (string, error) {
 		}
 
 		var detectForce string
-		detectForce, result = GetForcedGetter(result)
+		detectForce, result = getForcedGetter(result)
 		result, detectSubdir := SourceDirSubdir(result)
 
 		// If we have a subdir from the detection, then prepend it to our

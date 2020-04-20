@@ -220,7 +220,7 @@ func TestGetter_Url(t *testing.T) {
 	}{
 		{
 			name:    "AWSv1234",
-			url:     "s3::https://s3-eu-west-1.amazonaws.com/bucket/foo/bar.baz?version=1234",
+			url:     "https://s3-eu-west-1.amazonaws.com/bucket/foo/bar.baz?version=1234",
 			region:  "eu-west-1",
 			bucket:  "bucket",
 			path:    "foo/bar.baz",
@@ -228,7 +228,7 @@ func TestGetter_Url(t *testing.T) {
 		},
 		{
 			name:    "localhost-1",
-			url:     "s3::http://127.0.0.1:9000/test-bucket/hello.txt?aws_access_key_id=TESTID&aws_access_key_secret=TestSecret&region=us-east-2&version=1",
+			url:     "http://127.0.0.1:9000/test-bucket/hello.txt?aws_access_key_id=TESTID&aws_access_key_secret=TestSecret&region=us-east-2&version=1",
 			region:  "us-east-2",
 			bucket:  "test-bucket",
 			path:    "hello.txt",
@@ -236,7 +236,7 @@ func TestGetter_Url(t *testing.T) {
 		},
 		{
 			name:    "localhost-2",
-			url:     "s3::http://127.0.0.1:9000/test-bucket/hello.txt?aws_access_key_id=TESTID&aws_access_key_secret=TestSecret&version=1",
+			url:     "http://127.0.0.1:9000/test-bucket/hello.txt?aws_access_key_id=TESTID&aws_access_key_secret=TestSecret&version=1",
 			region:  "us-east-1",
 			bucket:  "test-bucket",
 			path:    "hello.txt",
@@ -244,7 +244,7 @@ func TestGetter_Url(t *testing.T) {
 		},
 		{
 			name:    "localhost-3",
-			url:     "s3::http://127.0.0.1:9000/test-bucket/hello.txt?aws_access_key_id=TESTID&aws_access_key_secret=TestSecret",
+			url:     "http://127.0.0.1:9000/test-bucket/hello.txt?aws_access_key_id=TESTID&aws_access_key_secret=TestSecret",
 			region:  "us-east-1",
 			bucket:  "test-bucket",
 			path:    "hello.txt",
@@ -256,14 +256,11 @@ func TestGetter_Url(t *testing.T) {
 		t.Run(pt.name, func(t *testing.T) {
 
 			g := new(Getter)
-			forced, src := getter.GetForcedGetter(pt.url)
+			src := pt.url
 			u, err := url.Parse(src)
 
 			if err != nil {
 				t.Errorf("test %d: unexpected error: %s", i, err)
-			}
-			if forced != "s3" {
-				t.Fatalf("expected forced protocol to be s3")
 			}
 
 			region, bucket, path, version, creds, err := g.parseUrl(u)

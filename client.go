@@ -58,7 +58,7 @@ func (c *Client) Get(ctx context.Context, req *Request) (*GetResult, error) {
 
 	var force string
 	// Determine if we have a forced protocol, i.e. "git::http://..."
-	force, req.Src = GetForcedGetter(req.Src)
+	force, req.Src = getForcedGetter(req.Src)
 
 	// If there is a subdir component, then we download the root separately
 	// and then copy over the proper subdir.

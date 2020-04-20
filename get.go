@@ -139,9 +139,10 @@ func getRunCommand(cmd *exec.Cmd) error {
 	return fmt.Errorf("error running %s: %s", cmd.Path, buf.String())
 }
 
-// GetForcedGetter takes a source and returns the tuple of the forced
+// getForcedGetter takes a source and returns the tuple of the forced
 // getter and the raw URL (without the force syntax).
-func GetForcedGetter(src string) (string, string) {
+// For example "git::https://...". returns "git" "https://".
+func getForcedGetter(src string) (string, string) {
 	var forced string
 	if ms := forcedRegexp.FindStringSubmatch(src); ms != nil {
 		forced = ms[1]
