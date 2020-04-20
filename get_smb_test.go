@@ -200,20 +200,20 @@ func TestSmbGetter_GetFile(t *testing.T) {
 			false,
 			true,
 		},
-		{
-			"local mounted smb shared file",
-			"smb://mnt/shared/file.txt",
-			"file.txt",
-			true,
-			false,
-		},
-		{
-			"local mounted smb shared directory",
-			"smb://mnt/shared/subdir",
-			"",
-			true,
-			true,
-		},
+		//{
+		//	"local mounted smb shared file",
+		//	"smb://mnt/shared/file.txt",
+		//	"file.txt",
+		//	true,
+		//	false,
+		//},
+		//{
+		//	"local mounted smb shared directory",
+		//	"smb://mnt/shared/subdir",
+		//	"",
+		//	true,
+		//	true,
+		//},
 		{
 			"non existent file",
 			"smb://vagrant:vagrant@samba/shared/invalidfile.txt",
@@ -332,20 +332,20 @@ func TestSmbGetter_Mode(t *testing.T) {
 			false,
 			true,
 		},
-		{
-			"local mount modefile for existing file",
-			"smb://mnt/shared/file.txt",
-			ModeFile,
-			true,
-			false,
-		},
-		{
-			"local mount modedir for existing directory",
-			"smb://mnt/shared/subdir",
-			ModeDir,
-			true,
-			false,
-		},
+		//{
+		//	"local mount modefile for existing file",
+		//	"smb://mnt/shared/file.txt",
+		//	ModeFile,
+		//	true,
+		//	false,
+		//},
+		//{
+		//	"local mount modedir for existing directory",
+		//	"smb://mnt/shared/subdir",
+		//	ModeDir,
+		//	true,
+		//	false,
+		//},
 	}
 
 	for _, tt := range tests {
