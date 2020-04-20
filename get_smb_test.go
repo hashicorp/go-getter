@@ -16,8 +16,6 @@ func TestSmbGetter_impl(t *testing.T) {
 // TODO:
 // tests:
 // allow download directory (?)
-// update Mode to return right mode
-// write GetFile tests
 // write higher level tests
 // save tests results on circleci
 
@@ -171,7 +169,7 @@ func TestSmbGetter_GetFile(t *testing.T) {
 			false,
 		},
 		{
-			"smbclient with authentication and subdir",
+			"smbclient with authentication and subdirectory",
 			"smb://vagrant:vagrant@samba/shared/subdir/file.txt",
 			"file.txt",
 			"",
@@ -190,6 +188,20 @@ func TestSmbGetter_GetFile(t *testing.T) {
 			"file.txt",
 			"",
 			false,
+		},
+		{
+			"smbclient get directory",
+			"smb://vagrant:vagrant@samba/shared/subdir",
+			"",
+			"",
+			true,
+		},
+		{
+			"smbclient get non existent file",
+			"smb://vagrant:vagrant@samba/shared/nonexistent.txt",
+			"",
+			"",
+			true,
 		},
 		{
 			"local mounted smb shared file",
@@ -252,10 +264,9 @@ func TestSmbGetter_GetFile(t *testing.T) {
 			}
 
 			g := new(SmbGetter)
-			ctx := context.Background()
-			err = g.GetFile(ctx, req)
-			fail := err != nil
+			err = g.GetFile(context.Background(), req)
 
+			fail := err != nil
 			if tt.fail != fail {
 				if fail {
 					t.Fatalf("err: unexpected error %s", err.Error())
@@ -277,7 +288,8 @@ func TestSmbGetter_GetFile(t *testing.T) {
 					// Verify the main file exists
 					assertContents(t, dst, "Hello\n")
 				} else {
-					// Verify the file exists at the destination folder
+					// Verify if the file was successfully download
+					// and exists at the destination folder
 					mainPath := filepath.Join(dst, tt.file)
 					if _, err := os.Stat(mainPath); err != nil {
 						log.Printf("MOSS err 2")
