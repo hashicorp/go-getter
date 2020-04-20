@@ -60,12 +60,12 @@ func (g *HttpGetter) Mode(ctx context.Context, u *url.URL) (Mode, error) {
 
 func (g *HttpGetter) Get(ctx context.Context, req *Request) error {
 	// Copy the URL so we can modify it
-	var newU url.URL = *req.url
-	req.url = &newU
+	var newU url.URL = *req.u
+	req.u = &newU
 
 	if g.Netrc {
 		// Add auth from netrc if we can
-		if err := addAuthFromNetrc(req.url); err != nil {
+		if err := addAuthFromNetrc(req.u); err != nil {
 			return err
 		}
 	}
@@ -75,12 +75,12 @@ func (g *HttpGetter) Get(ctx context.Context, req *Request) error {
 	}
 
 	// Add terraform-get to the parameter.
-	q := req.url.Query()
+	q := req.u.Query()
 	q.Add("terraform-get", "1")
-	req.url.RawQuery = q.Encode()
+	req.u.RawQuery = q.Encode()
 
 	// Get the URL
-	httpReq, err := http.NewRequest("GET", req.url.String(), nil)
+	httpReq, err := http.NewRequest("GET", req.u.String(), nil)
 	if err != nil {
 		return err
 	}
@@ -137,7 +137,7 @@ func (g *HttpGetter) Get(ctx context.Context, req *Request) error {
 func (g *HttpGetter) GetFile(ctx context.Context, req *Request) error {
 	if g.Netrc {
 		// Add auth from netrc if we can
-		if err := addAuthFromNetrc(req.url); err != nil {
+		if err := addAuthFromNetrc(req.u); err != nil {
 			return err
 		}
 	}
@@ -161,7 +161,7 @@ func (g *HttpGetter) GetFile(ctx context.Context, req *Request) error {
 	// We first make a HEAD request so we can check
 	// if the server supports range queries. If the server/URL doesn't
 	// support HEAD requests, we just fall back to GET.
-	httpReq, err := http.NewRequest("HEAD", req.url.String(), nil)
+	httpReq, err := http.NewRequest("HEAD", req.u.String(), nil)
 	if err != nil {
 		return err
 	}
@@ -206,7 +206,7 @@ func (g *HttpGetter) GetFile(ctx context.Context, req *Request) error {
 
 	if req.ProgressListener != nil {
 		// track download
-		fn := filepath.Base(req.url.EscapedPath())
+		fn := filepath.Base(req.u.EscapedPath())
 		body = req.ProgressListener.TrackProgress(fn, currentFileSize, currentFileSize+resp.ContentLength, resp.Body)
 	}
 	defer body.Close()

@@ -21,7 +21,7 @@ func TestFileGetter(t *testing.T) {
 
 	req := &Request{
 		Dst: dst,
-		url: testModuleURL("basic"),
+		u:   testModuleURL("basic"),
 	}
 
 	// With a dir that doesn't exist
@@ -56,7 +56,7 @@ func TestFileGetter_sourceFile(t *testing.T) {
 
 	req := &Request{
 		Dst: dst,
-		url: u,
+		u:   u,
 	}
 	if err := g.Get(ctx, req); err == nil {
 		t.Fatal("should error")
@@ -74,7 +74,7 @@ func TestFileGetter_sourceNoExist(t *testing.T) {
 
 	req := &Request{
 		Dst: dst,
-		url: u,
+		u:   u,
 	}
 	if err := g.Get(ctx, req); err == nil {
 		t.Fatal("should error")
@@ -92,7 +92,7 @@ func TestFileGetter_dir(t *testing.T) {
 
 	req := &Request{
 		Dst: dst,
-		url: testModuleURL("basic"),
+		u:   testModuleURL("basic"),
 	}
 	// With a dir that exists that isn't a symlink
 	if err := g.Get(ctx, req); err == nil {
@@ -122,7 +122,7 @@ func TestFileGetter_dirSymlink(t *testing.T) {
 
 	req := &Request{
 		Dst: dst,
-		url: testModuleURL("basic"),
+		u:   testModuleURL("basic"),
 	}
 
 	// With a dir that exists that isn't a symlink
@@ -145,7 +145,7 @@ func TestFileGetter_GetFile(t *testing.T) {
 
 	req := &Request{
 		Dst: dst,
-		url: testModuleURL("basic-file/foo.txt"),
+		u:   testModuleURL("basic-file/foo.txt"),
 	}
 
 	// With a dir that doesn't exist
@@ -175,7 +175,7 @@ func TestFileGetter_GetFile_Copy(t *testing.T) {
 
 	req := &Request{
 		Dst:  dst,
-		url:  testModuleURL("basic-file/foo.txt"),
+		u:    testModuleURL("basic-file/foo.txt"),
 		Copy: true,
 	}
 
@@ -205,7 +205,7 @@ func TestFileGetter_percent2F(t *testing.T) {
 
 	req := &Request{
 		Dst: dst,
-		url: testModuleURL("basic%2Ftest"),
+		u:   testModuleURL("basic%2Ftest"),
 	}
 
 	// With a dir that doesn't exist

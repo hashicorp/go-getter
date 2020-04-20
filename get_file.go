@@ -33,9 +33,9 @@ func (g *FileGetter) Mode(ctx context.Context, u *url.URL) (Mode, error) {
 }
 
 func (g *FileGetter) Get(ctx context.Context, req *Request) error {
-	path := req.url.Path
-	if req.url.RawPath != "" {
-		path = req.url.RawPath
+	path := req.u.Path
+	if req.u.RawPath != "" {
+		path = req.u.RawPath
 	}
 
 	// The source path must exist and be a directory to be usable.
@@ -77,9 +77,9 @@ func (g *FileGetter) Get(ctx context.Context, req *Request) error {
 }
 
 func (g *FileGetter) GetFile(ctx context.Context, req *Request) error {
-	path := req.url.Path
-	if req.url.RawPath != "" {
-		path = req.url.RawPath
+	path := req.u.Path
+	if req.u.RawPath != "" {
+		path = req.u.RawPath
 	}
 
 	// The source path must exist and be a file to be usable.

@@ -37,9 +37,9 @@ type Request struct {
 	// By default a no op progress listener is used.
 	ProgressListener ProgressTracker
 
-	url *url.URL
+	u *url.URL
 }
 
 func (req *Request) URL() *url.URL {
-	return req.url
+	return req.u
 }

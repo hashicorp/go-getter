@@ -26,7 +26,7 @@ type MockGetter struct {
 func (g *MockGetter) Get(ctx context.Context, req *Request) error {
 	g.GetCalled = true
 	g.GetDst = req.Dst
-	g.GetURL = req.url
+	g.GetURL = req.u
 
 	if g.Proxy != nil {
 		return g.Proxy.Get(ctx, req)
@@ -38,7 +38,7 @@ func (g *MockGetter) Get(ctx context.Context, req *Request) error {
 func (g *MockGetter) GetFile(ctx context.Context, req *Request) error {
 	g.GetFileCalled = true
 	g.GetFileDst = req.Dst
-	g.GetFileURL = req.url
+	g.GetFileURL = req.u
 
 	if g.Proxy != nil {
 		return g.Proxy.GetFile(ctx, req)
