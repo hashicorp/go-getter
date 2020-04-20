@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"regexp"
 	"runtime"
 	"strings"
@@ -24,7 +25,7 @@ func (g *SmbGetter) Mode(ctx context.Context, u *url.URL) (Mode, error) {
 	return ModeFile, nil
 }
 
-// TODO: also copy directory
+// TODO: copy directory
 func (g *SmbGetter) Get(ctx context.Context, req *Request) error {
 	hostPath, filePath, err := g.findHostAndFilePath(req)
 
@@ -63,21 +64,39 @@ func (g *SmbGetter) Get(ctx context.Context, req *Request) error {
 
 func (g *SmbGetter) GetFile(ctx context.Context, req *Request) error {
 	hostPath, filePath, err := g.findHostAndFilePath(req)
-	if err == nil {
-		err = g.smbclientGetFile(hostPath, filePath, req)
+
+	dstExisted := false
+	if req.Dst != "" {
+		if _, err := os.Lstat(req.Dst); err == nil {
+			dstExisted = true
+		}
 	}
 
-	if err != nil && err.Error() == basePathError {
-		return err
+	if err == nil {
+		err = g.smbclientGetFile(hostPath, filePath, req)
+		if err == nil {
+			return nil
+		}
+	}
+
+	if !dstExisted {
+		// Remove the destination created for smbclient files
+		if err := os.Remove(req.Dst); err != nil {
+			return err
+		}
 	}
 
 	// Look for local mount of shared folder
-	if err != nil && runtime.GOOS == "windows" {
-		err = getFile(hostPath, req, ctx)
+	if runtime.GOOS == "linux" {
+		hostPath = strings.TrimPrefix(hostPath, "/")
+	}
+	path := filepath.Join(hostPath, filePath)
+	err = getFile(path, req, ctx)
+	if err == nil {
+		return nil
 	}
 
-	// throw error msg to install smbclient or mount shared folder
-	return err
+	return fmt.Errorf("one of the options should be available: \n 1. local mount of the smb shared folder or; \n 2. smbclient cli installed. \n err: %s", err.Error())
 }
 
 func (g *SmbGetter) findHostAndFilePath(req *Request) (string, string, error) {
