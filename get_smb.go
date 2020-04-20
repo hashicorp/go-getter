@@ -11,6 +11,8 @@ import (
 	"runtime"
 	"strings"
 	"syscall"
+
+	"github.com/hashicorp/go-multierror"
 )
 
 // SmbGetter is a Getter implementation that will download a module from
@@ -31,8 +33,9 @@ func (g *SmbGetter) Mode(ctx context.Context, u *url.URL) (Mode, error) {
 	if runtime.GOOS == "windows" {
 		path = "/" + path
 	}
-	if m, err := mode(path); err == nil {
-		return m, nil
+	mode, result := mode(path)
+	if result == nil {
+		return mode, nil
 	}
 
 	// If not mounted, use smbclient cli to verify mode
@@ -41,7 +44,8 @@ func (g *SmbGetter) Mode(ctx context.Context, u *url.URL) (Mode, error) {
 		return mode, nil
 	}
 
-	return 0, fmt.Errorf("one of the options should be available: \n 1. local mount of the smb shared folder or; \n 2. smbclient cli installed. \n err: %s", err.Error())
+	result = multierror.Append(result, err)
+	return 0, fmt.Errorf("one of the options should be available: \n 1. local mount of the smb shared folder or; \n 2. smbclient cli installed. \n err: %s", result.Error())
 }
 
 func (g *SmbGetter) smbClientMode(u *url.URL) (Mode, error) {
@@ -60,7 +64,7 @@ func (g *SmbGetter) smbClientMode(u *url.URL) (Mode, error) {
 		fileDir = "."
 	}
 
-	getFileCmd := "smbclient -N"
+	baseCmd := "smbclient -N"
 
 	// Append auth user and password to cmd
 	auth := u.User.Username()
@@ -68,12 +72,12 @@ func (g *SmbGetter) smbClientMode(u *url.URL) (Mode, error) {
 		if password, ok := u.User.Password(); ok {
 			auth = auth + "%" + password
 		}
-		getFileCmd = getFileCmd + " -U " + auth
+		baseCmd = baseCmd + " -U " + auth
 	}
 
-	baseCmd := getFileCmd + " " + hostPath + " --directory " + fileDir
+	baseCmd = baseCmd + " " + hostPath + " --directory " + fileDir
 
-	// check file exists in the smb shared folder to check the mode
+	// check if file exists in the smb shared folder and check the mode
 	isDir, err := isDirectory(baseCmd, file)
 	if err != nil {
 		return 0, err
@@ -140,7 +144,8 @@ func (g *SmbGetter) GetFile(ctx context.Context, req *Request) error {
 	if runtime.GOOS == "windows" {
 		path = "/" + path
 	}
-	if err := getFile(path, req, ctx); err == nil {
+	result := getFile(path, req, ctx)
+	if result == nil {
 		return nil
 	}
 
@@ -150,16 +155,14 @@ func (g *SmbGetter) GetFile(ctx context.Context, req *Request) error {
 		return nil
 	}
 
-	err = fmt.Errorf("one of the options should be available: \n 1. local mount of the smb shared folder or; \n 2. smbclient cli installed. \n err: %s", err.Error())
+	result = multierror.Append(result, err)
 
 	if !dstExisted {
 		// Remove the destination created for smbclient
-		if rerr := os.Remove(req.Dst); rerr != nil {
-			err = fmt.Errorf("%s \n failed to remove created destination folder: %s", err.Error(), rerr.Error())
-		}
+		os.Remove(req.Dst)
 	}
 
-	return err
+	return fmt.Errorf("one of the options should be available: \n 1. local mount of the smb shared folder or; \n 2. smbclient cli installed. \n err: %s", result.Error())
 }
 
 func (g *SmbGetter) smbclientGetFile(req *Request) error {
@@ -179,7 +182,7 @@ func (g *SmbGetter) smbclientGetFile(req *Request) error {
 		fileDir = "."
 	}
 
-	getFileCmd := "smbclient -N"
+	baseCmd := "smbclient -N"
 
 	// Append auth user and password to cmd
 	auth := req.u.User.Username()
@@ -187,10 +190,10 @@ func (g *SmbGetter) smbclientGetFile(req *Request) error {
 		if password, ok := req.u.User.Password(); ok {
 			auth = auth + "%" + password
 		}
-		getFileCmd = getFileCmd + " -U " + auth
+		baseCmd = baseCmd + " -U " + auth
 	}
 
-	baseCmd := getFileCmd + " " + hostPath + " --directory " + fileDir
+	baseCmd = baseCmd + " " + hostPath + " --directory " + fileDir
 
 	// check file exists in the smb shared folder and is not a directory
 	isDir, err := isDirectory(baseCmd, file)
@@ -202,8 +205,8 @@ func (g *SmbGetter) smbclientGetFile(req *Request) error {
 	}
 
 	// download file
-	getFileCmd = baseCmd + " --command " + fmt.Sprintf("'get %s'", file)
-	cmd := exec.Command("bash", "-c", getFileCmd)
+	baseCmd = baseCmd + " --command " + fmt.Sprintf("'get %s'", file)
+	cmd := exec.Command("bash", "-c", baseCmd)
 
 	if req.Dst != "" {
 		_, err := os.Lstat(req.Dst)
