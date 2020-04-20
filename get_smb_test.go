@@ -23,7 +23,7 @@ func TestSmbGetter_impl(t *testing.T) {
 func TestSmbGetter_Get(t *testing.T) {
 	smbTestsPreCheck(t)
 
-	tests := []struct{
+	tests := []struct {
 		name       string
 		rawURL     string
 		file       string
@@ -159,7 +159,7 @@ func TestSmbGetter_Get(t *testing.T) {
 func TestSmbGetter_GetFile(t *testing.T) {
 	smbTestsPreCheck(t)
 
-	tests := []struct{
+	tests := []struct {
 		name       string
 		rawURL     string
 		file       string
@@ -310,10 +310,10 @@ func TestSmbGetter_Mode(t *testing.T) {
 	smbTestsPreCheck(t)
 
 	tests := []struct {
-		name string
-		rawURL string
+		name         string
+		rawURL       string
 		expectedMode Mode
-		fail bool
+		fail         bool
 	}{
 		{
 			"smbclient modefile for existing file",
