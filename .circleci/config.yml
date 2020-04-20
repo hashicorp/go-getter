@@ -85,7 +85,10 @@ jobs:
             docker cp ./ gogetter:/go-getter/
             docker exec -it gogetter bash -c "go mod download \
                   && apt-get update \
-                  && apt-get -y install smbclient"
+                  && apt-get -y install smbclient \
+                  && apt-get -y install cifs-utils \
+                  && mkdir /mnt/shared \
+                  && mount -t cifs -o user=user,password=password,sec=ntlmssp //samba/shared /mnt/shared "
 
       - run:
           name: run smb getter tests
