@@ -88,7 +88,7 @@ jobs:
                   && apt-get -y install smbclient \
                   && apt-get -y install cifs-utils \
                   && mkdir /mnt/shared \
-                  && mount -t cifs //samba/shared /mnt/shared -o user=vagrant,password=vagrant"
+                  && mount -t cifs //samba/shared /mnt/shared -o user=,password="
 
       - run:
           name: run smb getter tests
