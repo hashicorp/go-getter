@@ -3,7 +3,6 @@ package getter
 import (
 	"context"
 	urlhelper "github.com/hashicorp/go-getter/helper/url"
-	"log"
 	"os"
 	"path/filepath"
 	"testing"
@@ -14,54 +13,61 @@ func TestSmbGetter_impl(t *testing.T) {
 }
 
 // TODO:
-// allow download directory (?)
 // write higher level tests
 // save tests results on circleci
 // write docs of how to run tests locally (makefile?)
+// update readme
 
 func TestSmbGetter_Get(t *testing.T) {
 	smbTestsPreCheck(t)
 
 	tests := []struct {
-		name       string
-		rawURL     string
-		file       string
-		createFile string
-		fail       bool
+		name      string
+		rawURL    string
+		file      string
+		createDir string
+		fail      bool
 	}{
 		{
 			"smbclient with authentication",
-			"smb://vagrant:vagrant@samba/shared/file.txt",
+			"smb://username:password@samba/shared/subdir",
 			"file.txt",
 			"",
 			false,
 		},
 		{
-			"smbclient with authentication and subdir",
-			"smb://vagrant:vagrant@samba/shared/subdir/file.txt",
+			"smbclient with authentication with file",
+			"smb://username:password@samba/shared/subdir/file.txt",
 			"file.txt",
 			"",
-			false,
+			true,
 		},
 		{
 			"smbclient with only username authentication",
-			"smb://vagrant@samba/shared/file.txt",
+			"smb://username@samba/shared/subdir",
 			"file.txt",
 			"",
 			false,
 		},
 		{
 			"smbclient without authentication",
-			"smb://samba/shared/file.txt",
+			"smb://samba/shared/subdir",
 			"file.txt",
 			"",
 			false,
 		},
 		{
 			"local mounted smb shared file",
-			"smb://samba/shared/mounted.txt",
-			"mounted.txt",
-			"/samba/shared/mounted.txt",
+			"smb://mnt/shared/file.txt",
+			"file.txt",
+			"/mnt/shared",
+			true,
+		},
+		{
+			"local mounted smb shared directory",
+			"smb://mnt/shared/subdir",
+			"file.txt",
+			"/mnt/shared/subdir",
 			false,
 		},
 		{
@@ -82,27 +88,29 @@ func TestSmbGetter_Get(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if tt.createFile != "" {
+			if tt.createDir != "" {
 				// mock mounted folder by creating one
-				err := os.MkdirAll(filepath.Dir(tt.createFile), 0755)
+				err := os.MkdirAll(tt.createDir, 0755)
 				if err != nil {
 					t.Fatalf("err: %s", err.Error())
 				}
 
-				f, err := os.Create(tt.createFile)
-				if err != nil {
-					t.Fatalf("err: %s", err.Error())
-				}
-				defer f.Close()
+				if tt.file != "" {
+					f, err := os.Create(filepath.Join(tt.createDir, tt.file))
+					if err != nil {
+						t.Fatalf("err: %s", err.Error())
+					}
+					defer f.Close()
 
-				// Write content to assert later
-				_, err = f.WriteString("Hello\n")
-				if err != nil {
-					t.Fatalf("err: %s", err.Error())
+					// Write content to assert later
+					_, err = f.WriteString("Hello\n")
+					if err != nil {
+						t.Fatalf("err: %s", err.Error())
+					}
+					f.Sync()
 				}
-				f.Sync()
 
-				defer os.RemoveAll(tt.createFile)
+				defer os.RemoveAll(tt.createDir)
 			}
 
 			dst := tempDir(t)
@@ -118,10 +126,9 @@ func TestSmbGetter_Get(t *testing.T) {
 			}
 
 			g := new(SmbGetter)
-			ctx := context.Background()
-			err = g.GetFile(ctx, req)
-			fail := err != nil
+			err = g.Get(context.Background(), req)
 
+			fail := err != nil
 			if tt.fail != fail {
 				if fail {
 					t.Fatalf("err: unexpected error %s", err.Error())
@@ -130,23 +137,22 @@ func TestSmbGetter_Get(t *testing.T) {
 			}
 
 			if !tt.fail {
-				if tt.createFile != "" {
-					// Verify the destination folder is a symlink to mounted folder
+				if tt.createDir != "" {
+					// Verify the destination folder is a symlink to the mounted one
 					fi, err := os.Lstat(dst)
 					if err != nil {
-						log.Printf("MOSS err 1")
 						t.Fatalf("err: %s", err)
 					}
 					if fi.Mode()&os.ModeSymlink == 0 {
 						t.Fatal("destination is not a symlink")
 					}
-					// Verify the main file exists
-					assertContents(t, dst, "Hello\n")
+					// Verify the file exists
+					assertContents(t, filepath.Join(dst, tt.file), "Hello\n")
 				} else {
-					// Verify the file exists at the destination folder
+					// Verify if the file was successfully downloaded
+					// and exists at the destination folder
 					mainPath := filepath.Join(dst, tt.file)
 					if _, err := os.Stat(mainPath); err != nil {
-						log.Printf("MOSS err 2")
 						t.Fatalf("err: %s", err)
 					}
 				}
@@ -167,21 +173,21 @@ func TestSmbGetter_GetFile(t *testing.T) {
 	}{
 		{
 			"smbclient with authentication",
-			"smb://vagrant:vagrant@samba/shared/file.txt",
+			"smb://username:password@samba/shared/file.txt",
 			"file.txt",
 			"",
 			false,
 		},
 		{
 			"smbclient with authentication and subdirectory",
-			"smb://vagrant:vagrant@samba/shared/subdir/file.txt",
+			"smb://username:password@samba/shared/subdir/file.txt",
 			"file.txt",
 			"",
 			false,
 		},
 		{
 			"smbclient with only username authentication",
-			"smb://vagrant@samba/shared/file.txt",
+			"smb://username@samba/shared/file.txt",
 			"file.txt",
 			"",
 			false,
@@ -195,7 +201,7 @@ func TestSmbGetter_GetFile(t *testing.T) {
 		},
 		{
 			"smbclient get directory",
-			"smb://vagrant:vagrant@samba/shared/subdir",
+			"smb://username:password@samba/shared/subdir",
 			"",
 			"",
 			true,
@@ -216,14 +222,14 @@ func TestSmbGetter_GetFile(t *testing.T) {
 		},
 		{
 			"non existent file",
-			"smb://vagrant:vagrant@samba/shared/invalidfile.txt",
+			"smb://username:password@samba/shared/invalidfile.txt",
 			"",
 			"",
 			true,
 		},
 		{
 			"non existent directory",
-			"smb://vagrant:vagrant@samba/shared/invaliddir",
+			"smb://username:password@samba/shared/invaliddir",
 			"",
 			"",
 			true,
@@ -326,13 +332,13 @@ func TestSmbGetter_Mode(t *testing.T) {
 		name         string
 		rawURL       string
 		expectedMode Mode
-		file    string
+		file         string
 		createDir    string
 		fail         bool
 	}{
 		{
 			"smbclient modefile for existing file",
-			"smb://vagrant:vagrant@samba/shared/file.txt",
+			"smb://username:password@samba/shared/file.txt",
 			ModeFile,
 			"file.txt",
 			"",
@@ -340,7 +346,7 @@ func TestSmbGetter_Mode(t *testing.T) {
 		},
 		{
 			"smbclient modedir for existing directory",
-			"smb://vagrant:vagrant@samba/shared/subdir",
+			"smb://username:password@samba/shared/subdir",
 			ModeDir,
 			"",
 			"",
@@ -348,7 +354,7 @@ func TestSmbGetter_Mode(t *testing.T) {
 		},
 		{
 			"mode fail for non existent directory",
-			"smb://vagrant:vagrant@samba/shared/invaliddir",
+			"smb://username:password@samba/shared/invaliddir",
 			0,
 			"",
 			"",
@@ -356,7 +362,7 @@ func TestSmbGetter_Mode(t *testing.T) {
 		},
 		{
 			"mode fail for non existent file",
-			"smb://vagrant:vagrant@samba/shared/invalidfile.txt",
+			"smb://username:password@samba/shared/invalidfile.txt",
 			0,
 			"",
 			"",
