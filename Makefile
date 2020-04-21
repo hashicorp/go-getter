@@ -1,3 +1,6 @@
+start-smb:
+	docker-compose up -d samba
+
 smbtests-prepare:
 	@docker-compose up -d
 	@sleep 60

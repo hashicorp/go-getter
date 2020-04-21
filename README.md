@@ -361,3 +361,24 @@ In order to access to GCS, authentication credentials should be provided. More i
 #### GCS Testing
 
 The tests for `get_gcs.go` require you to have GCP credentials set in your environment.  These credentials can have any level of permissions to any project, they just need to exist.  This means setting `GOOGLE_APPLICATION_CREDENTIALS="~/path/to/credentials.json"` or `GOOGLE_CREDENTIALS="{stringified-credentials-json}"`.  Due to this configuration, `get_gcs_test.go` will fail for external contributors in CircleCI.
+
+### SMB (smb)
+
+To access samba shared folder it's necessary to have a [smbclient](https://www.samba.org/samba/docs/current/man-html/smbclient.1.html) installed or a local mount of the shared folder.
+
+Some examples for addressing the scheme:    
+- smb://username:password@host/shared/dir (downloads directory content)
+- smb://username@host/shared/dir
+- smb://host/shared/dir 
+- smb://username:password@host/shared/dir/file (downloads file)
+- smb://username@host/shared/dir/file
+- smb://host/shared/dir/file
+     
+#### SMB Testing
+The test for `get_smb.go` requires a smb server running which can be started inside a docker container by
+running `make start-smb`. Once the container is up the shared folder can be accessed via `smb://<ip|name>/shared/<dir|file>` 
+by another container or machine in the same network. 
+
+To run the tests inside `get_smb_test.go`, prepare the environment with `make smbtests-prepare`. On prepare some 
+mock files and directories will be added to the shared folder and a go-getter container will start together with the samba server.
+Once the environment for testing is prepared, run `make smbtests` to run the tests. 

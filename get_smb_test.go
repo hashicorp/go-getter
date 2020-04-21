@@ -13,10 +13,7 @@ func TestSmbGetter_impl(t *testing.T) {
 }
 
 // TODO:
-// write higher level tests
 // save tests results on circleci
-// write docs of how to run tests locally (makefile?)
-// update readme
 
 func TestSmbGetter_Get(t *testing.T) {
 	smbTestsPreCheck(t)
@@ -69,6 +66,13 @@ func TestSmbGetter_Get(t *testing.T) {
 			"file.txt",
 			"/mnt/shared/subdir",
 			false,
+		},
+		{
+			"non existent directory",
+			"smb://username:password@samba/shared/invalid",
+			"",
+			"",
+			true,
 		},
 		{
 			"no hostname provided",
@@ -223,13 +227,6 @@ func TestSmbGetter_GetFile(t *testing.T) {
 		{
 			"non existent file",
 			"smb://username:password@samba/shared/invalidfile.txt",
-			"",
-			"",
-			true,
-		},
-		{
-			"non existent directory",
-			"smb://username:password@samba/shared/invaliddir",
 			"",
 			"",
 			true,
