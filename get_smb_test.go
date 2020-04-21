@@ -159,11 +159,11 @@ func TestSmbGetter_GetFile(t *testing.T) {
 	smbTestsPreCheck(t)
 
 	tests := []struct {
-		name       string
-		rawURL     string
-		file       string
-		createFile string
-		fail       bool
+		name      string
+		rawURL    string
+		file      string
+		createDir string
+		fail      bool
 	}{
 		{
 			"smbclient with authentication",
@@ -204,16 +204,16 @@ func TestSmbGetter_GetFile(t *testing.T) {
 			"local mounted smb shared file",
 			"smb://mnt/shared/file.txt",
 			"file.txt",
-			"/mnt/shared/file.txt",
+			"/mnt/shared",
 			false,
 		},
-		//{
-		//	"local mounted smb shared directory",
-		//	"smb://mnt/shared/subdir",
-		//	"",
-		//	"//mnt/shared/subdir",
-		//	true,
-		//},
+		{
+			"local mounted smb shared directory",
+			"smb://mnt/shared/subdir",
+			"",
+			"/mnt/shared/subdir",
+			true,
+		},
 		{
 			"non existent file",
 			"smb://vagrant:vagrant@samba/shared/invalidfile.txt",
@@ -246,27 +246,29 @@ func TestSmbGetter_GetFile(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if tt.createFile != "" {
+			if tt.createDir != "" {
 				// mock mounted folder by creating one
-				err := os.MkdirAll(filepath.Dir(tt.createFile), 0755)
+				err := os.MkdirAll(tt.createDir, 0755)
 				if err != nil {
 					t.Fatalf("err: %s", err.Error())
 				}
 
-				f, err := os.Create(tt.createFile)
-				if err != nil {
-					t.Fatalf("err: %s", err.Error())
-				}
-				defer f.Close()
+				if tt.file != "" {
+					f, err := os.Create(filepath.Join(tt.createDir, tt.file))
+					if err != nil {
+						t.Fatalf("err: %s", err.Error())
+					}
+					defer f.Close()
 
-				// Write content to assert later
-				_, err = f.WriteString("Hello\n")
-				if err != nil {
-					t.Fatalf("err: %s", err.Error())
+					// Write content to assert later
+					_, err = f.WriteString("Hello\n")
+					if err != nil {
+						t.Fatalf("err: %s", err.Error())
+					}
+					f.Sync()
 				}
-				f.Sync()
 
-				defer os.RemoveAll(tt.createFile)
+				defer os.RemoveAll(tt.createDir)
 			}
 
 			dst := tempDir(t)
@@ -293,7 +295,7 @@ func TestSmbGetter_GetFile(t *testing.T) {
 			}
 
 			if !tt.fail {
-				if tt.createFile != "" {
+				if tt.createDir != "" {
 					// Verify the destination folder is a symlink to the mounted one
 					fi, err := os.Lstat(dst)
 					if err != nil {
@@ -324,13 +326,15 @@ func TestSmbGetter_Mode(t *testing.T) {
 		name         string
 		rawURL       string
 		expectedMode Mode
-		createFile   string
+		file    string
+		createDir    string
 		fail         bool
 	}{
 		{
 			"smbclient modefile for existing file",
 			"smb://vagrant:vagrant@samba/shared/file.txt",
 			ModeFile,
+			"file.txt",
 			"",
 			false,
 		},
@@ -339,12 +343,14 @@ func TestSmbGetter_Mode(t *testing.T) {
 			"smb://vagrant:vagrant@samba/shared/subdir",
 			ModeDir,
 			"",
+			"",
 			false,
 		},
 		{
 			"mode fail for non existent directory",
 			"smb://vagrant:vagrant@samba/shared/invaliddir",
 			0,
+			"",
 			"",
 			true,
 		},
@@ -353,39 +359,45 @@ func TestSmbGetter_Mode(t *testing.T) {
 			"smb://vagrant:vagrant@samba/shared/invalidfile.txt",
 			0,
 			"",
+			"",
 			true,
 		},
 		{
 			"local mount modefile for existing file",
 			"smb://mnt/shared/file.txt",
 			ModeFile,
-			"/mnt/shared/file.txt",
+			"file.txt",
+			"/mnt/shared",
 			false,
 		},
-		//{
-		//	"local mount modedir for existing directory",
-		//	"smb://mnt/shared/subdir",
-		//	ModeDir,
-		//	"/mnt/shared/subdir",
-		//	false,
-		//},
+		{
+			"local mount modedir for existing directory",
+			"smb://mnt/shared/subdir",
+			ModeDir,
+			"",
+			"/mnt/shared/subdir",
+			false,
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if tt.createFile != "" {
+			if tt.createDir != "" {
 				// mock mounted folder by creating one
-				err := os.MkdirAll(filepath.Dir(tt.createFile), 0755)
+				err := os.MkdirAll(tt.createDir, 0755)
 				if err != nil {
 					t.Fatalf("err: %s", err.Error())
 				}
 
-				_, err = os.Create(tt.createFile)
-				if err != nil {
-					t.Fatalf("err: %s", err.Error())
+				if tt.file != "" {
+					f, err := os.Create(filepath.Join(tt.createDir, tt.file))
+					if err != nil {
+						t.Fatalf("err: %s", err.Error())
+					}
+					defer f.Close()
 				}
 
-				//defer os.RemoveAll(tt.createFile)
+				defer os.RemoveAll(tt.createDir)
 			}
 
 			url, err := urlhelper.Parse(tt.rawURL)
@@ -414,6 +426,6 @@ func TestSmbGetter_Mode(t *testing.T) {
 func smbTestsPreCheck(t *testing.T) {
 	r := os.Getenv("ACC_SMB_TEST")
 	if r != "1" {
-		t.Skip("Smb getter tests won't run. ACC_SMB_TEST not set")
+		t.Skip("smb getter tests won't run. ACC_SMB_TEST not set")
 	}
 }
