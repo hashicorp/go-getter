@@ -376,8 +376,8 @@ Some examples for addressing the scheme:
      
 #### SMB Testing
 The test for `get_smb.go` requires a smb server running which can be started inside a docker container by
-running `make start-smb`. Once the container is up the shared folder can be accessed via `smb://<ip|name>/shared/<dir|file>` 
-by another container or machine in the same network. 
+running `make start-smb`. Once the container is up the shared folder can be accessed via `smb://<ip|name>/public/<dir|file>` or 
+`smb://user:password@<ip|name>/private/<dir|file>` by another container or machine in the same network. 
 
 To run the tests inside `get_smb_test.go`, prepare the environment with `make smbtests-prepare`. On prepare some 
 mock files and directories will be added to the shared folder and a go-getter container will start together with the samba server.
