@@ -12,9 +12,6 @@ func TestSmbGetter_impl(t *testing.T) {
 	var _ Getter = new(SmbGetter)
 }
 
-// TODO:
-// save tests results on circleci
-
 func TestSmbGetter_Get(t *testing.T) {
 	smbTestsPreCheck(t)
 
@@ -26,50 +23,57 @@ func TestSmbGetter_Get(t *testing.T) {
 		fail      bool
 	}{
 		{
-			"smbclient with authentication",
-			"smb://username:password@samba/shared/subdir",
+			"smbclient with registered authentication in public share",
+			"smb://user:password@samba/public/subdir",
 			"file.txt",
 			"",
 			false,
 		},
 		{
-			"smbclient with authentication with file",
-			"smb://username:password@samba/shared/subdir/file.txt",
+			"smbclient with registered authentication with file in public share",
+			"smb://user:password@samba/public/subdir/file.txt",
 			"file.txt",
 			"",
 			true,
 		},
 		{
-			"smbclient with only username authentication",
-			"smb://username@samba/shared/subdir",
+			"smbclient with only registered username authentication in public share",
+			"smb://user@samba/public/subdir",
+			"file.txt",
+			"",
+			true,
+		},
+		{
+			"smbclient with non registered username authentication in public share",
+			"smb://username@samba/public/subdir",
 			"file.txt",
 			"",
 			false,
 		},
 		{
-			"smbclient without authentication",
-			"smb://samba/shared/subdir",
+			"smbclient without authentication in public share",
+			"smb://samba/public/subdir",
 			"file.txt",
 			"",
 			false,
 		},
 		{
 			"local mounted smb shared file",
-			"smb://mnt/shared/file.txt",
+			"smb://mnt/public/file.txt",
 			"file.txt",
-			"/mnt/shared",
+			"/mnt/public",
 			true,
 		},
 		{
 			"local mounted smb shared directory",
-			"smb://mnt/shared/subdir",
+			"smb://mnt/public/subdir",
 			"file.txt",
-			"/mnt/shared/subdir",
+			"/mnt/public/subdir",
 			false,
 		},
 		{
-			"non existent directory",
-			"smb://username:password@samba/shared/invalid",
+			"non existent directory in public share",
+			"smb://user:password@samba/public/invalid",
 			"",
 			"",
 			true,
@@ -176,36 +180,43 @@ func TestSmbGetter_GetFile(t *testing.T) {
 		fail      bool
 	}{
 		{
-			"smbclient with authentication",
-			"smb://username:password@samba/shared/file.txt",
+			"smbclient with registered authentication in public share",
+			"smb://user:password@samba/public/file.txt",
 			"file.txt",
 			"",
 			false,
 		},
 		{
-			"smbclient with authentication and subdirectory",
-			"smb://username:password@samba/shared/subdir/file.txt",
+			"smbclient with registered authentication and subdirectory in public share",
+			"smb://user:password@samba/public/subdir/file.txt",
 			"file.txt",
 			"",
 			false,
 		},
 		{
-			"smbclient with only username authentication",
-			"smb://username@samba/shared/file.txt",
+			"smbclient with only registered username authentication in public share",
+			"smb://user@samba/public/file.txt",
+			"file.txt",
+			"",
+			true,
+		},
+		{
+			"smbclient with non registered username authentication in public share",
+			"smb://username@samba/public/file.txt",
 			"file.txt",
 			"",
 			false,
 		},
 		{
-			"smbclient without authentication",
-			"smb://samba/shared/file.txt",
+			"smbclient without authentication in public share",
+			"smb://samba/public/file.txt",
 			"file.txt",
 			"",
 			false,
 		},
 		{
-			"smbclient get directory",
-			"smb://username:password@samba/shared/subdir",
+			"smbclient get directory in public share",
+			"smb://user:password@samba/public/subdir",
 			"",
 			"",
 			true,
@@ -225,8 +236,8 @@ func TestSmbGetter_GetFile(t *testing.T) {
 			true,
 		},
 		{
-			"non existent file",
-			"smb://username:password@samba/shared/invalidfile.txt",
+			"non existent file in public share",
+			"smb://user:password@samba/public/invalidfile.txt",
 			"",
 			"",
 			true,
@@ -334,32 +345,32 @@ func TestSmbGetter_Mode(t *testing.T) {
 		fail         bool
 	}{
 		{
-			"smbclient modefile for existing file",
-			"smb://username:password@samba/shared/file.txt",
+			"smbclient modefile for existing file in authenticated public share",
+			"smb://user:password@samba/public/file.txt",
 			ModeFile,
 			"file.txt",
 			"",
 			false,
 		},
 		{
-			"smbclient modedir for existing directory",
-			"smb://username:password@samba/shared/subdir",
+			"smbclient modedir for existing directory in authenticated public share",
+			"smb://user:password@samba/public/subdir",
 			ModeDir,
 			"",
 			"",
 			false,
 		},
 		{
-			"mode fail for non existent directory",
-			"smb://username:password@samba/shared/invaliddir",
+			"mode fail for non existent directory in authenticated public share",
+			"smb://user:password@samba/public/invaliddir",
 			0,
 			"",
 			"",
 			true,
 		},
 		{
-			"mode fail for non existent file",
-			"smb://username:password@samba/shared/invalidfile.txt",
+			"mode fail for non existent file in authenticated public share",
+			"smb://user:password@samba/public/invalidfile.txt",
 			0,
 			"",
 			"",

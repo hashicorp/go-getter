@@ -12,8 +12,7 @@ services:
     ports:
       - "139:139/tcp" # default smb port
       - "445:445/tcp" # default smb port
-    read_only: false
-    command: '-u "user;password" -s "shared;/data"'
+    command: '-u "user;password" -s "public;/data"'
 
   gogetter:
     image: golang:latest
