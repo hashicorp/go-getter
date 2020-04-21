@@ -16,125 +16,100 @@ func TestSmbGetter_Get(t *testing.T) {
 	smbTestsPreCheck(t)
 
 	tests := []struct {
-		name      string
-		rawURL    string
-		file      string
-		createDir string
-		fail      bool
+		name    string
+		rawURL  string
+		file    string
+		mounted bool
+		fail    bool
 	}{
 		{
 			"smbclient with registered authentication in private share",
 			"smb://user:password@samba/private/subdir",
 			"file.txt",
-			"",
+			false,
 			false,
 		},
 		{
 			"smbclient with registered authentication with file in private share",
 			"smb://user:password@samba/private/subdir/file.txt",
 			"file.txt",
-			"",
+			false,
 			true,
 		},
 		{
 			"smbclient with only registered username authentication in private share",
 			"smb://user@samba/private/subdir",
 			"file.txt",
-			"",
+			false,
 			true,
 		},
 		{
 			"smbclient with non registered username authentication in public share",
 			"smb://username@samba/public/subdir",
 			"file.txt",
-			"",
+			false,
 			false,
 		},
 		{
 			"smbclient without authentication in private share",
 			"smb://samba/private/subdir",
 			"file.txt",
-			"",
+			false,
 			true,
 		},
 		{
 			"smbclient without authentication in public share",
 			"smb://samba/public/subdir",
 			"file.txt",
-			"",
+			false,
 			false,
 		},
-		{
-			"local mounted smb shared file",
-			"smb://mnt/public/file.txt",
-			"file.txt",
-			"/mnt/public",
-			true,
-		},
-		{
-			"local mounted smb shared directory",
-			"smb://mnt/public/subdir",
-			"file.txt",
-			"/mnt/public/subdir",
-			false,
-		},
+		//{
+		//	"local mounted smb shared file",
+		//	"smb://mnt/file.txt",
+		//	"file.txt",
+		//	true,
+		//	true,
+		//},
+		//{
+		//	"local mounted smb shared directory",
+		//	"smb://mnt/subdir",
+		//	"file.txt",
+		//	true,
+		//	false,
+		//},
 		{
 			"non existent directory in private share",
 			"smb://user:password@samba/private/invalid",
 			"",
-			"",
+			false,
 			true,
 		},
 		{
 			"non existent directory in public share",
 			"smb://samba/public/invalid",
 			"",
-			"",
+			false,
 			true,
 		},
 		{
 			"no hostname provided",
 			"smb://",
 			"",
-			"",
+			false,
 			true,
 		},
 		{
 			"no filepath provided",
 			"smb://samba",
 			"",
-			"",
+			false,
 			true,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if tt.createDir != "" {
-				// mock mounted folder by creating one
-				err := os.MkdirAll(tt.createDir, 0755)
-				if err != nil {
-					t.Fatalf("err: %s", err.Error())
-				}
-
-				if tt.file != "" {
-					f, err := os.Create(filepath.Join(tt.createDir, tt.file))
-					if err != nil {
-						t.Fatalf("err: %s", err.Error())
-					}
-					defer f.Close()
-
-					// Write content to assert later
-					_, err = f.WriteString("Hello\n")
-					if err != nil {
-						t.Fatalf("err: %s", err.Error())
-					}
-					f.Sync()
-				}
-
-				defer os.RemoveAll(tt.createDir)
-			}
-
 			dst := tempDir(t)
 			defer os.RemoveAll(dst)
 
@@ -159,7 +134,7 @@ func TestSmbGetter_Get(t *testing.T) {
 			}
 
 			if !tt.fail {
-				if tt.createDir != "" {
+				if tt.mounted {
 					// Verify the destination folder is a symlink to the mounted one
 					fi, err := os.Lstat(dst)
 					if err != nil {
@@ -187,139 +162,114 @@ func TestSmbGetter_GetFile(t *testing.T) {
 	smbTestsPreCheck(t)
 
 	tests := []struct {
-		name      string
-		rawURL    string
-		file      string
-		createDir string
-		fail      bool
+		name    string
+		rawURL  string
+		file    string
+		mounted bool
+		fail    bool
 	}{
 		{
 			"smbclient with registered authentication in private share",
 			"smb://user:password@samba/private/file.txt",
 			"file.txt",
-			"",
+			false,
 			false,
 		},
 		{
 			"smbclient with registered authentication and subdirectory in private share",
 			"smb://user:password@samba/private/subdir/file.txt",
 			"file.txt",
-			"",
+			false,
 			false,
 		},
 		{
 			"smbclient with only registered username authentication in private share",
 			"smb://user@samba/private/file.txt",
 			"file.txt",
-			"",
+			false,
 			true,
 		},
 		{
 			"smbclient with non registered username authentication in public share",
 			"smb://username@samba/public/file.txt",
 			"file.txt",
-			"",
+			false,
 			false,
 		},
 		{
 			"smbclient without authentication in public share",
 			"smb://samba/public/file.txt",
 			"file.txt",
-			"",
+			false,
 			false,
 		},
 		{
 			"smbclient without authentication in private share",
 			"smb://samba/private/file.txt",
 			"file.txt",
-			"",
+			false,
 			true,
 		},
 		{
 			"smbclient get directory in private share",
 			"smb://user:password@samba/private/subdir",
 			"",
-			"",
+			false,
 			true,
 		},
 		{
 			"smbclient get directory in public share",
 			"smb://samba/public/subdir",
 			"",
-			"",
+			false,
 			true,
 		},
 		{
 			"local mounted smb shared file",
-			"smb://mnt/shared/file.txt",
+			"smb://mnt/file.txt",
 			"file.txt",
-			"/mnt/shared",
+			true,
 			false,
 		},
 		{
 			"local mounted smb shared directory",
-			"smb://mnt/shared/subdir",
+			"smb://mnt/subdir",
 			"",
-			"/mnt/shared/subdir",
+			true,
 			true,
 		},
 		{
 			"non existent file in private share",
 			"smb://user:password@samba/private/invalidfile.txt",
 			"",
-			"",
+			false,
 			true,
 		},
 		{
 			"non existent file in public share",
 			"smb://samba/public/invalidfile.txt",
 			"",
-			"",
+			false,
 			true,
 		},
 		{
 			"no hostname provided",
 			"smb://",
 			"",
-			"",
+			false,
 			true,
 		},
 		{
 			"no filepath provided",
 			"smb://samba",
 			"",
-			"",
+			false,
 			true,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if tt.createDir != "" {
-				// mock mounted folder by creating one
-				err := os.MkdirAll(tt.createDir, 0755)
-				if err != nil {
-					t.Fatalf("err: %s", err.Error())
-				}
-
-				if tt.file != "" {
-					f, err := os.Create(filepath.Join(tt.createDir, tt.file))
-					if err != nil {
-						t.Fatalf("err: %s", err.Error())
-					}
-					defer f.Close()
-
-					// Write content to assert later
-					_, err = f.WriteString("Hello\n")
-					if err != nil {
-						t.Fatalf("err: %s", err.Error())
-					}
-					f.Sync()
-				}
-
-				defer os.RemoveAll(tt.createDir)
-			}
-
 			dst := tempDir(t)
 			defer os.RemoveAll(dst)
 
@@ -344,7 +294,7 @@ func TestSmbGetter_GetFile(t *testing.T) {
 			}
 
 			if !tt.fail {
-				if tt.createDir != "" {
+				if tt.mounted {
 					// Verify the destination folder is a symlink to the mounted one
 					fi, err := os.Lstat(dst)
 					if err != nil {
@@ -376,7 +326,7 @@ func TestSmbGetter_Mode(t *testing.T) {
 		rawURL       string
 		expectedMode Mode
 		file         string
-		createDir    string
+		mounted      bool
 		fail         bool
 	}{
 		{
@@ -384,7 +334,7 @@ func TestSmbGetter_Mode(t *testing.T) {
 			"smb://user:password@samba/private/file.txt",
 			ModeFile,
 			"file.txt",
-			"",
+			false,
 			false,
 		},
 		{
@@ -392,7 +342,7 @@ func TestSmbGetter_Mode(t *testing.T) {
 			"smb://user:password@samba/private/subdir",
 			ModeDir,
 			"",
-			"",
+			false,
 			false,
 		},
 		{
@@ -400,7 +350,7 @@ func TestSmbGetter_Mode(t *testing.T) {
 			"smb://user:password@samba/private/invaliddir",
 			0,
 			"",
-			"",
+			false,
 			true,
 		},
 		{
@@ -408,7 +358,7 @@ func TestSmbGetter_Mode(t *testing.T) {
 			"smb://user:password@samba/private/invalidfile.txt",
 			0,
 			"",
-			"",
+			false,
 			true,
 		},
 		{
@@ -416,7 +366,7 @@ func TestSmbGetter_Mode(t *testing.T) {
 			"smb://samba/public/file.txt",
 			ModeFile,
 			"file.txt",
-			"",
+			false,
 			false,
 		},
 		{
@@ -424,7 +374,7 @@ func TestSmbGetter_Mode(t *testing.T) {
 			"smb://samba/public/subdir",
 			ModeDir,
 			"",
-			"",
+			false,
 			false,
 		},
 		{
@@ -432,7 +382,7 @@ func TestSmbGetter_Mode(t *testing.T) {
 			"smb://samba/public/invaliddir",
 			0,
 			"",
-			"",
+			false,
 			true,
 		},
 		{
@@ -440,47 +390,29 @@ func TestSmbGetter_Mode(t *testing.T) {
 			"smb://samba/public/invalidfile.txt",
 			0,
 			"",
-			"",
+			false,
 			true,
 		},
 		{
 			"local mount modefile for existing file",
-			"smb://mnt/shared/file.txt",
+			"smb://mnt/file.txt",
 			ModeFile,
 			"file.txt",
-			"/mnt/shared",
+			true,
 			false,
 		},
 		{
 			"local mount modedir for existing directory",
-			"smb://mnt/shared/subdir",
+			"smb://mnt/subdir",
 			ModeDir,
 			"",
-			"/mnt/shared/subdir",
+			true,
 			false,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if tt.createDir != "" {
-				// mock mounted folder by creating one
-				err := os.MkdirAll(tt.createDir, 0755)
-				if err != nil {
-					t.Fatalf("err: %s", err.Error())
-				}
-
-				if tt.file != "" {
-					f, err := os.Create(filepath.Join(tt.createDir, tt.file))
-					if err != nil {
-						t.Fatalf("err: %s", err.Error())
-					}
-					defer f.Close()
-				}
-
-				defer os.RemoveAll(tt.createDir)
-			}
-
 			url, err := urlhelper.Parse(tt.rawURL)
 			if err != nil {
 				t.Fatalf("err: %s", err.Error())
