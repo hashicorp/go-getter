@@ -325,88 +325,66 @@ func TestSmbGetter_Mode(t *testing.T) {
 		name         string
 		rawURL       string
 		expectedMode Mode
-		file         string
-		mounted      bool
 		fail         bool
 	}{
 		{
 			"smbclient modefile for existing file in authenticated private share",
 			"smb://user:password@samba/private/file.txt",
 			ModeFile,
-			"file.txt",
-			false,
 			false,
 		},
 		{
 			"smbclient modedir for existing directory in authenticated private share",
 			"smb://user:password@samba/private/subdir",
 			ModeDir,
-			"",
-			false,
 			false,
 		},
 		{
 			"mode fail for non existent directory in authenticated private share",
 			"smb://user:password@samba/private/invaliddir",
 			0,
-			"",
-			false,
 			true,
 		},
 		{
 			"mode fail for non existent file in authenticated private share",
 			"smb://user:password@samba/private/invalidfile.txt",
 			0,
-			"",
-			false,
 			true,
 		},
 		{
 			"smbclient modefile for existing file in public share",
 			"smb://samba/public/file.txt",
 			ModeFile,
-			"file.txt",
-			false,
 			false,
 		},
 		{
 			"smbclient modedir for existing directory in public share",
 			"smb://samba/public/subdir",
 			ModeDir,
-			"",
-			false,
 			false,
 		},
 		{
 			"mode fail for non existent directory in public share",
 			"smb://samba/public/invaliddir",
 			0,
-			"",
-			false,
 			true,
 		},
 		{
 			"mode fail for non existent file in public share",
 			"smb://samba/public/invalidfile.txt",
 			0,
-			"",
-			false,
 			true,
 		},
 		{
 			"local mount modefile for existing file",
 			"smb://mnt/file.txt",
 			ModeFile,
-			"file.txt",
-			true,
 			false,
 		},
 		{
 			"local mount modedir for existing directory",
 			"smb://mnt/subdir",
 			ModeDir,
-			"",
-			true,
 			false,
 		},
 	}
