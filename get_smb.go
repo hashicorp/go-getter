@@ -47,7 +47,7 @@ func (g *SmbGetter) Mode(ctx context.Context, u *url.URL) (Mode, error) {
 	}
 
 	result = multierror.Append(result, err)
-	return 0, fmt.Errorf("one of the options should be available: \n 1. local mount of the smb shared folder or; \n 2. smbclient cli installed. \n err: %s", result.Error())
+	return 0, fmt.Errorf("one of the options should be available: \n 1. local mount of the smb shared folder or; \n 2. smbclient cli installed (provice credentials when necessary). \n err: %s", result.Error())
 }
 
 func (g *SmbGetter) smbClientMode(u *url.URL) (Mode, error) {
@@ -115,7 +115,7 @@ func (g *SmbGetter) Get(ctx context.Context, req *Request) error {
 		os.Remove(req.Dst)
 	}
 
-	return fmt.Errorf("one of the options should be available: \n 1. local mount of the smb shared folder or; \n 2. smbclient cli installed. \n err: %s", result.Error())
+	return fmt.Errorf("one of the options should be available: \n 1. local mount of the smb shared folder or; \n 2. smbclient cli installed (provice credentials when necessary). \n err: %s", result.Error())
 }
 
 func (g *SmbGetter) smbclientGet(req *Request) error {
@@ -192,7 +192,7 @@ func (g *SmbGetter) GetFile(ctx context.Context, req *Request) error {
 		os.Remove(req.Dst)
 	}
 
-	return fmt.Errorf("one of the options should be available: \n 1. local mount of the smb shared folder or; \n 2. smbclient cli installed. \n err: %s", result.Error())
+	return fmt.Errorf("one of the options should be available: \n 1. local mount of the smb shared folder or; \n 2. smbclient cli installed (provice credentials when necessary). \n err: %s", result.Error())
 }
 
 func (g *SmbGetter) smbclientGetFile(req *Request) error {
