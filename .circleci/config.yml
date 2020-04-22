@@ -70,8 +70,9 @@ jobs:
               docker-compose==1.12.0
 
       - run:
-          name: start smb server and gogetter containers
+          name: build and start smb server and gogetter containers
           command: |
+            docker-compose build
             docker-compose up -d
 
       - run:
@@ -79,22 +80,9 @@ jobs:
           command: sleep 60
 
       - run:
-          name: prepare server and client to run tests
-          command: |
-            docker exec -it samba bash -c "echo 'Hello' > data/file.txt \
-                  && mkdir -p data/subdir \
-                  && echo 'Hello' > data/subdir/file.txt \
-                  && echo 'Hello' > mnt/file.txt \
-                  && mkdir -p mnt/subdir \
-                  && echo 'Hello' > mnt/subdir/file.txt"
-            docker cp ./ gogetter:/go-getter/
-            docker exec -it gogetter bash -c "go mod download \
-                  && apt-get update \
-                  && apt-get -y install smbclient"
-
-      - run:
           name: run smb getter tests
           command: |
+            docker exec -it samba bash -c "echo 'Hello' > /mnt/file.txt && mkdir -p /mnt/subdir  && echo 'Hello' > /mnt/subdir/file.txt"
             docker exec -it gogetter bash -c "env ACC_SMB_TEST=1 go test -v ./... -run=TestSmbGetter_"
 
 workflows:

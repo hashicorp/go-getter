@@ -2,7 +2,9 @@ version: '3.2'
 
 services:
   samba:
-    image: dperson/samba
+    build:
+      dockerfile: Dockerfile-smbserver
+      context: .
     container_name: samba
     environment:
       USERID: "0"
@@ -14,16 +16,16 @@ services:
       - "445:445/tcp" # default smb port
     volumes:
       - /mnt:/mnt:z
-    command: '-s "public;/data" -s "private;/mnt;yes;no;no;user" -u "user;password" -p '
+    command: '-s "public;/public" -s "private;/private;yes;no;no;user" -u "user;password" -p'
 
   gogetter:
-    image: golang:latest
+    build:
+      context: .
     container_name: gogetter
     depends_on:
       - samba
     networks:
       - default
-    working_dir: /go-getter
     volumes:
       - /mnt:/mnt
     command: tail -f /dev/null
