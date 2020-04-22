@@ -278,7 +278,7 @@ func TestSmbGetter_GetFile(t *testing.T) {
 				t.Fatalf("err: %s", err.Error())
 			}
 			req := &Request{
-				Dst: dst,
+				Dst: filepath.Join(dst, tt.file),
 				u:   url,
 			}
 
@@ -294,25 +294,13 @@ func TestSmbGetter_GetFile(t *testing.T) {
 			}
 
 			if !tt.fail {
-				if tt.mounted {
-					// Verify the destination folder is a symlink to the mounted one
-					fi, err := os.Lstat(dst)
-					if err != nil {
-						t.Fatalf("err: %s", err)
-					}
-					if fi.Mode()&os.ModeSymlink == 0 {
-						t.Fatal("destination is not a symlink")
-					}
-					// Verify the file exists
-					assertContents(t, dst, "Hello\n")
-				} else {
-					// Verify if the file was successfully downloaded
-					// and exists at the destination folder
-					mainPath := filepath.Join(dst, tt.file)
-					if _, err := os.Stat(mainPath); err != nil {
-						t.Fatalf("err: %s", err)
-					}
+				// Verify if the file was successfully downloaded
+				// and exists at the destination folder
+				mainPath := filepath.Join(dst, tt.file)
+				if _, err := os.Stat(mainPath); err != nil {
+					t.Fatalf("err: %s", err)
 				}
+
 			}
 		})
 	}

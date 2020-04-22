@@ -7,6 +7,7 @@ import (
 	"net/url"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"regexp"
 	"runtime"
 	"strings"
@@ -135,6 +136,21 @@ func (g *SmbGetter) smbclientGet(req *Request) error {
 
 	// download everything that's inside the directory (files and subdirectories)
 	smbclientCmd := baseCmd + " --command 'prompt OFF;recurse ON; mget *'"
+
+	if req.Dst != "" {
+		_, err := os.Lstat(req.Dst)
+		if err != nil {
+			if os.IsNotExist(err) {
+				// Create destination folder if it doesn't exists
+				if err := os.MkdirAll(req.Dst, 0755); err != nil {
+					return fmt.Errorf("failed to creat destination path: %s", err.Error())
+				}
+			} else {
+				return err
+			}
+		}
+	}
+
 	_, err = runSmbClientCommand(smbclientCmd, req.Dst)
 	return err
 }
@@ -208,7 +224,21 @@ func (g *SmbGetter) smbclientGetFile(req *Request) error {
 
 	// download file
 	smbclientCmd := baseCmd + " --command " + fmt.Sprintf("'get %s'", file)
-	_, err = runSmbClientCommand(smbclientCmd, req.Dst)
+	if req.Dst != "" {
+		_, err := os.Lstat(req.Dst)
+		if err != nil {
+			if os.IsNotExist(err) {
+				// Create destination folder if it doesn't exists
+				if err := os.MkdirAll(filepath.Dir(req.Dst), 0755); err != nil {
+					return fmt.Errorf("failed to creat destination path: %s", err.Error())
+				}
+			} else {
+				return err
+			}
+		}
+		smbclientCmd = baseCmd + " --command " + fmt.Sprintf("'get %s %s'", file, req.Dst)
+	}
+	_, err = runSmbClientCommand(smbclientCmd, "")
 	return err
 }
 
@@ -265,17 +295,6 @@ func runSmbClientCommand(smbclientCmd string, dst string) (string, error) {
 	cmd := exec.Command("bash", "-c", smbclientCmd)
 
 	if dst != "" {
-		_, err := os.Lstat(dst)
-		if err != nil {
-			if os.IsNotExist(err) {
-				// Create destination folder if it doesn't exists
-				if err := os.MkdirAll(dst, os.ModePerm); err != nil {
-					return "", fmt.Errorf("failed to creat destination path: %s", err.Error())
-				}
-			} else {
-				return "", err
-			}
-		}
 		cmd.Dir = dst
 	}
 
