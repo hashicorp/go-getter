@@ -143,7 +143,7 @@ func (g *SmbGetter) smbclientGet(req *Request) error {
 			if os.IsNotExist(err) {
 				// Create destination folder if it doesn't exist
 				if err := os.MkdirAll(req.Dst, 0755); err != nil {
-					return fmt.Errorf("failed to creat destination path: %s", err.Error())
+					return fmt.Errorf("failed to create destination path: %s", err.Error())
 				}
 			} else {
 				return err
