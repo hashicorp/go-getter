@@ -160,7 +160,7 @@ func (g *SmbGetter) GetFile(ctx context.Context, req *Request) error {
 		return fmt.Errorf(basePathError)
 	}
 
-	// If dst folder doesn't exists, we need to remove the created on later in case of failures
+	// If dst folder doesn't exist, we need to remove the created one later in case of failures
 	dstExisted := false
 	if req.Dst != "" {
 		if _, err := os.Lstat(req.Dst); err == nil {
