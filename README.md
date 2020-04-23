@@ -364,7 +364,8 @@ The tests for `get_gcs.go` require you to have GCP credentials set in your envir
 
 ### SMB (smb)
 
-To access samba shared folder it's necessary to have a [smbclient](https://www.samba.org/samba/docs/current/man-html/smbclient.1.html) installed or a local mount of the shared folder.
+To access samba shared folder, for Unix user it's necessary to have the [smbclient](https://www.samba.org/samba/docs/current/man-html/smbclient.1.html) installed or a local mount of the shared folder.
+For windows users, only the access permission is necessary.  
 
 Some examples for addressing the scheme:    
 - smb://username:password@host/shared/dir (downloads directory content)
