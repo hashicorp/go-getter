@@ -139,9 +139,9 @@ func (g *SmbGetter) smbclientGet(req *Request) error {
 		_, err := os.Lstat(req.Dst)
 		if err != nil {
 			if os.IsNotExist(err) {
-				// Create destination folder if it doesn't exists
+				// Create destination folder if it doesn't exist
 				if err := os.MkdirAll(req.Dst, 0755); err != nil {
-					return fmt.Errorf("failed to creat destination path: %s", err.Error())
+					return fmt.Errorf("failed to create destination path: %s", err.Error())
 				}
 			} else {
 				return err
@@ -158,7 +158,7 @@ func (g *SmbGetter) GetFile(ctx context.Context, req *Request) error {
 		return new(smbPathError)
 	}
 
-	// If dst folder doesn't exists, we need to remove the created on later in case of failures
+	// If dst folder doesn't exist, we need to remove the created one later in case of failures
 	dstExisted := false
 	if req.Dst != "" {
 		if _, err := os.Lstat(req.Dst); err == nil {
@@ -226,7 +226,7 @@ func (g *SmbGetter) smbclientGetFile(req *Request) error {
 		_, err := os.Lstat(req.Dst)
 		if err != nil {
 			if os.IsNotExist(err) {
-				// Create destination folder if it doesn't exists
+				// Create destination folder if it doesn't exist
 				if err := os.MkdirAll(filepath.Dir(req.Dst), 0755); err != nil {
 					return fmt.Errorf("failed to creat destination path: %s", err.Error())
 				}
