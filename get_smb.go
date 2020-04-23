@@ -240,7 +240,7 @@ func (g *SmbGetter) smbclientGetFile(req *Request) error {
 	return err
 }
 
-func(g *SmbGetter) smbclientBaseCmd(used *url.Userinfo, hostPath string, fileDir string) string {
+func (g *SmbGetter) smbclientBaseCmd(used *url.Userinfo, hostPath string, fileDir string) string {
 	baseCmd := "smbclient -N"
 
 	// Append auth user and password to baseCmd
@@ -338,4 +338,3 @@ func (e *smbGeneralError) Error() string {
 	}
 	return "one of the options should be available: \n 1. local mount of the smb shared folder or; \n 2. smbclient cli installed (provice credentials when necessary)."
 }
-
