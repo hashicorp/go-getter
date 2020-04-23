@@ -22,11 +22,9 @@ type SmbGetter struct {
 	getter
 }
 
-const basePathError = "samba path should contain valid host, filepath, and authentication if necessary (smb://<user>:<password>@<host>/<file_path>)"
-
 func (g *SmbGetter) Mode(ctx context.Context, u *url.URL) (Mode, error) {
 	if u.Host == "" || u.Path == "" {
-		return 0, fmt.Errorf(basePathError)
+		return 0, new(smbPathError)
 	}
 
 	// Look in a possible local mount of shared folder
@@ -47,11 +45,11 @@ func (g *SmbGetter) Mode(ctx context.Context, u *url.URL) (Mode, error) {
 	}
 
 	result = multierror.Append(result, err)
-	return 0, fmt.Errorf("one of the options should be available: \n 1. local mount of the smb shared folder or; \n 2. smbclient cli installed (provice credentials when necessary). \n err: %s", result.Error())
+	return 0, &smbGeneralError{result}
 }
 
 func (g *SmbGetter) smbClientMode(u *url.URL) (Mode, error) {
-	hostPath, filePath, err := findHostAndFilePath(u)
+	hostPath, filePath, err := g.findHostAndFilePath(u)
 	if err != nil {
 		return 0, err
 	}
@@ -66,9 +64,9 @@ func (g *SmbGetter) smbClientMode(u *url.URL) (Mode, error) {
 		filePath = "."
 	}
 
-	baseCmd := smbclientBaseCmd(u.User, hostPath, filePath)
+	baseCmd := g.smbclientBaseCmd(u.User, hostPath, filePath)
 	// check if file exists in the smb shared folder and check the mode
-	isDir, err := isDirectory(baseCmd, file)
+	isDir, err := g.isDirectory(baseCmd, file)
 	if err != nil {
 		return 0, err
 	}
@@ -80,7 +78,7 @@ func (g *SmbGetter) smbClientMode(u *url.URL) (Mode, error) {
 
 func (g *SmbGetter) Get(ctx context.Context, req *Request) error {
 	if req.u.Host == "" || req.u.Path == "" {
-		return fmt.Errorf(basePathError)
+		return new(smbPathError)
 	}
 
 	// If dst folder doesn't exists, we need to remove the created on later in case of failures
@@ -115,18 +113,18 @@ func (g *SmbGetter) Get(ctx context.Context, req *Request) error {
 		os.Remove(req.Dst)
 	}
 
-	return fmt.Errorf("one of the options should be available: \n 1. local mount of the smb shared folder or; \n 2. smbclient cli installed (provice credentials when necessary). \n err: %s", result.Error())
+	return &smbGeneralError{result}
 }
 
 func (g *SmbGetter) smbclientGet(req *Request) error {
-	hostPath, directory, err := findHostAndFilePath(req.u)
+	hostPath, directory, err := g.findHostAndFilePath(req.u)
 	if err != nil {
 		return err
 	}
 
-	baseCmd := smbclientBaseCmd(req.u.User, hostPath, ".")
+	baseCmd := g.smbclientBaseCmd(req.u.User, hostPath, ".")
 	// check directory exists in the smb shared folder and is a directory
-	isDir, err := isDirectory(baseCmd, directory)
+	isDir, err := g.isDirectory(baseCmd, directory)
 	if err != nil {
 		return err
 	}
@@ -151,13 +149,13 @@ func (g *SmbGetter) smbclientGet(req *Request) error {
 		}
 	}
 
-	_, err = runSmbClientCommand(smbclientCmd, req.Dst)
+	_, err = g.runSmbClientCommand(smbclientCmd, req.Dst)
 	return err
 }
 
 func (g *SmbGetter) GetFile(ctx context.Context, req *Request) error {
 	if req.u.Host == "" || req.u.Path == "" {
-		return fmt.Errorf(basePathError)
+		return new(smbPathError)
 	}
 
 	// If dst folder doesn't exists, we need to remove the created on later in case of failures
@@ -192,11 +190,11 @@ func (g *SmbGetter) GetFile(ctx context.Context, req *Request) error {
 		os.Remove(req.Dst)
 	}
 
-	return fmt.Errorf("one of the options should be available: \n 1. local mount of the smb shared folder or; \n 2. smbclient cli installed (provice credentials when necessary). \n err: %s", result.Error())
+	return &smbGeneralError{result}
 }
 
 func (g *SmbGetter) smbclientGetFile(req *Request) error {
-	hostPath, filePath, err := findHostAndFilePath(req.u)
+	hostPath, filePath, err := g.findHostAndFilePath(req.u)
 	if err != nil {
 		return err
 	}
@@ -212,9 +210,9 @@ func (g *SmbGetter) smbclientGetFile(req *Request) error {
 		filePath = "."
 	}
 
-	baseCmd := smbclientBaseCmd(req.u.User, hostPath, filePath)
+	baseCmd := g.smbclientBaseCmd(req.u.User, hostPath, filePath)
 	// check file exists in the smb shared folder and is not a directory
-	isDir, err := isDirectory(baseCmd, file)
+	isDir, err := g.isDirectory(baseCmd, file)
 	if err != nil {
 		return err
 	}
@@ -238,11 +236,11 @@ func (g *SmbGetter) smbclientGetFile(req *Request) error {
 		}
 		smbclientCmd = baseCmd + " --command " + fmt.Sprintf("'get %s %s'", file, req.Dst)
 	}
-	_, err = runSmbClientCommand(smbclientCmd, "")
+	_, err = g.runSmbClientCommand(smbclientCmd, "")
 	return err
 }
 
-func smbclientBaseCmd(used *url.Userinfo, hostPath string, fileDir string) string {
+func(g *SmbGetter) smbclientBaseCmd(used *url.Userinfo, hostPath string, fileDir string) string {
 	baseCmd := "smbclient -N"
 
 	// Append auth user and password to baseCmd
@@ -258,7 +256,7 @@ func smbclientBaseCmd(used *url.Userinfo, hostPath string, fileDir string) strin
 	return baseCmd
 }
 
-func findHostAndFilePath(u *url.URL) (string, string, error) {
+func (g *SmbGetter) findHostAndFilePath(u *url.URL) (string, string, error) {
 	// Host path
 	hostPath := "//" + u.Host
 
@@ -279,9 +277,9 @@ func findHostAndFilePath(u *url.URL) (string, string, error) {
 	return hostPath, directories[1], nil
 }
 
-func isDirectory(baseCmd string, object string) (bool, error) {
+func (g *SmbGetter) isDirectory(baseCmd string, object string) (bool, error) {
 	objectInfoCmd := baseCmd + " --command " + fmt.Sprintf("'allinfo %s'", object)
-	output, err := runSmbClientCommand(objectInfoCmd, "")
+	output, err := g.runSmbClientCommand(objectInfoCmd, "")
 	if err != nil {
 		return false, err
 	}
@@ -291,7 +289,7 @@ func isDirectory(baseCmd string, object string) (bool, error) {
 	return strings.Contains(output, "attributes: D"), nil
 }
 
-func runSmbClientCommand(smbclientCmd string, dst string) (string, error) {
+func (g *SmbGetter) runSmbClientCommand(smbclientCmd string, dst string) (string, error) {
 	cmd := exec.Command("bash", "-c", smbclientCmd)
 
 	if dst != "" {
@@ -318,3 +316,26 @@ func runSmbClientCommand(smbclientCmd string, dst string) (string, error) {
 	}
 	return buf.String(), fmt.Errorf("error running %s: %s", cmd.Path, buf.String())
 }
+
+type smbPathError struct {
+	Path string
+}
+
+func (e *smbPathError) Error() string {
+	if e.Path == "" {
+		return "samba path should contain valid host, filepath, and authentication if necessary (smb://<user>:<password>@<host>/<file_path>)"
+	}
+	return fmt.Sprintf("samba path should contain valid host, filepath, and authentication if necessary (%s)", e.Path)
+}
+
+type smbGeneralError struct {
+	err error
+}
+
+func (e *smbGeneralError) Error() string {
+	if e != nil {
+		return fmt.Sprintf("one of the options should be available: \n 1. local mount of the smb shared folder or; \n 2. smbclient cli installed (provice credentials when necessary). \n err: %s", e.err.Error())
+	}
+	return "one of the options should be available: \n 1. local mount of the smb shared folder or; \n 2. smbclient cli installed (provice credentials when necessary)."
+}
+
