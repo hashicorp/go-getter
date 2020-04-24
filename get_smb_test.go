@@ -8,11 +8,11 @@ import (
 	"testing"
 )
 
-func TestSmbGetter_impl(t *testing.T) {
+func TestSmb_GetterImpl(t *testing.T) {
 	var _ Getter = new(SmbGetter)
 }
 
-func TestSmbGetter_Get(t *testing.T) {
+func TestSmb_GetterGet(t *testing.T) {
 	smbTestsPreCheck(t)
 
 	tests := []struct {
@@ -143,22 +143,16 @@ func TestSmbGetter_Get(t *testing.T) {
 					if fi.Mode()&os.ModeSymlink == 0 {
 						t.Fatal("destination is not a symlink")
 					}
-					// Verify the file exists
-					assertContents(t, filepath.Join(dst, tt.file), "Hello\n")
-				} else {
-					// Verify if the file was successfully downloaded
-					// and exists at the destination folder
-					mainPath := filepath.Join(dst, tt.file)
-					if _, err := os.Stat(mainPath); err != nil {
-						t.Fatalf("err: %s", err)
-					}
 				}
+				// Verify if the file was successfully downloaded
+				// and exists at the destination folder
+				assertContents(t, filepath.Join(dst, tt.file), "Hello\n")
 			}
 		})
 	}
 }
 
-func TestSmbGetter_GetFile(t *testing.T) {
+func TestSmb_GetterGetFile(t *testing.T) {
 	smbTestsPreCheck(t)
 
 	tests := []struct {
@@ -296,17 +290,13 @@ func TestSmbGetter_GetFile(t *testing.T) {
 			if !tt.fail {
 				// Verify if the file was successfully downloaded
 				// and exists at the destination folder
-				mainPath := filepath.Join(dst, tt.file)
-				if _, err := os.Stat(mainPath); err != nil {
-					t.Fatalf("err: %s", err)
-				}
-
+				assertContents(t, filepath.Join(dst, tt.file), "Hello\n")
 			}
 		})
 	}
 }
 
-func TestSmbGetter_Mode(t *testing.T) {
+func TestSmb_GetterMode(t *testing.T) {
 	smbTestsPreCheck(t)
 
 	tests := []struct {

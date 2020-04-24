@@ -374,12 +374,17 @@ Some examples for addressing the scheme:
 - smb://username:password@host/shared/dir/file (downloads file)
 - smb://username@host/shared/dir/file
 - smb://host/shared/dir/file
+- //host/shared/dir (downloads directory content)
+- //host/shared/dir/file (downloads file)
+
+With and without the smb:// scheme, go-getter will first look for a local mount with file path as `/host/shared/dir` (Unix) or `//host/shared/dir` (Windows), and if the local mount is not available 
+it will then try to download the file/directory via `smbclient` command.  
      
 #### SMB Testing
 The test for `get_smb.go` requires a smb server running which can be started inside a docker container by
 running `make start-smb`. Once the container is up the shared folder can be accessed via `smb://<ip|name>/public/<dir|file>` or 
 `smb://user:password@<ip|name>/private/<dir|file>` by another container or machine in the same network. 
 
-To run the tests inside `get_smb_test.go`, prepare the environment with `make smbtests-prepare`. On prepare some 
+To run the tests inside `get_smb_test.go` and `client_test.go`, prepare the environment with `make smbtests-prepare`. On prepare some 
 mock files and directories will be added to the shared folder and a go-getter container will start together with the samba server.
 Once the environment for testing is prepared, run `make smbtests` to run the tests. 
