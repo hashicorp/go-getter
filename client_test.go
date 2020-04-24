@@ -2,7 +2,6 @@ package getter
 
 import (
 	"context"
-	"log"
 	"os"
 	"path/filepath"
 	"testing"
@@ -69,8 +68,6 @@ func TestSmb_ClientGet(t *testing.T) {
 			if tt.mode == ModeFile {
 				dst = filepath.Join(dst, tt.file)
 			}
-
-			log.Printf("MOSS dst %s", dst)
 
 			req := &Request{
 				Dst:  dst,
