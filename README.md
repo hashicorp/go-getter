@@ -364,8 +364,12 @@ The tests for `get_gcs.go` require you to have GCP credentials set in your envir
 
 ### SMB (smb)
 
-To access samba shared folder, for Unix user it's necessary to have the [smbclient](https://www.samba.org/samba/docs/current/man-html/smbclient.1.html) installed or a local mount of the shared folder.
-For windows users, only the access permission is necessary.  
+The SMB getter will try to get files from samba when a url is prefixed with `smb://`, for example `smb://foo/bar/dir`.   
+   
+The go-getter will try for a local mount of the path such as `/foo/bar/dir` (Unix) or `//foo/bar/dir` (Windows), 
+and will fallback to using the [`smbclient`](https://www.samba.org/samba/docs/current/man-html/smbclient.1.html) command to download the file/dir.   
+
+⚠️ On Unix when the smb share is not mounted, [`smbclient`](https://www.samba.org/samba/docs/current/man-html/smbclient.1.html) needs to be installed for this to work.
 
 Some examples for addressing the scheme:    
 - smb://username:password@host/shared/dir (downloads directory content)
@@ -376,10 +380,8 @@ Some examples for addressing the scheme:
 - smb://host/shared/dir/file
 - //host/shared/dir (downloads directory content)
 - //host/shared/dir/file (downloads file)
-
-With and without the smb:// scheme, go-getter will first look for a local mount with file path as `/host/shared/dir` (Unix) or `//host/shared/dir` (Windows), and if the local mount is not available 
-it will then try to download the file/directory via `smbclient` command.  
-     
+   
+        
 #### SMB Testing
 The test for `get_smb.go` requires a smb server running which can be started inside a docker container by
 running `make start-smb`. Once the container is up the shared folder can be accessed via `smb://<ip|name>/public/<dir|file>` or 
