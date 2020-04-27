@@ -181,6 +181,17 @@ func (g *S3Getter) getObject(ctx context.Context, client *s3.S3, dst, bucket, ke
 
 func (g *S3Getter) getAWSConfig(region string, url *url.URL, creds *credentials.Credentials) *aws.Config {
 	conf := &aws.Config{}
+
+	if creds == nil {
+		sess, err := session.NewSessionWithOptions(session.Options{
+			SharedConfigState: session.SharedConfigEnable,
+		})
+		if err != nil {
+			fmt.Println("ERROR", err)
+		}
+		creds = sess.Config.Credentials
+	}
+
 	if creds == nil {
 		// Grab the metadata URL
 		metadataURL := os.Getenv("AWS_METADATA_URL")
