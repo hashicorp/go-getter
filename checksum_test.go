@@ -13,7 +13,7 @@ func TestClient_ChecksumFromFileWithSubFolder(t *testing.T) {
 
 	client := Client{}
 	req := &Request{
-		Src:              httpChecksums.URL+"/sha256-subfolder.sum",
+		Src: httpChecksums.URL + "/sha256-subfolder.sum",
 	}
 	file, err := client.ChecksumFromFile(ctx, req, isoURL)
 
