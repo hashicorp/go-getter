@@ -12,8 +12,6 @@ import (
 	"runtime"
 	"strings"
 	"syscall"
-
-	"github.com/hashicorp/go-multierror"
 )
 
 // SmbGetter is a Getter implementation that will download a module from
@@ -27,27 +25,22 @@ func (g *SmbGetter) Mode(ctx context.Context, u *url.URL) (Mode, error) {
 		return 0, new(smbPathError)
 	}
 
-	var result *multierror.Error
-	// Look in a possible local mount of shared folder
-	path := "/" + u.Host + u.Path
-	if runtime.GOOS == "windows" {
-		path = "/" + path
+	// For windows, look for the shared folder withing the file system
+	if g.client != nil {
+		fileGetter, ok := g.client.Getters["file"]
+		if runtime.GOOS == "windows" && ok {
+			prefix := string(os.PathSeparator) + string(os.PathSeparator)
+			u.Path = prefix + filepath.Join(u.Host, u.Path)
+			return fileGetter.Mode(ctx, u)
+		}
 	}
-	f := new(FileGetter)
-	mode, err := f.mode(path)
+
+	// Use smbclient cli to verify mode
+	mode, err := g.smbClientMode(u)
 	if err == nil {
 		return mode, nil
 	}
-	result = multierror.Append(result, err)
-
-	// If not mounted, use smbclient cli to verify mode
-	mode, err = g.smbClientMode(u)
-	if err == nil {
-		return mode, nil
-	}
-	result = multierror.Append(result, err)
-
-	return 0, &smbGeneralError{result}
+	return 0, &smbGeneralError{err}
 }
 
 func (g *SmbGetter) smbClientMode(u *url.URL) (Mode, error) {
@@ -91,32 +84,28 @@ func (g *SmbGetter) Get(ctx context.Context, req *Request) error {
 		}
 	}
 
-	var result *multierror.Error
-	// First look in a possible local mount of the shared folder
-	path := "/" + req.u.Host + req.u.Path
-	if runtime.GOOS == "windows" {
-		path = "/" + path
+	// For windows, look for the shared folder withing the file system
+	if g.client != nil {
+		fileGetter, ok := g.client.Getters["file"]
+		if runtime.GOOS == "windows" && ok {
+			prefix := string(os.PathSeparator) + string(os.PathSeparator)
+			req.u.Path = prefix + filepath.Join(req.u.Host, req.u.Path)
+			return fileGetter.Get(ctx, req)
+		}
 	}
-	f := new(FileGetter)
-	err := f.get(path, req)
-	if err == nil {
-		return nil
-	}
-	result = multierror.Append(result, err)
 
-	// If not mounted, try downloading the directory content using smbclient cli
-	err = g.smbclientGet(req)
+	// Download the directory content using smbclient cli
+	err := g.smbclientGet(req)
 	if err == nil {
 		return nil
 	}
-	result = multierror.Append(result, err)
 
 	if !dstExisted {
 		// Remove the destination created for smbclient
 		os.Remove(req.Dst)
 	}
 
-	return &smbGeneralError{result}
+	return &smbGeneralError{err}
 }
 
 func (g *SmbGetter) smbclientGet(req *Request) error {
@@ -170,32 +159,28 @@ func (g *SmbGetter) GetFile(ctx context.Context, req *Request) error {
 		}
 	}
 
-	var result *multierror.Error
-	// First look in a possible local mount of the shared folder
-	path := "/" + req.u.Host + req.u.Path
-	if runtime.GOOS == "windows" {
-		path = "/" + path
+	// For windows, look for the shared folder withing the file system
+	if g.client != nil {
+		fileGetter, ok := g.client.Getters["file"]
+		if runtime.GOOS == "windows" && ok {
+			prefix := string(os.PathSeparator) + string(os.PathSeparator)
+			req.u.Path = prefix + filepath.Join(req.u.Host, req.u.Path)
+			return fileGetter.GetFile(ctx, req)
+		}
 	}
-	f := new(FileGetter)
-	err := f.getFile(path, req, ctx)
-	if err == nil {
-		return nil
-	}
-	result = multierror.Append(result, err)
 
 	// If not mounted, try downloading the file using smbclient cli
-	err = g.smbclientGetFile(req)
+	err := g.smbclientGetFile(req)
 	if err == nil {
 		return nil
 	}
-	result = multierror.Append(result, err)
 
 	if !dstExisted {
 		// Remove the destination created for smbclient
 		os.Remove(req.Dst)
 	}
 
-	return &smbGeneralError{result}
+	return &smbGeneralError{err}
 }
 
 func (g *SmbGetter) smbclientGetFile(req *Request) error {
@@ -346,7 +331,7 @@ type smbGeneralError struct {
 
 func (e *smbGeneralError) Error() string {
 	if e != nil {
-		return fmt.Sprintf("one of the options should be available: \n 1. local mount of the smb shared folder or; \n 2. smbclient cli installed (provice credentials when necessary). \n err: %s", e.err.Error())
+		return fmt.Sprintf("smbclient cli needs to be installed and credentials provided when necessary. \n err: %s", e.err.Error())
 	}
-	return "one of the options should be available: \n 1. local mount of the smb shared folder or; \n 2. smbclient cli installed (provice credentials when necessary)."
+	return "smbclient cli needs to be installed and credentials provided when necessary."
 }

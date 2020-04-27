@@ -19,10 +19,7 @@ func (g *FileGetter) Mode(ctx context.Context, u *url.URL) (Mode, error) {
 	if u.RawPath != "" {
 		path = u.RawPath
 	}
-	return g.mode(path)
-}
 
-func (g *FileGetter) mode(path string) (Mode, error) {
 	fi, err := os.Stat(path)
 	if err != nil {
 		return 0, err
@@ -41,10 +38,7 @@ func (g *FileGetter) Get(ctx context.Context, req *Request) error {
 	if req.u.RawPath != "" {
 		path = req.u.RawPath
 	}
-	return g.get(path, req)
-}
 
-func (g *FileGetter) get(path string, req *Request) error {
 	// The source path must exist and be a directory to be usable.
 	if fi, err := os.Stat(path); err != nil {
 		return fmt.Errorf("source path error: %s", err)
@@ -88,10 +82,7 @@ func (g *FileGetter) GetFile(ctx context.Context, req *Request) error {
 	if req.u.RawPath != "" {
 		path = req.u.RawPath
 	}
-	return g.getFile(path, req, ctx)
-}
 
-func (g *FileGetter) getFile(path string, req *Request, ctx context.Context) error {
 	// The source path must exist and be a file to be usable.
 	if fi, err := os.Stat(path); err != nil {
 		return fmt.Errorf("source path error: %s", err)

@@ -5,7 +5,6 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
-	"strings"
 )
 
 // FileDetector implements Detector to detect file paths.
@@ -50,8 +49,9 @@ func (d *FileDetector) Detect(src, pwd string) (string, bool, error) {
 		src = filepath.Join(pwd, src)
 	}
 
-	if strings.HasPrefix(src, "//") {
-		// This is a valid smb path and will be also checked as local file by the SmbGetter
+	if windowsSmbPath(src) {
+		// This is a valid smb path for Windows and will be checked in the SmbGetter
+		// by the file system using the FileGetter, if available.
 		return src, false, nil
 	}
 

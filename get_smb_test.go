@@ -16,31 +16,27 @@ func TestSmb_GetterGet(t *testing.T) {
 	smbTestsPreCheck(t)
 
 	tests := []struct {
-		name    string
-		rawURL  string
-		file    string
-		mounted bool
-		fail    bool
+		name   string
+		rawURL string
+		file   string
+		fail   bool
 	}{
 		{
 			"smbclient with registered authentication in private share",
 			"smb://user:password@samba/private/subdir",
 			"file.txt",
 			false,
-			false,
 		},
 		{
 			"smbclient with registered authentication with file in private share",
 			"smb://user:password@samba/private/subdir/file.txt",
 			"file.txt",
-			false,
 			true,
 		},
 		{
 			"smbclient with only registered username authentication in private share",
 			"smb://user@samba/private/subdir",
 			"file.txt",
-			false,
 			true,
 		},
 		{
@@ -48,13 +44,11 @@ func TestSmb_GetterGet(t *testing.T) {
 			"smb://username@samba/public/subdir",
 			"file.txt",
 			false,
-			false,
 		},
 		{
 			"smbclient without authentication in private share",
 			"smb://samba/private/subdir",
 			"file.txt",
-			false,
 			true,
 		},
 		{
@@ -62,48 +56,29 @@ func TestSmb_GetterGet(t *testing.T) {
 			"smb://samba/public/subdir",
 			"file.txt",
 			false,
-			false,
-		},
-		{
-			"local mounted smb shared file",
-			"smb://mnt/file.txt",
-			"file.txt",
-			true,
-			true,
-		},
-		{
-			"local mounted smb shared directory",
-			"smb://mnt/subdir",
-			"file.txt",
-			true,
-			false,
 		},
 		{
 			"non existent directory in private share",
 			"smb://user:password@samba/private/invalid",
 			"",
-			false,
 			true,
 		},
 		{
 			"non existent directory in public share",
 			"smb://samba/public/invalid",
 			"",
-			false,
 			true,
 		},
 		{
 			"no hostname provided",
 			"smb://",
 			"",
-			false,
 			true,
 		},
 		{
 			"no filepath provided",
 			"smb://samba",
 			"",
-			false,
 			true,
 		},
 	}
@@ -123,6 +98,7 @@ func TestSmb_GetterGet(t *testing.T) {
 			}
 
 			g := new(SmbGetter)
+			g.SetClient(DefaultClient)
 			err = g.Get(context.Background(), req)
 
 			fail := err != nil
@@ -134,16 +110,6 @@ func TestSmb_GetterGet(t *testing.T) {
 			}
 
 			if !tt.fail {
-				if tt.mounted {
-					// Verify the destination folder is a symlink to the mounted one
-					fi, err := os.Lstat(dst)
-					if err != nil {
-						t.Fatalf("err: %s", err)
-					}
-					if fi.Mode()&os.ModeSymlink == 0 {
-						t.Fatal("destination is not a symlink")
-					}
-				}
 				// Verify if the file was successfully downloaded
 				// and exists at the destination folder
 				assertContents(t, filepath.Join(dst, tt.file), "Hello\n")
@@ -156,17 +122,15 @@ func TestSmb_GetterGetFile(t *testing.T) {
 	smbTestsPreCheck(t)
 
 	tests := []struct {
-		name    string
-		rawURL  string
-		file    string
-		mounted bool
-		fail    bool
+		name   string
+		rawURL string
+		file   string
+		fail   bool
 	}{
 		{
 			"smbclient with registered authentication in private share",
 			"smb://user:password@samba/private/file.txt",
 			"file.txt",
-			false,
 			false,
 		},
 		{
@@ -174,13 +138,11 @@ func TestSmb_GetterGetFile(t *testing.T) {
 			"smb://user:password@samba/private/subdir/file.txt",
 			"file.txt",
 			false,
-			false,
 		},
 		{
 			"smbclient with only registered username authentication in private share",
 			"smb://user@samba/private/file.txt",
 			"file.txt",
-			false,
 			true,
 		},
 		{
@@ -188,76 +150,53 @@ func TestSmb_GetterGetFile(t *testing.T) {
 			"smb://username@samba/public/file.txt",
 			"file.txt",
 			false,
-			false,
 		},
 		{
 			"smbclient without authentication in public share",
 			"smb://samba/public/file.txt",
 			"file.txt",
 			false,
-			false,
 		},
 		{
 			"smbclient without authentication in private share",
 			"smb://samba/private/file.txt",
 			"file.txt",
-			false,
 			true,
 		},
 		{
 			"smbclient get directory in private share",
 			"smb://user:password@samba/private/subdir",
 			"",
-			false,
 			true,
 		},
 		{
 			"smbclient get directory in public share",
 			"smb://samba/public/subdir",
 			"",
-			false,
-			true,
-		},
-		{
-			"local mounted smb shared file",
-			"smb://mnt/file.txt",
-			"file.txt",
-			true,
-			false,
-		},
-		{
-			"local mounted smb shared directory",
-			"smb://mnt/subdir",
-			"",
-			true,
 			true,
 		},
 		{
 			"non existent file in private share",
 			"smb://user:password@samba/private/invalidfile.txt",
 			"",
-			false,
 			true,
 		},
 		{
 			"non existent file in public share",
 			"smb://samba/public/invalidfile.txt",
 			"",
-			false,
 			true,
 		},
 		{
 			"no hostname provided",
 			"smb://",
 			"",
-			false,
 			true,
 		},
 		{
 			"no filepath provided",
 			"smb://samba",
 			"",
-			false,
 			true,
 		},
 	}
@@ -277,6 +216,7 @@ func TestSmb_GetterGetFile(t *testing.T) {
 			}
 
 			g := new(SmbGetter)
+			g.SetClient(DefaultClient)
 			err = g.GetFile(context.Background(), req)
 
 			fail := err != nil
@@ -353,18 +293,6 @@ func TestSmb_GetterMode(t *testing.T) {
 			0,
 			true,
 		},
-		{
-			"local mount modefile for existing file",
-			"smb://mnt/file.txt",
-			ModeFile,
-			false,
-		},
-		{
-			"local mount modedir for existing directory",
-			"smb://mnt/subdir",
-			ModeDir,
-			false,
-		},
 	}
 
 	for _, tt := range tests {
@@ -375,6 +303,7 @@ func TestSmb_GetterMode(t *testing.T) {
 			}
 
 			g := new(SmbGetter)
+			g.SetClient(DefaultClient)
 			mode, err := g.Mode(context.Background(), url)
 
 			fail := err != nil

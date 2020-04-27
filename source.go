@@ -15,8 +15,8 @@ import (
 //   proto://dom.com/path//path2?q=p => proto://dom.com/path?q=p, "path2"
 //
 func SourceDirSubdir(src string) (string, string) {
-	if strings.HasPrefix(src, "//") {
-		// This is valid for smb path
+	if windowsSmbPath(src) {
+		// This is valid for smb path for Windows
 		return src, ""
 	}
 
