@@ -12,7 +12,10 @@ func TestClient_ChecksumFromFileWithSubFolder(t *testing.T) {
 	isoURL := "http://hashicorp.com/ubuntu/dists/bionic-updates/main/installer-amd64/current/images/netboot/mini.iso"
 
 	client := Client{}
-	file, err := client.ChecksumFromFile(ctx, httpChecksums.URL+"/sha256-subfolder.sum", isoURL)
+	req := &Request{
+		Src:              httpChecksums.URL+"/sha256-subfolder.sum",
+	}
+	file, err := client.ChecksumFromFile(ctx, req, isoURL)
 
 	if err != nil {
 		t.Fatalf("bad: should not have error: %s", err.Error())
