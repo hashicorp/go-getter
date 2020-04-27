@@ -27,24 +27,26 @@ func (g *SmbGetter) Mode(ctx context.Context, u *url.URL) (Mode, error) {
 		return 0, new(smbPathError)
 	}
 
+	var result *multierror.Error
 	// Look in a possible local mount of shared folder
 	path := "/" + u.Host + u.Path
 	if runtime.GOOS == "windows" {
 		path = "/" + path
 	}
 	f := new(FileGetter)
-	mode, result := f.mode(path)
-	if result == nil {
-		return mode, nil
-	}
-
-	// If not mounted, use smbclient cli to verify mode
-	mode, err := g.smbClientMode(u)
+	mode, err := f.mode(path)
 	if err == nil {
 		return mode, nil
 	}
-
 	result = multierror.Append(result, err)
+
+	// If not mounted, use smbclient cli to verify mode
+	mode, err = g.smbClientMode(u)
+	if err == nil {
+		return mode, nil
+	}
+	result = multierror.Append(result, err)
+
 	return 0, &smbGeneralError{result}
 }
 
@@ -89,23 +91,24 @@ func (g *SmbGetter) Get(ctx context.Context, req *Request) error {
 		}
 	}
 
+	var result *multierror.Error
 	// First look in a possible local mount of the shared folder
 	path := "/" + req.u.Host + req.u.Path
 	if runtime.GOOS == "windows" {
 		path = "/" + path
 	}
 	f := new(FileGetter)
-	result := f.get(path, req)
-	if result == nil {
-		return nil
-	}
-
-	// If not mounted, try downloading the directory content using smbclient cli
-	err := g.smbclientGet(req)
+	err := f.get(path, req)
 	if err == nil {
 		return nil
 	}
+	result = multierror.Append(result, err)
 
+	// If not mounted, try downloading the directory content using smbclient cli
+	err = g.smbclientGet(req)
+	if err == nil {
+		return nil
+	}
 	result = multierror.Append(result, err)
 
 	if !dstExisted {
@@ -167,23 +170,24 @@ func (g *SmbGetter) GetFile(ctx context.Context, req *Request) error {
 		}
 	}
 
+	var result *multierror.Error
 	// First look in a possible local mount of the shared folder
 	path := "/" + req.u.Host + req.u.Path
 	if runtime.GOOS == "windows" {
 		path = "/" + path
 	}
 	f := new(FileGetter)
-	result := f.getFile(path, req, ctx)
-	if result == nil {
-		return nil
-	}
-
-	// If not mounted, try downloading the file using smbclient cli
-	err := g.smbclientGetFile(req)
+	err := f.getFile(path, req, ctx)
 	if err == nil {
 		return nil
 	}
+	result = multierror.Append(result, err)
 
+	// If not mounted, try downloading the file using smbclient cli
+	err = g.smbclientGetFile(req)
+	if err == nil {
+		return nil
+	}
 	result = multierror.Append(result, err)
 
 	if !dstExisted {
