@@ -64,9 +64,9 @@ func (g *SmbGetter) smbClientMode(u *url.URL) (Mode, error) {
 		filePath = "."
 	}
 
-	baseCmd := g.smbclientBaseCmd(u.User, hostPath, filePath)
+	cmdArgs := g.smbclientCmdArgs(u.User, hostPath, filePath)
 	// check if file exists in the smb shared folder and check the mode
-	isDir, err := g.isDirectory(baseCmd, file)
+	isDir, err := g.isDirectory(cmdArgs, file)
 	if err != nil {
 		return 0, err
 	}
@@ -122,9 +122,9 @@ func (g *SmbGetter) smbclientGet(req *Request) error {
 		return err
 	}
 
-	baseCmd := g.smbclientBaseCmd(req.u.User, hostPath, ".")
+	cmdArgs := g.smbclientCmdArgs(req.u.User, hostPath, ".")
 	// check directory exists in the smb shared folder and is a directory
-	isDir, err := g.isDirectory(baseCmd, directory)
+	isDir, err := g.isDirectory(cmdArgs, directory)
 	if err != nil {
 		return err
 	}
@@ -133,7 +133,8 @@ func (g *SmbGetter) smbclientGet(req *Request) error {
 	}
 
 	// download everything that's inside the directory (files and subdirectories)
-	smbclientCmd := baseCmd + " --command 'prompt OFF;recurse ON; mget *'"
+	cmdArgs = append(cmdArgs, "-c")
+	cmdArgs = append(cmdArgs, "prompt OFF;recurse ON; mget *")
 
 	if req.Dst != "" {
 		_, err := os.Lstat(req.Dst)
@@ -149,7 +150,7 @@ func (g *SmbGetter) smbclientGet(req *Request) error {
 		}
 	}
 
-	_, err = g.runSmbClientCommand(smbclientCmd, req.Dst)
+	_, err = g.runSmbClientCommand(req.Dst, cmdArgs)
 	return err
 }
 
@@ -210,9 +211,9 @@ func (g *SmbGetter) smbclientGetFile(req *Request) error {
 		filePath = "."
 	}
 
-	baseCmd := g.smbclientBaseCmd(req.u.User, hostPath, filePath)
+	cmdArgs := g.smbclientCmdArgs(req.u.User, hostPath, filePath)
 	// check file exists in the smb shared folder and is not a directory
-	isDir, err := g.isDirectory(baseCmd, file)
+	isDir, err := g.isDirectory(cmdArgs, file)
 	if err != nil {
 		return err
 	}
@@ -221,7 +222,7 @@ func (g *SmbGetter) smbclientGetFile(req *Request) error {
 	}
 
 	// download file
-	smbclientCmd := baseCmd + " --command " + fmt.Sprintf("'get %s'", file)
+	cmdArgs = append(cmdArgs, "-c")
 	if req.Dst != "" {
 		_, err := os.Lstat(req.Dst)
 		if err != nil {
@@ -234,14 +235,17 @@ func (g *SmbGetter) smbclientGetFile(req *Request) error {
 				return err
 			}
 		}
-		smbclientCmd = baseCmd + " --command " + fmt.Sprintf("'get %s %s'", file, req.Dst)
+		cmdArgs = append(cmdArgs, fmt.Sprintf("get %s %s", file, req.Dst))
+	} else {
+		cmdArgs = append(cmdArgs, fmt.Sprintf("get %s", file))
 	}
-	_, err = g.runSmbClientCommand(smbclientCmd, "")
+
+	_, err = g.runSmbClientCommand("", cmdArgs)
 	return err
 }
 
-func (g *SmbGetter) smbclientBaseCmd(used *url.Userinfo, hostPath string, fileDir string) string {
-	baseCmd := "smbclient -N"
+func (g *SmbGetter) smbclientCmdArgs(used *url.Userinfo, hostPath string, fileDir string) (baseCmd []string) {
+	baseCmd = append(baseCmd, "-N")
 
 	// Append auth user and password to baseCmd
 	auth := used.Username()
@@ -249,10 +253,13 @@ func (g *SmbGetter) smbclientBaseCmd(used *url.Userinfo, hostPath string, fileDi
 		if password, ok := used.Password(); ok {
 			auth = auth + "%" + password
 		}
-		baseCmd = baseCmd + " -U " + auth
+		baseCmd = append(baseCmd, "-U")
+		baseCmd = append(baseCmd, auth)
 	}
 
-	baseCmd = baseCmd + " " + hostPath + " --directory " + fileDir
+	baseCmd = append(baseCmd, hostPath)
+	baseCmd = append(baseCmd, "--directory")
+	baseCmd = append(baseCmd, fileDir)
 	return baseCmd
 }
 
@@ -277,9 +284,10 @@ func (g *SmbGetter) findHostAndFilePath(u *url.URL) (string, string, error) {
 	return hostPath, directories[1], nil
 }
 
-func (g *SmbGetter) isDirectory(baseCmd string, object string) (bool, error) {
-	objectInfoCmd := baseCmd + " --command " + fmt.Sprintf("'allinfo %s'", object)
-	output, err := g.runSmbClientCommand(objectInfoCmd, "")
+func (g *SmbGetter) isDirectory(args []string, object string) (bool, error) {
+	args = append(args, "-c")
+	args = append(args, fmt.Sprintf("allinfo %s", object))
+	output, err := g.runSmbClientCommand("", args)
 	if err != nil {
 		return false, err
 	}
@@ -289,8 +297,8 @@ func (g *SmbGetter) isDirectory(baseCmd string, object string) (bool, error) {
 	return strings.Contains(output, "attributes: D"), nil
 }
 
-func (g *SmbGetter) runSmbClientCommand(smbclientCmd string, dst string) (string, error) {
-	cmd := exec.Command("bash", "-c", smbclientCmd)
+func (g *SmbGetter) runSmbClientCommand(dst string, args []string) (string, error) {
+	cmd := exec.Command("smbclient", args...)
 
 	if dst != "" {
 		cmd.Dir = dst
