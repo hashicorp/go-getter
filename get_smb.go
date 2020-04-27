@@ -15,7 +15,7 @@ import (
 )
 
 // SmbGetter is a Getter implementation that will download a module from
-// a shared folder using smbclient cli or looking for local mount.
+// a shared folder using smbclient cli for Unix and local file system for Windows.
 type SmbGetter struct {
 	getter
 }
