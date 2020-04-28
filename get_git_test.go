@@ -13,7 +13,8 @@ import (
 	"strings"
 	"testing"
 
-	urlhelper "github.com/hashicorp/go-getter/helper/url"
+	testing_helper "github.com/hashicorp/go-getter/v2/helper/testing"
+	urlhelper "github.com/hashicorp/go-getter/v2/helper/url"
 )
 
 var testHasGit bool
@@ -35,7 +36,7 @@ func TestGitGetter(t *testing.T) {
 	ctx := context.Background()
 
 	g := new(GitGetter)
-	dst := tempDir(t)
+	dst := testing_helper.TempDir(t)
 
 	repo := testGitRepo(t, "basic")
 	repo.commitFile("foo.txt", "hello")
@@ -64,7 +65,7 @@ func TestGitGetter_branch(t *testing.T) {
 	ctx := context.Background()
 
 	g := new(GitGetter)
-	dst := tempDir(t)
+	dst := testing_helper.TempDir(t)
 
 	repo := testGitRepo(t, "branch")
 	repo.git("checkout", "-b", "test-branch")
@@ -110,7 +111,7 @@ func TestGitGetter_remoteWithoutMaster(t *testing.T) {
 
 	ctx := context.Background()
 	g := new(GitGetter)
-	dst := tempDir(t)
+	dst := testing_helper.TempDir(t)
 
 	repo := testGitRepo(t, "branch")
 	repo.git("checkout", "-b", "test-branch")
@@ -154,7 +155,7 @@ func TestGitGetter_shallowClone(t *testing.T) {
 	ctx := context.Background()
 
 	g := new(GitGetter)
-	dst := tempDir(t)
+	dst := testing_helper.TempDir(t)
 
 	repo := testGitRepo(t, "upstream")
 	repo.commitFile("upstream.txt", "0")
@@ -193,7 +194,7 @@ func TestGitGetter_branchUpdate(t *testing.T) {
 	ctx := context.Background()
 
 	g := new(GitGetter)
-	dst := tempDir(t)
+	dst := testing_helper.TempDir(t)
 
 	// First setup the state with a fresh branch
 	repo := testGitRepo(t, "branch-update")
@@ -243,7 +244,7 @@ func TestGitGetter_tag(t *testing.T) {
 	ctx := context.Background()
 
 	g := new(GitGetter)
-	dst := tempDir(t)
+	dst := testing_helper.TempDir(t)
 
 	repo := testGitRepo(t, "tag")
 	repo.commitFile("tag.txt", "tag")
@@ -288,7 +289,7 @@ func TestGitGetter_GetFile(t *testing.T) {
 	ctx := context.Background()
 
 	g := new(GitGetter)
-	dst := tempTestFile(t)
+	dst := testing_helper.TempTestFile(t)
 	defer os.RemoveAll(filepath.Dir(dst))
 
 	repo := testGitRepo(t, "file")
@@ -309,7 +310,7 @@ func TestGitGetter_GetFile(t *testing.T) {
 	if _, err := os.Stat(dst); err != nil {
 		t.Fatalf("err: %s", err)
 	}
-	assertContents(t, dst, "hello")
+	testing_helper.AssertContents(t, dst, "hello")
 }
 
 func TestGitGetter_gitVersion(t *testing.T) {
@@ -358,7 +359,7 @@ func TestGitGetter_sshKey(t *testing.T) {
 	ctx := context.Background()
 
 	g := new(GitGetter)
-	dst := tempDir(t)
+	dst := testing_helper.TempDir(t)
 
 	encodedKey := base64.StdEncoding.EncodeToString([]byte(testGitToken))
 
@@ -394,7 +395,7 @@ func TestGitGetter_sshSCPStyle(t *testing.T) {
 
 	ctx := context.Background()
 	g := new(GitGetter)
-	dst := tempDir(t)
+	dst := testing_helper.TempDir(t)
 
 	encodedKey := base64.StdEncoding.EncodeToString([]byte(testGitToken))
 
@@ -437,7 +438,7 @@ func TestGitGetter_sshExplicitPort(t *testing.T) {
 
 	ctx := context.Background()
 	g := new(GitGetter)
-	dst := tempDir(t)
+	dst := testing_helper.TempDir(t)
 
 	encodedKey := base64.StdEncoding.EncodeToString([]byte(testGitToken))
 
@@ -481,7 +482,7 @@ func TestGitGetter_sshSCPStyleInvalidScheme(t *testing.T) {
 
 	ctx := context.Background()
 	g := new(GitGetter)
-	dst := tempDir(t)
+	dst := testing_helper.TempDir(t)
 
 	encodedKey := base64.StdEncoding.EncodeToString([]byte(testGitToken))
 
@@ -527,7 +528,7 @@ func TestGitGetter_submodule(t *testing.T) {
 	ctx := context.Background()
 
 	g := new(GitGetter)
-	dst := tempDir(t)
+	dst := testing_helper.TempDir(t)
 
 	relpath := func(basepath, targpath string) string {
 		relpath, err := filepath.Rel(basepath, targpath)
