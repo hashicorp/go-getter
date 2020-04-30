@@ -43,15 +43,16 @@ type Getter interface {
 	// allow clients to let the getters decide which mode to use.
 	Mode(context.Context, *url.URL) (Mode, error)
 
-	// SetClient allows a getter to know it's client
-	// in order to access client's Get functions or
-	// progress tracking.
-	SetClient(*Client)
+	// Detect will detect whether the string matches a known pattern to
+	// turn it into a proper URL.
+	Detect(string, string) (string, bool, error)
+
+	ValidScheme(string) bool
 }
 
 // Getters is the mapping of scheme to the Getter implementation that will
 // be used to get a dependency.
-var Getters map[string]Getter
+var Getters []Getter
 
 // forcedRegexp is the regular expression that finds forced getters. This
 // syntax is schema::url, example: git::https://foo.com
@@ -62,7 +63,6 @@ var httpClient = cleanhttp.DefaultClient()
 
 var DefaultClient = &Client{
 	Getters:       Getters,
-	Detectors:     Detectors,
 	Decompressors: Decompressors,
 }
 
@@ -71,15 +71,15 @@ func init() {
 		Netrc: true,
 	}
 
-	Getters = map[string]Getter{
-		"file":  new(FileGetter),
-		"smb":   new(SmbGetter),
-		"git":   new(GitGetter),
-		"gcs":   new(GCSGetter),
-		"hg":    new(HgGetter),
-		"s3":    new(S3Getter),
-		"http":  httpGetter,
-		"https": httpGetter,
+	Getters = []Getter{
+		new(GitGetter),
+		new(HgGetter),
+		new(S3Getter),
+		new(GCSGetter),
+		new(FileGetter),
+		new(SmbGetter),
+		httpGetter,
+		httpGetter,
 	}
 }
 
@@ -147,7 +147,7 @@ func getRunCommand(cmd *exec.Cmd) error {
 	return fmt.Errorf("error running %s: %s", cmd.Path, buf.String())
 }
 
-// getForcedGetter takes a source and returns the tuple of the forced
+// removeForcedGetter takes a source and returns the tuple of the forced
 // getter and the raw URL (without the force syntax).
 func getForcedGetter(src string) (string, string) {
 	var forced string

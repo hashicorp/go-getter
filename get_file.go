@@ -6,12 +6,12 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"runtime"
 )
 
 // FileGetter is a Getter implementation that will download a module from
 // a file scheme.
 type FileGetter struct {
-	getter
 }
 
 func (g *FileGetter) Mode(ctx context.Context, u *url.URL) (Mode, error) {
@@ -148,4 +148,71 @@ func (g *FileGetter) GetFile(ctx context.Context, req *Request) error {
 
 	_, err = Copy(ctx, dstF, srcF)
 	return err
+}
+
+func (g *FileGetter) Detect(src, pwd string) (string, bool, error) {
+	if len(src) == 0 {
+		return "", false, nil
+	}
+
+	u, err := url.Parse(src)
+	if err == nil && u.Scheme == "file" {
+		// Valid URL
+		return src, true, nil
+	}
+
+
+	if !filepath.IsAbs(src) {
+		if pwd == "" {
+			return "", true, fmt.Errorf(
+				"relative paths require a module with a pwd")
+		}
+
+		// Stat the pwd to determine if its a symbolic link. If it is,
+		// then the pwd becomes the original directory. Otherwise,
+		// `filepath.Join` below does some weird stuff.
+		//
+		// We just ignore if the pwd doesn't exist. That error will be
+		// caught later when we try to use the URL.
+		if fi, err := os.Lstat(pwd); !os.IsNotExist(err) {
+			if err != nil {
+				return "", true, err
+			}
+			if fi.Mode()&os.ModeSymlink != 0 {
+				pwd, err = filepath.EvalSymlinks(pwd)
+				if err != nil {
+					return "", true, err
+				}
+
+				// The symlink itself might be a relative path, so we have to
+				// resolve this to have a correctly rooted URL.
+				pwd, err = filepath.Abs(pwd)
+				if err != nil {
+					return "", true, err
+				}
+			}
+		}
+
+		src = filepath.Join(pwd, src)
+	}
+
+	if windowsSmbPath(src) {
+		// This is a valid smb path for Windows and will be checked in the SmbGetter
+		// by the file system using the FileGetter, if available.
+		return src, false, nil
+	}
+
+	return fmtFileURL(src), true, nil
+}
+
+func (g *FileGetter) ValidScheme(scheme string) bool {
+	return scheme == "file"
+}
+
+func fmtFileURL(path string) string {
+	if runtime.GOOS == "windows" {
+		// Make sure we're using "/" on Windows. URLs are "/"-based.
+		path = filepath.ToSlash(path)
+	}
+	return path
 }

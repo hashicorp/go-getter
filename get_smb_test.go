@@ -98,7 +98,6 @@ func TestSmb_GetterGet(t *testing.T) {
 			}
 
 			g := new(SmbGetter)
-			g.SetClient(DefaultClient)
 			err = g.Get(context.Background(), req)
 
 			fail := err != nil
@@ -216,7 +215,6 @@ func TestSmb_GetterGetFile(t *testing.T) {
 			}
 
 			g := new(SmbGetter)
-			g.SetClient(DefaultClient)
 			err = g.GetFile(context.Background(), req)
 
 			fail := err != nil
@@ -303,7 +301,6 @@ func TestSmb_GetterMode(t *testing.T) {
 			}
 
 			g := new(SmbGetter)
-			g.SetClient(DefaultClient)
 			mode, err := g.Mode(context.Background(), url)
 
 			fail := err != nil

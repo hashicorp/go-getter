@@ -55,7 +55,7 @@ func TestFileDetector_relativeSymlink(t *testing.T) {
 
 	// if detech doesn't fully resolve the pwd symlink, the output will be the
 	// invalid path: "file:///../modules/foo"
-	f := new(FileDetector)
+	f := new(FileGetter)
 	out, ok, err := f.Detect("../modules/foo", "./linkedPWD")
 	if err != nil {
 		t.Fatalf("err: %v", err)

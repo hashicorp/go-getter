@@ -19,30 +19,33 @@ func TestBitBucketDetector(t *testing.T) {
 	cases := []struct {
 		Input  string
 		Output string
+		g      Getter
 	}{
 		// HTTP
 		{
 			"bitbucket.org/hashicorp/tf-test-git",
-			"git::https://bitbucket.org/hashicorp/tf-test-git.git",
+			"https://bitbucket.org/hashicorp/tf-test-git.git",
+			new(GitGetter),
 		},
 		{
 			"bitbucket.org/hashicorp/tf-test-git.git",
-			"git::https://bitbucket.org/hashicorp/tf-test-git.git",
+			"https://bitbucket.org/hashicorp/tf-test-git.git",
+			new(GitGetter),
 		},
 		{
 			"bitbucket.org/hashicorp/tf-test-hg",
-			"hg::https://bitbucket.org/hashicorp/tf-test-hg",
+			"https://bitbucket.org/hashicorp/tf-test-hg",
+			new(HgGetter),
 		},
 	}
 
 	pwd := "/pwd"
-	f := new(BitBucketDetector)
 	for i, tc := range cases {
 		var err error
 		for i := 0; i < 3; i++ {
 			var output string
 			var ok bool
-			output, ok, err = f.Detect(tc.Input, pwd)
+			output, ok, err = tc.g.Detect(tc.Input, pwd)
 			if err != nil {
 				if strings.Contains(err.Error(), "invalid character") {
 					continue

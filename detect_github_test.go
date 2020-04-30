@@ -10,24 +10,24 @@ func TestGitHubDetector(t *testing.T) {
 		Output string
 	}{
 		// HTTP
-		{"github.com/hashicorp/foo", "git::https://github.com/hashicorp/foo.git"},
-		{"github.com/hashicorp/foo.git", "git::https://github.com/hashicorp/foo.git"},
+		{"github.com/hashicorp/foo", "https://github.com/hashicorp/foo.git"},
+		{"github.com/hashicorp/foo.git", "https://github.com/hashicorp/foo.git"},
 		{
 			"github.com/hashicorp/foo/bar",
-			"git::https://github.com/hashicorp/foo.git//bar",
+			"https://github.com/hashicorp/foo.git//bar",
 		},
 		{
 			"github.com/hashicorp/foo?foo=bar",
-			"git::https://github.com/hashicorp/foo.git?foo=bar",
+			"https://github.com/hashicorp/foo.git?foo=bar",
 		},
 		{
 			"github.com/hashicorp/foo.git?foo=bar",
-			"git::https://github.com/hashicorp/foo.git?foo=bar",
+			"https://github.com/hashicorp/foo.git?foo=bar",
 		},
 	}
 
 	pwd := "/pwd"
-	f := new(GitHubDetector)
+	f := new(GitGetter)
 	for i, tc := range cases {
 		output, ok, err := f.Detect(tc.Input, pwd)
 		if err != nil {

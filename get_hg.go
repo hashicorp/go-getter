@@ -3,20 +3,18 @@ package getter
 import (
 	"context"
 	"fmt"
+	urlhelper "github.com/hashicorp/go-getter/helper/url"
+	safetemp "github.com/hashicorp/go-safetemp"
 	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"runtime"
-
-	urlhelper "github.com/hashicorp/go-getter/helper/url"
-	safetemp "github.com/hashicorp/go-safetemp"
 )
 
 // HgGetter is a Getter implementation that will download a module from
 // a Mercurial repository.
 type HgGetter struct {
-	getter
 }
 
 func (g *HgGetter) Mode(ctx context.Context, _ *url.URL) (Mode, error) {
@@ -124,6 +122,33 @@ func (g *HgGetter) update(ctx context.Context, dst string, u *url.URL, rev strin
 	cmd := exec.CommandContext(ctx, "hg", args...)
 	cmd.Dir = dst
 	return getRunCommand(cmd)
+}
+
+func (g *HgGetter) Detect(src, _ string) (string, bool, error) {
+	if len(src) == 0 {
+		return "", false, nil
+	}
+
+	u, err := url.Parse(src)
+	if err == nil && u.Scheme == "hg" {
+		// Valid URL
+		return src, true, nil
+	}
+
+	result, u, err := detectBitBucket(src)
+	if err != nil {
+		return "", true, err
+	}
+	if result == "hg" {
+		return u.String(), true, nil
+	}
+
+	return "", false, nil
+}
+
+
+func (g *HgGetter) ValidScheme(scheme string) bool {
+	return scheme == "hg"
 }
 
 func fixWindowsDrivePath(u *url.URL) bool {

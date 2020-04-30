@@ -35,8 +35,6 @@ import (
 // formed URL. The shorthand syntax of "github.com/foo/bar" or relative
 // paths are not allowed.
 type HttpGetter struct {
-	getter
-
 	// Netrc, if true, will lookup and use auth information found
 	// in the user's netrc file if available.
 	Netrc bool
@@ -319,4 +317,17 @@ func charsetReader(charset string, input io.Reader) (io.Reader, error) {
 	default:
 		return nil, fmt.Errorf("can't decode XML document using charset %q", charset)
 	}
+}
+
+func (g *HttpGetter) Detect(src, _ string) (string, bool, error) {
+	u, err := url.Parse(src)
+	if err == nil && u.Scheme != "" && (u.Scheme == "http" || u.Scheme == "https") {
+		// Valid URL
+		return src, true, nil
+	}
+	return "", false, nil
+}
+
+func (g *HttpGetter) ValidScheme(scheme string) bool {
+	return scheme == "http" || scheme == "https"
 }

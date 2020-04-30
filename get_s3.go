@@ -19,7 +19,6 @@ import (
 // S3Getter is a Getter implementation that will download a module from
 // a S3 bucket.
 type S3Getter struct {
-	getter
 }
 
 func (g *S3Getter) Mode(ctx context.Context, u *url.URL) (Mode, error) {
@@ -270,4 +269,64 @@ func (g *S3Getter) parseUrl(u *url.URL) (region, bucket, path, version string, c
 	}
 
 	return
+}
+
+func (g *S3Getter) Detect(src, _ string) (string, bool, error) {
+	if len(src) == 0 {
+		return "", false, nil
+	}
+
+	u, err := url.Parse(src)
+	if err == nil && u.Scheme == "s3" {
+		// Valid URL
+		return src, true, nil
+	}
+
+	if strings.Contains(src, ".amazonaws.com/") {
+		return g.detectHTTP(src)
+	}
+
+	return "", false, nil
+}
+
+func (g *S3Getter) detectHTTP(src string) (string, bool, error) {
+	parts := strings.Split(src, "/")
+	if len(parts) < 2 {
+		return "", false, fmt.Errorf(
+			"URL is not a valid S3 URL")
+	}
+
+	hostParts := strings.Split(parts[0], ".")
+	if len(hostParts) == 3 {
+		return g.detectPathStyle(hostParts[0], parts[1:])
+	} else if len(hostParts) == 4 {
+		return g.detectVhostStyle(hostParts[1], hostParts[0], parts[1:])
+	} else {
+		return "", false, fmt.Errorf(
+			"URL is not a valid S3 URL")
+	}
+}
+
+func (g *S3Getter) detectPathStyle(region string, parts []string) (string, bool, error) {
+	urlStr := fmt.Sprintf("https://%s.amazonaws.com/%s", region, strings.Join(parts, "/"))
+	url, err := url.Parse(urlStr)
+	if err != nil {
+		return "", false, fmt.Errorf("error parsing S3 URL: %s", err)
+	}
+
+	return url.String(), true, nil
+}
+
+func (g *S3Getter) detectVhostStyle(region, bucket string, parts []string) (string, bool, error) {
+	urlStr := fmt.Sprintf("https://%s.amazonaws.com/%s/%s", region, bucket, strings.Join(parts, "/"))
+	url, err := url.Parse(urlStr)
+	if err != nil {
+		return "", false, fmt.Errorf("error parsing S3 URL: %s", err)
+	}
+
+	return url.String(), true, nil
+}
+
+func (g *S3Getter) ValidScheme(scheme string) bool {
+	return scheme == "s3"
 }

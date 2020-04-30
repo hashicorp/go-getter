@@ -5,33 +5,32 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
-	"strings"
 	"testing"
 )
 
 type fileTest struct {
 	in, pwd, out string
-	err          bool
+	symlink, err          bool
 }
 
 var fileTests = []fileTest{
-	{"./foo", "/pwd", "file:///pwd/foo", false},
-	{"./foo?foo=bar", "/pwd", "file:///pwd/foo?foo=bar", false},
-	{"foo", "/pwd", "file:///pwd/foo", false},
+	{"./foo", "/pwd", "/pwd/foo", false,false},
+	{"./foo?foo=bar", "/pwd", "/pwd/foo?foo=bar", false,false},
+	{"foo", "/pwd", "/pwd/foo", false,false},
 }
 
 var unixFileTests = []fileTest{
 	{"./foo", "testdata/detect-file-symlink-pwd/syml/pwd",
-		"testdata/detect-file-symlink-pwd/real/foo", false},
+		"testdata/detect-file-symlink-pwd/real/foo", true,false},
 
-	{"/foo", "/pwd", "file:///foo", false},
-	{"/foo?bar=baz", "/pwd", "file:///foo?bar=baz", false},
+	{"/foo", "/pwd", "/foo", false,false},
+	{"/foo?bar=baz", "/pwd", "/foo?bar=baz", false,false},
 }
 
 var winFileTests = []fileTest{
-	{"/foo", "/pwd", "file:///pwd/foo", false},
-	{`C:\`, `/pwd`, `file://C:/`, false},
-	{`C:\?bar=baz`, `/pwd`, `file://C:/?bar=baz`, false},
+	{"/foo", "/pwd", "/pwd/foo", false,false},
+	{`C:\`, `/pwd`, `C:/`, false,false},
+	{`C:\?bar=baz`, `/pwd`, `C:/?bar=baz`, false,false},
 }
 
 func TestFileDetector(t *testing.T) {
@@ -51,7 +50,7 @@ func TestFileDetector(t *testing.T) {
 		t.Fatalf("err: %s", err)
 	}
 
-	f := new(FileDetector)
+	f := new(FileGetter)
 	for i, tc := range fileTests {
 		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
 			pwd := tc.pwd
@@ -65,8 +64,8 @@ func TestFileDetector(t *testing.T) {
 			}
 
 			expected := tc.out
-			if !strings.HasPrefix(expected, "file://") {
-				expected = "file://" + filepath.Join(pwdRoot, expected)
+			if tc.symlink {
+				expected = filepath.Join(pwdRoot, expected)
 			}
 
 			if out != expected {
@@ -83,12 +82,12 @@ var noPwdFileTests = []fileTest{
 }
 
 var noPwdUnixFileTests = []fileTest{
-	{in: "/foo", pwd: "", out: "file:///foo", err: false},
+	{in: "/foo", pwd: "", out: "/foo", err: false},
 }
 
 var noPwdWinFileTests = []fileTest{
 	{in: "/foo", pwd: "", out: "", err: true},
-	{in: `C:\`, pwd: ``, out: `file://C:/`, err: false},
+	{in: `C:\`, pwd: ``, out: `C:/`, err: false},
 }
 
 func TestFileDetector_noPwd(t *testing.T) {
@@ -98,7 +97,7 @@ func TestFileDetector_noPwd(t *testing.T) {
 		noPwdFileTests = append(noPwdFileTests, noPwdUnixFileTests...)
 	}
 
-	f := new(FileDetector)
+	f := new(FileGetter)
 	for i, tc := range noPwdFileTests {
 		out, ok, err := f.Detect(tc.in, tc.pwd)
 		if err != nil != tc.err {

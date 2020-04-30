@@ -9,7 +9,6 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
-	"runtime"
 	"strings"
 	"syscall"
 )
@@ -17,22 +16,11 @@ import (
 // SmbGetter is a Getter implementation that will download a module from
 // a shared folder using smbclient cli for Unix and local file system for Windows.
 type SmbGetter struct {
-	getter
 }
 
 func (g *SmbGetter) Mode(ctx context.Context, u *url.URL) (Mode, error) {
 	if u.Host == "" || u.Path == "" {
 		return 0, new(smbPathError)
-	}
-
-	// For windows, look for the shared folder withing the file system
-	if g.client != nil {
-		fileGetter, ok := g.client.Getters["file"]
-		if runtime.GOOS == "windows" && ok {
-			prefix := string(os.PathSeparator) + string(os.PathSeparator)
-			u.Path = prefix + filepath.Join(u.Host, u.Path)
-			return fileGetter.Mode(ctx, u)
-		}
 	}
 
 	// Use smbclient cli to verify mode
@@ -81,16 +69,6 @@ func (g *SmbGetter) Get(ctx context.Context, req *Request) error {
 	if req.Dst != "" {
 		if _, err := os.Lstat(req.Dst); err == nil {
 			dstExisted = true
-		}
-	}
-
-	// For windows, look for the shared folder withing the file system
-	if g.client != nil {
-		fileGetter, ok := g.client.Getters["file"]
-		if runtime.GOOS == "windows" && ok {
-			prefix := string(os.PathSeparator) + string(os.PathSeparator)
-			req.u.Path = prefix + filepath.Join(req.u.Host, req.u.Path)
-			return fileGetter.Get(ctx, req)
 		}
 	}
 
@@ -156,16 +134,6 @@ func (g *SmbGetter) GetFile(ctx context.Context, req *Request) error {
 	if req.Dst != "" {
 		if _, err := os.Lstat(req.Dst); err == nil {
 			dstExisted = true
-		}
-	}
-
-	// For windows, look for the shared folder withing the file system
-	if g.client != nil {
-		fileGetter, ok := g.client.Getters["file"]
-		if runtime.GOOS == "windows" && ok {
-			prefix := string(os.PathSeparator) + string(os.PathSeparator)
-			req.u.Path = prefix + filepath.Join(req.u.Host, req.u.Path)
-			return fileGetter.GetFile(ctx, req)
 		}
 	}
 
@@ -312,6 +280,25 @@ func (g *SmbGetter) runSmbClientCommand(dst string, args []string) (string, erro
 		}
 	}
 	return buf.String(), fmt.Errorf("error running %s: %s", cmd.Path, buf.String())
+}
+
+func (g *SmbGetter) Detect(src, pwd string) (string, bool, error) {
+	if len(src) == 0 {
+		return "", false, nil
+	}
+
+	u, err := url.Parse(src)
+	if err == nil && u.Scheme == "smb" {
+		// Valid URL
+		return src, true, nil
+	}
+
+	return "", false, nil
+}
+
+
+func (g *SmbGetter) ValidScheme(scheme string) bool {
+	return scheme == "smb"
 }
 
 type smbPathError struct {

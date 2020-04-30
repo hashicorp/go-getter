@@ -10,50 +10,58 @@ func TestDetect(t *testing.T) {
 		Input  string
 		Pwd    string
 		Output string
+		g Getter
 		Err    bool
 	}{
-		{"./foo", "/foo", "file:///foo/foo", false},
-		{"git::./foo", "/foo", "git::file:///foo/foo", false},
+	{"./foo", "/foo", "/foo/foo", new(FileGetter), false},
+	//{"git::./foo", "/foo", "/foo/foo", new(GitGetter),false}, // TODO @sylviamoss understand this test. Is this a real situation?
 		{
 			"git::github.com/hashicorp/foo",
 			"",
-			"git::https://github.com/hashicorp/foo.git",
+			"https://github.com/hashicorp/foo.git",
+			new(GitGetter),
 			false,
 		},
 		{
 			"./foo//bar",
 			"/foo",
-			"file:///foo/foo//bar",
+			"/foo/foo//bar",
+			new(FileGetter),
 			false,
 		},
 		{
 			"git::github.com/hashicorp/foo//bar",
 			"",
-			"git::https://github.com/hashicorp/foo.git//bar",
+			"https://github.com/hashicorp/foo.git//bar",
+			new(GitGetter),
 			false,
 		},
 		{
 			"git::https://github.com/hashicorp/consul.git",
 			"",
-			"git::https://github.com/hashicorp/consul.git",
+			"https://github.com/hashicorp/consul.git",
+			new(GitGetter),
 			false,
 		},
 		{
-			"git::https://person@someothergit.com/foo/bar",
+			"git::https://person@someothergit.com/foo/bar", // this
 			"",
-			"git::https://person@someothergit.com/foo/bar",
+			"https://person@someothergit.com/foo/bar",
+			new(GitGetter),
 			false,
 		},
 		{
-			"git::https://person@someothergit.com/foo/bar",
+			"git::https://person@someothergit.com/foo/bar", // this
 			"/bar",
-			"git::https://person@someothergit.com/foo/bar",
+			"https://person@someothergit.com/foo/bar",
+			new(GitGetter),
 			false,
 		},
 		{
 			"./foo/archive//*",
 			"/bar",
-			"file:///bar/foo/archive//*",
+			"/bar/foo/archive//*",
+			new(FileGetter),
 			false,
 		},
 
@@ -61,28 +69,34 @@ func TestDetect(t *testing.T) {
 		{
 			"git::ssh://git@my.custom.git/dir1/dir2",
 			"",
-			"git::ssh://git@my.custom.git/dir1/dir2",
+			"ssh://git@my.custom.git/dir1/dir2",
+			new(GitGetter),
 			false,
 		},
 		{
 			"git::git@my.custom.git:dir1/dir2",
 			"/foo",
-			"git::ssh://git@my.custom.git/dir1/dir2",
+			"ssh://git@my.custom.git/dir1/dir2",
+			new(GitGetter),
 			false,
 		},
 		{
 			"git::git@my.custom.git:dir1/dir2",
 			"",
-			"git::ssh://git@my.custom.git/dir1/dir2",
+			"ssh://git@my.custom.git/dir1/dir2",
+			new(GitGetter),
 			false,
 		},
 	}
 
 	for i, tc := range cases {
 		t.Run(fmt.Sprintf("%d %s", i, tc.Input), func(t *testing.T) {
-			output, err := Detect(tc.Input, tc.Pwd, Detectors)
+			output, ok, err := Detect(tc.Input, tc.Pwd, tc.g)
 			if err != nil != tc.Err {
 				t.Fatalf("%d: bad err: %s", i, err)
+			}
+			if !ok {
+				t.Fatalf("%s url expected to valid", tc.Input)
 			}
 			if output != tc.Output {
 				t.Fatalf("%d: bad output: %s\nexpected: %s", i, output, tc.Output)

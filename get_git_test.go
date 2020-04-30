@@ -393,7 +393,6 @@ func TestGitGetter_sshSCPStyle(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	g := new(GitGetter)
 	dst := tempDir(t)
 
 	encodedKey := base64.StdEncoding.EncodeToString([]byte(testGitToken))
@@ -412,12 +411,7 @@ func TestGitGetter_sshSCPStyle(t *testing.T) {
 		Mode: ModeDir,
 	}
 	client := &Client{
-		Detectors: []Detector{
-			new(GitDetector),
-		},
-		Getters: map[string]Getter{
-			"git": g,
-		},
+		Getters:[]Getter{new(GitGetter)},
 	}
 
 	if _, err := client.Get(ctx, req); err != nil {
@@ -436,7 +430,6 @@ func TestGitGetter_sshExplicitPort(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	g := new(GitGetter)
 	dst := tempDir(t)
 
 	encodedKey := base64.StdEncoding.EncodeToString([]byte(testGitToken))
@@ -455,13 +448,7 @@ func TestGitGetter_sshExplicitPort(t *testing.T) {
 		Mode: ModeDir,
 	}
 	client := &Client{
-
-		Detectors: []Detector{
-			new(GitDetector),
-		},
-		Getters: map[string]Getter{
-			"git": g,
-		},
+		Getters: []Getter{new(GitGetter)},
 	}
 
 	if _, err := client.Get(ctx, req); err != nil {
@@ -480,7 +467,6 @@ func TestGitGetter_sshSCPStyleInvalidScheme(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	g := new(GitGetter)
 	dst := tempDir(t)
 
 	encodedKey := base64.StdEncoding.EncodeToString([]byte(testGitToken))
@@ -500,12 +486,7 @@ func TestGitGetter_sshSCPStyleInvalidScheme(t *testing.T) {
 	}
 
 	client := &Client{
-		Detectors: []Detector{
-			new(GitDetector),
-		},
-		Getters: map[string]Getter{
-			"git": g,
-		},
+		Getters: []Getter{new(GitGetter)},
 	}
 
 	_, err := client.Get(ctx, req)
@@ -514,7 +495,7 @@ func TestGitGetter_sshSCPStyleInvalidScheme(t *testing.T) {
 	}
 
 	got := err.Error()
-	want1, want2 := `invalid source string`, `invalid port number "hashicorp"`
+	want1, want2 := `invalid source string`, `invalid port ":hashicorp"`
 	if !(strings.Contains(got, want1) || strings.Contains(got, want2)) {
 		t.Fatalf("wrong error\ngot:  %s\nwant: %q or %q", got, want1, want2)
 	}

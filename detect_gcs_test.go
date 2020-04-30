@@ -11,20 +11,20 @@ func TestGCSDetector(t *testing.T) {
 	}{
 		{
 			"www.googleapis.com/storage/v1/bucket/foo",
-			"gcs::https://www.googleapis.com/storage/v1/bucket/foo",
+			"https://www.googleapis.com/storage/v1/bucket/foo",
 		},
 		{
 			"www.googleapis.com/storage/v1/bucket/foo/bar",
-			"gcs::https://www.googleapis.com/storage/v1/bucket/foo/bar",
+			"https://www.googleapis.com/storage/v1/bucket/foo/bar",
 		},
 		{
 			"www.googleapis.com/storage/v1/foo/bar.baz",
-			"gcs::https://www.googleapis.com/storage/v1/foo/bar.baz",
+			"https://www.googleapis.com/storage/v1/foo/bar.baz",
 		},
 	}
 
 	pwd := "/pwd"
-	f := new(GCSDetector)
+	f := new(GCSGetter)
 	for i, tc := range cases {
 		output, ok, err := f.Detect(tc.Input, pwd)
 		if err != nil {

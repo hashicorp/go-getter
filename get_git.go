@@ -4,8 +4,10 @@ import (
 	"bytes"
 	"context"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"net/http"
 	"net/url"
 	"os"
 	"os/exec"
@@ -23,7 +25,6 @@ import (
 // GitGetter is a Getter implementation that will download a module from
 // a git repository.
 type GitGetter struct {
-	getter
 }
 
 var defaultBranchRegexp = regexp.MustCompile(`\s->\sorigin/(.*)`)
@@ -313,4 +314,113 @@ func checkGitVersion(min string) error {
 	}
 
 	return nil
+}
+
+func (g *GitGetter) Detect(src, _ string) (string, bool, error) {
+	if len(src) == 0 {
+		return "", false, nil
+	}
+
+	u, err := url.Parse(src)
+	if err == nil && (u.Scheme == "git" || u.Scheme == "ssh") {
+		// Valid URL
+		return src, true, nil
+	}
+
+	u, err = detectSSH(src)
+	if err != nil {
+		return "", true, err
+	}
+	if u != nil {
+		// We require the username to be "git" to assume that this is a Git URL
+		if u.User.Username() == "git" {
+			return u.String(), true, nil
+		}
+	}
+
+	result, ok, err := detectGitHub(src)
+	if err != nil {
+		return "", ok, err
+	}
+	if ok {
+		return result, ok, nil
+	}
+
+	result, u, err = detectBitBucket(src)
+	if err != nil {
+		return "", true, err
+	}
+	if result == "git" {
+		if !strings.HasSuffix(u.Path, ".git") {
+			u.Path += ".git"
+		}
+		return u.String(), true, nil
+	}
+
+	return "", false, nil
+}
+
+func detectBitBucket(src string) (string, *url.URL, error) {
+	if !strings.HasPrefix(src, "bitbucket.org/") {
+		return "", nil, nil
+	}
+
+	u, err := url.Parse("https://" + src)
+	if err != nil {
+		return "", nil, fmt.Errorf("error parsing BitBucket URL: %s", err)
+	}
+
+	// We need to get info on this BitBucket repository to determine whether
+	// it is Git or Hg.
+	var info struct {
+		SCM string `json:"scm"`
+	}
+	infoUrl := "https://api.bitbucket.org/2.0/repositories" + u.Path
+	resp, err := http.Get(infoUrl)
+	if err != nil {
+		return "", nil, fmt.Errorf("error looking up BitBucket URL: %s", err)
+	}
+	if resp.StatusCode == 403 {
+		// A private repo
+		return "", nil, fmt.Errorf(
+			"shorthand BitBucket URL can't be used for private repos, " +
+				"please use a full URL")
+	}
+	dec := json.NewDecoder(resp.Body)
+	if err := dec.Decode(&info); err != nil {
+		return "", nil, fmt.Errorf("error looking up BitBucket URL: %s", err)
+	}
+
+	return info.SCM, u, nil
+}
+
+func detectGitHub(src string) (string, bool, error) {
+	if !strings.HasPrefix(src, "github.com/") {
+		return "", false, nil
+	}
+	parts := strings.Split(src, "/")
+	if len(parts) < 3 {
+		return "", false, fmt.Errorf(
+			"GitHub URLs should be github.com/username/repo")
+	}
+
+	urlStr := fmt.Sprintf("https://%s", strings.Join(parts[:3], "/"))
+	url, err := url.Parse(urlStr)
+	if err != nil {
+		return "", true, fmt.Errorf("error parsing GitHub URL: %s", err)
+	}
+
+	if !strings.HasSuffix(url.Path, ".git") {
+		url.Path += ".git"
+	}
+
+	if len(parts) > 3 {
+		url.Path += "//" + strings.Join(parts[3:], "/")
+	}
+
+	return url.String(), true, nil
+}
+
+func (g *GitGetter) ValidScheme(scheme string) bool {
+	return scheme == "git" || scheme == "ssh"
 }
