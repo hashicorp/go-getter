@@ -411,7 +411,7 @@ func TestGitGetter_sshSCPStyle(t *testing.T) {
 		Mode: ModeDir,
 	}
 	client := &Client{
-		Getters:[]Getter{new(GitGetter)},
+		Getters: []Getter{new(GitGetter)},
 	}
 
 	if _, err := client.Get(ctx, req); err != nil {

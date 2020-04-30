@@ -296,7 +296,6 @@ func (g *SmbGetter) Detect(src, pwd string) (string, bool, error) {
 	return "", false, nil
 }
 
-
 func (g *SmbGetter) ValidScheme(scheme string) bool {
 	return scheme == "smb"
 }

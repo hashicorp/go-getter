@@ -88,4 +88,3 @@ func windowsSmbPath(path string) bool {
 func (g *SmbGetterWindows) ValidScheme(scheme string) bool {
 	return scheme == "smb"
 }
-

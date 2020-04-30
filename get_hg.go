@@ -146,7 +146,6 @@ func (g *HgGetter) Detect(src, _ string) (string, bool, error) {
 	return "", false, nil
 }
 
-
 func (g *HgGetter) ValidScheme(scheme string) bool {
 	return scheme == "hg"
 }

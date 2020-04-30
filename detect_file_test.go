@@ -10,27 +10,27 @@ import (
 
 type fileTest struct {
 	in, pwd, out string
-	symlink, err          bool
+	symlink, err bool
 }
 
 var fileTests = []fileTest{
-	{"./foo", "/pwd", "/pwd/foo", false,false},
-	{"./foo?foo=bar", "/pwd", "/pwd/foo?foo=bar", false,false},
-	{"foo", "/pwd", "/pwd/foo", false,false},
+	{"./foo", "/pwd", "/pwd/foo", false, false},
+	{"./foo?foo=bar", "/pwd", "/pwd/foo?foo=bar", false, false},
+	{"foo", "/pwd", "/pwd/foo", false, false},
 }
 
 var unixFileTests = []fileTest{
 	{"./foo", "testdata/detect-file-symlink-pwd/syml/pwd",
-		"testdata/detect-file-symlink-pwd/real/foo", true,false},
+		"testdata/detect-file-symlink-pwd/real/foo", true, false},
 
-	{"/foo", "/pwd", "/foo", false,false},
-	{"/foo?bar=baz", "/pwd", "/foo?bar=baz", false,false},
+	{"/foo", "/pwd", "/foo", false, false},
+	{"/foo?bar=baz", "/pwd", "/foo?bar=baz", false, false},
 }
 
 var winFileTests = []fileTest{
-	{"/foo", "/pwd", "/pwd/foo", false,false},
-	{`C:\`, `/pwd`, `C:/`, false,false},
-	{`C:\?bar=baz`, `/pwd`, `C:/?bar=baz`, false,false},
+	{"/foo", "/pwd", "/pwd/foo", false, false},
+	{`C:\`, `/pwd`, `C:/`, false, false},
+	{`C:\?bar=baz`, `/pwd`, `C:/?bar=baz`, false, false},
 }
 
 func TestFileDetector(t *testing.T) {

@@ -19,9 +19,9 @@ import (
 func Detect(src string, pwd string, g Getter) (string, bool, error) {
 	getForce, getSrc := getForcedGetter(src)
 
-	if getForce != "" && !g.ValidScheme(getForce){
-			// Another getter is being forced
-			return "", false, nil
+	if getForce != "" && !g.ValidScheme(getForce) {
+		// Another getter is being forced
+		return "", false, nil
 	}
 
 	isForcedGetter := getForce != "" && g.ValidScheme(getForce)

@@ -588,7 +588,7 @@ func TestGetFile_checksumURL(t *testing.T) {
 		Mode: ModeFile,
 	}
 	client := &Client{
-		Getters: []Getter{ getter},
+		Getters: []Getter{getter},
 	}
 
 	op, err := client.Get(ctx, req)
@@ -689,7 +689,7 @@ func TestGetFile_inplace(t *testing.T) {
 		Inplace: true,
 	}
 	client := &Client{
-		Getters: []Getter{ getter},
+		Getters: []Getter{getter},
 	}
 
 	// get the file

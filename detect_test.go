@@ -10,11 +10,11 @@ func TestDetect(t *testing.T) {
 		Input  string
 		Pwd    string
 		Output string
-		g Getter
+		g      Getter
 		Err    bool
 	}{
-	{"./foo", "/foo", "/foo/foo", new(FileGetter), false},
-	//{"git::./foo", "/foo", "/foo/foo", new(GitGetter),false}, // TODO @sylviamoss understand this test. Is this a real situation?
+		{"./foo", "/foo", "/foo/foo", new(FileGetter), false},
+		//{"git::./foo", "/foo", "/foo/foo", new(GitGetter),false}, // TODO @sylviamoss understand this test. Is this a real situation?
 		{
 			"git::github.com/hashicorp/foo",
 			"",

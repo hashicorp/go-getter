@@ -161,7 +161,6 @@ func (g *FileGetter) Detect(src, pwd string) (string, bool, error) {
 		return src, true, nil
 	}
 
-
 	if !filepath.IsAbs(src) {
 		if pwd == "" {
 			return "", true, fmt.Errorf(
