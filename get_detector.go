@@ -6,10 +6,13 @@ import (
 	"path/filepath"
 )
 
+// GetterDetector detects the possible Getters in the list of available Getters to download an artifact
 type GetterDetector struct {
+	// List of possible getters that will be used for trying to download the artifact
 	getters []Getter
 }
 
+// NewGetterDetector creates a chain of Getters that will be used for detection
 func NewGetterDetector(getters []Getter) *GetterDetector {
 	for i, g := range getters {
 		if i == len(getters)-1 {
@@ -21,48 +24,22 @@ func NewGetterDetector(getters []Getter) *GetterDetector {
 }
 
 func (g *GetterDetector) Detect(src, pwd string) (string, error) {
-	// Start chain of detection to allow detecting multiple getters for a src
-	result, getters, err := g.getters[0].Detect(src, pwd)
-	g.getters = getters
-	return result, err
+	// Start chain of detection to allow detecting multiple getters for an object
+	if len(g.getters) > 0 {
+		result, getters, err := g.getters[0].Detect(src, pwd)
+		g.getters = getters
+		return result, err
+	}
+	return "", fmt.Errorf("couldn't find any available getter")
 }
 
-//func (g *GetterDetector) Mode(ctx context.Context, u *url.URL) (Mode, error) {
-//	var result *multierror.Error
-//	for _, getter := range g.getters {
-//		mode, err := getter.Mode(ctx, u)
-//		if err == nil {
-//			// will return the first mode that is found and
-//			// the current getter will be used for downloading the object
-//			g.getters = []Getter{getter}
-//			return mode, nil
-//		}
-//		result = multierror.Append(result, err)
-//	}
-//	return 0, result
-//}
+// Detect is a shared method used by all of the Getters to validate if
+// a source string is detected to be of a known pattern,
+// and to transform it to a known pattern when necessary.
 //
-//func (g *GetterDetector) Get(ctx context.Context, req *Request) error {
-//	// Mode will always return the first mode that is found successfully
-//	// At this point, the getters list will always contain only 1 getter
-//	return g.getters[0].Get(ctx, req)
-//}
-//
-//func (g *GetterDetector) GetFile(ctx context.Context, req *Request) error {
-//	// Mode will always return the first mode that is found successfully
-//	// At this point, the getters list will always contain only 1 getter
-//	return g.getters[0].GetFile(ctx, req)
-//}
-
-// Detect turns a source string into another source string if it is
-// detected to be of a known pattern.
-//
-// The third parameter should be the list of detectors to use in the
-// order to try them. If you don't want to configure this, just use
-// the global Detectors variable.
-//
-// This is safe to be called with an already valid source string: Detect
-// will just return it.
+// This is the logic of the getters chain of detection.
+// When a getter detects or not a valid source string, it will
+// call the next getter that will then use this method to do the same.
 func Detect(src string, pwd string, g Getter) (string, []Getter, error) {
 	gList := []Getter{g}
 	getForce, getSrc := getForcedGetter(src)
@@ -74,7 +51,7 @@ func Detect(src string, pwd string, g Getter) (string, []Getter, error) {
 	u, err := url.Parse(getSrc)
 	if err == nil && u.Scheme != "" {
 		if !isForcedGetter && !g.ValidScheme(u.Scheme) {
-			// Not forced and no valid scheme
+			// Not forced getter and not valid scheme
 			// Keep going through the chain to find valid getters for this scheme
 			return tryNextGetter(src, pwd, g)
 		}
@@ -101,11 +78,8 @@ func Detect(src string, pwd string, g Getter) (string, []Getter, error) {
 	if !ok {
 		// Try next of the chain
 		r, gs, err := tryNextGetter(src, pwd, g)
-		if r == "" && err == nil {
-			r = getSrc
-		}
 		if isForcedGetter && err == nil {
-			// Remove forced getter from the path
+			// Remove any forced getter from the path
 			_, r = getForcedGetter(r)
 			return r, gList, nil
 		}
@@ -145,7 +119,7 @@ func Detect(src string, pwd string, g Getter) (string, []Getter, error) {
 		_, gs, err := tryNextGetter(result, pwd, g)
 		return result, gs, err
 	}
-	// no forced getter, no scheme, and this is valid by detection
+	// this is valid by detection
 	return result, gList, nil
 }
 
@@ -153,5 +127,5 @@ func tryNextGetter(src string, pwd string, g Getter) (string, []Getter, error) {
 	if g.Next() != nil {
 		return g.Next().Detect(src, pwd)
 	}
-	return "", nil, nil
+	return src, nil, nil
 }

@@ -42,13 +42,6 @@ func TestGitDetector(t *testing.T) {
 			"ssh://git@github.xyz.com/org/project.git//module/a?ref=test-branch",
 		},
 		{
-			// Already in the canonical form, so no rewriting required
-			// When the ssh: protocol is used explicitly, we recognize it as
-			// URL form rather than SCP-like form, so the part after the colon
-			// is a port number, not part of the path.
-
-			// TODO @sylviamoss rewrite comment
-			// No need to set git scheme anymore
 			"git::ssh://git@git.example.com:2222/hashicorp/foo.git",
 			"ssh://git@git.example.com:2222/hashicorp/foo.git",
 		},

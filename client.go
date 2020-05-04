@@ -46,12 +46,13 @@ func (c *Client) Get(ctx context.Context, req *Request) (*GetResult, error) {
 		req.Mode = ModeAny
 	}
 
-	executor := NewGetterDetector(c.Getters)
+	detector := NewGetterDetector(c.Getters)
 
-	// Loop over Getters in priority order.
+	// Run over the chain of detection to get a list of possible Getters.
 	// Some urls can be supported by more than one Getter and we want to make sure
-	// the best getter option will try to download first
-	src, err := executor.Detect(req.Src, req.Pwd)
+	// the best getter option will try to download first.
+	// The Getters slice must be in priority order.
+	src, err := detector.Detect(req.Src, req.Pwd)
 	if err != nil {
 		return nil, err
 	}
@@ -138,10 +139,12 @@ func (c *Client) Get(ctx context.Context, req *Request) (*GetResult, error) {
 	q.Del("checksum")
 	req.u.RawQuery = q.Encode()
 
+	// From now one, each possible getter will
+	// try to run the rest of the logic
 	var modeErr *multierror.Error
 	var getFileErr *multierror.Error
 	var getErr *multierror.Error
-	for _, g := range executor.getters {
+	for _, g := range detector.getters {
 		if req.Mode == ModeAny {
 			// Ask the getter which client mode to use
 			req.Mode, err = g.Mode(ctx, req.u)
@@ -258,6 +261,8 @@ func (c *Client) Get(ctx context.Context, req *Request) (*GetResult, error) {
 		return &GetResult{req.Dst}, nil
 	}
 
+	// If there's an getErr or getFileErr, we can ignore any modeErr because is
+	// going to be a getter that didn't get to far on downloading the artifact
 	if getErr != nil {
 		err = fmt.Errorf("error downloading '%s': %s", req.Src, getErr)
 	}
