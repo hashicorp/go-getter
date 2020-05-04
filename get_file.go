@@ -12,6 +12,7 @@ import (
 // FileGetter is a Getter implementation that will download a module from
 // a file scheme.
 type FileGetter struct {
+	next Getter
 }
 
 func (g *FileGetter) Mode(ctx context.Context, u *url.URL) (Mode, error) {
@@ -150,7 +151,7 @@ func (g *FileGetter) GetFile(ctx context.Context, req *Request) error {
 	return err
 }
 
-func (g *FileGetter) Detect(src, pwd string) (string, bool, error) {
+func (g *FileGetter) DetectGetter(src string, pwd string) (string, bool, error) {
 	if len(src) == 0 {
 		return "", false, nil
 	}
@@ -214,4 +215,16 @@ func fmtFileURL(path string) string {
 		path = filepath.ToSlash(path)
 	}
 	return path
+}
+
+func (g *FileGetter) Detect(src, pwd string) (string, []Getter, error) {
+	return Detect(src, pwd, g)
+}
+
+func (g *FileGetter) Next() Getter {
+	return g.next
+}
+
+func (g *FileGetter) SetNext(next Getter) {
+	g.next = next
 }

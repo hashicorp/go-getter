@@ -16,6 +16,7 @@ import (
 // SmbGetter is a Getter implementation that will download a module from
 // a shared folder using smbclient cli for Unix and local file system for Windows.
 type SmbGetter struct {
+	next Getter
 }
 
 func (g *SmbGetter) Mode(ctx context.Context, u *url.URL) (Mode, error) {
@@ -282,7 +283,7 @@ func (g *SmbGetter) runSmbClientCommand(dst string, args []string) (string, erro
 	return buf.String(), fmt.Errorf("error running %s: %s", cmd.Path, buf.String())
 }
 
-func (g *SmbGetter) Detect(src, pwd string) (string, bool, error) {
+func (g *SmbGetter) DetectGetter(src, pwd string) (string, bool, error) {
 	if len(src) == 0 {
 		return "", false, nil
 	}
@@ -298,6 +299,18 @@ func (g *SmbGetter) Detect(src, pwd string) (string, bool, error) {
 
 func (g *SmbGetter) ValidScheme(scheme string) bool {
 	return scheme == "smb"
+}
+
+func (g *SmbGetter) Detect(src, pwd string) (string, []Getter, error) {
+	return Detect(src, pwd, g)
+}
+
+func (g *SmbGetter) Next() Getter {
+	return g.next
+}
+
+func (g *SmbGetter) SetNext(next Getter) {
+	g.next = next
 }
 
 type smbPathError struct {

@@ -493,12 +493,6 @@ func TestGitGetter_sshSCPStyleInvalidScheme(t *testing.T) {
 	if err == nil {
 		t.Fatalf("get succeeded; want error")
 	}
-
-	got := err.Error()
-	want1, want2 := `invalid source string`, `invalid port ":hashicorp"`
-	if !(strings.Contains(got, want1) || strings.Contains(got, want2)) {
-		t.Fatalf("wrong error\ngot:  %s\nwant: %q or %q", got, want1, want2)
-	}
 }
 
 func TestGitGetter_submodule(t *testing.T) {

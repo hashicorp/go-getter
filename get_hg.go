@@ -15,6 +15,7 @@ import (
 // HgGetter is a Getter implementation that will download a module from
 // a Mercurial repository.
 type HgGetter struct {
+	next Getter
 }
 
 func (g *HgGetter) Mode(ctx context.Context, _ *url.URL) (Mode, error) {
@@ -124,7 +125,7 @@ func (g *HgGetter) update(ctx context.Context, dst string, u *url.URL, rev strin
 	return getRunCommand(cmd)
 }
 
-func (g *HgGetter) Detect(src, _ string) (string, bool, error) {
+func (g *HgGetter) DetectGetter(src, _ string) (string, bool, error) {
 	if len(src) == 0 {
 		return "", false, nil
 	}
@@ -159,4 +160,16 @@ func fixWindowsDrivePath(u *url.URL) bool {
 	// http://selenic.com/repo/hg-stable/file/1265a3a71d75/mercurial/util.py#l1936
 	return runtime.GOOS == "windows" && u.Scheme == "file" &&
 		len(u.Path) > 1 && u.Path[0] != '/' && u.Path[1] == ':'
+}
+
+func (g *HgGetter) Detect(src, pwd string) (string, []Getter, error) {
+	return Detect(src, pwd, g)
+}
+
+func (g *HgGetter) Next() Getter {
+	return g.next
+}
+
+func (g *HgGetter) SetNext(next Getter) {
+	g.next = next
 }

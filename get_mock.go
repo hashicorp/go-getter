@@ -52,10 +52,34 @@ func (g *MockGetter) Mode(ctx context.Context, u *url.URL) (Mode, error) {
 	return ModeFile, nil
 }
 
-func (g *MockGetter) Detect(src, _ string) (string, bool, error) {
+func (g *MockGetter) DetectGetter(src, pwd string) (string, bool, error) {
+	if g.Proxy != nil {
+		return g.Proxy.DetectGetter(src, pwd)
+	}
 	return "", true, nil
 }
 
 func (g *MockGetter) ValidScheme(scheme string) bool {
+	if g.Proxy != nil {
+		return g.Proxy.ValidScheme(scheme)
+	}
 	return true
+}
+
+func (g *MockGetter) Detect(src, pwd string) (string, []Getter, error) {
+	if g.Proxy != nil {
+		detect, _, err := g.Proxy.Detect(src, pwd)
+		return detect, []Getter{g}, err
+	}
+	return src, []Getter{g}, nil
+}
+
+func (g *MockGetter) Next() Getter {
+	if g.Proxy != nil {
+		return g.Proxy.Next()
+	}
+	return nil
+}
+
+func (g *MockGetter) SetNext(next Getter) {
 }

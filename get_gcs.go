@@ -15,6 +15,7 @@ import (
 // GCSGetter is a Getter implementation that will download a module from
 // a GCS bucket.
 type GCSGetter struct {
+	next Getter
 }
 
 func (g *GCSGetter) Mode(ctx context.Context, u *url.URL) (Mode, error) {
@@ -165,7 +166,7 @@ func (g *GCSGetter) parseURL(u *url.URL) (bucket, path string, err error) {
 	return
 }
 
-func (g *GCSGetter) Detect(src, _ string) (string, bool, error) {
+func (g *GCSGetter) DetectGetter(src, _ string) (string, bool, error) {
 	if len(src) == 0 {
 		return "", false, nil
 	}
@@ -205,4 +206,16 @@ func (g *GCSGetter) detectHTTP(src string) (string, bool, error) {
 
 func (g *GCSGetter) ValidScheme(scheme string) bool {
 	return scheme == "gcs"
+}
+
+func (g *GCSGetter) Detect(src, pwd string) (string, []Getter, error) {
+	return Detect(src, pwd, g)
+}
+
+func (g *GCSGetter) Next() Getter {
+	return g.next
+}
+
+func (g *GCSGetter) SetNext(next Getter) {
+	g.next = next
 }

@@ -55,7 +55,7 @@ func TestFileDetector(t *testing.T) {
 		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
 			pwd := tc.pwd
 
-			out, ok, err := f.Detect(tc.in, pwd)
+			out, ok, err := f.DetectGetter(tc.in, pwd)
 			if err != nil {
 				t.Fatalf("err: %s", err)
 			}
@@ -99,7 +99,7 @@ func TestFileDetector_noPwd(t *testing.T) {
 
 	f := new(FileGetter)
 	for i, tc := range noPwdFileTests {
-		out, ok, err := f.Detect(tc.in, tc.pwd)
+		out, ok, err := f.DetectGetter(tc.in, tc.pwd)
 		if err != nil != tc.err {
 			t.Fatalf("%d: err: %s", i, err)
 		}

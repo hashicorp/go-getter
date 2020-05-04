@@ -48,6 +48,8 @@ type HttpGetter struct {
 	// and as such it needs to be initialized before use, via something like
 	// make(http.Header).
 	Header http.Header
+
+	next Getter
 }
 
 func (g *HttpGetter) Mode(ctx context.Context, u *url.URL) (Mode, error) {
@@ -319,7 +321,7 @@ func charsetReader(charset string, input io.Reader) (io.Reader, error) {
 	}
 }
 
-func (g *HttpGetter) Detect(src, _ string) (string, bool, error) {
+func (g *HttpGetter) DetectGetter(src, _ string) (string, bool, error) {
 	u, err := url.Parse(src)
 	if err == nil && u.Scheme != "" && (u.Scheme == "http" || u.Scheme == "https") {
 		// Valid URL
@@ -330,4 +332,16 @@ func (g *HttpGetter) Detect(src, _ string) (string, bool, error) {
 
 func (g *HttpGetter) ValidScheme(scheme string) bool {
 	return scheme == "http" || scheme == "https"
+}
+
+func (g *HttpGetter) Detect(src, pwd string) (string, []Getter, error) {
+	return Detect(src, pwd, g)
+}
+
+func (g *HttpGetter) Next() Getter {
+	return g.next
+}
+
+func (g *HttpGetter) SetNext(next Getter) {
+	g.next = next
 }

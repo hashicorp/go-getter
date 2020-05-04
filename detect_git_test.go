@@ -57,15 +57,11 @@ func TestGitDetector(t *testing.T) {
 	pwd := "/pwd"
 	for _, tc := range cases {
 		t.Run(tc.Input, func(t *testing.T) {
-			output, ok, err := Detect(tc.Input, pwd, new(GitGetter))
+			detector := NewGetterDetector([]Getter{new(GitGetter)})
+			output, err := detector.Detect(tc.Input, pwd)
 			if err != nil {
 				t.Fatalf("unexpected error: %s", err)
 			}
-
-			if !ok {
-				t.Fatalf("%s url expected to valid", tc.Input)
-			}
-
 			if output != tc.Output {
 				t.Errorf("wrong result\ninput: %s\ngot:   %s\nwant:  %s", tc.Input, output, tc.Output)
 			}
