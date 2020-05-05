@@ -196,7 +196,7 @@ func (g *SmbMountGetter) findShare(u *url.URL) string {
 	directories := splt.Split(path, 2)
 
 	if len(directories) > 0 {
-		return  directories[0]
+		return directories[0]
 	}
 
 	return "."
