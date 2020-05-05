@@ -88,7 +88,7 @@ func TestDetect(t *testing.T) {
 			new(S3Getter),
 			new(GCSGetter),
 			new(FileGetter),
-			new(SmbGetter),
+			new(SmbClientGetter),
 			httpGetter,
 		}
 		t.Run(fmt.Sprintf("%d %s", i, tc.Input), func(t *testing.T) {

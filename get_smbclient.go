@@ -13,13 +13,13 @@ import (
 	"syscall"
 )
 
-// SmbGetter is a Getter implementation that will download a module from
-// a shared folder using smbclient cli for Unix and local file system for Windows.
-type SmbGetter struct {
+// SmbClientGetter is a Getter implementation that will download a module from
+// a shared folder using smbclient cli.
+type SmbClientGetter struct {
 	next Getter
 }
 
-func (g *SmbGetter) Mode(ctx context.Context, u *url.URL) (Mode, error) {
+func (g *SmbClientGetter) Mode(ctx context.Context, u *url.URL) (Mode, error) {
 	if u.Host == "" || u.Path == "" {
 		return 0, new(smbPathError)
 	}
@@ -32,7 +32,7 @@ func (g *SmbGetter) Mode(ctx context.Context, u *url.URL) (Mode, error) {
 	return 0, &smbGeneralError{err}
 }
 
-func (g *SmbGetter) smbClientMode(u *url.URL) (Mode, error) {
+func (g *SmbClientGetter) smbClientMode(u *url.URL) (Mode, error) {
 	hostPath, filePath, err := g.findHostAndFilePath(u)
 	if err != nil {
 		return 0, err
@@ -60,7 +60,7 @@ func (g *SmbGetter) smbClientMode(u *url.URL) (Mode, error) {
 	return ModeFile, nil
 }
 
-func (g *SmbGetter) Get(ctx context.Context, req *Request) error {
+func (g *SmbClientGetter) Get(ctx context.Context, req *Request) error {
 	if req.u.Host == "" || req.u.Path == "" {
 		return new(smbPathError)
 	}
@@ -87,7 +87,7 @@ func (g *SmbGetter) Get(ctx context.Context, req *Request) error {
 	return &smbGeneralError{err}
 }
 
-func (g *SmbGetter) smbclientGet(req *Request) error {
+func (g *SmbClientGetter) smbclientGet(req *Request) error {
 	hostPath, directory, err := g.findHostAndFilePath(req.u)
 	if err != nil {
 		return err
@@ -125,7 +125,7 @@ func (g *SmbGetter) smbclientGet(req *Request) error {
 	return err
 }
 
-func (g *SmbGetter) GetFile(ctx context.Context, req *Request) error {
+func (g *SmbClientGetter) GetFile(ctx context.Context, req *Request) error {
 	if req.u.Host == "" || req.u.Path == "" {
 		return new(smbPathError)
 	}
@@ -152,7 +152,7 @@ func (g *SmbGetter) GetFile(ctx context.Context, req *Request) error {
 	return &smbGeneralError{err}
 }
 
-func (g *SmbGetter) smbclientGetFile(req *Request) error {
+func (g *SmbClientGetter) smbclientGetFile(req *Request) error {
 	hostPath, filePath, err := g.findHostAndFilePath(req.u)
 	if err != nil {
 		return err
@@ -202,7 +202,7 @@ func (g *SmbGetter) smbclientGetFile(req *Request) error {
 	return err
 }
 
-func (g *SmbGetter) smbclientCmdArgs(used *url.Userinfo, hostPath string, fileDir string) (baseCmd []string) {
+func (g *SmbClientGetter) smbclientCmdArgs(used *url.Userinfo, hostPath string, fileDir string) (baseCmd []string) {
 	baseCmd = append(baseCmd, "-N")
 
 	// Append auth user and password to baseCmd
@@ -221,7 +221,7 @@ func (g *SmbGetter) smbclientCmdArgs(used *url.Userinfo, hostPath string, fileDi
 	return baseCmd
 }
 
-func (g *SmbGetter) findHostAndFilePath(u *url.URL) (string, string, error) {
+func (g *SmbClientGetter) findHostAndFilePath(u *url.URL) (string, string, error) {
 	// Host path
 	hostPath := "//" + u.Host
 
@@ -242,7 +242,7 @@ func (g *SmbGetter) findHostAndFilePath(u *url.URL) (string, string, error) {
 	return hostPath, directories[1], nil
 }
 
-func (g *SmbGetter) isDirectory(args []string, object string) (bool, error) {
+func (g *SmbClientGetter) isDirectory(args []string, object string) (bool, error) {
 	args = append(args, "-c")
 	args = append(args, fmt.Sprintf("allinfo %s", object))
 	output, err := g.runSmbClientCommand("", args)
@@ -255,7 +255,7 @@ func (g *SmbGetter) isDirectory(args []string, object string) (bool, error) {
 	return strings.Contains(output, "attributes: D"), nil
 }
 
-func (g *SmbGetter) runSmbClientCommand(dst string, args []string) (string, error) {
+func (g *SmbClientGetter) runSmbClientCommand(dst string, args []string) (string, error) {
 	cmd := exec.Command("smbclient", args...)
 
 	if dst != "" {
@@ -283,7 +283,7 @@ func (g *SmbGetter) runSmbClientCommand(dst string, args []string) (string, erro
 	return buf.String(), fmt.Errorf("error running %s: %s", cmd.Path, buf.String())
 }
 
-func (g *SmbGetter) DetectGetter(src, pwd string) (string, bool, error) {
+func (g *SmbClientGetter) DetectGetter(src, pwd string) (string, bool, error) {
 	if len(src) == 0 {
 		return "", false, nil
 	}
@@ -297,19 +297,19 @@ func (g *SmbGetter) DetectGetter(src, pwd string) (string, bool, error) {
 	return "", false, nil
 }
 
-func (g *SmbGetter) ValidScheme(scheme string) bool {
+func (g *SmbClientGetter) ValidScheme(scheme string) bool {
 	return scheme == "smb"
 }
 
-func (g *SmbGetter) Detect(src, pwd string) (string, []Getter, error) {
+func (g *SmbClientGetter) Detect(src, pwd string) (string, []Getter, error) {
 	return Detect(src, pwd, g)
 }
 
-func (g *SmbGetter) Next() Getter {
+func (g *SmbClientGetter) Next() Getter {
 	return g.next
 }
 
-func (g *SmbGetter) SetNext(next Getter) {
+func (g *SmbClientGetter) SetNext(next Getter) {
 	g.next = next
 }
 

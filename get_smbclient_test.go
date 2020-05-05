@@ -9,7 +9,7 @@ import (
 )
 
 func TestSmb_GetterImpl(t *testing.T) {
-	var _ Getter = new(SmbGetter)
+	var _ Getter = new(SmbClientGetter)
 }
 
 func TestSmb_GetterGet(t *testing.T) {
@@ -97,7 +97,7 @@ func TestSmb_GetterGet(t *testing.T) {
 				u:   url,
 			}
 
-			g := new(SmbGetter)
+			g := new(SmbClientGetter)
 			err = g.Get(context.Background(), req)
 
 			fail := err != nil
@@ -214,7 +214,7 @@ func TestSmb_GetterGetFile(t *testing.T) {
 				u:   url,
 			}
 
-			g := new(SmbGetter)
+			g := new(SmbClientGetter)
 			err = g.GetFile(context.Background(), req)
 
 			fail := err != nil
@@ -300,7 +300,7 @@ func TestSmb_GetterMode(t *testing.T) {
 				t.Fatalf("err: %s", err.Error())
 			}
 
-			g := new(SmbGetter)
+			g := new(SmbClientGetter)
 			mode, err := g.Mode(context.Background(), url)
 
 			fail := err != nil

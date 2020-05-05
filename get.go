@@ -83,8 +83,8 @@ func init() {
 		new(S3Getter),
 		new(GCSGetter),
 		new(FileGetter),
-		new(SmbGetter),
-		new(SmbWindowsGetter),
+		new(SmbClientGetter),
+		new(SmbMountGetter),
 		httpGetter,
 	}
 }

@@ -6,17 +6,25 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"regexp"
 	"runtime"
+	"strings"
 )
 
-// FileGetter is a Getter implementation that will download a module from
-// a file scheme.
-type FileGetter struct {
+// SmbMountGetter is a Getter implementation that will download a module from
+// a shared folder using the file system.
+type SmbMountGetter struct {
 	next Getter
 }
 
-func (g *FileGetter) Mode(ctx context.Context, u *url.URL) (Mode, error) {
-	path := u.Path
+func (g *SmbMountGetter) Mode(ctx context.Context, u *url.URL) (Mode, error) {
+	if u.Host == "" || u.Path == "" {
+		return 0, new(smbPathError)
+	}
+
+	prefix, path := g.findPrefixAndPath(u)
+	path = prefix + path
+
 	if u.RawPath != "" {
 		path = u.RawPath
 	}
@@ -34,8 +42,14 @@ func (g *FileGetter) Mode(ctx context.Context, u *url.URL) (Mode, error) {
 	return ModeFile, nil
 }
 
-func (g *FileGetter) Get(ctx context.Context, req *Request) error {
-	path := req.u.Path
+func (g *SmbMountGetter) Get(ctx context.Context, req *Request) error {
+	if req.u.Host == "" || req.u.Path == "" {
+		return new(smbPathError)
+	}
+
+	prefix, path := g.findPrefixAndPath(req.u)
+	path = prefix + path
+
 	if req.u.RawPath != "" {
 		path = req.u.RawPath
 	}
@@ -78,8 +92,14 @@ func (g *FileGetter) Get(ctx context.Context, req *Request) error {
 	return SymlinkAny(path, req.Dst)
 }
 
-func (g *FileGetter) GetFile(ctx context.Context, req *Request) error {
-	path := req.u.Path
+func (g *SmbMountGetter) GetFile(ctx context.Context, req *Request) error {
+	if req.u.Host == "" || req.u.Path == "" {
+		return new(smbPathError)
+	}
+
+	prefix, path := g.findPrefixAndPath(req.u)
+	path = prefix + path
+
 	if req.u.RawPath != "" {
 		path = req.u.RawPath
 	}
@@ -151,74 +171,63 @@ func (g *FileGetter) GetFile(ctx context.Context, req *Request) error {
 	return err
 }
 
-func (g *FileGetter) DetectGetter(src string, pwd string) (string, bool, error) {
+func (g *SmbMountGetter) findPrefixAndPath(u *url.URL) (string, string) {
+	var prefix, path string
+	switch runtime.GOOS {
+	case "windows":
+		prefix = string(os.PathSeparator) + string(os.PathSeparator)
+		path = filepath.Join(u.Host, u.Path)
+	case "darwin":
+		prefix = string(os.PathSeparator)
+		path = filepath.Join("Volumes", u.Path)
+	case "linux":
+		prefix = string(os.PathSeparator)
+		share := g.findShare(u)
+		pwd := fmt.Sprintf("run/user/1000/gvfs/smb-share:server=%s,share=%s", u.Host, share)
+		path = filepath.Join(pwd, u.Path)
+	}
+	return prefix, path
+}
+
+func (g *SmbMountGetter) findShare(u *url.URL) string {
+	// Get shared directory
+	path := strings.TrimPrefix(u.Path, "/")
+	splt := regexp.MustCompile(`/`)
+	directories := splt.Split(path, 2)
+
+	if len(directories) > 0 {
+		return  directories[0]
+	}
+
+	return "."
+}
+
+func (g *SmbMountGetter) DetectGetter(src, pwd string) (string, bool, error) {
 	if len(src) == 0 {
 		return "", false, nil
 	}
 
 	u, err := url.Parse(src)
-	if err == nil && u.Scheme == "file" {
+	if err == nil && u.Scheme == "smb" {
 		// Valid URL
 		return src, true, nil
 	}
 
-	if !filepath.IsAbs(src) {
-		if pwd == "" {
-			return "", true, fmt.Errorf(
-				"relative paths require a module with a pwd")
-		}
-
-		// Stat the pwd to determine if its a symbolic link. If it is,
-		// then the pwd becomes the original directory. Otherwise,
-		// `filepath.Join` below does some weird stuff.
-		//
-		// We just ignore if the pwd doesn't exist. That error will be
-		// caught later when we try to use the URL.
-		if fi, err := os.Lstat(pwd); !os.IsNotExist(err) {
-			if err != nil {
-				return "", true, err
-			}
-			if fi.Mode()&os.ModeSymlink != 0 {
-				pwd, err = filepath.EvalSymlinks(pwd)
-				if err != nil {
-					return "", true, err
-				}
-
-				// The symlink itself might be a relative path, so we have to
-				// resolve this to have a correctly rooted URL.
-				pwd, err = filepath.Abs(pwd)
-				if err != nil {
-					return "", true, err
-				}
-			}
-		}
-
-		src = filepath.Join(pwd, src)
-	}
-
-	return fmtFileURL(src), true, nil
+	return "", false, nil
 }
 
-func (g *FileGetter) ValidScheme(scheme string) bool {
-	return scheme == "file"
+func (g *SmbMountGetter) ValidScheme(scheme string) bool {
+	return scheme == "smb"
 }
 
-func fmtFileURL(path string) string {
-	if runtime.GOOS == "windows" {
-		// Make sure we're using "/" on Windows. URLs are "/"-based.
-		path = filepath.ToSlash(path)
-	}
-	return path
-}
-
-func (g *FileGetter) Detect(src, pwd string) (string, []Getter, error) {
+func (g *SmbMountGetter) Detect(src, pwd string) (string, []Getter, error) {
 	return Detect(src, pwd, g)
 }
 
-func (g *FileGetter) Next() Getter {
+func (g *SmbMountGetter) Next() Getter {
 	return g.next
 }
 
-func (g *FileGetter) SetNext(next Getter) {
+func (g *SmbMountGetter) SetNext(next Getter) {
 	g.next = next
 }
