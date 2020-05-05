@@ -11,10 +11,11 @@ import (
 
 // SmbGetter is a Getter implementation that will download a module from
 // a shared folder using smbclient cli for Unix and local file system for Windows.
-type SmbGetterWindows struct {
+type SmbWindowsGetter struct {
+	next Getter
 }
 
-func (g *SmbGetterWindows) Mode(ctx context.Context, u *url.URL) (Mode, error) {
+func (g *SmbWindowsGetter) Mode(ctx context.Context, u *url.URL) (Mode, error) {
 	if u.Host == "" || u.Path == "" {
 		return 0, new(smbPathError)
 	}
@@ -28,7 +29,7 @@ func (g *SmbGetterWindows) Mode(ctx context.Context, u *url.URL) (Mode, error) {
 	return 0, nil
 }
 
-func (g *SmbGetterWindows) Get(ctx context.Context, req *Request) error {
+func (g *SmbWindowsGetter) Get(ctx context.Context, req *Request) error {
 	if req.u.Host == "" || req.u.Path == "" {
 		return new(smbPathError)
 	}
@@ -42,7 +43,7 @@ func (g *SmbGetterWindows) Get(ctx context.Context, req *Request) error {
 	return nil
 }
 
-func (g *SmbGetterWindows) GetFile(ctx context.Context, req *Request) error {
+func (g *SmbWindowsGetter) GetFile(ctx context.Context, req *Request) error {
 	if req.u.Host == "" || req.u.Path == "" {
 		return new(smbPathError)
 	}
@@ -56,12 +57,12 @@ func (g *SmbGetterWindows) GetFile(ctx context.Context, req *Request) error {
 	return nil
 }
 
-func (g *SmbGetterWindows) Detect(src, pwd string) (string, bool, error) {
+func (g *SmbWindowsGetter) DetectGetter(src, pwd string) (string, bool, error) {
 	if len(src) == 0 {
 		return "", false, nil
 	}
 
-	// Don't even try SmbGetterWindows if is not Windows
+	// Don't even try SmbWindowsGetter if is not Windows
 	if runtime.GOOS != "windows" {
 		return "", false, nil
 	}
@@ -85,6 +86,18 @@ func windowsSmbPath(path string) bool {
 	return runtime.GOOS == "windows" && (strings.HasPrefix(path, "\\\\") || strings.HasPrefix(path, "//"))
 }
 
-func (g *SmbGetterWindows) ValidScheme(scheme string) bool {
+func (g *SmbWindowsGetter) ValidScheme(scheme string) bool {
 	return scheme == "smb"
+}
+
+func (g *SmbWindowsGetter) Detect(src, pwd string) (string, []Getter, error) {
+	return Detect(src, pwd, g)
+}
+
+func (g *SmbWindowsGetter) Next() Getter {
+	return g.next
+}
+
+func (g *SmbWindowsGetter) SetNext(next Getter) {
+	g.next = next
 }

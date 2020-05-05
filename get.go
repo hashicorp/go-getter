@@ -45,11 +45,11 @@ type Getter interface {
 
 	// Detect will detect whether the string matches a known pattern to
 	// turn it into a proper URL.
+	DetectGetter(string, string) (string, bool, error)
+
 	Detect(string, string) (string, []Getter, error)
 
-	DetectGetter(src string, pwd string) (string, bool, error)
-
-	SetNext(next Getter)
+	SetNext(Getter)
 
 	Next() Getter
 
@@ -84,6 +84,7 @@ func init() {
 		new(GCSGetter),
 		new(FileGetter),
 		new(SmbGetter),
+		new(SmbWindowsGetter),
 		httpGetter,
 	}
 }
