@@ -119,7 +119,12 @@ func Detect(src string, pwd string, g Getter) (string, []Getter, error) {
 		_, gs, err := tryNextGetter(result, pwd, g)
 		return result, gs, err
 	}
-	// this is valid by detection
+
+	// this is valid by getter detection
+	r, gs, err := tryNextGetter(result, pwd, g)
+	if err != nil && gs != nil {
+		return r, append(gList, gs...), nil
+	}
 	return result, gList, nil
 }
 
