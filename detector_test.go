@@ -92,8 +92,7 @@ func TestDetect(t *testing.T) {
 			httpGetter,
 		}
 		t.Run(fmt.Sprintf("%d %s", i, tc.Input), func(t *testing.T) {
-			detector := NewGetterDetector(Getters)
-			output, err := detector.Detect(tc.Input, tc.Pwd)
+			output, _, err := Detect(tc.Input, tc.Pwd, Getters)
 			if err != nil != tc.Err {
 				t.Fatalf("%d: bad err: %s", i, err)
 			}

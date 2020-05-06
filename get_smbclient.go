@@ -283,7 +283,7 @@ func (g *SmbClientGetter) runSmbClientCommand(dst string, args []string) (string
 	return buf.String(), fmt.Errorf("error running %s: %s", cmd.Path, buf.String())
 }
 
-func (g *SmbClientGetter) DetectGetter(src, pwd string) (string, bool, error) {
+func (g *SmbClientGetter) Detect(src, pwd string) (string, bool, error) {
 	if len(src) == 0 {
 		return "", false, nil
 	}
@@ -299,18 +299,6 @@ func (g *SmbClientGetter) DetectGetter(src, pwd string) (string, bool, error) {
 
 func (g *SmbClientGetter) ValidScheme(scheme string) bool {
 	return scheme == "smb"
-}
-
-func (g *SmbClientGetter) Detect(src, pwd string) (string, []Getter, error) {
-	return Detect(src, pwd, g)
-}
-
-func (g *SmbClientGetter) Next() Getter {
-	return g.next
-}
-
-func (g *SmbClientGetter) SetNext(next Getter) {
-	g.next = next
 }
 
 type smbPathError struct {

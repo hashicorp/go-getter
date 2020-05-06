@@ -272,7 +272,7 @@ func (g *S3Getter) parseUrl(u *url.URL) (region, bucket, path, version string, c
 	return
 }
 
-func (g *S3Getter) DetectGetter(src, _ string) (string, bool, error) {
+func (g *S3Getter) Detect(src, _ string) (string, bool, error) {
 	if len(src) == 0 {
 		return "", false, nil
 	}
@@ -330,16 +330,4 @@ func (g *S3Getter) detectVhostStyle(region, bucket string, parts []string) (stri
 
 func (g *S3Getter) ValidScheme(scheme string) bool {
 	return scheme == "s3"
-}
-
-func (g *S3Getter) Detect(src, pwd string) (string, []Getter, error) {
-	return Detect(src, pwd, g)
-}
-
-func (g *S3Getter) Next() Getter {
-	return g.next
-}
-
-func (g *S3Getter) SetNext(next Getter) {
-	g.next = next
 }

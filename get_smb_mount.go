@@ -202,7 +202,7 @@ func (g *SmbMountGetter) findShare(u *url.URL) string {
 	return "."
 }
 
-func (g *SmbMountGetter) DetectGetter(src, pwd string) (string, bool, error) {
+func (g *SmbMountGetter) Detect(src, pwd string) (string, bool, error) {
 	if len(src) == 0 {
 		return "", false, nil
 	}
@@ -218,16 +218,4 @@ func (g *SmbMountGetter) DetectGetter(src, pwd string) (string, bool, error) {
 
 func (g *SmbMountGetter) ValidScheme(scheme string) bool {
 	return scheme == "smb"
-}
-
-func (g *SmbMountGetter) Detect(src, pwd string) (string, []Getter, error) {
-	return Detect(src, pwd, g)
-}
-
-func (g *SmbMountGetter) Next() Getter {
-	return g.next
-}
-
-func (g *SmbMountGetter) SetNext(next Getter) {
-	g.next = next
 }

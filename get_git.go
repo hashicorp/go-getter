@@ -317,7 +317,7 @@ func checkGitVersion(min string) error {
 	return nil
 }
 
-func (g *GitGetter) DetectGetter(src, _ string) (string, bool, error) {
+func (g *GitGetter) Detect(src, _ string) (string, bool, error) {
 	if len(src) == 0 {
 		return "", false, nil
 	}
@@ -424,16 +424,4 @@ func detectGitHub(src string) (string, bool, error) {
 
 func (g *GitGetter) ValidScheme(scheme string) bool {
 	return scheme == "git" || scheme == "ssh"
-}
-
-func (g *GitGetter) Detect(src, pwd string) (string, []Getter, error) {
-	return Detect(src, pwd, g)
-}
-
-func (g *GitGetter) Next() Getter {
-	return g.next
-}
-
-func (g *GitGetter) SetNext(next Getter) {
-	g.next = next
 }

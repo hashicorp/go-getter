@@ -50,8 +50,7 @@ func TestGitDetector(t *testing.T) {
 	pwd := "/pwd"
 	for _, tc := range cases {
 		t.Run(tc.Input, func(t *testing.T) {
-			detector := NewGetterDetector([]Getter{new(GitGetter)})
-			output, err := detector.Detect(tc.Input, pwd)
+			output, _, err := Detect(tc.Input, pwd, []Getter{new(GitGetter)})
 			if err != nil {
 				t.Fatalf("unexpected error: %s", err)
 			}

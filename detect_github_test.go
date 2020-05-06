@@ -29,7 +29,7 @@ func TestGitHubDetector(t *testing.T) {
 	pwd := "/pwd"
 	f := new(GitGetter)
 	for i, tc := range cases {
-		output, ok, err := f.DetectGetter(tc.Input, pwd)
+		output, ok, err := f.Detect(tc.Input, pwd)
 		if err != nil {
 			t.Fatalf("err: %s", err)
 		}

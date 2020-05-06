@@ -46,13 +46,11 @@ func (c *Client) Get(ctx context.Context, req *Request) (*GetResult, error) {
 		req.Mode = ModeAny
 	}
 
-	detector := NewGetterDetector(c.Getters)
-
-	// Run over the chain of detection to get a list of possible Getters.
+	// Run over the getters to get a list of possible Getters.
 	// Some urls can be supported by more than one Getter and we want to make sure
 	// the best getter option will try to download first.
 	// The Getters slice must be in priority order.
-	src, err := detector.Detect(req.Src, req.Pwd)
+	src, getters, err := Detect(req.Src, req.Pwd, c.Getters)
 	if err != nil {
 		return nil, err
 	}
@@ -144,7 +142,7 @@ func (c *Client) Get(ctx context.Context, req *Request) (*GetResult, error) {
 	var modeErr *multierror.Error
 	var getFileErr *multierror.Error
 	var getErr *multierror.Error
-	for _, g := range detector.getters {
+	for _, g := range getters {
 		if req.Mode == ModeAny {
 			// Ask the getter which client mode to use
 			req.Mode, err = g.Mode(ctx, req.u)
