@@ -125,7 +125,8 @@ func (g *HgGetter) update(ctx context.Context, dst string, u *url.URL, rev strin
 	return getRunCommand(cmd)
 }
 
-func (g *HgGetter) Detect(src, _ string) (string, bool, error) {
+func (g *HgGetter) Detect(req *Request) (string, bool, error) {
+	src := req.Src
 	if len(src) == 0 {
 		return "", false, nil
 	}

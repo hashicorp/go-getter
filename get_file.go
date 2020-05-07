@@ -151,7 +151,10 @@ func (g *FileGetter) GetFile(ctx context.Context, req *Request) error {
 	return err
 }
 
-func (g *FileGetter) Detect(src string, pwd string) (string, bool, error) {
+func (g *FileGetter) Detect(req *Request) (string, bool, error) {
+	var src, pwd string
+	src = req.Src
+	pwd = req.Pwd
 	if len(src) == 0 {
 		return "", false, nil
 	}

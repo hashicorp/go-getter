@@ -45,7 +45,7 @@ type Getter interface {
 
 	// Detect will detect whether the string matches a known pattern to
 	// turn it into a proper URL.
-	Detect(string, string) (string, bool, error)
+	Detect(*Request) (string, bool, error)
 
 	ValidScheme(string) bool
 }

@@ -45,7 +45,11 @@ func TestBitBucketDetector(t *testing.T) {
 		for i := 0; i < 3; i++ {
 			var output string
 			var ok bool
-			output, ok, err = tc.g.Detect(tc.Input, pwd)
+			req := &Request{
+				Src: tc.Input,
+				Pwd: pwd,
+			}
+			output, ok, err = Detect(req, tc.g)
 			if err != nil {
 				if strings.Contains(err.Error(), "invalid character") {
 					continue

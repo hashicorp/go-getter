@@ -46,103 +46,103 @@ func (c *Client) Get(ctx context.Context, req *Request) (*GetResult, error) {
 		req.Mode = ModeAny
 	}
 
-	// Run over the getters to get a list of possible Getters.
-	// Some urls can be supported by more than one Getter and we want to make sure
-	// the best getter option will try to download first.
-	// The Getters slice must be in priority order.
-	src, getters, err := Detect(req.Src, req.Pwd, c.Getters)
-	if err != nil {
-		return nil, err
-	}
-	req.Src = src
-
-	// If there is a subdir component, then we download the root separately
-	// and then copy over the proper subdir.
-	var realDst, subDir string
-	req.Src, subDir = SourceDirSubdir(req.Src)
-	if subDir != "" {
-		td, tdcloser, err := safetemp.Dir("", "getter")
-		if err != nil {
-			return nil, err
-		}
-		defer tdcloser.Close()
-
-		realDst = req.Dst
-		req.Dst = td
-	}
-
-	req.u, err = urlhelper.Parse(req.Src)
-	if err != nil {
-		return nil, err
-	}
-
-	// We have magic query parameters that we use to signal different features
-	q := req.u.Query()
-
-	// Determine if we have an archive type
-	archiveV := q.Get("archive")
-	if archiveV != "" {
-		// Delete the paramter since it is a magic parameter we don't
-		// want to pass on to the Getter
-		q.Del("archive")
-		req.u.RawQuery = q.Encode()
-
-		// If we can parse the value as a bool and it is false, then
-		// set the archive to "-" which should never map to a decompressor
-		if b, err := strconv.ParseBool(archiveV); err == nil && !b {
-			archiveV = "-"
-		}
-	} else {
-		// We don't appear to... but is it part of the filename?
-		matchingLen := 0
-		for k := range c.Decompressors {
-			if strings.HasSuffix(req.u.Path, "."+k) && len(k) > matchingLen {
-				archiveV = k
-				matchingLen = len(k)
-			}
-		}
-	}
-
-	// If we have a decompressor, then we need to change the destination
-	// to download to a temporary path. We unarchive this into the final,
-	// real path.
-	var decompressDst string
-	var decompressDir bool
-	decompressor := c.Decompressors[archiveV]
-	if decompressor != nil {
-		// Create a temporary directory to store our archive. We delete
-		// this at the end of everything.
-		td, err := ioutil.TempDir("", "getter")
-		if err != nil {
-			return nil, fmt.Errorf(
-				"Error creating temporary directory for archive: %s", err)
-		}
-		defer os.RemoveAll(td)
-
-		// Swap the download directory to be our temporary path and
-		// store the old values.
-		decompressDst = req.Dst
-		decompressDir = req.Mode != ModeFile
-		req.Dst = filepath.Join(td, "archive")
-		req.Mode = ModeFile
-	}
-
-	// Determine checksum if we have one
-	checksum, err := c.extractChecksum(ctx, req.u)
-	if err != nil {
-		return nil, fmt.Errorf("invalid checksum: %s", err)
-	}
-
-	// Delete the query parameter if we have it.
-	q.Del("checksum")
-	req.u.RawQuery = q.Encode()
-
-	// From now one, each possible getter will
-	// try to run the rest of the logic
 	var modeErr *multierror.Error
 	var getFileErr *multierror.Error
 	var getErr *multierror.Error
-	for _, g := range getters {
+	for _, g := range c.Getters {
+		src, ok, err := Detect(req, g)
+		if err != nil {
+			return nil, err
+		}
+		if !ok {
+			continue
+		}
+		req.Src = src
+
+		// If there is a subdir component, then we download the root separately
+		// and then copy over the proper subdir.
+		var realDst, subDir string
+		req.Src, subDir = SourceDirSubdir(req.Src)
+		if subDir != "" {
+			td, tdcloser, err := safetemp.Dir("", "getter")
+			if err != nil {
+				return nil, err
+			}
+			defer tdcloser.Close()
+
+			realDst = req.Dst
+			req.Dst = td
+		}
+
+		req.u, err = urlhelper.Parse(req.Src)
+		if err != nil {
+			return nil, err
+		}
+
+		// We have magic query parameters that we use to signal different features
+		q := req.u.Query()
+
+		// Determine if we have an archive type
+		archiveV := q.Get("archive")
+		if archiveV != "" {
+			// Delete the paramter since it is a magic parameter we don't
+			// want to pass on to the Getter
+			q.Del("archive")
+			req.u.RawQuery = q.Encode()
+
+			// If we can parse the value as a bool and it is false, then
+			// set the archive to "-" which should never map to a decompressor
+			if b, err := strconv.ParseBool(archiveV); err == nil && !b {
+				archiveV = "-"
+			}
+		} else {
+			// We don't appear to... but is it part of the filename?
+			matchingLen := 0
+			for k := range c.Decompressors {
+				if strings.HasSuffix(req.u.Path, "."+k) && len(k) > matchingLen {
+					archiveV = k
+					matchingLen = len(k)
+				}
+			}
+		}
+
+		// If we have a decompressor, then we need to change the destination
+		// to download to a temporary path. We unarchive this into the final,
+		// real path.
+		var decompressDst string
+		var decompressDir bool
+		decompressor := c.Decompressors[archiveV]
+		if decompressor != nil {
+			// Create a temporary directory to store our archive. We delete
+			// this at the end of everything.
+			td, err := ioutil.TempDir("", "getter")
+			if err != nil {
+				return nil, fmt.Errorf(
+					"Error creating temporary directory for archive: %s", err)
+			}
+			defer os.RemoveAll(td)
+
+			// Swap the download directory to be our temporary path and
+			// store the old values.
+			decompressDst = req.Dst
+			decompressDir = req.Mode != ModeFile
+			req.Dst = filepath.Join(td, "archive")
+			req.Mode = ModeFile
+		}
+
+		// Determine checksum if we have one
+		checksum, err := c.extractChecksum(ctx, req.u)
+		if err != nil {
+			return nil, fmt.Errorf("invalid checksum: %s", err)
+		}
+
+		// Delete the query parameter if we have it.
+		q.Del("checksum")
+		req.u.RawQuery = q.Encode()
+
+		// From now one, each possible getter will
+		// try to run the rest of the logic
+
 		if req.Mode == ModeAny {
 			// Ask the getter which client mode to use
 			req.Mode, err = g.Mode(ctx, req.u)
@@ -262,13 +262,13 @@ func (c *Client) Get(ctx context.Context, req *Request) (*GetResult, error) {
 	// If there's an getErr or getFileErr, we can ignore any modeErr because is
 	// going to be a getter that didn't get to far on downloading the artifact
 	if getErr != nil {
-		err = fmt.Errorf("error downloading '%s': %s", req.Src, getErr)
+		return nil, fmt.Errorf("error downloading '%s': %s", req.Src, getErr)
 	}
 	if getFileErr != nil {
-		err = fmt.Errorf("error downloading '%s': %s", req.Src, getFileErr)
+		return nil, fmt.Errorf("error downloading '%s': %s", req.Src, getFileErr)
 	}
 	if modeErr != nil {
-		err = fmt.Errorf("error downloading '%s': %s", req.Src, modeErr)
+		return nil, fmt.Errorf("error downloading '%s': %s", req.Src, modeErr)
 	}
 	return nil, fmt.Errorf("error downloading '%s'", req.Src)
 }

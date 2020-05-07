@@ -321,7 +321,8 @@ func charsetReader(charset string, input io.Reader) (io.Reader, error) {
 	}
 }
 
-func (g *HttpGetter) Detect(src, _ string) (string, bool, error) {
+func (g *HttpGetter) Detect(req *Request) (string, bool, error) {
+	src := req.Src
 	u, err := url.Parse(src)
 	if err == nil && u.Scheme != "" && (u.Scheme == "http" || u.Scheme == "https") {
 		// Valid URL

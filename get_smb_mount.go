@@ -202,7 +202,8 @@ func (g *SmbMountGetter) findShare(u *url.URL) string {
 	return "."
 }
 
-func (g *SmbMountGetter) Detect(src, pwd string) (string, bool, error) {
+func (g *SmbMountGetter) Detect(req *Request) (string, bool, error) {
+	src := req.Src
 	if len(src) == 0 {
 		return "", false, nil
 	}

@@ -272,7 +272,8 @@ func (g *S3Getter) parseUrl(u *url.URL) (region, bucket, path, version string, c
 	return
 }
 
-func (g *S3Getter) Detect(src, _ string) (string, bool, error) {
+func (g *S3Getter) Detect(req *Request) (string, bool, error) {
+	src := req.Src
 	if len(src) == 0 {
 		return "", false, nil
 	}

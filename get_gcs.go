@@ -166,7 +166,8 @@ func (g *GCSGetter) parseURL(u *url.URL) (bucket, path string, err error) {
 	return
 }
 
-func (g *GCSGetter) Detect(src, _ string) (string, bool, error) {
+func (g *GCSGetter) Detect(req *Request) (string, bool, error) {
+	src := req.Src
 	if len(src) == 0 {
 		return "", false, nil
 	}

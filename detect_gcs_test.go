@@ -26,7 +26,11 @@ func TestGCSDetector(t *testing.T) {
 	pwd := "/pwd"
 	f := new(GCSGetter)
 	for i, tc := range cases {
-		output, ok, err := f.Detect(tc.Input, pwd)
+		req := &Request{
+			Src: tc.Input,
+			Pwd: pwd,
+		}
+		output, ok, err := Detect(req, f)
 		if err != nil {
 			t.Fatalf("err: %s", err)
 		}

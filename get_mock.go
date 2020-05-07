@@ -52,11 +52,11 @@ func (g *MockGetter) Mode(ctx context.Context, u *url.URL) (Mode, error) {
 	return ModeFile, nil
 }
 
-func (g *MockGetter) Detect(src, pwd string) (string, bool, error) {
+func (g *MockGetter) Detect(req *Request) (string, bool, error) {
 	if g.Proxy != nil {
-		return g.Proxy.Detect(src, pwd)
+		return g.Proxy.Detect(req)
 	}
-	return src, true, nil
+	return req.Src, true, nil
 }
 
 func (g *MockGetter) ValidScheme(scheme string) bool {

@@ -317,7 +317,8 @@ func checkGitVersion(min string) error {
 	return nil
 }
 
-func (g *GitGetter) Detect(src, _ string) (string, bool, error) {
+func (g *GitGetter) Detect(req *Request) (string, bool, error) {
+	src := req.Src
 	if len(src) == 0 {
 		return "", false, nil
 	}
@@ -356,6 +357,10 @@ func (g *GitGetter) Detect(src, _ string) (string, bool, error) {
 			u.Path += ".git"
 		}
 		return u.String(), true, nil
+	}
+
+	if _, err = url.Parse(req.Src); err != nil {
+		return "", true, nil
 	}
 
 	return "", false, nil

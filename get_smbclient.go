@@ -283,7 +283,8 @@ func (g *SmbClientGetter) runSmbClientCommand(dst string, args []string) (string
 	return buf.String(), fmt.Errorf("error running %s: %s", cmd.Path, buf.String())
 }
 
-func (g *SmbClientGetter) Detect(src, pwd string) (string, bool, error) {
+func (g *SmbClientGetter) Detect(req *Request) (string, bool, error) {
+	src := req.Src
 	if len(src) == 0 {
 		return "", false, nil
 	}
