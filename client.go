@@ -49,14 +49,13 @@ func (c *Client) Get(ctx context.Context, req *Request) (*GetResult, error) {
 
 	var multierr *multierror.Error
 	for _, g := range c.Getters {
-		src, ok, err := Detect(req, g)
+		ok, err := Detect(req, g)
 		if err != nil {
 			return nil, err
 		}
 		if !ok {
 			continue
 		}
-		req.Src = src
 		getterName := reflect.Indirect(reflect.ValueOf(g)).Type().Name()
 
 		// If there is a subdir component, then we download the root separately

@@ -9,7 +9,7 @@ import (
 // Detect is a method used to detect if a Getter is a candidate for downloading and artifact
 // by validating if a source string is detected to be of a known pattern,
 // and to transform it to a known pattern when necessary.
-func Detect(req *Request, getter Getter) (string, bool, error) {
+func Detect(req *Request, getter Getter) (bool, error) {
 	originalSrc := req.Src
 
 	getForce, getSrc := getForcedGetter(req.Src)
@@ -21,12 +21,12 @@ func Detect(req *Request, getter Getter) (string, bool, error) {
 	req.Src = getSrc
 	result, ok, err := getter.Detect(req)
 	if err != nil {
-		return "", true, err
+		return true, err
 	}
 	if !ok {
 		// Write back the original source
 		req.Src = originalSrc
-		return "", ok, nil
+		return ok, nil
 	}
 
 	result, detectSubdir := SourceDirSubdir(result)
@@ -44,7 +44,7 @@ func Detect(req *Request, getter Getter) (string, bool, error) {
 	if subDir != "" {
 		u, err := url.Parse(result)
 		if err != nil {
-			return "", true, fmt.Errorf("Error parsing URL: %s", err)
+			return true, fmt.Errorf("Error parsing URL: %s", err)
 		}
 		u.Path += "//" + subDir
 
@@ -55,5 +55,6 @@ func Detect(req *Request, getter Getter) (string, bool, error) {
 		result = u.String()
 	}
 
-	return result, true, nil
+	req.Src = result
+	return true, nil
 }
