@@ -167,7 +167,8 @@ func (g *HgGetter) Detect(req *Request) (string, bool, error) {
 			// Make sure to add pwd to relative paths
 			src = filepath.Join(req.Pwd, src)
 		}
-		return src, true, nil
+		// Make sure we're using "/" on Windows. URLs are "/"-based.
+		return filepath.ToSlash(src), true, nil
 	}
 
 	return "", false, nil
