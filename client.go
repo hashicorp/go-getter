@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strconv"
 	"strings"
 
@@ -46,9 +47,7 @@ func (c *Client) Get(ctx context.Context, req *Request) (*GetResult, error) {
 		req.Mode = ModeAny
 	}
 
-	var modeErr *multierror.Error
-	var getFileErr *multierror.Error
-	var getErr *multierror.Error
+	var multierr *multierror.Error
 	for _, g := range c.Getters {
 		src, ok, err := Detect(req, g)
 		if err != nil {
@@ -58,6 +57,7 @@ func (c *Client) Get(ctx context.Context, req *Request) (*GetResult, error) {
 			continue
 		}
 		req.Src = src
+		getterName := reflect.Indirect(reflect.ValueOf(g)).Type().Name()
 
 		// If there is a subdir component, then we download the root separately
 		// and then copy over the proper subdir.
@@ -147,7 +147,8 @@ func (c *Client) Get(ctx context.Context, req *Request) (*GetResult, error) {
 			// Ask the getter which client mode to use
 			req.Mode, err = g.Mode(ctx, req.u)
 			if err != nil {
-				modeErr = multierror.Append(modeErr, err)
+				err = fmt.Errorf("%s failed: %s", getterName, err.Error())
+				multierr = multierror.Append(multierr, err)
 				continue
 			}
 
@@ -182,7 +183,8 @@ func (c *Client) Get(ctx context.Context, req *Request) (*GetResult, error) {
 			if getFile {
 				err := g.GetFile(ctx, req)
 				if err != nil {
-					getFileErr = multierror.Append(getFileErr, err)
+					err = fmt.Errorf("%s failed: %s", getterName, err.Error())
+					multierr = multierror.Append(multierr, err)
 					continue
 				}
 
@@ -234,7 +236,8 @@ func (c *Client) Get(ctx context.Context, req *Request) (*GetResult, error) {
 			// if we're specifying a subdir.
 			err := g.Get(ctx, req)
 			if err != nil {
-				getErr = multierror.Append(getErr, err)
+				err = fmt.Errorf("%s failed: %s", getterName, err.Error())
+				multierr = multierror.Append(multierr, err)
 				continue
 			}
 		}
@@ -261,15 +264,10 @@ func (c *Client) Get(ctx context.Context, req *Request) (*GetResult, error) {
 
 	// If there's an getErr or getFileErr, we can ignore any modeErr because is
 	// going to be a getter that didn't get to far on downloading the artifact
-	if getErr != nil {
-		return nil, fmt.Errorf("error downloading '%s': %s", req.Src, getErr)
+	if multierr != nil {
+		return nil, fmt.Errorf("error downloading '%s': %s", req.Src, multierr)
 	}
-	if getFileErr != nil {
-		return nil, fmt.Errorf("error downloading '%s': %s", req.Src, getFileErr)
-	}
-	if modeErr != nil {
-		return nil, fmt.Errorf("error downloading '%s': %s", req.Src, modeErr)
-	}
+
 	return nil, fmt.Errorf("error downloading '%s'", req.Src)
 }
 
