@@ -30,7 +30,7 @@ func TestGCSDetector(t *testing.T) {
 			Src: tc.Input,
 			Pwd: pwd,
 		}
-		output, ok, err := Detect(req, f)
+		ok, err := Detect(req, f)
 		if err != nil {
 			t.Fatalf("err: %s", err)
 		}
@@ -38,8 +38,8 @@ func TestGCSDetector(t *testing.T) {
 			t.Fatal("not ok")
 		}
 
-		if output != tc.Output {
-			t.Fatalf("%d: bad: %#v", i, output)
+		if req.Src != tc.Output {
+			t.Fatalf("%d: bad: %#v", i, req.Src)
 		}
 	}
 }

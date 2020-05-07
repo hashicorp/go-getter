@@ -59,7 +59,7 @@ func TestFileDetector(t *testing.T) {
 				Src: tc.in,
 				Pwd: pwd,
 			}
-			out, ok, err := Detect(req, f)
+			ok, err := Detect(req, f)
 			if err != nil {
 				t.Fatalf("err: %s", err)
 			}
@@ -72,9 +72,9 @@ func TestFileDetector(t *testing.T) {
 				expected = filepath.Join(pwdRoot, expected)
 			}
 
-			if out != expected {
+			if req.Src != expected {
 				t.Fatalf("input: %q\npwd: %q\nexpected: %q\nbad output: %#v",
-					tc.in, pwd, expected, out)
+					tc.in, pwd, expected, req.Src)
 			}
 		})
 	}
@@ -107,7 +107,7 @@ func TestFileDetector_noPwd(t *testing.T) {
 			Src: tc.in,
 			Pwd: tc.pwd,
 		}
-		out, ok, err := Detect(req, f)
+		ok, err := Detect(req, f)
 		if err != nil != tc.err {
 			t.Fatalf("%d: err: %s", i, err)
 		}
@@ -115,8 +115,8 @@ func TestFileDetector_noPwd(t *testing.T) {
 			t.Fatal("not ok")
 		}
 
-		if out != tc.out {
-			t.Fatalf("%d: bad: %#v", i, out)
+		if req.Src != tc.out {
+			t.Fatalf("%d: bad: %#v", i, req.Src)
 		}
 	}
 }

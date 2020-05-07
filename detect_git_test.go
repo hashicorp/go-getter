@@ -54,12 +54,12 @@ func TestGitDetector(t *testing.T) {
 				Src: tc.Input,
 				Pwd: pwd,
 			}
-			output, _, err := Detect(req, new(GitGetter))
+			_, err := Detect(req, new(GitGetter))
 			if err != nil {
 				t.Fatalf("unexpected error: %s", err)
 			}
-			if output != tc.Output {
-				t.Errorf("wrong result\ninput: %s\ngot:   %s\nwant:  %s", tc.Input, output, tc.Output)
+			if req.Src != tc.Output {
+				t.Errorf("wrong result\ninput: %s\ngot:   %s\nwant:  %s", tc.Input, req.Src, tc.Output)
 			}
 		})
 	}

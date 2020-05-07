@@ -21,6 +21,7 @@ func Detect(req *Request, getter Getter) (bool, error) {
 	req.Src = getSrc
 	result, ok, err := getter.Detect(req)
 	if err != nil {
+		req.Src = result
 		return true, err
 	}
 	if !ok {

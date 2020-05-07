@@ -95,12 +95,12 @@ func TestDetect(t *testing.T) {
 				Src: tc.Input,
 				Pwd: tc.Pwd,
 			}
-			output, _, err := Detect(req, tc.getter)
+			_, err := Detect(req, tc.getter)
 			if err != nil != tc.Err {
 				t.Fatalf("%d: bad err: %s", i, err)
 			}
-			if output != tc.Output {
-				t.Fatalf("%d: bad output: %s\nexpected: %s", i, output, tc.Output)
+			if req.Src != tc.Output {
+				t.Fatalf("%d: bad output: %s\nexpected: %s", i, req.Src, tc.Output)
 			}
 		})
 	}
