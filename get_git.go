@@ -25,7 +25,6 @@ import (
 // GitGetter is a Getter implementation that will download a module from
 // a git repository.
 type GitGetter struct {
-	next Getter
 }
 
 var defaultBranchRegexp = regexp.MustCompile(`\s->\sorigin/(.*)`)
@@ -323,10 +322,27 @@ func (g *GitGetter) Detect(req *Request) (string, bool, error) {
 		return "", false, nil
 	}
 
+	if req.forced != "" {
+		// There's a getter being forced
+		if !g.validScheme(req.forced) {
+			// Current getter is not the forced one
+			// Don't use it to try to download the artifact
+			return "", false, nil
+		}
+	}
+	isForcedGetter := req.forced != "" && g.validScheme(req.forced)
+
 	u, err := url.Parse(src)
-	if err == nil && (u.Scheme == "git" || u.Scheme == "ssh") {
-		// Valid URL
-		return src, true, nil
+	if err == nil && u.Scheme != "" {
+		if isForcedGetter {
+			// Is the forced getter and source is a valid url
+			return src, true, nil
+		}
+		if g.validScheme(u.Scheme) {
+			return src, true, nil
+		}
+		// Valid url with a scheme that is not valid for current getter
+		return "", false, nil
 	}
 
 	u, err = detectSSH(src)
@@ -361,6 +377,15 @@ func (g *GitGetter) Detect(req *Request) (string, bool, error) {
 
 	if _, err = url.Parse(req.Src); err != nil {
 		return "", true, nil
+	}
+
+	if isForcedGetter {
+		// Is the forced getter and should be used to download the artifact
+		if req.Pwd != "" && !filepath.IsAbs(src) {
+			// Make sure to add pwd to relative paths
+			src = filepath.Join(req.Pwd, src)
+		}
+		return src, true, nil
 	}
 
 	return "", false, nil
@@ -427,6 +452,6 @@ func detectGitHub(src string) (string, bool, error) {
 	return url.String(), true, nil
 }
 
-func (g *GitGetter) ValidScheme(scheme string) bool {
+func (g *GitGetter) validScheme(scheme string) bool {
 	return scheme == "git" || scheme == "ssh"
 }

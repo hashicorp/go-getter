@@ -48,8 +48,6 @@ type HttpGetter struct {
 	// and as such it needs to be initialized before use, via something like
 	// make(http.Header).
 	Header http.Header
-
-	next Getter
 }
 
 func (g *HttpGetter) Mode(ctx context.Context, u *url.URL) (Mode, error) {
@@ -323,14 +321,45 @@ func charsetReader(charset string, input io.Reader) (io.Reader, error) {
 
 func (g *HttpGetter) Detect(req *Request) (string, bool, error) {
 	src := req.Src
+	if len(src) == 0 {
+		return "", false, nil
+	}
+
+	if req.forced != "" {
+		// There's a getter being forced
+		if !g.validScheme(req.forced) {
+			// Current getter is not the forced one
+			// Don't use it to try to download the artifact
+			return "", false, nil
+		}
+	}
+	isForcedGetter := req.forced != "" && g.validScheme(req.forced)
+
 	u, err := url.Parse(src)
-	if err == nil && u.Scheme != "" && (u.Scheme == "http" || u.Scheme == "https") {
-		// Valid URL
+	if err == nil && u.Scheme != "" {
+		if isForcedGetter {
+			// Is the forced getter and source is a valid url
+			return src, true, nil
+		}
+		if g.validScheme(u.Scheme) {
+			return src, true, nil
+		}
+		// Valid url with a scheme that is not valid for current getter
+		return "", false, nil
+	}
+
+	if isForcedGetter {
+		// Is the forced getter and should be used to download the artifact
+		if req.Pwd != "" && !filepath.IsAbs(src) {
+			// Make sure to add pwd to relative paths
+			src = filepath.Join(req.Pwd, src)
+		}
 		return src, true, nil
 	}
+
 	return "", false, nil
 }
 
-func (g *HttpGetter) ValidScheme(scheme string) bool {
+func (g *HttpGetter) validScheme(scheme string) bool {
 	return scheme == "http" || scheme == "https"
 }

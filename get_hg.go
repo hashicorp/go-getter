@@ -15,7 +15,6 @@ import (
 // HgGetter is a Getter implementation that will download a module from
 // a Mercurial repository.
 type HgGetter struct {
-	next Getter
 }
 
 func (g *HgGetter) Mode(ctx context.Context, _ *url.URL) (Mode, error) {
@@ -131,10 +130,27 @@ func (g *HgGetter) Detect(req *Request) (string, bool, error) {
 		return "", false, nil
 	}
 
+	if req.forced != "" {
+		// There's a getter being forced
+		if !g.validScheme(req.forced) {
+			// Current getter is not the forced one
+			// Don't use it to try to download the artifact
+			return "", false, nil
+		}
+	}
+	isForcedGetter := req.forced != "" && g.validScheme(req.forced)
+
 	u, err := url.Parse(src)
-	if err == nil && u.Scheme == "hg" {
-		// Valid URL
-		return src, true, nil
+	if err == nil && u.Scheme != "" {
+		if isForcedGetter {
+			// Is the forced getter and source is a valid url
+			return src, true, nil
+		}
+		if g.validScheme(u.Scheme) {
+			return src, true, nil
+		}
+		// Valid url with a scheme that is not valid for current getter
+		return "", false, nil
 	}
 
 	result, u, err := detectBitBucket(src)
@@ -145,10 +161,19 @@ func (g *HgGetter) Detect(req *Request) (string, bool, error) {
 		return u.String(), true, nil
 	}
 
+	if isForcedGetter {
+		// Is the forced getter and should be used to download the artifact
+		if req.Pwd != "" && !filepath.IsAbs(src) {
+			// Make sure to add pwd to relative paths
+			src = filepath.Join(req.Pwd, src)
+		}
+		return src, true, nil
+	}
+
 	return "", false, nil
 }
 
-func (g *HgGetter) ValidScheme(scheme string) bool {
+func (g *HgGetter) validScheme(scheme string) bool {
 	return scheme == "hg"
 }
 

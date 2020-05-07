@@ -12,7 +12,6 @@ import (
 // FileGetter is a Getter implementation that will download a module from
 // a file scheme.
 type FileGetter struct {
-	next Getter
 }
 
 func (g *FileGetter) Mode(ctx context.Context, u *url.URL) (Mode, error) {
@@ -159,10 +158,27 @@ func (g *FileGetter) Detect(req *Request) (string, bool, error) {
 		return "", false, nil
 	}
 
+	if req.forced != "" {
+		// There's a getter being forced
+		if !g.validScheme(req.forced) {
+			// Current getter is not the forced one
+			// Don't use it to try to download the artifact
+			return "", false, nil
+		}
+	}
+	isForcedGetter := req.forced != "" && g.validScheme(req.forced)
+
 	u, err := url.Parse(src)
-	if err == nil && u.Scheme == "file" {
-		// Valid URL
-		return src, true, nil
+	if err == nil && u.Scheme != "" {
+		if isForcedGetter {
+			// Is the forced getter and source is a valid url
+			return src, true, nil
+		}
+		if g.validScheme(u.Scheme) {
+			return src, true, nil
+		}
+		// Valid url with a scheme that is not valid for current getter
+		return "", false, nil
 	}
 
 	if !filepath.IsAbs(src) {
@@ -202,7 +218,7 @@ func (g *FileGetter) Detect(req *Request) (string, bool, error) {
 	return fmtFileURL(src), true, nil
 }
 
-func (g *FileGetter) ValidScheme(scheme string) bool {
+func (g *FileGetter) validScheme(scheme string) bool {
 	return scheme == "file"
 }
 

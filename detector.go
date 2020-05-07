@@ -13,48 +13,17 @@ func Detect(req *Request, getter Getter) (string, bool, error) {
 	originalSrc := req.Src
 
 	getForce, getSrc := getForcedGetter(req.Src)
-
-	if getForce != "" {
-		// There's a getter being forced
-		if !getter.ValidScheme(getForce) {
-			// Current getter is not the forced one
-			// Don't use it to try to download the artifact
-			return "", false, nil
-		}
-	}
-
-	isForcedGetter := getForce != "" && getter.ValidScheme(getForce)
+	req.forced = getForce
 
 	// Separate out the subdir if there is one, we don't pass that to detect
 	getSrc, subDir := SourceDirSubdir(getSrc)
 
-	u, err := url.Parse(getSrc)
-	if err == nil && u.Scheme != "" {
-		if isForcedGetter {
-			// Is the forced getter and source is a valid url
-			return getSrc, true, nil
-		}
-		if getter.ValidScheme(u.Scheme) {
-			return getSrc, true, nil
-		} else {
-			// Valid url with a scheme that is not valid for current getter
-			return "", false, nil
-		}
-	}
 	req.Src = getSrc
 	result, ok, err := getter.Detect(req)
 	if err != nil {
 		return "", true, err
 	}
 	if !ok {
-		if isForcedGetter {
-			// Is the forced getter then should be used to download the artifact
-			if req.Pwd != "" && !filepath.IsAbs(getSrc) {
-				// Make sure to add pwd to relative paths
-				getSrc = filepath.Join(req.Pwd, getSrc)
-			}
-			return getSrc, true, nil
-		}
 		// Write back the original source
 		req.Src = originalSrc
 		return "", ok, nil

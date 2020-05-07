@@ -58,10 +58,3 @@ func (g *MockGetter) Detect(req *Request) (string, bool, error) {
 	}
 	return req.Src, true, nil
 }
-
-func (g *MockGetter) ValidScheme(scheme string) bool {
-	if g.Proxy != nil {
-		return g.Proxy.ValidScheme(scheme)
-	}
-	return true
-}

@@ -46,8 +46,6 @@ type Getter interface {
 	// Detect will detect whether the string matches a known pattern to
 	// turn it into a proper URL.
 	Detect(*Request) (string, bool, error)
-
-	ValidScheme(string) bool
 }
 
 // Getters is the mapping of scheme to the Getter implementation that will
