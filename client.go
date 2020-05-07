@@ -67,6 +67,7 @@ func (c *Client) Get(ctx context.Context, req *Request) (*GetResult, error) {
 			if err != nil {
 				return nil, err
 			}
+			// TODO @sylviamoss defer doesn't work here inside a for loop
 			defer tdcloser.Close()
 
 			realDst = req.Dst
@@ -119,6 +120,7 @@ func (c *Client) Get(ctx context.Context, req *Request) (*GetResult, error) {
 				return nil, fmt.Errorf(
 					"Error creating temporary directory for archive: %s", err)
 			}
+			// TODO @sylviamoss defer doesn't work here inside a for loop
 			defer os.RemoveAll(td)
 
 			// Swap the download directory to be our temporary path and
@@ -180,8 +182,7 @@ func (c *Client) Get(ctx context.Context, req *Request) (*GetResult, error) {
 				}
 			}
 			if getFile {
-				err := g.GetFile(ctx, req)
-				if err != nil {
+				if err := g.GetFile(ctx, req); err != nil {
 					err = fmt.Errorf("%s failed: %s", getterName, err.Error())
 					multierr = multierror.Append(multierr, err)
 					continue
@@ -233,8 +234,7 @@ func (c *Client) Get(ctx context.Context, req *Request) (*GetResult, error) {
 
 			// We're downloading a directory, which might require a bit more work
 			// if we're specifying a subdir.
-			err := g.Get(ctx, req)
-			if err != nil {
+			if err := g.Get(ctx, req); err != nil {
 				err = fmt.Errorf("%s failed: %s", getterName, err.Error())
 				multierr = multierror.Append(multierr, err)
 				continue
@@ -261,10 +261,8 @@ func (c *Client) Get(ctx context.Context, req *Request) (*GetResult, error) {
 		return &GetResult{req.Dst}, nil
 	}
 
-	// If there's an getErr or getFileErr, we can ignore any modeErr because is
-	// going to be a getter that didn't get to far on downloading the artifact
 	if multierr != nil {
-		return nil, fmt.Errorf("error downloading '%s': %s", req.Src, multierr)
+		return nil, fmt.Errorf("error downloading '%s': %s", req.Src, multierr.Error())
 	}
 
 	return nil, fmt.Errorf("error downloading '%s'", req.Src)
