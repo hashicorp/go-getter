@@ -11,7 +11,7 @@ import (
 	"strconv"
 	"strings"
 
-	urlhelper "github.com/hashicorp/go-getter/helper/url"
+	urlhelper "github.com/hashicorp/go-getter/v2/helper/url"
 	safetemp "github.com/hashicorp/go-safetemp"
 )
 
@@ -131,11 +131,11 @@ func (c *Client) Get(ctx context.Context, req *Request) (*GetResult, error) {
 			req.Mode = ModeFile
 		}
 
-		// Determine checksum if we have one
-		checksum, err := c.extractChecksum(ctx, req.u)
-		if err != nil {
-			return nil, fmt.Errorf("invalid checksum: %s", err)
-		}
+	// Determine checksum if we have one
+	checksum, err := c.GetChecksum(ctx, req)
+	if err != nil {
+		return nil, fmt.Errorf("invalid checksum: %s", err)
+	}
 
 		// Delete the query parameter if we have it.
 		q.Del("checksum")

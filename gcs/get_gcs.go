@@ -1,4 +1,4 @@
-package getter
+package gcs
 
 import (
 	"context"
@@ -9,15 +9,16 @@ import (
 	"strings"
 
 	"cloud.google.com/go/storage"
+	"github.com/hashicorp/go-getter/v2"
 	"google.golang.org/api/iterator"
 )
 
-// GCSGetter is a Getter implementation that will download a module from
+// Getter is a Getter implementation that will download a module from
 // a GCS bucket.
-type GCSGetter struct {
+type Getter struct {
 }
 
-func (g *GCSGetter) Mode(ctx context.Context, u *url.URL) (Mode, error) {
+func (g *Getter) Mode(ctx context.Context, u *url.URL) (getter.Mode, error) {
 
 	// Parse URL
 	bucket, object, err := g.parseURL(u)
@@ -41,21 +42,21 @@ func (g *GCSGetter) Mode(ctx context.Context, u *url.URL) (Mode, error) {
 		}
 		if strings.HasSuffix(obj.Name, "/") {
 			// A directory matched the prefix search, so this must be a directory
-			return ModeDir, nil
+			return getter.ModeDir, nil
 		} else if obj.Name != object {
 			// A file matched the prefix search and doesn't have the same name
 			// as the query, so this must be a directory
-			return ModeDir, nil
+			return getter.ModeDir, nil
 		}
 	}
 	// There are no directories or subdirectories, and if a match was returned,
 	// it was exactly equal to the prefix search. So return File mode
-	return ModeFile, nil
+	return getter.ModeFile, nil
 }
 
-func (g *GCSGetter) Get(ctx context.Context, req *Request) error {
+func (g *Getter) Get(ctx context.Context, req *getter.Request) error {
 	// Parse URL
-	bucket, object, err := g.parseURL(req.u)
+	bucket, object, err := g.parseURL(req.URL())
 	if err != nil {
 		return err
 	}
@@ -110,9 +111,9 @@ func (g *GCSGetter) Get(ctx context.Context, req *Request) error {
 	return nil
 }
 
-func (g *GCSGetter) GetFile(ctx context.Context, req *Request) error {
+func (g *Getter) GetFile(ctx context.Context, req *getter.Request) error {
 	// Parse URL
-	bucket, object, err := g.parseURL(req.u)
+	bucket, object, err := g.parseURL(req.URL())
 	if err != nil {
 		return err
 	}
@@ -124,7 +125,7 @@ func (g *GCSGetter) GetFile(ctx context.Context, req *Request) error {
 	return g.getObject(ctx, client, req.Dst, bucket, object)
 }
 
-func (g *GCSGetter) getObject(ctx context.Context, client *storage.Client, dst, bucket, object string) error {
+func (g *Getter) getObject(ctx context.Context, client *storage.Client, dst, bucket, object string) error {
 	rc, err := client.Bucket(bucket).Object(object).NewReader(ctx)
 	if err != nil {
 		return err
@@ -142,11 +143,11 @@ func (g *GCSGetter) getObject(ctx context.Context, client *storage.Client, dst, 
 	}
 	defer f.Close()
 
-	_, err = Copy(ctx, f, rc)
+	_, err = getter.Copy(ctx, f, rc)
 	return err
 }
 
-func (g *GCSGetter) parseURL(u *url.URL) (bucket, path string, err error) {
+func (g *Getter) parseURL(u *url.URL) (bucket, path string, err error) {
 	if strings.Contains(u.Host, "googleapis.com") {
 		hostParts := strings.Split(u.Host, ".")
 		if len(hostParts) != 3 {
@@ -165,21 +166,21 @@ func (g *GCSGetter) parseURL(u *url.URL) (bucket, path string, err error) {
 	return
 }
 
-func (g *GCSGetter) Detect(req *Request) (string, bool, error) {
+func (g *Getter) Detect(req *getter.Request) (string, bool, error) {
 	src := req.Src
 	if len(src) == 0 {
 		return "", false, nil
 	}
 
-	if req.forced != "" {
+	if req.Forced != "" {
 		// There's a getter being forced
-		if !g.validScheme(req.forced) {
+		if !g.validScheme(req.Forced) {
 			// Current getter is not the forced one
 			// Don't use it to try to download the artifact
 			return "", false, nil
 		}
 	}
-	isForcedGetter := req.forced != "" && g.validScheme(req.forced)
+	isForcedGetter := req.Forced != "" && g.validScheme(req.Forced)
 
 	u, err := url.Parse(src)
 	if err == nil && u.Scheme != "" {
@@ -211,7 +212,7 @@ func (g *GCSGetter) Detect(req *Request) (string, bool, error) {
 	return "", false, nil
 }
 
-func (g *GCSGetter) detectHTTP(src string) (string, bool, error) {
+func (g *Getter) detectHTTP(src string) (string, bool, error) {
 
 	parts := strings.Split(src, "/")
 	if len(parts) < 5 {
@@ -231,6 +232,6 @@ func (g *GCSGetter) detectHTTP(src string) (string, bool, error) {
 	return url.String(), true, nil
 }
 
-func (g *GCSGetter) validScheme(scheme string) bool {
+func (g *Getter) validScheme(scheme string) bool {
 	return scheme == "gcs"
 }

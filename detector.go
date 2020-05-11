@@ -13,7 +13,7 @@ func Detect(req *Request, getter Getter) (bool, error) {
 	originalSrc := req.Src
 
 	getForce, getSrc := getForcedGetter(req.Src)
-	req.forced = getForce
+	req.Forced = getForce
 
 	// Separate out the subdir if there is one, we don't pass that to detect
 	getSrc, subDir := SourceDirSubdir(getSrc)

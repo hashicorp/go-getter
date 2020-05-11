@@ -17,7 +17,7 @@ import (
 	"strconv"
 	"strings"
 
-	urlhelper "github.com/hashicorp/go-getter/helper/url"
+	urlhelper "github.com/hashicorp/go-getter/v2/helper/url"
 	safetemp "github.com/hashicorp/go-safetemp"
 	version "github.com/hashicorp/go-version"
 )
@@ -322,20 +322,20 @@ func (g *GitGetter) Detect(req *Request) (string, bool, error) {
 		return "", false, nil
 	}
 
-	if req.forced != "" {
-		// There's a getter being forced
-		if !g.validScheme(req.forced) {
-			// Current getter is not the forced one
+	if req.Forced != "" {
+		// There's a getter being Forced
+		if !g.validScheme(req.Forced) {
+			// Current getter is not the Forced one
 			// Don't use it to try to download the artifact
 			return "", false, nil
 		}
 	}
-	isForcedGetter := req.forced != "" && g.validScheme(req.forced)
+	isForcedGetter := req.Forced != "" && g.validScheme(req.Forced)
 
 	u, err := url.Parse(src)
 	if err == nil && u.Scheme != "" {
 		if isForcedGetter {
-			// Is the forced getter and source is a valid url
+			// Is the Forced getter and source is a valid url
 			return src, true, nil
 		}
 		if g.validScheme(u.Scheme) {
@@ -380,7 +380,7 @@ func (g *GitGetter) Detect(req *Request) (string, bool, error) {
 	}
 
 	if isForcedGetter {
-		// Is the forced getter and should be used to download the artifact
+		// Is the Forced getter and should be used to download the artifact
 		if req.Pwd != "" && !filepath.IsAbs(src) {
 			// Make sure to add pwd to relative paths
 			src = filepath.Join(req.Pwd, src)

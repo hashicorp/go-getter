@@ -2,6 +2,7 @@ package getter
 
 import (
 	"context"
+	testing_helper "github.com/hashicorp/go-getter/v2/helper/testing"
 	"os"
 	"path/filepath"
 	"testing"
@@ -42,7 +43,7 @@ func TestSmb_ClientGet(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			dst := tempDir(t)
+			dst := testing_helper.TempDir(t)
 			defer os.RemoveAll(dst)
 
 			if tt.mode == ModeFile {
@@ -77,7 +78,7 @@ func TestSmb_ClientGet(t *testing.T) {
 				}
 				// Verify if the file was successfully downloaded
 				// and exists at the destination folder
-				assertContents(t, dst, "Hello\n")
+				testing_helper.AssertContents(t, dst, "Hello\n")
 			}
 		})
 	}

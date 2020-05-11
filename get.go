@@ -3,7 +3,7 @@
 //
 // getter is unique in its ability to download both directories and files.
 // It also detects certain source strings to be protocol-specific URLs. For
-// example, "github.com/hashicorp/go-getter" would turn into a Git URL and
+// example, "github.com/hashicorp/go-getter/v2" would turn into a Git URL and
 // use the Git protocol.
 //
 // Protocols and detectors are extensible.
@@ -52,7 +52,7 @@ type Getter interface {
 // be used to get a dependency.
 var Getters []Getter
 
-// forcedRegexp is the regular expression that finds forced getters. This
+// forcedRegexp is the regular expression that finds Forced getters. This
 // syntax is schema::url, example: git::https://foo.com
 var forcedRegexp = regexp.MustCompile(`^([A-Za-z0-9]+)::(.+)$`)
 
@@ -72,8 +72,8 @@ func init() {
 	Getters = []Getter{
 		new(GitGetter),
 		new(HgGetter),
-		new(S3Getter),
-		new(GCSGetter),
+		//new(S3Getter),
+		//new(GCSGetter),
 		new(FileGetter),
 		new(SmbClientGetter),
 		new(SmbMountGetter),
@@ -145,8 +145,9 @@ func getRunCommand(cmd *exec.Cmd) error {
 	return fmt.Errorf("error running %s: %s", cmd.Path, buf.String())
 }
 
-// removeForcedGetter takes a source and returns the tuple of the forced
+// getForcedGetter takes a source and returns the tuple of the Forced
 // getter and the raw URL (without the force syntax).
+// For example "git::https://...". returns "git" "https://".
 func getForcedGetter(src string) (string, string) {
 	var forced string
 	if ms := forcedRegexp.FindStringSubmatch(src); ms != nil {

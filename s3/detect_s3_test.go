@@ -1,6 +1,7 @@
-package getter
+package s3
 
 import (
+	"github.com/hashicorp/go-getter/v2"
 	"testing"
 )
 
@@ -67,13 +68,13 @@ func TestS3Detector(t *testing.T) {
 	}
 
 	pwd := "/pwd"
-	f := new(S3Getter)
+	f := new(Getter)
 	for i, tc := range cases {
-		req := &Request{
+		req := &getter.Request{
 			Src: tc.Input,
 			Pwd: pwd,
 		}
-		ok, err := Detect(req, f)
+		ok, err := getter.Detect(req, f)
 		if err != nil {
 			t.Fatalf("err: %s", err)
 		}

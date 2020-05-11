@@ -1,4 +1,4 @@
-package getter
+package s3
 
 import (
 	"context"
@@ -8,6 +8,10 @@ import (
 	"testing"
 
 	"github.com/aws/aws-sdk-go/aws/awserr"
+	"github.com/hashicorp/go-getter/v2"
+
+	testing_helper "github.com/hashicorp/go-getter/v2/helper/testing"
+	urlhelper "github.com/hashicorp/go-getter/v2/helper/url"
 )
 
 func init() {
@@ -22,21 +26,27 @@ func init() {
 	os.Setenv("AWS_SECRET_KEY", "oMwSyqdass2kPF"+"/7ORZA9dlb/iegz+89B0Cy01Ea")
 }
 
-func TestS3Getter_impl(t *testing.T) {
-	var _ Getter = new(S3Getter)
+func TestGetter_impl(t *testing.T) {
+	var _ getter.Getter = new(Getter)
 }
 
-func TestS3Getter(t *testing.T) {
+func TestGetter(t *testing.T) {
 	ctx := context.Background()
 
-	g := new(S3Getter)
-	dst := tempDir(t)
-	req := &Request{
-		Dst: dst,
-		u:   testURL("https://s3.amazonaws.com/hc-oss-test/go-getter/folder"),
+	g := new(Getter)
+	dst := testing_helper.TempDir(t)
+	req := &getter.Request{
+		Src:  "s3.amazonaws.com/hc-oss-test/go-getter/folder",
+		Dst:  dst,
+		Mode: getter.ModeAny,
 	}
+
+	c := getter.Client{
+		Getters: []getter.Getter{g},
+	}
+
 	// With a dir that doesn't exist
-	err := g.Get(ctx, req)
+	_, err := c.Get(ctx, req)
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
@@ -48,17 +58,22 @@ func TestS3Getter(t *testing.T) {
 	}
 }
 
-func TestS3Getter_subdir(t *testing.T) {
+func TestGetter_subdir(t *testing.T) {
 	ctx := context.Background()
 
-	g := new(S3Getter)
-	dst := tempDir(t)
-	req := &Request{
+	g := new(Getter)
+	dst := testing_helper.TempDir(t)
+	req := &getter.Request{
+		Src: "s3::https://s3.amazonaws.com/hc-oss-test/go-getter/folder/subfolder",
 		Dst: dst,
-		u:   testURL("https://s3.amazonaws.com/hc-oss-test/go-getter/folder/subfolder"),
 	}
+
+	c := getter.Client{
+		Getters: map[string]getter.Getter{"s3": g},
+	}
+
 	// With a dir that doesn't exist
-	err := g.Get(ctx, req)
+	_, err := c.Get(ctx, req)
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
@@ -70,19 +85,25 @@ func TestS3Getter_subdir(t *testing.T) {
 	}
 }
 
-func TestS3Getter_GetFile(t *testing.T) {
+func TestGetter_GetFile(t *testing.T) {
 	ctx := context.Background()
 
-	g := new(S3Getter)
-	dst := tempTestFile(t)
+	g := new(Getter)
+	dst := testing_helper.TempTestFile(t)
 	defer os.RemoveAll(filepath.Dir(dst))
 
-	req := &Request{
-		Dst: dst,
-		u:   testURL("https://s3.amazonaws.com/hc-oss-test/go-getter/folder/main.tf"),
+	req := &getter.Request{
+		Dst:  dst,
+		Src:  "s3.amazonaws.com/hc-oss-test/go-getter/folder/main.tf",
+		Mode: getter.ModeFile,
 	}
+
+	c := getter.Client{
+		Getters: map[string]getter.Getter{"s3": g},
+	}
+
 	// Download
-	err := g.GetFile(ctx, req)
+	_, err := c.Get(ctx, req)
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
@@ -91,87 +112,96 @@ func TestS3Getter_GetFile(t *testing.T) {
 	if _, err := os.Stat(dst); err != nil {
 		t.Fatalf("err: %s", err)
 	}
-	assertContents(t, dst, "# Main\n")
+	testing_helper.AssertContents(t, dst, "# Main\n")
 }
 
-func TestS3Getter_GetFile_badParams(t *testing.T) {
+func TestGetter_GetFile_badParams(t *testing.T) {
 	ctx := context.Background()
 
-	g := new(S3Getter)
-	dst := tempTestFile(t)
+	g := new(Getter)
+	dst := testing_helper.TempTestFile(t)
 	defer os.RemoveAll(filepath.Dir(dst))
 
-	req := &Request{
-		Dst: dst,
-		u:   testURL("https://s3.amazonaws.com/hc-oss-test/go-getter/folder/main.tf?aws_access_key_id=foo&aws_access_key_secret=bar&aws_access_token=baz"),
+	req := &getter.Request{
+		Src:  "s3.amazonaws.com/hc-oss-test/go-getter/folder/main.tf?aws_access_key_id=foo&aws_access_key_secret=bar&aws_access_token=baz",
+		Dst:  dst,
+		Mode: getter.ModeFile,
+	}
+
+	c := getter.Client{
+		Getters: map[string]getter.Getter{"s3": g},
 	}
 
 	// Download
-	err := g.GetFile(ctx, req)
+	_, err := c.Get(ctx, req)
 	if err == nil {
 		t.Fatalf("expected error, got none")
 	}
 
 	if reqerr, ok := err.(awserr.RequestFailure); !ok || reqerr.StatusCode() != 403 {
-		t.Fatalf("expected InvalidAccessKeyId error")
+		t.Fatalf("expected InvalidAccessKeyId error, %v", err)
 	}
 }
 
-func TestS3Getter_GetFile_notfound(t *testing.T) {
+func TestGetter_GetFile_notfound(t *testing.T) {
 	ctx := context.Background()
 
-	g := new(S3Getter)
-	dst := tempTestFile(t)
+	g := new(Getter)
+	dst := testing_helper.TempTestFile(t)
 	defer os.RemoveAll(filepath.Dir(dst))
 
-	req := &Request{
-		Dst: dst,
-		u:   testURL("https://s3.amazonaws.com/hc-oss-test/go-getter/folder/404.tf"),
+	req := &getter.Request{
+		Src:  "s3.amazonaws.com/hc-oss-test/go-getter/folder/404.tf",
+		Dst:  dst,
+		Mode: getter.ModeFile,
 	}
 
+	c := getter.Client{
+		Getters: map[string]getter.Getter{"s3": g},
+	}
 	// Download
-	err := g.GetFile(ctx, req)
+	_, err := c.Get(ctx, req)
 	if err == nil {
 		t.Fatalf("expected error, got none")
 	}
 }
 
-func TestS3Getter_Mode_dir(t *testing.T) {
+func TestGetter_Mode_dir(t *testing.T) {
 	ctx := context.Background()
 
-	g := new(S3Getter)
+	g := new(Getter)
 
 	// Check client mode on a key prefix with only a single key.
 	mode, err := g.Mode(ctx,
-		testURL("https://s3.amazonaws.com/hc-oss-test/go-getter/folder"))
+		urlhelper.MustParse("https://s3.amazonaws.com/hc-oss-test/go-getter/folder"))
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
-	if mode != ModeDir {
+	if mode != getter.ModeDir {
 		t.Fatal("expect ModeDir")
 	}
 }
 
-func TestS3Getter_Mode_file(t *testing.T) {
+func TestGetter_Mode_file(t *testing.T) {
 	ctx := context.Background()
 
-	g := new(S3Getter)
+	g := new(Getter)
 
 	// Check client mode on a key prefix which contains sub-keys.
 	mode, err := g.Mode(ctx,
-		testURL("https://s3.amazonaws.com/hc-oss-test/go-getter/folder/main.tf"))
+		urlhelper.MustParse("https://s3.amazonaws.com/hc-oss-test/go-getter/folder/main.tf"))
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
-	if mode != ModeFile {
+	if mode != getter.ModeFile {
 		t.Fatal("expect ModeFile")
 	}
 }
 
-func TestS3Getter_Mode_notfound(t *testing.T) {
+func TestGetter_Mode_notfound(t *testing.T) {
 	ctx := context.Background()
 
-	g := new(S3Getter)
+	g := new(Getter)
 
 	// Check the client mode when a non-existent key is looked up. This does not
 	// return an error, but rather should just return the file mode so that S3
@@ -179,33 +209,33 @@ func TestS3Getter_Mode_notfound(t *testing.T) {
 	// prefix is handled properly (e.g., "/fold" and "/folder" don't put the
 	// client mode into "dir".
 	mode, err := g.Mode(ctx,
-		testURL("https://s3.amazonaws.com/hc-oss-test/go-getter/fold"))
+		urlhelper.MustParse("https://s3.amazonaws.com/hc-oss-test/go-getter/fold"))
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
-	if mode != ModeFile {
+	if mode != getter.ModeFile {
 		t.Fatal("expect ModeFile")
 	}
 }
 
-func TestS3Getter_Mode_collision(t *testing.T) {
+func TestGetter_Mode_collision(t *testing.T) {
 	ctx := context.Background()
 
-	g := new(S3Getter)
+	g := new(Getter)
 
 	// Check that the client mode is "file" if there is both an object and a
 	// folder with a common prefix (i.e., a "collision" in the namespace).
 	mode, err := g.Mode(ctx,
-		testURL("https://s3.amazonaws.com/hc-oss-test/go-getter/collision/foo"))
+		urlhelper.MustParse("https://s3.amazonaws.com/hc-oss-test/go-getter/collision/foo"))
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
-	if mode != ModeFile {
+	if mode != getter.ModeFile {
 		t.Fatal("expect ModeFile")
 	}
 }
 
-func TestS3Getter_Url(t *testing.T) {
+func TestGetter_Url(t *testing.T) {
 	var s3tests = []struct {
 		name    string
 		url     string
@@ -216,7 +246,7 @@ func TestS3Getter_Url(t *testing.T) {
 	}{
 		{
 			name:    "AWSv1234",
-			url:     "s3::https://s3-eu-west-1.amazonaws.com/bucket/foo/bar.baz?version=1234",
+			url:     "https://s3-eu-west-1.amazonaws.com/bucket/foo/bar.baz?version=1234",
 			region:  "eu-west-1",
 			bucket:  "bucket",
 			path:    "foo/bar.baz",
@@ -224,7 +254,7 @@ func TestS3Getter_Url(t *testing.T) {
 		},
 		{
 			name:    "localhost-1",
-			url:     "s3::http://127.0.0.1:9000/test-bucket/hello.txt?aws_access_key_id=TESTID&aws_access_key_secret=TestSecret&region=us-east-2&version=1",
+			url:     "http://127.0.0.1:9000/test-bucket/hello.txt?aws_access_key_id=TESTID&aws_access_key_secret=TestSecret&region=us-east-2&version=1",
 			region:  "us-east-2",
 			bucket:  "test-bucket",
 			path:    "hello.txt",
@@ -232,7 +262,7 @@ func TestS3Getter_Url(t *testing.T) {
 		},
 		{
 			name:    "localhost-2",
-			url:     "s3::http://127.0.0.1:9000/test-bucket/hello.txt?aws_access_key_id=TESTID&aws_access_key_secret=TestSecret&version=1",
+			url:     "http://127.0.0.1:9000/test-bucket/hello.txt?aws_access_key_id=TESTID&aws_access_key_secret=TestSecret&version=1",
 			region:  "us-east-1",
 			bucket:  "test-bucket",
 			path:    "hello.txt",
@@ -240,7 +270,7 @@ func TestS3Getter_Url(t *testing.T) {
 		},
 		{
 			name:    "localhost-3",
-			url:     "s3::http://127.0.0.1:9000/test-bucket/hello.txt?aws_access_key_id=TESTID&aws_access_key_secret=TestSecret",
+			url:     "http://127.0.0.1:9000/test-bucket/hello.txt?aws_access_key_id=TESTID&aws_access_key_secret=TestSecret",
 			region:  "us-east-1",
 			bucket:  "test-bucket",
 			path:    "hello.txt",
@@ -251,15 +281,12 @@ func TestS3Getter_Url(t *testing.T) {
 	for i, pt := range s3tests {
 		t.Run(pt.name, func(t *testing.T) {
 
-			g := new(S3Getter)
-			forced, src := getForcedGetter(pt.url)
+			g := new(Getter)
+			src := pt.url
 			u, err := url.Parse(src)
 
 			if err != nil {
 				t.Errorf("test %d: unexpected error: %s", i, err)
-			}
-			if forced != "s3" {
-				t.Fatalf("expected forced protocol to be s3")
 			}
 
 			region, bucket, path, version, creds, err := g.parseUrl(u)

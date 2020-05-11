@@ -1,6 +1,8 @@
 package getter
 
-import "net/url"
+import (
+	"net/url"
+)
 
 type Request struct {
 	// Src is the source URL to get.
@@ -18,7 +20,7 @@ type Request struct {
 
 	// Forced getter detected in Src during Getter detection phase
 	// This is currently for internal use only
-	forced string
+	Forced string
 
 	// Mode is the method of download the client will use. See Mode
 	// for documentation.
@@ -40,4 +42,8 @@ type Request struct {
 	ProgressListener ProgressTracker
 
 	u *url.URL
+}
+
+func (req *Request) URL() *url.URL {
+	return req.u
 }

@@ -3,6 +3,7 @@ package getter
 import (
 	"context"
 	urlhelper "github.com/hashicorp/go-getter/helper/url"
+	testing_helper "github.com/hashicorp/go-getter/v2/helper/testing"
 	"os"
 	"path/filepath"
 	"testing"
@@ -85,7 +86,7 @@ func TestSmb_GetterGet(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			dst := tempDir(t)
+			dst := testing_helper.TempDir(t)
 			defer os.RemoveAll(dst)
 
 			url, err := urlhelper.Parse(tt.rawURL)
@@ -111,7 +112,7 @@ func TestSmb_GetterGet(t *testing.T) {
 			if !tt.fail {
 				// Verify if the file was successfully downloaded
 				// and exists at the destination folder
-				assertContents(t, filepath.Join(dst, tt.file), "Hello\n")
+				testing_helper.AssertContents(t, filepath.Join(dst, tt.file), "Hello\n")
 			}
 		})
 	}
@@ -202,7 +203,7 @@ func TestSmb_GetterGetFile(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			dst := tempDir(t)
+			dst := testing_helper.TempDir(t)
 			defer os.RemoveAll(dst)
 
 			url, err := urlhelper.Parse(tt.rawURL)
@@ -228,7 +229,7 @@ func TestSmb_GetterGetFile(t *testing.T) {
 			if !tt.fail {
 				// Verify if the file was successfully downloaded
 				// and exists at the destination folder
-				assertContents(t, filepath.Join(dst, tt.file), "Hello\n")
+				testing_helper.AssertContents(t, filepath.Join(dst, tt.file), "Hello\n")
 			}
 		})
 	}
