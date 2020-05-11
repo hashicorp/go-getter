@@ -72,8 +72,6 @@ func init() {
 	Getters = []Getter{
 		new(GitGetter),
 		new(HgGetter),
-		//new(S3Getter),
-		//new(GCSGetter),
 		new(FileGetter),
 		new(SmbClientGetter),
 		new(SmbMountGetter),
@@ -145,7 +143,7 @@ func getRunCommand(cmd *exec.Cmd) error {
 	return fmt.Errorf("error running %s: %s", cmd.Path, buf.String())
 }
 
-// getForcedGetter takes a source and returns the tuple of the Forced
+// getForcedGetter takes a source and returns the tuple of the forced
 // getter and the raw URL (without the force syntax).
 // For example "git::https://...". returns "git" "https://".
 func getForcedGetter(src string) (string, string) {

@@ -6,9 +6,9 @@ import (
 	"path/filepath"
 )
 
-// Detect is a method used to detect if a Getter is a candidate for downloading and artifact
+// Detect is a method used to detect if a Getter is a candidate for downloading an artifact
 // by validating if a source string is detected to be of a known pattern,
-// and to transform it to a known pattern when necessary.
+// and transforming it to a known pattern when necessary.
 func Detect(req *Request, getter Getter) (bool, error) {
 	originalSrc := req.Src
 

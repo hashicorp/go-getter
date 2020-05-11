@@ -594,6 +594,110 @@ func TestGitGetter_setupGitEnvWithExisting_sshKey(t *testing.T) {
 	}
 }
 
+func TestGitGetter_GitHubDetector(t *testing.T) {
+	cases := []struct {
+		Input  string
+		Output string
+	}{
+		// HTTP
+		{"github.com/hashicorp/foo", "https://github.com/hashicorp/foo.git"},
+		{"github.com/hashicorp/foo.git", "https://github.com/hashicorp/foo.git"},
+		{
+			"github.com/hashicorp/foo/bar",
+			"https://github.com/hashicorp/foo.git//bar",
+		},
+		{
+			"github.com/hashicorp/foo?foo=bar",
+			"https://github.com/hashicorp/foo.git?foo=bar",
+		},
+		{
+			"github.com/hashicorp/foo.git?foo=bar",
+			"https://github.com/hashicorp/foo.git?foo=bar",
+		},
+	}
+
+	pwd := "/pwd"
+	f := new(GitGetter)
+	for i, tc := range cases {
+		req := &Request{
+			Src: tc.Input,
+			Pwd: pwd,
+		}
+		ok, err := Detect(req, f)
+		if err != nil {
+			t.Fatalf("err: %s", err)
+		}
+		if !ok {
+			t.Fatal("not ok")
+		}
+
+		if req.Src != tc.Output {
+			t.Fatalf("%d: bad: %#v", i, req.Src)
+		}
+	}
+}
+
+func TestGitGetter_Detector(t *testing.T) {
+	cases := []struct {
+		Input  string
+		Output string
+	}{
+		{
+			"git@github.com:hashicorp/foo.git",
+			"ssh://git@github.com/hashicorp/foo.git",
+		},
+		{
+			"git@github.com:org/project.git?ref=test-branch",
+			"ssh://git@github.com/org/project.git?ref=test-branch",
+		},
+		{
+			"git@github.com:hashicorp/foo.git//bar",
+			"ssh://git@github.com/hashicorp/foo.git//bar",
+		},
+		{
+			"git@github.com:hashicorp/foo.git?foo=bar",
+			"ssh://git@github.com/hashicorp/foo.git?foo=bar",
+		},
+		{
+			"git@github.xyz.com:org/project.git",
+			"ssh://git@github.xyz.com/org/project.git",
+		},
+		{
+			"git@github.xyz.com:org/project.git?ref=test-branch",
+			"ssh://git@github.xyz.com/org/project.git?ref=test-branch",
+		},
+		{
+			"git@github.xyz.com:org/project.git//module/a",
+			"ssh://git@github.xyz.com/org/project.git//module/a",
+		},
+		{
+			"git@github.xyz.com:org/project.git//module/a?ref=test-branch",
+			"ssh://git@github.xyz.com/org/project.git//module/a?ref=test-branch",
+		},
+		{
+			"git::ssh://git@git.example.com:2222/hashicorp/foo.git",
+			"ssh://git@git.example.com:2222/hashicorp/foo.git",
+		},
+	}
+
+	pwd := "/pwd"
+	for _, tc := range cases {
+		t.Run(tc.Input, func(t *testing.T) {
+			req := &Request{
+				Src: tc.Input,
+				Pwd: pwd,
+			}
+			_, err := Detect(req, new(GitGetter))
+			if err != nil {
+				t.Fatalf("unexpected error: %s", err)
+			}
+			if req.Src != tc.Output {
+				t.Errorf("wrong result\ninput: %s\ngot:   %s\nwant:  %s", tc.Input, req.Src, tc.Output)
+			}
+		})
+	}
+}
+
 // gitRepo is a helper struct which controls a single temp git repo.
 type gitRepo struct {
 	t   *testing.T
