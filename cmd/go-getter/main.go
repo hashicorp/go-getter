@@ -61,8 +61,8 @@ func main() {
 	client := getter.DefaultClient
 
 	getters := getter.Getters
-	getters["gcs"] = new(gcs.Getter)
-	getters["s3"] = new(s3.Getter)
+	getters = append(getters, new(gcs.Getter))
+	getters = append(getters, new(s3.Getter))
 	client.Getters = getters
 
 	errChan := make(chan error, 2)
