@@ -72,10 +72,10 @@ func init() {
 	Getters = []Getter{
 		new(GitGetter),
 		new(HgGetter),
-		new(FileGetter),
 		new(SmbClientGetter),
 		new(SmbMountGetter),
 		httpGetter,
+		new(FileGetter),
 	}
 }
 

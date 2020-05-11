@@ -177,8 +177,12 @@ func (g *FileGetter) Detect(req *Request) (string, bool, error) {
 		if g.validScheme(u.Scheme) {
 			return src, true, nil
 		}
-		// Valid url with a scheme that is not valid for current getter
-		return "", false, nil
+		if !(runtime.GOOS == "windows" && len(u.Scheme) == 1) {
+			return src, false, nil
+		}
+		// For windows, we try to get the artifact
+		// if it has a non valid scheme with 1 char
+		// e.g. C:/foo/bar for other cases a prefix file:// is necessary
 	}
 
 	if !filepath.IsAbs(src) {

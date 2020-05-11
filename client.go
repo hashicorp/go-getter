@@ -5,10 +5,8 @@ import (
 	"fmt"
 	"github.com/hashicorp/go-multierror"
 	"io/ioutil"
-	"log"
 	"os"
 	"path/filepath"
-	"reflect"
 	"strconv"
 	"strings"
 
@@ -51,15 +49,12 @@ func (c *Client) Get(ctx context.Context, req *Request) (*GetResult, error) {
 	var multierr []error
 	for _, g := range c.Getters {
 		ok, err := Detect(req, g)
-		getterName := reflect.Indirect(reflect.ValueOf(g)).Type().Name()
 		if err != nil {
 			return nil, err
 		}
 		if !ok {
-			log.Printf("%s MOSS NOT OK for %s", getterName, req.Src)
 			continue
 		}
-		log.Printf("%s MOSS OK for %s", getterName, req.Src)
 
 		// If there is a subdir component, then we download the root separately
 		// and then copy over the proper subdir.
@@ -239,7 +234,6 @@ func (c *Client) Get(ctx context.Context, req *Request) (*GetResult, error) {
 				multierr = append(multierr, err)
 				continue
 			}
-			log.Printf("MOSS after getting dir")
 		}
 
 		// If we have a subdir, copy that over
