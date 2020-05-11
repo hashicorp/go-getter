@@ -7,7 +7,6 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"reflect"
 	"strconv"
 	"strings"
 
@@ -47,7 +46,7 @@ func (c *Client) Get(ctx context.Context, req *Request) (*GetResult, error) {
 		req.Mode = ModeAny
 	}
 
-	var multierr *multierror.Error
+	var multierr []error
 	for _, g := range c.Getters {
 		ok, err := Detect(req, g)
 		if err != nil {
@@ -56,7 +55,6 @@ func (c *Client) Get(ctx context.Context, req *Request) (*GetResult, error) {
 		if !ok {
 			continue
 		}
-		getterName := reflect.Indirect(reflect.ValueOf(g)).Type().Name()
 
 		// If there is a subdir component, then we download the root separately
 		// and then copy over the proper subdir.
@@ -148,8 +146,7 @@ func (c *Client) Get(ctx context.Context, req *Request) (*GetResult, error) {
 			// Ask the getter which client mode to use
 			req.Mode, err = g.Mode(ctx, req.u)
 			if err != nil {
-				err = fmt.Errorf("%s failed: %s", getterName, err.Error())
-				multierr = multierror.Append(multierr, err)
+				multierr = append(multierr, err)
 				continue
 			}
 
@@ -183,8 +180,7 @@ func (c *Client) Get(ctx context.Context, req *Request) (*GetResult, error) {
 			}
 			if getFile {
 				if err := g.GetFile(ctx, req); err != nil {
-					err = fmt.Errorf("%s failed: %s", getterName, err.Error())
-					multierr = multierror.Append(multierr, err)
+					multierr = append(multierr, err)
 					continue
 				}
 
@@ -235,8 +231,7 @@ func (c *Client) Get(ctx context.Context, req *Request) (*GetResult, error) {
 			// We're downloading a directory, which might require a bit more work
 			// if we're specifying a subdir.
 			if err := g.Get(ctx, req); err != nil {
-				err = fmt.Errorf("%s failed: %s", getterName, err.Error())
-				multierr = multierror.Append(multierr, err)
+				multierr = append(multierr, err)
 				continue
 			}
 		}
@@ -261,8 +256,14 @@ func (c *Client) Get(ctx context.Context, req *Request) (*GetResult, error) {
 		return &GetResult{req.Dst}, nil
 	}
 
+	if len(multierr) == 1 {
+		return nil, multierr[0]
+	}
+
 	if multierr != nil {
-		return nil, fmt.Errorf("error downloading '%s': %s", req.Src, multierr.Error())
+		var result *multierror.Error
+		result = multierror.Append(result, multierr...)
+		return nil, fmt.Errorf("error downloading '%s': %s", req.Src, result.Error())
 	}
 
 	return nil, fmt.Errorf("error downloading '%s'", req.Src)
