@@ -131,11 +131,11 @@ func (c *Client) Get(ctx context.Context, req *Request) (*GetResult, error) {
 			req.Mode = ModeFile
 		}
 
-	// Determine checksum if we have one
-	checksum, err := c.GetChecksum(ctx, req)
-	if err != nil {
-		return nil, fmt.Errorf("invalid checksum: %s", err)
-	}
+		// Determine checksum if we have one
+		checksum, err := c.GetChecksum(ctx, req)
+		if err != nil {
+			return nil, fmt.Errorf("invalid checksum: %s", err)
+		}
 
 		// Delete the query parameter if we have it.
 		q.Del("checksum")
