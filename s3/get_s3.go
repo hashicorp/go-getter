@@ -1,4 +1,4 @@
-package getter
+package s3
 
 import (
 	"context"
@@ -14,15 +14,16 @@ import (
 	"github.com/aws/aws-sdk-go/aws/ec2metadata"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
+
+	"github.com/hashicorp/go-getter/v2"
 )
 
-// S3Getter is a Getter implementation that will download a module from
+// Getter is a Getter implementation that will download a module from
 // a S3 bucket.
-type S3Getter struct {
-	getter
+type Getter struct {
 }
 
-func (g *S3Getter) Mode(ctx context.Context, u *url.URL) (Mode, error) {
+func (g *Getter) Mode(ctx context.Context, u *url.URL) (getter.Mode, error) {
 	// Parse URL
 	region, bucket, path, _, creds, err := g.parseUrl(u)
 	if err != nil {
@@ -47,24 +48,24 @@ func (g *S3Getter) Mode(ctx context.Context, u *url.URL) (Mode, error) {
 	for _, o := range resp.Contents {
 		// Use file mode on exact match.
 		if *o.Key == path {
-			return ModeFile, nil
+			return getter.ModeFile, nil
 		}
 
 		// Use dir mode if child keys are found.
 		if strings.HasPrefix(*o.Key, path+"/") {
-			return ModeDir, nil
+			return getter.ModeDir, nil
 		}
 	}
 
 	// There was no match, so just return file mode. The download is going
 	// to fail but we will let S3 return the proper error later.
-	return ModeFile, nil
+	return getter.ModeFile, nil
 }
 
-func (g *S3Getter) Get(ctx context.Context, req *Request) error {
+func (g *Getter) Get(ctx context.Context, req *getter.Request) error {
 
 	// Parse URL
-	region, bucket, path, _, creds, err := g.parseUrl(req.u)
+	region, bucket, path, _, creds, err := g.parseUrl(req.URL())
 	if err != nil {
 		return err
 	}
@@ -87,7 +88,7 @@ func (g *S3Getter) Get(ctx context.Context, req *Request) error {
 		return err
 	}
 
-	config := g.getAWSConfig(region, req.u, creds)
+	config := g.getAWSConfig(region, req.URL(), creds)
 	sess := session.New(config)
 	client := s3.New(sess)
 
@@ -136,19 +137,19 @@ func (g *S3Getter) Get(ctx context.Context, req *Request) error {
 	return nil
 }
 
-func (g *S3Getter) GetFile(ctx context.Context, req *Request) error {
-	region, bucket, path, version, creds, err := g.parseUrl(req.u)
+func (g *Getter) GetFile(ctx context.Context, req *getter.Request) error {
+	region, bucket, path, version, creds, err := g.parseUrl(req.URL())
 	if err != nil {
 		return err
 	}
 
-	config := g.getAWSConfig(region, req.u, creds)
+	config := g.getAWSConfig(region, req.URL(), creds)
 	sess := session.New(config)
 	client := s3.New(sess)
 	return g.getObject(ctx, client, req.Dst, bucket, path, version)
 }
 
-func (g *S3Getter) getObject(ctx context.Context, client *s3.S3, dst, bucket, key, version string) error {
+func (g *Getter) getObject(ctx context.Context, client *s3.S3, dst, bucket, key, version string) error {
 	req := &s3.GetObjectInput{
 		Bucket: aws.String(bucket),
 		Key:    aws.String(key),
@@ -173,11 +174,11 @@ func (g *S3Getter) getObject(ctx context.Context, client *s3.S3, dst, bucket, ke
 	}
 	defer f.Close()
 
-	_, err = Copy(ctx, f, resp.Body)
+	_, err = getter.Copy(ctx, f, resp.Body)
 	return err
 }
 
-func (g *S3Getter) getAWSConfig(region string, url *url.URL, creds *credentials.Credentials) *aws.Config {
+func (g *Getter) getAWSConfig(region string, url *url.URL, creds *credentials.Credentials) *aws.Config {
 	conf := &aws.Config{}
 	if creds == nil {
 		// Grab the metadata URL
@@ -214,7 +215,7 @@ func (g *S3Getter) getAWSConfig(region string, url *url.URL, creds *credentials.
 	return conf
 }
 
-func (g *S3Getter) parseUrl(u *url.URL) (region, bucket, path, version string, creds *credentials.Credentials, err error) {
+func (g *Getter) parseUrl(u *url.URL) (region, bucket, path, version string, creds *credentials.Credentials, err error) {
 	// This just check whether we are dealing with S3 or
 	// any other S3 compliant service. S3 has a predictable
 	// url as others do not

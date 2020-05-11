@@ -23,7 +23,29 @@ commands:
             echo "Running $(echo $PACKAGE_NAMES | wc -w) packages"
             echo $PACKAGE_NAMES
             << parameters.cmd >> --format=short-verbose --junitfile $TEST_RESULTS_PATH/go-getter/gotestsum-report.xml -- -p 2 -cover -coverprofile=<< parameters.platform >>_cov_$CIRCLE_NODE_INDEX.part $PACKAGE_NAMES
-        
+      - run:
+          name: "gcs - Run go tests"
+          command: |
+            cd gcs
+            PACKAGE_NAMES=$(go list ./... | circleci tests split --split-by=timings --timings-type=classname)
+            echo "Running $(echo $PACKAGE_NAMES | wc -w) packages"
+            echo $PACKAGE_NAMES
+            << parameters.cmd >> --format=short-verbose --junitfile $TEST_RESULTS_PATH/go-getter/gotestsum-report.xml -- -p 2 -cover -coverprofile=<< parameters.platform >>_cov_$CIRCLE_NODE_INDEX.part $PACKAGE_NAMES
+      - run:
+          name: "s3 - Run go tests"
+          command: |
+            cd s3
+            PACKAGE_NAMES=$(go list ./... | circleci tests split --split-by=timings --timings-type=classname)
+            echo "Running $(echo $PACKAGE_NAMES | wc -w) packages"
+            echo $PACKAGE_NAMES
+            << parameters.cmd >> --format=short-verbose --junitfile $TEST_RESULTS_PATH/go-getter/gotestsum-report.xml -- -p 2 -cover -coverprofile=<< parameters.platform >>_cov_$CIRCLE_NODE_INDEX.part $PACKAGE_NAMES
+      - run:
+          name: "Run go cmd"
+          command: |
+            cd cmd/go-getter
+            go run . go.mod tmpdir
+            diff tmpdir/go.mod go.mod
+
 jobs:
   linux-tests:
     docker:
@@ -138,7 +160,7 @@ jobs:
             tar -xvzf gotestsum.tar.gz
 
       - run-gotests:
-          cmd: "./gotestsum.exe"
+          cmd: "c:/gopath/src/github.com/hashicorp/go-getter/gotestsum.exe"
           platform: "win"
 
       # Save coverage report parts

@@ -5,6 +5,8 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+
+	testing_helper "github.com/hashicorp/go-getter/v2/helper/testing"
 )
 
 func TestFolderStorage_impl(t *testing.T) {
@@ -12,7 +14,7 @@ func TestFolderStorage_impl(t *testing.T) {
 }
 
 func TestFolderStorage(t *testing.T) {
-	s := &FolderStorage{StorageDir: tempDir(t)}
+	s := &FolderStorage{StorageDir: testing_helper.TempDir(t)}
 	ctx := context.Background()
 
 	module := testModule("basic")
