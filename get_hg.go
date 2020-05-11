@@ -125,10 +125,10 @@ func (g *HgGetter) update(ctx context.Context, dst string, u *url.URL, rev strin
 	return getRunCommand(cmd)
 }
 
-func (g *HgGetter) Detect(req *Request) (string, bool, error) {
+func (g *HgGetter) Detect(req *Request) (bool, error) {
 	src := req.Src
 	if len(src) == 0 {
-		return "", false, nil
+		return false, nil
 	}
 
 	if req.Forced != "" {
@@ -136,7 +136,7 @@ func (g *HgGetter) Detect(req *Request) (string, bool, error) {
 		if !g.validScheme(req.Forced) {
 			// Current getter is not the Forced one
 			// Don't use it to try to download the artifact
-			return "", false, nil
+			return false, nil
 		}
 	}
 	isForcedGetter := req.Forced != "" && g.validScheme(req.Forced)
@@ -145,21 +145,22 @@ func (g *HgGetter) Detect(req *Request) (string, bool, error) {
 	if err == nil && u.Scheme != "" {
 		if isForcedGetter {
 			// Is the Forced getter and source is a valid url
-			return src, true, nil
+			return true, nil
 		}
 		if g.validScheme(u.Scheme) {
-			return src, true, nil
+			return true, nil
 		}
 		// Valid url with a scheme that is not valid for current getter
-		return "", false, nil
+		return false, nil
 	}
 
 	result, u, err := detectBitBucket(src)
 	if err != nil {
-		return "", true, err
+		return true, err
 	}
 	if result == "hg" {
-		return u.String(), true, nil
+		req.Src = u.String()
+		return true, nil
 	}
 
 	if isForcedGetter {
@@ -169,10 +170,11 @@ func (g *HgGetter) Detect(req *Request) (string, bool, error) {
 			src = filepath.Join(req.Pwd, src)
 		}
 		// Make sure we're using "/" on Windows. URLs are "/"-based.
-		return filepath.ToSlash(src), true, nil
+		req.Src = filepath.ToSlash(src)
+		return true, nil
 	}
 
-	return "", false, nil
+	return false, nil
 }
 
 func (g *HgGetter) validScheme(scheme string) bool {

@@ -316,10 +316,10 @@ func checkGitVersion(min string) error {
 	return nil
 }
 
-func (g *GitGetter) Detect(req *Request) (string, bool, error) {
+func (g *GitGetter) Detect(req *Request) (bool, error) {
 	src := req.Src
 	if len(src) == 0 {
-		return "", false, nil
+		return false, nil
 	}
 
 	if req.Forced != "" {
@@ -327,7 +327,7 @@ func (g *GitGetter) Detect(req *Request) (string, bool, error) {
 		if !g.validScheme(req.Forced) {
 			// Current getter is not the Forced one
 			// Don't use it to try to download the artifact
-			return "", false, nil
+			return false, nil
 		}
 	}
 	isForcedGetter := req.Forced != "" && g.validScheme(req.Forced)
@@ -336,47 +336,50 @@ func (g *GitGetter) Detect(req *Request) (string, bool, error) {
 	if err == nil && u.Scheme != "" {
 		if isForcedGetter {
 			// Is the Forced getter and source is a valid url
-			return src, true, nil
+			return true, nil
 		}
 		if g.validScheme(u.Scheme) {
-			return src, true, nil
+			return true, nil
 		}
 		// Valid url with a scheme that is not valid for current getter
-		return "", false, nil
+		return false, nil
 	}
 
 	u, err = detectSSH(src)
 	if err != nil {
-		return "", true, err
+		return true, err
 	}
 	if u != nil {
 		// We require the username to be "git" to assume that this is a Git URL
 		if u.User.Username() == "git" {
-			return u.String(), true, nil
+			req.Src = u.String()
+			return true, nil
 		}
 	}
 
 	result, ok, err := detectGitHub(src)
 	if err != nil {
-		return "", ok, err
+		return ok, err
 	}
 	if ok {
-		return result, ok, nil
+		req.Src = result
+		return ok, nil
 	}
 
 	result, u, err = detectBitBucket(src)
 	if err != nil {
-		return "", true, err
+		return true, err
 	}
 	if result == "git" {
 		if !strings.HasSuffix(u.Path, ".git") {
 			u.Path += ".git"
 		}
-		return u.String(), true, nil
+		req.Src = u.String()
+		return true, nil
 	}
 
 	if _, err = url.Parse(req.Src); err != nil {
-		return "", true, nil
+		return true, nil
 	}
 
 	if isForcedGetter {
@@ -386,10 +389,11 @@ func (g *GitGetter) Detect(req *Request) (string, bool, error) {
 			src = filepath.Join(req.Pwd, src)
 		}
 		// Make sure we're using "/" on Windows. URLs are "/"-based.
-		return filepath.ToSlash(src), true, nil
+		req.Src = filepath.ToSlash(src)
+		return true, nil
 	}
 
-	return "", false, nil
+	return false, nil
 }
 
 func detectBitBucket(src string) (string, *url.URL, error) {

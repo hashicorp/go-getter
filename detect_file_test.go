@@ -81,8 +81,8 @@ func TestFileDetector(t *testing.T) {
 }
 
 var noPwdFileTests = []fileTest{
-	{in: "./foo", pwd: "", out: "", err: true},
-	{in: "foo", pwd: "", out: "", err: true},
+	{in: "./foo", pwd: "", out: "./foo", err: true},
+	{in: "foo", pwd: "", out: "foo", err: true},
 }
 
 var noPwdUnixFileTests = []fileTest{

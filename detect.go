@@ -19,9 +19,8 @@ func Detect(req *Request, getter Getter) (bool, error) {
 	getSrc, subDir := SourceDirSubdir(getSrc)
 
 	req.Src = getSrc
-	result, ok, err := getter.Detect(req)
+	ok, err := getter.Detect(req)
 	if err != nil {
-		req.Src = result
 		return true, err
 	}
 	if !ok {
@@ -30,7 +29,7 @@ func Detect(req *Request, getter Getter) (bool, error) {
 		return ok, nil
 	}
 
-	result, detectSubdir := SourceDirSubdir(result)
+	result, detectSubdir := SourceDirSubdir(req.Src)
 
 	// If we have a subdir from the detection, then prepend it to our
 	// requested subdir.

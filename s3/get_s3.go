@@ -273,10 +273,10 @@ func (g *Getter) parseUrl(u *url.URL) (region, bucket, path, version string, cre
 	return
 }
 
-func (g *Getter) Detect(req *getter.Request) (string, bool, error) {
+func (g *Getter) Detect(req *getter.Request) (bool, error) {
 	src := req.Src
 	if len(src) == 0 {
-		return "", false, nil
+		return false, nil
 	}
 
 	if req.Forced != "" {
@@ -284,7 +284,7 @@ func (g *Getter) Detect(req *getter.Request) (string, bool, error) {
 		if !g.validScheme(req.Forced) {
 			// Current getter is not the forced one
 			// Don't use it to try to download the artifact
-			return "", false, nil
+			return false, nil
 		}
 	}
 	isForcedGetter := req.Forced != "" && g.validScheme(req.Forced)
@@ -293,30 +293,22 @@ func (g *Getter) Detect(req *getter.Request) (string, bool, error) {
 	if err == nil && u.Scheme != "" {
 		if isForcedGetter {
 			// Is the forced getter and source is a valid url
-			return src, true, nil
+			return  true, nil
 		}
 		if g.validScheme(u.Scheme) {
-			return src, true, nil
+			return true, nil
 		}
 		// Valid url with a scheme that is not valid for current getter
-		return "", false, nil
+		return false, nil
 	}
 
 	if strings.Contains(src, ".amazonaws.com/") {
-		return g.detectHTTP(src)
+		src, ok, err := g.detectHTTP(src)
+		req.Src = src
+		return ok, err
 	}
 
-	if isForcedGetter {
-		// Is the forced getter and should be used to download the artifact
-		if req.Pwd != "" && !filepath.IsAbs(src) {
-			// Make sure to add pwd to relative paths
-			src = filepath.Join(req.Pwd, src)
-		}
-		// Make sure we're using "/" on Windows. URLs are "/"-based.
-		return filepath.ToSlash(src), true, nil
-	}
-
-	return "", false, nil
+	return false, nil
 }
 
 func (g *Getter) detectHTTP(src string) (string, bool, error) {

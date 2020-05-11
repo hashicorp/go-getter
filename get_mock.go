@@ -53,9 +53,9 @@ func (g *MockGetter) Mode(ctx context.Context, u *url.URL) (Mode, error) {
 	return ModeFile, nil
 }
 
-func (g *MockGetter) Detect(req *Request) (string, bool, error) {
+func (g *MockGetter) Detect(req *Request) (bool, error) {
 	if g.Proxy != nil {
 		return g.Proxy.Detect(req)
 	}
-	return req.Src, true, nil
+	return true, nil
 }

@@ -150,12 +150,12 @@ func (g *FileGetter) GetFile(ctx context.Context, req *Request) error {
 	return err
 }
 
-func (g *FileGetter) Detect(req *Request) (string, bool, error) {
+func (g *FileGetter) Detect(req *Request) (bool, error) {
 	var src, pwd string
 	src = req.Src
 	pwd = req.Pwd
 	if len(src) == 0 {
-		return "", false, nil
+		return false, nil
 	}
 
 	if req.Forced != "" {
@@ -163,7 +163,7 @@ func (g *FileGetter) Detect(req *Request) (string, bool, error) {
 		if !g.validScheme(req.Forced) {
 			// Current getter is not the Forced one
 			// Don't use it to try to download the artifact
-			return "", false, nil
+			return false, nil
 		}
 	}
 	isForcedGetter := req.Forced != "" && g.validScheme(req.Forced)
@@ -172,13 +172,13 @@ func (g *FileGetter) Detect(req *Request) (string, bool, error) {
 	if err == nil && u.Scheme != "" {
 		if isForcedGetter {
 			// Is the Forced getter and source is a valid url
-			return src, true, nil
+			return true, nil
 		}
 		if g.validScheme(u.Scheme) {
-			return src, true, nil
+			return true, nil
 		}
 		if !(runtime.GOOS == "windows" && len(u.Scheme) == 1) {
-			return src, false, nil
+			return false, nil
 		}
 		// For windows, we try to get the artifact
 		// if it has a non valid scheme with 1 char
@@ -187,7 +187,7 @@ func (g *FileGetter) Detect(req *Request) (string, bool, error) {
 
 	if !filepath.IsAbs(src) {
 		if pwd == "" {
-			return "", true, fmt.Errorf(
+			return true, fmt.Errorf(
 				"relative paths require a module with a pwd")
 		}
 
@@ -199,19 +199,19 @@ func (g *FileGetter) Detect(req *Request) (string, bool, error) {
 		// caught later when we try to use the URL.
 		if fi, err := os.Lstat(pwd); !os.IsNotExist(err) {
 			if err != nil {
-				return "", true, err
+				return true, err
 			}
 			if fi.Mode()&os.ModeSymlink != 0 {
 				pwd, err = filepath.EvalSymlinks(pwd)
 				if err != nil {
-					return "", true, err
+					return true, err
 				}
 
 				// The symlink itself might be a relative path, so we have to
 				// resolve this to have a correctly rooted URL.
 				pwd, err = filepath.Abs(pwd)
 				if err != nil {
-					return "", true, err
+					return true, err
 				}
 			}
 		}
@@ -219,7 +219,8 @@ func (g *FileGetter) Detect(req *Request) (string, bool, error) {
 		src = filepath.Join(pwd, src)
 	}
 
-	return fmtFileURL(src), true, nil
+	req.Src = fmtFileURL(src)
+	return true, nil
 }
 
 func (g *FileGetter) validScheme(scheme string) bool {
