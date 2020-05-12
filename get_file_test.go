@@ -342,7 +342,7 @@ var noPwdUnixFileTests = []fileTest{
 }
 
 var noPwdWinFileTests = []fileTest{
-	{in: "/foo", pwd: "", out: "", err: true},
+	{in: "/foo", pwd: "", out: "/foo", err: true},
 	{in: `C:\`, pwd: ``, out: `C:/`, err: false},
 }
 
