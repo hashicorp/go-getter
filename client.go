@@ -46,6 +46,21 @@ func (c *Client) Get(ctx context.Context, req *Request) (*GetResult, error) {
 		req.Mode = ModeAny
 	}
 
+	// If there is a subdir component, then we download the root separately
+	// and then copy over the proper subdir.
+	var realDst, subDir string
+	req.Src, subDir = SourceDirSubdir(req.Src)
+	if subDir != "" {
+		td, tdcloser, err := safetemp.Dir("", "getter")
+		if err != nil {
+			return nil, err
+		}
+		defer tdcloser.Close()
+
+		realDst = req.Dst
+		req.Dst = td
+	}
+
 	var multierr []error
 	for _, g := range c.Getters {
 		ok, err := Detect(req, g)
@@ -56,23 +71,8 @@ func (c *Client) Get(ctx context.Context, req *Request) (*GetResult, error) {
 			continue
 		}
 
-		// If there is a subdir component, then we download the root separately
-		// and then copy over the proper subdir.
-		var realDst, subDir string
-		req.Src, subDir = SourceDirSubdir(req.Src)
-		if subDir != "" {
-			td, tdcloser, err := safetemp.Dir("", "getter")
-			if err != nil {
-				return nil, err
-			}
-			// TODO @sylviamoss defer doesn't work here inside a for loop
-			defer tdcloser.Close()
-
-			realDst = req.Dst
-			req.Dst = td
-		}
-
-		req.u, err = urlhelper.Parse(req.Src)
+		u, err := urlhelper.Parse(req.Src)
+		req.u = u
 		if err != nil {
 			return nil, err
 		}
@@ -107,7 +107,7 @@ func (c *Client) Get(ctx context.Context, req *Request) (*GetResult, error) {
 		// If we have a decompressor, then we need to change the destination
 		// to download to a temporary path. We unarchive this into the final,
 		// real path.
-		var decompressDst string
+		var decompressDst, td string
 		var decompressDir bool
 		decompressor := c.Decompressors[archiveV]
 		if decompressor != nil {
@@ -118,7 +118,7 @@ func (c *Client) Get(ctx context.Context, req *Request) (*GetResult, error) {
 				return nil, fmt.Errorf(
 					"Error creating temporary directory for archive: %s", err)
 			}
-			// TODO @sylviamoss defer doesn't work here inside a for loop
+			// If success clean this after loop
 			defer os.RemoveAll(td)
 
 			// Swap the download directory to be our temporary path and
@@ -146,6 +146,7 @@ func (c *Client) Get(ctx context.Context, req *Request) (*GetResult, error) {
 			// Ask the getter which client mode to use
 			req.Mode, err = g.Mode(ctx, req.u)
 			if err != nil {
+				os.RemoveAll(td)
 				multierr = append(multierr, err)
 				continue
 			}
@@ -180,6 +181,7 @@ func (c *Client) Get(ctx context.Context, req *Request) (*GetResult, error) {
 			}
 			if getFile {
 				if err := g.GetFile(ctx, req); err != nil {
+					os.RemoveAll(td)
 					multierr = append(multierr, err)
 					continue
 				}
@@ -231,6 +233,7 @@ func (c *Client) Get(ctx context.Context, req *Request) (*GetResult, error) {
 			// We're downloading a directory, which might require a bit more work
 			// if we're specifying a subdir.
 			if err := g.Get(ctx, req); err != nil {
+				os.RemoveAll(td)
 				multierr = append(multierr, err)
 				continue
 			}

@@ -3,7 +3,6 @@ package getter
 import (
 	"fmt"
 	"github.com/hashicorp/go-getter/helper/url"
-	"path/filepath"
 )
 
 // Detect is a method used to detect if a Getter is a candidate for downloading an artifact
@@ -13,10 +12,9 @@ func Detect(req *Request, getter Getter) (bool, error) {
 	originalSrc := req.Src
 
 	getForce, getSrc := getForcedGetter(req.Src)
-	req.Forced = getForce
-
-	// Separate out the subdir if there is one, we don't pass that to detect
-	getSrc, subDir := SourceDirSubdir(getSrc)
+	if req.Forced == "" {
+		req.Forced = getForce
+	}
 
 	req.Src = getSrc
 	ok, err := getter.Detect(req)
@@ -34,19 +32,11 @@ func Detect(req *Request, getter Getter) (bool, error) {
 	// If we have a subdir from the detection, then prepend it to our
 	// requested subdir.
 	if detectSubdir != "" {
-		if subDir != "" {
-			subDir = filepath.Join(detectSubdir, subDir)
-		} else {
-			subDir = detectSubdir
-		}
-	}
-
-	if subDir != "" {
 		u, err := url.Parse(result)
 		if err != nil {
 			return true, fmt.Errorf("Error parsing URL: %s", err)
 		}
-		u.Path += "//" + subDir
+		u.Path += "//" + detectSubdir
 
 		// a subdir may contain wildcards, but in order to support them we
 		// have to ensure the path isn't escaped.

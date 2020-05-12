@@ -23,18 +23,11 @@ func TestDetect(t *testing.T) {
 			new(GitGetter),
 		},
 		{
-			"./foo//bar",
+			"./foo",
 			"/foo",
-			"/foo/foo//bar",
+			"/foo/foo",
 			false,
 			new(FileGetter),
-		},
-		{
-			"git::github.com/hashicorp/foo//bar",
-			"",
-			"https://github.com/hashicorp/foo.git//bar",
-			false,
-			new(GitGetter),
 		},
 		{
 			"git::https://github.com/hashicorp/consul.git",
@@ -56,13 +49,6 @@ func TestDetect(t *testing.T) {
 			"https://person@someothergit.com/foo/bar",
 			false,
 			new(GitGetter),
-		},
-		{
-			"./foo/archive//*",
-			"/bar",
-			"/bar/foo/archive//*",
-			false,
-			new(FileGetter),
 		},
 
 		// https://github.com/hashicorp/go-getter/pull/124

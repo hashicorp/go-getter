@@ -2,9 +2,11 @@ package getter
 
 import (
 	"context"
+	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	testing_helper "github.com/hashicorp/go-getter/v2/helper/testing"
@@ -117,4 +119,57 @@ func TestHgGetter_GetFile(t *testing.T) {
 		t.Fatalf("err: %s", err)
 	}
 	testing_helper.AssertContents(t, dst, "Hello\n")
+}
+
+const testBBUrl = "https://bitbucket.org/hashicorp/tf-test-git"
+
+func TestHgGetter_DetectBitBucketDetector(t *testing.T) {
+	t.Parallel()
+
+	if _, err := http.Get(testBBUrl); err != nil {
+		t.Log("internet may not be working, skipping BB tests")
+		t.Skip()
+	}
+
+	cases := []struct {
+		Input  string
+		Output string
+	}{
+		{
+			"bitbucket.org/hashicorp/tf-test-hg",
+			"https://bitbucket.org/hashicorp/tf-test-hg",
+		},
+	}
+
+	pwd := "/pwd"
+	for i, tc := range cases {
+		var err error
+		for i := 0; i < 3; i++ {
+			var ok bool
+			req := &Request{
+				Src: tc.Input,
+				Pwd: pwd,
+			}
+			ok, err = Detect(req, new(HgGetter))
+			if err != nil {
+				if strings.Contains(err.Error(), "invalid character") {
+					continue
+				}
+
+				t.Fatalf("err: %s", err)
+			}
+			if !ok {
+				t.Fatal("not ok")
+			}
+
+			if req.Src != tc.Output {
+				t.Fatalf("%d: bad: %#v", i, req.Src)
+			}
+
+			break
+		}
+		if i >= 3 {
+			t.Fatalf("failure from bitbucket: %s", err)
+		}
+	}
 }

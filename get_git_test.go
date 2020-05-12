@@ -678,6 +678,14 @@ func TestGitGetter_Detector(t *testing.T) {
 			"git::ssh://git@git.example.com:2222/hashicorp/foo.git",
 			"ssh://git@git.example.com:2222/hashicorp/foo.git",
 		},
+		{
+			"bitbucket.org/hashicorp/tf-test-git",
+			"https://bitbucket.org/hashicorp/tf-test-git.git",
+		},
+		{
+			"bitbucket.org/hashicorp/tf-test-git.git",
+			"https://bitbucket.org/hashicorp/tf-test-git.git",
+		},
 	}
 
 	pwd := "/pwd"
