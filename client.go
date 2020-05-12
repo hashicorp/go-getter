@@ -146,7 +146,7 @@ func (c *Client) Get(ctx context.Context, req *Request) (*GetResult, error) {
 			// Ask the getter which client mode to use
 			req.Mode, err = g.Mode(ctx, req.u)
 			if err != nil {
-				os.RemoveAll(td)
+				os.RemoveAll(td) // Removes temporary folder
 				multierr = append(multierr, err)
 				continue
 			}
@@ -233,7 +233,7 @@ func (c *Client) Get(ctx context.Context, req *Request) (*GetResult, error) {
 			// We're downloading a directory, which might require a bit more work
 			// if we're specifying a subdir.
 			if err := g.Get(ctx, req); err != nil {
-				os.RemoveAll(td)
+				os.RemoveAll(td) // Removes temporary folder
 				multierr = append(multierr, err)
 				continue
 			}
@@ -260,6 +260,7 @@ func (c *Client) Get(ctx context.Context, req *Request) (*GetResult, error) {
 	}
 
 	if len(multierr) == 1 {
+		// This is for keeping the error original format
 		return nil, multierr[0]
 	}
 

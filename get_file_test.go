@@ -372,4 +372,3 @@ func TestFileDetector_noPwd(t *testing.T) {
 		}
 	}
 }
-

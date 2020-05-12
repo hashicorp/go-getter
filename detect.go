@@ -6,13 +6,12 @@ import (
 )
 
 // Detect is a method used to detect if a Getter is a candidate for downloading an artifact
-// by validating if a source string is detected to be of a known pattern,
-// and transforming it to a known pattern when necessary.
+// by calling the Getter.Detect(*Request) method
 func Detect(req *Request, getter Getter) (bool, error) {
 	originalSrc := req.Src
 
 	getForce, getSrc := getForcedGetter(req.Src)
-	if req.Forced == "" {
+	if getForce != "" {
 		req.Forced = getForce
 	}
 
