@@ -43,8 +43,11 @@ type Getter interface {
 	// allow clients to let the getters decide which mode to use.
 	Mode(context.Context, *url.URL) (Mode, error)
 
-	// Detect will detect whether the string matches a known pattern to
+	// Detect detects whether the Request.Src matches a known pattern to
 	// turn it into a proper URL.
+	// The Getter must validate if the Request.Src is a valid URL
+	// with a valid scheme for the Getter, and also check if the
+	// current Getter is the forced one and return true if that's the case.
 	Detect(*Request) (bool, error)
 }
 
