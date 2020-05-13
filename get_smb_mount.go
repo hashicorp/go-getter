@@ -6,13 +6,15 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
-	"regexp"
 	"runtime"
 	"strings"
 )
 
 // SmbMountGetter is a Getter implementation that will download a module from
-// a shared folder using the file system.
+// a shared folder using the file system using FileGetter implementation.
+// For Unix and MacOS users, the Getter will look for usual system specific mount paths such as:
+// /Volumes/ for MacOS
+// /run/user/1000/gvfs/smb-share:server=<host>,share=<path> for Unix
 type SmbMountGetter struct {
 }
 
@@ -60,24 +62,9 @@ func (g *SmbMountGetter) findPrefixAndPath(u *url.URL) (string, string) {
 		path = filepath.Join("Volumes", u.Path)
 	case "linux":
 		prefix = string(os.PathSeparator)
-		share := g.findShare(u)
-		pwd := fmt.Sprintf("run/user/1000/gvfs/smb-share:server=%s,share=%s", u.Host, share)
-		path = filepath.Join(pwd, u.Path)
+		path = fmt.Sprintf("run/user/1000/gvfs/smb-share:server=%s,share=%s", u.Host, strings.TrimPrefix(u.Path, prefix))
 	}
 	return prefix, path
-}
-
-func (g *SmbMountGetter) findShare(u *url.URL) string {
-	// Get shared directory
-	path := strings.TrimPrefix(u.Path, "/")
-	splt := regexp.MustCompile(`/`)
-	directories := splt.Split(path, 2)
-
-	if len(directories) > 0 {
-		return directories[0]
-	}
-
-	return "."
 }
 
 func (g *SmbMountGetter) Detect(req *Request) (bool, error) {
