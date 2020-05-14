@@ -48,10 +48,11 @@ func (cerr *ChecksumError) Error() string {
 	)
 }
 
-// checksum is a simple method to compute the checksum of a source file
-// and compare it to the given expected value.
-func (c *FileChecksum) checksum(source string) error {
-	f, err := os.Open(source)
+// Checksum computes the Checksum for file using the hashing algorithm from
+// c.Hash and compares it to c.Value. If those values differ a ChecksumError
+// will be returned.
+func (c *FileChecksum) Checksum(file string) error {
+	f, err := os.Open(file)
 	if err != nil {
 		return fmt.Errorf("Failed to open file for checksum: %s", err)
 	}
@@ -67,7 +68,7 @@ func (c *FileChecksum) checksum(source string) error {
 			Hash:     c.Hash,
 			Actual:   actual,
 			Expected: c.Value,
-			File:     source,
+			File:     file,
 		}
 	}
 
