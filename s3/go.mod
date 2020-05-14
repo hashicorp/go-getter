@@ -6,5 +6,5 @@ replace github.com/hashicorp/go-getter/v2 => ../
 
 require (
 	github.com/aws/aws-sdk-go v1.30.8
-	github.com/hashicorp/go-getter/v2 v2.0.0-00010101000000-000000000000
+	github.com/hashicorp/go-getter/v2 v2.0.0-20200511090339-3107ec4af37a
 )
