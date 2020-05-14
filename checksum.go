@@ -27,6 +27,13 @@ type FileChecksum struct {
 	Filename string
 }
 
+// String returns the hash type and the hash separated by a colon, for example:
+//  "md5:090992ba9fd140077b0661cb75f7ce13"
+//  "sha1:ebfb681885ddf1234c18094a45bbeafd91467911"
+func (c *FileChecksum) String() string {
+	return c.Type + ":" + hex.EncodeToString(c.Value)
+}
+
 // A ChecksumError is returned when a checksum differs
 type ChecksumError struct {
 	Hash     hash.Hash
