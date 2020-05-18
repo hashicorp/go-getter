@@ -111,7 +111,8 @@ func (g *GitGetter) Get(dst string, u *url.URL) error {
 	if err != nil && !os.IsNotExist(err) {
 		return err
 	}
-	if err == nil {
+
+	if err == nil && g.isGitRepo(dst) {
 		err = g.update(ctx, dst, sshKeyFile, ref, depth)
 	} else {
 		err = g.clone(ctx, dst, sshKeyFile, u, depth)
@@ -129,6 +130,17 @@ func (g *GitGetter) Get(dst string, u *url.URL) error {
 
 	// Lastly, download any/all submodules.
 	return g.fetchSubmodules(ctx, dst, sshKeyFile, depth)
+}
+
+// isGitRepo checks that given folder is a Git repository
+//
+func (g *GitGetter) isGitRepo(path string) bool {
+	_, err := os.Stat(filepath.Join(path, ".git"))
+	if err != nil && os.IsNotExist(err) {
+		return false
+	}
+
+	return true
 }
 
 // GetFile for Git doesn't support updating at this time. It will download

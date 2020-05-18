@@ -242,6 +242,29 @@ func TestGitGetter_tag(t *testing.T) {
 	}
 }
 
+func TestGitGetter_isGitRepo(t *testing.T) {
+	if !testHasGit {
+		t.Skip("git not found, skipping")
+		return
+	}
+
+	t.Run("is-repo", func(t *testing.T) {
+		g := new(GitGetter)
+		repo := testGitRepo(t, "repo")
+		if !g.isGitRepo(repo.dir) {
+			t.Fatalf("unexpected false, %s is a git repository", repo.dir)
+		}
+	})
+
+	t.Run("is-not-repo", func(t *testing.T) {
+		g := new(GitGetter)
+		dir := tempDir(t)
+		if g.isGitRepo(dir) {
+			t.Fatalf("unexpected true, %s is not a repository", dir)
+		}
+	})
+}
+
 func TestGitGetter_GetFile(t *testing.T) {
 	if !testHasGit {
 		t.Skip("git not found, skipping")
