@@ -181,7 +181,7 @@ func (c *Client) Get(ctx context.Context, req *Request) (*GetResult, error) {
 	if req.Mode == ModeFile {
 		getFile := true
 		if checksum != nil {
-			if err := checksum.checksum(req.Dst); err == nil {
+			if err := checksum.Checksum(req.Dst); err == nil {
 				// don't get the file if the checksum of dst is correct
 				getFile = false
 			}
@@ -193,7 +193,7 @@ func (c *Client) Get(ctx context.Context, req *Request) (*GetResult, error) {
 			}
 
 			if checksum != nil {
-				if err := checksum.checksum(req.Dst); err != nil {
+				if err := checksum.Checksum(req.Dst); err != nil {
 					return nil, err
 				}
 			}

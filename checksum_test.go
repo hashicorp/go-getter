@@ -5,6 +5,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strconv"
 	"testing"
 )
 
@@ -59,5 +60,40 @@ func TestClient_GetChecksum(t *testing.T) {
 	}
 	if file.Filename != "./netboot/mini.iso" {
 		t.Fatalf("bad: expecting filename ./netboot/mini.iso but was: %s", file.Filename)
+	}
+}
+
+func TestFileChecksum_String(t *testing.T) {
+	type fields struct {
+		checksum string
+	}
+	wd, err := os.Getwd()
+	if err != nil {
+		t.Fatalf(err.Error())
+	}
+	tests := []struct {
+		fields fields
+		want   string
+	}{
+		{fields{"090992ba9fd140077b0661cb75f7ce13"}, "md5:090992ba9fd140077b0661cb75f7ce13"},
+		{fields{"ebfb681885ddf1234c18094a45bbeafd91467911"}, "sha1:ebfb681885ddf1234c18094a45bbeafd91467911"},
+		{fields{"sha256:ed363350696a726b7932db864dda019bd2017365c9e299627830f06954643f93"}, "sha256:ed363350696a726b7932db864dda019bd2017365c9e299627830f06954643f93"},
+		{fields{"file:" + filepath.Join(wd, fixtureDir, "checksum-file", "sha1.sum")}, "sha1:e2c7dc83ac8aa7f181314387f6dfb132cd117e3a"},
+	}
+
+	for i, tt := range tests {
+		t.Run(strconv.Itoa(i), func(t *testing.T) {
+			req := &Request{
+				Src: "http://example.dev?checksum=" + tt.fields.checksum,
+			}
+			c, err := DefaultClient.GetChecksum(context.TODO(), req)
+			if err != nil {
+				t.Fatalf("GetChecksum: %v", err)
+			}
+
+			if got := c.String(); got != tt.want {
+				t.Errorf("FileChecksum.String() = %v, want %v", got, tt.want)
+			}
+		})
 	}
 }
