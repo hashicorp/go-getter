@@ -21,7 +21,7 @@ func copyDir(ctx context.Context, dst string, src string, ignoreDot bool) error 
 		if err != nil {
 			return err
 		}
-		if path == src {
+		if path == src && info.IsDir() {
 			return nil
 		}
 
@@ -51,6 +51,15 @@ func copyDir(ctx context.Context, dst string, src string, ignoreDot bool) error 
 			}
 
 			return nil
+		}
+
+		// If src is a file, then dstPath should contain the src filename
+		fi, err := os.Stat(src)
+		if err != nil {
+			return err
+		}
+		if !fi.IsDir() {
+			dstPath = filepath.Join(dstPath, filepath.Base(src))
 		}
 
 		// If we have a file, copy the contents.
