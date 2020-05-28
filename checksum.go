@@ -27,6 +27,13 @@ type FileChecksum struct {
 	Filename string
 }
 
+// String returns the hash type and the hash separated by a colon, for example:
+//  "md5:090992ba9fd140077b0661cb75f7ce13"
+//  "sha1:ebfb681885ddf1234c18094a45bbeafd91467911"
+func (c *FileChecksum) String() string {
+	return c.Type + ":" + hex.EncodeToString(c.Value)
+}
+
 // A ChecksumError is returned when a checksum differs
 type ChecksumError struct {
 	Hash     hash.Hash
@@ -48,10 +55,11 @@ func (cerr *ChecksumError) Error() string {
 	)
 }
 
-// checksum is a simple method to compute the checksum of a source file
-// and compare it to the given expected value.
-func (c *FileChecksum) checksum(source string) error {
-	f, err := os.Open(source)
+// Checksum computes the Checksum for filePath using the hashing algorithm from
+// c.Hash and compares it to c.Value. If those values differ a ChecksumError
+// will be returned.
+func (c *FileChecksum) Checksum(filePath string) error {
+	f, err := os.Open(filePath)
 	if err != nil {
 		return fmt.Errorf("Failed to open file for checksum: %s", err)
 	}
@@ -67,7 +75,7 @@ func (c *FileChecksum) checksum(source string) error {
 			Hash:     c.Hash,
 			Actual:   actual,
 			Expected: c.Value,
-			File:     source,
+			File:     filePath,
 		}
 	}
 
