@@ -6,6 +6,12 @@ import (
 )
 
 func TestDetect(t *testing.T) {
+	gitGetter := &GitGetter{[]Detector{
+		new(GitDetector),
+		new(BitBucketDetector),
+		new(GitHubDetector),
+	},
+	}
 	cases := []struct {
 		Input  string
 		Pwd    string
@@ -14,13 +20,13 @@ func TestDetect(t *testing.T) {
 		getter Getter
 	}{
 		{"./foo", "/foo", "/foo/foo", false, new(FileGetter)},
-		{"git::./foo", "/foo", "/foo/foo", false, new(GitGetter)},
+		{"git::./foo", "/foo", "/foo/foo", false, gitGetter},
 		{
 			"git::github.com/hashicorp/foo",
 			"",
 			"https://github.com/hashicorp/foo.git",
 			false,
-			new(GitGetter),
+			gitGetter,
 		},
 		{
 			"./foo",
@@ -34,21 +40,21 @@ func TestDetect(t *testing.T) {
 			"",
 			"https://github.com/hashicorp/consul.git",
 			false,
-			new(GitGetter),
+			gitGetter,
 		},
 		{
-			"git::https://person@someothergit.com/foo/bar", // this
+			"git::https://person@someothergit.com/foo/bar",
 			"",
 			"https://person@someothergit.com/foo/bar",
 			false,
-			new(GitGetter),
+			gitGetter,
 		},
 		{
-			"git::https://person@someothergit.com/foo/bar", // this
+			"git::https://person@someothergit.com/foo/bar",
 			"/bar",
 			"https://person@someothergit.com/foo/bar",
 			false,
-			new(GitGetter),
+			gitGetter,
 		},
 
 		// https://github.com/hashicorp/go-getter/pull/124
@@ -57,21 +63,21 @@ func TestDetect(t *testing.T) {
 			"",
 			"ssh://git@my.custom.git/dir1/dir2",
 			false,
-			new(GitGetter),
+			gitGetter,
 		},
 		{
 			"git::git@my.custom.git:dir1/dir2",
 			"/foo",
 			"ssh://git@my.custom.git/dir1/dir2",
 			false,
-			new(GitGetter),
+			gitGetter,
 		},
 		{
 			"git::git@my.custom.git:dir1/dir2",
 			"",
 			"ssh://git@my.custom.git/dir1/dir2",
 			false,
-			new(GitGetter),
+			gitGetter,
 		},
 	}
 
@@ -81,10 +87,15 @@ func TestDetect(t *testing.T) {
 				Src: tc.Input,
 				Pwd: tc.Pwd,
 			}
-			_, err := Detect(req, tc.getter)
+			ok, err := Detect(req, tc.getter)
 			if err != nil != tc.Err {
 				t.Fatalf("%d: bad err: %s", i, err)
 			}
+
+			if !tc.Err && !ok {
+				t.Fatalf("%d: should be ok", i)
+			}
+
 			if req.Src != tc.Output {
 				t.Fatalf("%d: bad output: %s\nexpected: %s", i, req.Src, tc.Output)
 			}

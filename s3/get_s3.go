@@ -20,8 +20,7 @@ import (
 
 // Getter is a Getter implementation that will download a module from
 // a S3 bucket.
-type Getter struct {
-}
+type Getter struct{}
 
 func (g *Getter) Mode(ctx context.Context, u *url.URL) (getter.Mode, error) {
 	// Parse URL
@@ -293,7 +292,7 @@ func (g *Getter) Detect(req *getter.Request) (bool, error) {
 	if err == nil && u.Scheme != "" {
 		if isForcedGetter {
 			// Is the forced getter and source is a valid url
-			return  true, nil
+			return true, nil
 		}
 		if g.validScheme(u.Scheme) {
 			return true, nil
@@ -302,51 +301,16 @@ func (g *Getter) Detect(req *getter.Request) (bool, error) {
 		return false, nil
 	}
 
-	if strings.Contains(src, ".amazonaws.com/") {
-		src, ok, err := g.detectHTTP(src)
-		req.Src = src
+	src, ok, err := new(Detector).Detect(src, req.Pwd)
+	if err != nil {
 		return ok, err
+	}
+	if ok {
+		req.Src = src
+		return ok, nil
 	}
 
 	return false, nil
-}
-
-func (g *Getter) detectHTTP(src string) (string, bool, error) {
-	parts := strings.Split(src, "/")
-	if len(parts) < 2 {
-		return "", false, fmt.Errorf(
-			"URL is not a valid S3 URL")
-	}
-
-	hostParts := strings.Split(parts[0], ".")
-	if len(hostParts) == 3 {
-		return g.detectPathStyle(hostParts[0], parts[1:])
-	} else if len(hostParts) == 4 {
-		return g.detectVhostStyle(hostParts[1], hostParts[0], parts[1:])
-	} else {
-		return "", false, fmt.Errorf(
-			"URL is not a valid S3 URL")
-	}
-}
-
-func (g *Getter) detectPathStyle(region string, parts []string) (string, bool, error) {
-	urlStr := fmt.Sprintf("https://%s.amazonaws.com/%s", region, strings.Join(parts, "/"))
-	url, err := url.Parse(urlStr)
-	if err != nil {
-		return "", false, fmt.Errorf("error parsing S3 URL: %s", err)
-	}
-
-	return url.String(), true, nil
-}
-
-func (g *Getter) detectVhostStyle(region, bucket string, parts []string) (string, bool, error) {
-	urlStr := fmt.Sprintf("https://%s.amazonaws.com/%s/%s", region, bucket, strings.Join(parts, "/"))
-	url, err := url.Parse(urlStr)
-	if err != nil {
-		return "", false, fmt.Errorf("error parsing S3 URL: %s", err)
-	}
-
-	return url.String(), true, nil
 }
 
 func (g *Getter) validScheme(scheme string) bool {

@@ -9,6 +9,15 @@ import (
 	"testing"
 )
 
+// smbTestsPreCheck checks whether ACC_SMB_TEST is set before running any SMB tests.
+// SMB tests depends on a SMB server and should not run without the intention of it.
+func smbTestsPreCheck(t *testing.T) {
+	r := os.Getenv("ACC_SMB_TEST")
+	if r != "1" {
+		t.Skip("smb getter tests won't run. ACC_SMB_TEST not set")
+	}
+}
+
 func TestSmb_GetterImpl(t *testing.T) {
 	var _ Getter = new(SmbClientGetter)
 }
@@ -316,12 +325,5 @@ func TestSmb_GetterMode(t *testing.T) {
 				t.Fatalf("err: expeting mode %d, actual mode %d", tt.expectedMode, mode)
 			}
 		})
-	}
-}
-
-func smbTestsPreCheck(t *testing.T) {
-	r := os.Getenv("ACC_SMB_TEST")
-	if r != "1" {
-		t.Skip("smb getter tests won't run. ACC_SMB_TEST not set")
 	}
 }

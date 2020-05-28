@@ -15,8 +15,7 @@ import (
 
 // Getter is a Getter implementation that will download a module from
 // a GCS bucket.
-type Getter struct {
-}
+type Getter struct {}
 
 func (g *Getter) Mode(ctx context.Context, u *url.URL) (getter.Mode, error) {
 
@@ -195,33 +194,16 @@ func (g *Getter) Detect(req *getter.Request) (bool, error) {
 		return false, nil
 	}
 
-	if strings.Contains(src, "googleapis.com/") {
-		src, ok, err := g.detectHTTP(src)
-		req.Src = src
+	src, ok, err := new(Detector).Detect(src, req.Pwd)
+	if err != nil {
 		return ok, err
+	}
+	if ok {
+		req.Src = src
+		return ok, nil
 	}
 
 	return false, nil
-}
-
-func (g *Getter) detectHTTP(src string) (string, bool, error) {
-
-	parts := strings.Split(src, "/")
-	if len(parts) < 5 {
-		return "", false, fmt.Errorf(
-			"URL is not a valid GCS URL")
-	}
-	version := parts[2]
-	bucket := parts[3]
-	object := strings.Join(parts[4:], "/")
-
-	url, err := url.Parse(fmt.Sprintf("https://www.googleapis.com/storage/%s/%s/%s",
-		version, bucket, object))
-	if err != nil {
-		return "", false, fmt.Errorf("error parsing GCS URL: %s", err)
-	}
-
-	return url.String(), true, nil
 }
 
 func (g *Getter) validScheme(scheme string) bool {

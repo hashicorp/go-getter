@@ -5,6 +5,15 @@ import (
 	"github.com/hashicorp/go-getter/helper/url"
 )
 
+// Detector defines the interface that an invalid URL or a URL with a blank
+// scheme is passed through in order to determine if its shorthand for
+// something else well-known.
+type Detector interface {
+	// Detect will detect whether the string matches a known pattern to
+	// turn it into a proper URL.
+	Detect(string, string) (string, bool, error)
+}
+
 // Detect is a method used to detect if a Getter is a candidate for downloading an artifact
 // by calling the Getter.Detect(*Request) method
 func Detect(req *Request, getter Getter) (bool, error) {

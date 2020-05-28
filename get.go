@@ -44,7 +44,8 @@ type Getter interface {
 	Mode(context.Context, *url.URL) (Mode, error)
 
 	// Detect detects whether the Request.Src matches a known pattern to
-	// turn it into a proper URL.
+	// turn it into a proper URL, and also transforms and update Request.Src
+	// when necessary.
 	// The Getter must validate if the Request.Src is a valid URL
 	// with a valid scheme for the Getter, and also check if the
 	// current Getter is the forced one and return true if that's the case.
@@ -72,8 +73,15 @@ func init() {
 		Netrc: true,
 	}
 
+	// The order of the Getters in the list may affect the result
+	// depending if the Request.Src is detected as valid by multiple getters
 	Getters = []Getter{
-		new(GitGetter),
+		&GitGetter{[]Detector{
+			new(GitHubDetector),
+			new(GitDetector),
+			new(BitBucketDetector),
+		},
+		},
 		new(HgGetter),
 		new(SmbClientGetter),
 		new(SmbMountGetter),

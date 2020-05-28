@@ -15,8 +15,7 @@ import (
 // For Unix and MacOS users, the Getter will look for usual system specific mount paths such as:
 // /Volumes/ for MacOS
 // /run/user/1000/gvfs/smb-share:server=<hostIP>,share=<path> for Unix
-type SmbMountGetter struct {
-}
+type SmbMountGetter struct{}
 
 func (g *SmbMountGetter) Mode(ctx context.Context, u *url.URL) (Mode, error) {
 	if u.Host == "" || u.Path == "" {

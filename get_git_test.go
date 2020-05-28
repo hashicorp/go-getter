@@ -411,8 +411,14 @@ func TestGitGetter_sshSCPStyle(t *testing.T) {
 
 		Mode: ModeDir,
 	}
+	getter := &GitGetter{[]Detector{
+		new(GitDetector),
+		new(BitBucketDetector),
+		new(GitHubDetector),
+	},
+	}
 	client := &Client{
-		Getters: []Getter{new(GitGetter)},
+		Getters: []Getter{getter},
 	}
 
 	if _, err := client.Get(ctx, req); err != nil {
@@ -617,7 +623,12 @@ func TestGitGetter_GitHubDetector(t *testing.T) {
 	}
 
 	pwd := "/pwd"
-	f := new(GitGetter)
+	f := &GitGetter{[]Detector{
+		new(GitDetector),
+		new(BitBucketDetector),
+		new(GitHubDetector),
+	},
+	}
 	for i, tc := range cases {
 		req := &Request{
 			Src: tc.Input,
@@ -689,15 +700,24 @@ func TestGitGetter_Detector(t *testing.T) {
 	}
 
 	pwd := "/pwd"
+	getter := &GitGetter{[]Detector{
+		new(GitDetector),
+		new(BitBucketDetector),
+		new(GitHubDetector),
+	},
+	}
 	for _, tc := range cases {
 		t.Run(tc.Input, func(t *testing.T) {
 			req := &Request{
 				Src: tc.Input,
 				Pwd: pwd,
 			}
-			_, err := Detect(req, new(GitGetter))
+			ok, err := Detect(req, getter)
 			if err != nil {
 				t.Fatalf("unexpected error: %s", err)
+			}
+			if !ok {
+				t.Fatalf("bad: should be ok")
 			}
 			if req.Src != tc.Output {
 				t.Errorf("wrong result\ninput: %s\ngot:   %s\nwant:  %s", tc.Input, req.Src, tc.Output)

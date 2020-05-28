@@ -41,7 +41,8 @@ type Request struct {
 	// By default a no op progress listener is used.
 	ProgressListener ProgressTracker
 
-	u *url.URL
+	u               *url.URL
+	subDir, realDst string
 }
 
 func (req *Request) URL() *url.URL {
