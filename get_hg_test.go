@@ -121,8 +121,6 @@ func TestHgGetter_GetFile(t *testing.T) {
 	testing_helper.AssertContents(t, dst, "Hello\n")
 }
 
-const testBBUrl = "https://bitbucket.org/hashicorp/tf-test-git"
-
 func TestHgGetter_DetectBitBucketDetector(t *testing.T) {
 	t.Parallel()
 

@@ -15,9 +15,7 @@ import (
 
 // HgGetter is a Getter implementation that will download a module from
 // a Mercurial repository.
-type HgGetter struct {
-	Detectors []Detector
-}
+type HgGetter struct {}
 
 func (g *HgGetter) Mode(ctx context.Context, _ *url.URL) (Mode, error) {
 	return ModeDir, nil

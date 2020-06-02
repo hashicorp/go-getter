@@ -11,7 +11,7 @@ import (
 
 // FileGetter is a Getter implementation that will download a module from
 // a file scheme.
-type FileGetter struct {}
+type FileGetter struct{}
 
 func (g *FileGetter) Mode(ctx context.Context, u *url.URL) (Mode, error) {
 	path := u.Path
