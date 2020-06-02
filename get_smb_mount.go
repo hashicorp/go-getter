@@ -8,7 +8,7 @@ import (
 	"runtime"
 )
 
-// SmbMountGetter is a Getter implementation that will download a module from
+// SmbMountGetter is a Getter implementation that will download an artifact from
 // a shared folder using the file system using FileGetter implementation.
 // For Unix and MacOS users, the Getter will look for usual system specific mount paths such as:
 // /Volumes/ for MacOS
@@ -63,7 +63,8 @@ func (g *SmbMountGetter) findPrefixAndPath(u *url.URL) (string, string) {
 
 func (g *SmbMountGetter) Detect(req *Request) (bool, error) {
 	if runtime.GOOS == "linux" {
-		// Linux users should use smbclient command.
+		// Linux has the smbclient command which is a safer approach to retrieve an artifact from a samba shared folder.
+		// Therefore, this should be used instead of looking in the file system.
 		return false, nil
 	}
 	if len(req.Src) == 0 {

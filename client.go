@@ -62,20 +62,21 @@ func (c *Client) Get(ctx context.Context, req *Request) (*GetResult, error) {
 
 	var multierr []error
 	for _, g := range c.Getters {
-		ok, err := Detect(req, g)
+		shouldDownload, err := Detect(req, g)
 		if err != nil {
 			return nil, err
 		}
-		if !ok {
+		if !shouldDownload {
+			// the request should not be processed by that getter
 			continue
 		}
 
-		result, fatal, err := c.get(ctx, req, g)
-		if err != nil {
-			if fatal {
-				return nil, err
+		result, getErr := c.get(ctx, req, g)
+		if getErr != nil {
+			if getErr.Fatal {
+				return nil, getErr.Err
 			}
-			multierr = append(multierr, err)
+			multierr = append(multierr, getErr.Err)
 			continue
 		}
 
@@ -96,11 +97,24 @@ func (c *Client) Get(ctx context.Context, req *Request) (*GetResult, error) {
 	return nil, fmt.Errorf("error downloading '%s'", req.Src)
 }
 
-func (c *Client) get(ctx context.Context, req *Request, g Getter) (*GetResult, bool, error) {
+// getError is the Error response object returned by get(context.Context, *Request, Getter)
+// to tell the client whether to halt (Fatal) Get or to keep trying to get an artifact.
+type getError struct {
+	// When Fatal is true something went wrong with get(context.Context, *Request, Getter)
+	// and the client should halt and return the Err.
+	Fatal bool
+	Err   error
+}
+
+func (ge *getError) Error() string {
+	return ge.Err.Error()
+}
+
+func (c *Client) get(ctx context.Context, req *Request, g Getter) (*GetResult, *getError) {
 	u, err := urlhelper.Parse(req.Src)
 	req.u = u
 	if err != nil {
-		return nil, true, err
+		return nil, &getError{true, err}
 	}
 
 	// We have magic query parameters that we use to signal different features
@@ -141,8 +155,8 @@ func (c *Client) get(ctx context.Context, req *Request, g Getter) (*GetResult, b
 		// this at the end of everything.
 		td, err := ioutil.TempDir("", "getter")
 		if err != nil {
-			return nil, true, fmt.Errorf(
-				"Error creating temporary directory for archive: %s", err)
+			return nil, &getError{true, fmt.Errorf(
+				"Error creating temporary directory for archive: %s", err)}
 		}
 		defer os.RemoveAll(td)
 
@@ -157,7 +171,7 @@ func (c *Client) get(ctx context.Context, req *Request, g Getter) (*GetResult, b
 	// Determine checksum if we have one
 	checksum, err := c.GetChecksum(ctx, req)
 	if err != nil {
-		return nil, true, fmt.Errorf("invalid checksum: %s", err)
+		return nil, &getError{true, fmt.Errorf("invalid checksum: %s", err)}
 	}
 
 	// Delete the query parameter if we have it.
@@ -168,7 +182,7 @@ func (c *Client) get(ctx context.Context, req *Request, g Getter) (*GetResult, b
 		// Ask the getter which client mode to use
 		req.Mode, err = g.Mode(ctx, req.u)
 		if err != nil {
-			return nil, false, err
+			return nil, &getError{false, err}
 		}
 
 		// Destination is the base name of the URL path in "any" mode when
@@ -201,12 +215,12 @@ func (c *Client) get(ctx context.Context, req *Request, g Getter) (*GetResult, b
 		}
 		if getFile {
 			if err := g.GetFile(ctx, req); err != nil {
-				return nil, false, err
+				return nil, &getError{false, err}
 			}
 
 			if checksum != nil {
 				if err := checksum.Checksum(req.Dst); err != nil {
-					return nil, true, err
+					return nil, &getError{true, err}
 				}
 			}
 		}
@@ -216,7 +230,7 @@ func (c *Client) get(ctx context.Context, req *Request, g Getter) (*GetResult, b
 			// into the final destination with the proper mode.
 			err := decompressor.Decompress(decompressDst, req.Dst, decompressDir)
 			if err != nil {
-				return nil, true, err
+				return nil, &getError{true, err}
 			}
 
 			// Swap the information back
@@ -232,7 +246,7 @@ func (c *Client) get(ctx context.Context, req *Request, g Getter) (*GetResult, b
 		// if we were unarchiving. If we're still only Get-ing a file, then
 		// we're done.
 		if req.Mode == ModeFile {
-			return &GetResult{req.Dst}, false, nil
+			return &GetResult{req.Dst}, nil
 		}
 	}
 
@@ -244,35 +258,40 @@ func (c *Client) get(ctx context.Context, req *Request, g Getter) (*GetResult, b
 		// If we're getting a directory, then this is an error. You cannot
 		// checksum a directory. TODO: test
 		if checksum != nil {
-			return nil, true, fmt.Errorf(
-				"checksum cannot be specified for directory download")
+			return nil, &getError{true, fmt.Errorf(
+				"checksum cannot be specified for directory download")}
 		}
 
 		// We're downloading a directory, which might require a bit more work
 		// if we're specifying a subdir.
 		if err := g.Get(ctx, req); err != nil {
-			return nil, false, err
+			return nil, &getError{false, err}
 		}
 	}
 
 	// If we have a subdir, copy that over
 	if req.subDir != "" {
 		if err := os.RemoveAll(req.realDst); err != nil {
-			return nil, true, err
+			return nil, &getError{true, err}
 		}
 		if err := os.MkdirAll(req.realDst, 0755); err != nil {
-			return nil, true, err
+			return nil, &getError{true, err}
 		}
 
 		// Process any globs
 		subDir, err := SubdirGlob(req.Dst, req.subDir)
 		if err != nil {
-			return nil, true, err
+			return nil, &getError{true, err}
 		}
 
-		return &GetResult{req.realDst}, false, copyDir(ctx, req.realDst, subDir, false)
+		err = copyDir(ctx, req.realDst, subDir, false)
+		if err != nil {
+			return nil, &getError{false, err}
+		}
+		return &GetResult{req.realDst}, nil
 	}
-	return &GetResult{req.Dst}, false, nil
+
+	return &GetResult{req.Dst}, nil
 
 }
 

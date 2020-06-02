@@ -307,10 +307,9 @@ func (g *Getter) Detect(req *getter.Request) (bool, error) {
 	}
 	if ok {
 		req.Src = src
-		return ok, nil
 	}
 
-	return false, nil
+	return ok, nil
 }
 
 func (g *Getter) validScheme(scheme string) bool {
