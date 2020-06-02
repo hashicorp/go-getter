@@ -2,12 +2,10 @@ package getter
 
 import (
 	"context"
-	"fmt"
 	"net/url"
 	"os"
 	"path/filepath"
 	"runtime"
-	"strings"
 )
 
 // SmbMountGetter is a Getter implementation that will download a module from
@@ -59,14 +57,15 @@ func (g *SmbMountGetter) findPrefixAndPath(u *url.URL) (string, string) {
 	case "darwin":
 		prefix = string(os.PathSeparator)
 		path = filepath.Join("Volumes", u.Path)
-	case "linux":
-		prefix = string(os.PathSeparator)
-		path = fmt.Sprintf("run/user/1000/gvfs/smb-share:server=%s,share=%s", u.Host, strings.TrimPrefix(u.Path, prefix))
 	}
 	return prefix, path
 }
 
 func (g *SmbMountGetter) Detect(req *Request) (bool, error) {
+	if runtime.GOOS == "linux" {
+		// Linux users should use smbclient command.
+		return false, nil
+	}
 	if len(req.Src) == 0 {
 		return false, nil
 	}

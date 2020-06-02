@@ -369,25 +369,23 @@ There are two options that go-getter will use to download a file in a smb shared
 to look for a file in a local mount of the shared folder in the OS specific volume folder. go-getter will try to download
 files from a smb shared folder whenever the url is prefixed with `smb://`.
 
-⚠️ The [`smbclient`](https://www.samba.org/samba/docs/current/man-html/smbclient.1.html) command is available only for Unix.
-This is the best option for a Unix user and therefore the client must be installed.
+⚠️ The [`smbclient`](https://www.samba.org/samba/docs/current/man-html/smbclient.1.html) command is available only for Linux.
+This is the ONLY option for a Linux user and therefore the client must be installed.
     
-The `smbclient` cli is not available for Windows and MacOS. Whenever the `smbclient` is not available, go-getter
-will try to get files using the file system, when this happens the getter uses the FileGetter implementation.   
-⚠️ The FileGetter need to be enabled for this to work on Windows and MacOS.
+The `smbclient` cli is not available for Windows and MacOS. The go-getter
+will try to get files using the file system, when this happens the getter uses the FileGetter implementation.
 
 When connecting to a smb server, the OS creates a local mount in a system specific volume folder, and go-getter will 
 try to access the following folders when looking for local mounts.
 
 - MacOS: /Volumes/<shared_path>
 - Windows: \\\\\<host>\\\<shared_path>
-- Unix: /run/user/1000/gvfs/smb-share:server=\<host>,share=<shared_path> 
 
 The following examples work for all the OSes:  
 - smb://host/shared/dir (downloads directory content)
 - smb://host/shared/dir/file (downloads file) 
 
-The following examples work for Unix:  
+The following examples work for Linux:  
 - smb://username:password@host/shared/dir (downloads directory content)
 - smb://username@host/shared/dir
 - smb://username:password@host/shared/dir/file (downloads file)
