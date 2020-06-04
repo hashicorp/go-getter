@@ -46,7 +46,7 @@ func TestGetter(t *testing.T) {
 	}
 
 	c := getter.Client{
-		Getters: map[string]getter.Getter{"gcs": g},
+		Getters: []getter.Getter{g},
 	}
 
 	// With a dir that doesn't exist
@@ -75,7 +75,7 @@ func TestGetter_subdir(t *testing.T) {
 	}
 
 	c := getter.Client{
-		Getters: map[string]getter.Getter{"gcs": g},
+		Getters: []getter.Getter{g},
 	}
 
 	// With a dir that doesn't exist
@@ -106,7 +106,7 @@ func TestGetter_GetFile(t *testing.T) {
 	}
 
 	c := getter.Client{
-		Getters: map[string]getter.Getter{"gcs": g},
+		Getters: []getter.Getter{g},
 	}
 
 	// Download
@@ -134,7 +134,7 @@ func TestGetter_GetFile_notfound(t *testing.T) {
 	}
 
 	c := getter.Client{
-		Getters: map[string]getter.Getter{"gcs": g},
+		Getters: []getter.Getter{g},
 	}
 
 	// Download

@@ -16,7 +16,7 @@ func TestGet_badSchema(t *testing.T) {
 
 	dst := testing_helper.TempDir(t)
 	u := testModule("basic")
-	u = strings.Replace(u, "file", "nope", -1)
+	u = "nope::" + u
 
 	op, err := Get(ctx, dst, u)
 	if err == nil {
@@ -589,9 +589,7 @@ func TestGetFile_checksumURL(t *testing.T) {
 		Mode: ModeFile,
 	}
 	client := &Client{
-		Getters: map[string]Getter{
-			"file": getter,
-		},
+		Getters: []Getter{getter},
 	}
 
 	op, err := client.Get(ctx, req)
@@ -644,9 +642,7 @@ func TestGetFile_checksumSkip(t *testing.T) {
 		Mode: ModeFile,
 	}
 	client := &Client{
-		Getters: map[string]Getter{
-			"file": getter,
-		},
+		Getters: []Getter{getter},
 	}
 
 	// get the file
@@ -694,9 +690,7 @@ func TestGetFile_inplace(t *testing.T) {
 		Inplace: true,
 	}
 	client := &Client{
-		Getters: map[string]Getter{
-			"file": getter,
-		},
+		Getters: []Getter{getter},
 	}
 
 	// get the file
@@ -744,9 +738,7 @@ func TestGetFile_inplace_badChecksum(t *testing.T) {
 		Inplace: true,
 	}
 	client := &Client{
-		Getters: map[string]Getter{
-			"file": getter,
-		},
+		Getters: []Getter{getter},
 	}
 
 	// get the file

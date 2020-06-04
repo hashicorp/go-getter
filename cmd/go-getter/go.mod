@@ -13,7 +13,7 @@ require (
 	github.com/fatih/color v1.9.0 // indirect
 	github.com/hashicorp/go-getter/gcs/v2 v2.0.0-00010101000000-000000000000
 	github.com/hashicorp/go-getter/s3/v2 v2.0.0-00010101000000-000000000000
-	github.com/hashicorp/go-getter/v2 v2.0.0-00010101000000-000000000000
+	github.com/hashicorp/go-getter/v2 v2.0.0-20200511090339-3107ec4af37a
 	github.com/mattn/go-runewidth v0.0.8 // indirect
 	gopkg.in/cheggaaa/pb.v1 v1.0.28 // indirect
 )

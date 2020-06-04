@@ -174,6 +174,30 @@ jobs:
       - store_artifacts:
           path: *WIN_TEST_RESULTS
 
+  go-smb-test:
+    docker:
+      - image: circleci/golang:<< parameters.go-version >>
+    parameters:
+      go-version:
+        type: string
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run:
+          name: build and start smb server and gogetter containers
+          command: |
+            docker-compose build
+            docker-compose up -d
+
+      - run:
+          name: wait for containers to start
+          command: sleep 60
+
+      - run:
+          name: run smb getter tests
+          command: |
+            docker exec -it gogetter bash -c "env ACC_SMB_TEST=1 go test -v ./... -run=TestSmb_"
+
 workflows:
   go-getter:
     jobs:
@@ -190,3 +214,7 @@ workflows:
               go-version: ["1.14.1"]
               gotestsum-version: ["0.4.1"]
           name: win-test-go-<< matrix.go-version >>
+      - go-smb-test:
+          matrix:
+            parameters:
+              go-version: ["1.14.1"]

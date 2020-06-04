@@ -394,7 +394,6 @@ func TestGitGetter_sshSCPStyle(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	g := new(GitGetter)
 	dst := testing_helper.TempDir(t)
 
 	encodedKey := base64.StdEncoding.EncodeToString([]byte(testGitToken))
@@ -412,13 +411,14 @@ func TestGitGetter_sshSCPStyle(t *testing.T) {
 
 		Mode: ModeDir,
 	}
+	getter := &GitGetter{[]Detector{
+		new(GitDetector),
+		new(BitBucketDetector),
+		new(GitHubDetector),
+	},
+	}
 	client := &Client{
-		Detectors: []Detector{
-			new(GitDetector),
-		},
-		Getters: map[string]Getter{
-			"git": g,
-		},
+		Getters: []Getter{getter},
 	}
 
 	if _, err := client.Get(ctx, req); err != nil {
@@ -437,7 +437,6 @@ func TestGitGetter_sshExplicitPort(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	g := new(GitGetter)
 	dst := testing_helper.TempDir(t)
 
 	encodedKey := base64.StdEncoding.EncodeToString([]byte(testGitToken))
@@ -456,13 +455,7 @@ func TestGitGetter_sshExplicitPort(t *testing.T) {
 		Mode: ModeDir,
 	}
 	client := &Client{
-
-		Detectors: []Detector{
-			new(GitDetector),
-		},
-		Getters: map[string]Getter{
-			"git": g,
-		},
+		Getters: []Getter{new(GitGetter)},
 	}
 
 	if _, err := client.Get(ctx, req); err != nil {
@@ -481,7 +474,6 @@ func TestGitGetter_sshSCPStyleInvalidScheme(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	g := new(GitGetter)
 	dst := testing_helper.TempDir(t)
 
 	encodedKey := base64.StdEncoding.EncodeToString([]byte(testGitToken))
@@ -501,23 +493,12 @@ func TestGitGetter_sshSCPStyleInvalidScheme(t *testing.T) {
 	}
 
 	client := &Client{
-		Detectors: []Detector{
-			new(GitDetector),
-		},
-		Getters: map[string]Getter{
-			"git": g,
-		},
+		Getters: []Getter{new(GitGetter)},
 	}
 
 	_, err := client.Get(ctx, req)
 	if err == nil {
 		t.Fatalf("get succeeded; want error")
-	}
-
-	got := err.Error()
-	want1, want2 := `invalid source string`, `invalid port number "hashicorp"`
-	if !(strings.Contains(got, want1) || strings.Contains(got, want2)) {
-		t.Fatalf("wrong error\ngot:  %s\nwant: %q or %q", got, want1, want2)
 	}
 }
 
@@ -616,6 +597,136 @@ func TestGitGetter_setupGitEnvWithExisting_sshKey(t *testing.T) {
 	actual := strings.TrimSpace(string(out))
 	if actual != "ssh -o StrictHostKeyChecking=no -o IdentitiesOnly=yes -i /tmp/foo.pem" {
 		t.Fatalf("unexpected GIT_SSH_COMMAND: %q", actual)
+	}
+}
+
+func TestGitGetter_GitHubDetector(t *testing.T) {
+	cases := []struct {
+		Input  string
+		Output string
+	}{
+		// HTTP
+		{"github.com/hashicorp/foo", "https://github.com/hashicorp/foo.git"},
+		{"github.com/hashicorp/foo.git", "https://github.com/hashicorp/foo.git"},
+		{
+			"github.com/hashicorp/foo/bar",
+			"https://github.com/hashicorp/foo.git//bar",
+		},
+		{
+			"github.com/hashicorp/foo?foo=bar",
+			"https://github.com/hashicorp/foo.git?foo=bar",
+		},
+		{
+			"github.com/hashicorp/foo.git?foo=bar",
+			"https://github.com/hashicorp/foo.git?foo=bar",
+		},
+	}
+
+	pwd := "/pwd"
+	f := &GitGetter{[]Detector{
+		new(GitDetector),
+		new(BitBucketDetector),
+		new(GitHubDetector),
+	},
+	}
+	for i, tc := range cases {
+		req := &Request{
+			Src: tc.Input,
+			Pwd: pwd,
+		}
+		ok, err := Detect(req, f)
+		if err != nil {
+			t.Fatalf("err: %s", err)
+		}
+		if !ok {
+			t.Fatal("not ok")
+		}
+
+		if req.Src != tc.Output {
+			t.Fatalf("%d: bad: %#v", i, req.Src)
+		}
+	}
+}
+
+func TestGitGetter_Detector(t *testing.T) {
+	cases := []struct {
+		Input  string
+		Output string
+	}{
+		{
+			"git@github.com:hashicorp/foo.git",
+			"ssh://git@github.com/hashicorp/foo.git",
+		},
+		{
+			"git@github.com:org/project.git?ref=test-branch",
+			"ssh://git@github.com/org/project.git?ref=test-branch",
+		},
+		{
+			"git@github.com:hashicorp/foo.git//bar",
+			"ssh://git@github.com/hashicorp/foo.git//bar",
+		},
+		{
+			"git@github.com:hashicorp/foo.git?foo=bar",
+			"ssh://git@github.com/hashicorp/foo.git?foo=bar",
+		},
+		{
+			"git@github.xyz.com:org/project.git",
+			"ssh://git@github.xyz.com/org/project.git",
+		},
+		{
+			"git@github.xyz.com:org/project.git?ref=test-branch",
+			"ssh://git@github.xyz.com/org/project.git?ref=test-branch",
+		},
+		{
+			"git@github.xyz.com:org/project.git//module/a",
+			"ssh://git@github.xyz.com/org/project.git//module/a",
+		},
+		{
+			"git@github.xyz.com:org/project.git//module/a?ref=test-branch",
+			"ssh://git@github.xyz.com/org/project.git//module/a?ref=test-branch",
+		},
+		{
+			"git::ssh://git@git.example.com:2222/hashicorp/foo.git",
+			"ssh://git@git.example.com:2222/hashicorp/foo.git",
+		},
+		{
+			"bitbucket.org/hashicorp/tf-test-git",
+			"https://bitbucket.org/hashicorp/tf-test-git.git",
+		},
+		{
+			"bitbucket.org/hashicorp/tf-test-git.git",
+			"https://bitbucket.org/hashicorp/tf-test-git.git",
+		},
+		{
+			"git::ssh://git@git.example.com:2222/hashicorp/foo.git",
+			"ssh://git@git.example.com:2222/hashicorp/foo.git",
+		},
+	}
+
+	pwd := "/pwd"
+	getter := &GitGetter{[]Detector{
+		new(GitDetector),
+		new(BitBucketDetector),
+		new(GitHubDetector),
+	},
+	}
+	for _, tc := range cases {
+		t.Run(tc.Input, func(t *testing.T) {
+			req := &Request{
+				Src: tc.Input,
+				Pwd: pwd,
+			}
+			ok, err := Detect(req, getter)
+			if err != nil {
+				t.Fatalf("unexpected error: %s", err)
+			}
+			if !ok {
+				t.Fatalf("bad: should be ok")
+			}
+			if req.Src != tc.Output {
+				t.Errorf("wrong result\ninput: %s\ngot:   %s\nwant:  %s", tc.Input, req.Src, tc.Output)
+			}
+		})
 	}
 }
 
