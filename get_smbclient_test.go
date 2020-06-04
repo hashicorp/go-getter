@@ -2,11 +2,12 @@ package getter
 
 import (
 	"context"
-	urlhelper "github.com/hashicorp/go-getter/helper/url"
-	testing_helper "github.com/hashicorp/go-getter/v2/helper/testing"
 	"os"
 	"path/filepath"
 	"testing"
+
+	testing_helper "github.com/hashicorp/go-getter/v2/helper/testing"
+	urlhelper "github.com/hashicorp/go-getter/v2/helper/url"
 )
 
 // smbTestsPreCheck checks whether ACC_SMB_TEST is set before running any SMB tests.
