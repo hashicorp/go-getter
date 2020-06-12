@@ -2,6 +2,7 @@ module github.com/hashicorp/go-getter
 
 require (
 	cloud.google.com/go v0.45.1
+	github.com/avast/retry-go v2.6.0+incompatible
 	github.com/aws/aws-sdk-go v1.15.78
 	github.com/bgentry/go-netrc v0.0.0-20140422174119-9fd32a8b3d3d
 	github.com/cheggaaa/pb v1.0.27

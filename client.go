@@ -3,11 +3,13 @@ package getter
 import (
 	"context"
 	"fmt"
+	"github.com/avast/retry-go"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 
 	urlhelper "github.com/hashicorp/go-getter/helper/url"
 	safetemp "github.com/hashicorp/go-safetemp"
@@ -207,6 +209,15 @@ func (c *Client) Get() error {
 		}
 	}
 
+	// Performs retries during failures for Get and GetFile
+	// 5 attempts backing off start with 1 s,
+	// for a maximum delay of 63 seconds.
+	retryOpts := []retry.Option{
+		retry.Attempts(5),
+		retry.Delay(1 * time.Second),
+		retry.DelayType(retry.BackOffDelay),
+	}
+
 	// If we're not downloading a directory, then just download the file
 	// and return.
 	if mode == ClientModeFile {
@@ -218,7 +229,16 @@ func (c *Client) Get() error {
 			}
 		}
 		if getFile {
-			err := g.GetFile(dst, u)
+			err := retry.Do(
+				func() error {
+					err := g.GetFile(dst, u)
+					if err != nil {
+						return err
+					}
+					return nil
+				},
+				retryOpts...,
+			)
 			if err != nil {
 				return err
 			}
@@ -269,7 +289,16 @@ func (c *Client) Get() error {
 
 		// We're downloading a directory, which might require a bit more work
 		// if we're specifying a subdir.
-		err := g.Get(dst, u)
+		err := retry.Do(
+			func() error {
+				err := g.Get(dst, u)
+				if err != nil {
+					return err
+				}
+				return nil
+			},
+			retryOpts...,
+		)
 		if err != nil {
 			err = fmt.Errorf("error downloading '%s': %s", src, err)
 			return err
