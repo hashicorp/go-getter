@@ -58,7 +58,7 @@ func (cerr *ChecksumError) Error() string {
 // Checksum computes the Checksum for filePath using the hashing algorithm from
 // c.Hash and compares it to c.Value. If those values differ a ChecksumError
 // will be returned.
-func (c *FileChecksum) Checksum(filePath string) error {
+func (c *FileChecksum) ChecksumFile(filePath string) error {
 	f, err := os.Open(filePath)
 	if err != nil {
 		return fmt.Errorf("Failed to open file for checksum: %s", err)
@@ -79,6 +79,26 @@ func (c *FileChecksum) Checksum(filePath string) error {
 		}
 	}
 
+	return nil
+}
+
+// Checksum computes the Checksum for stream using the hashing algorithm from
+// c.Hash and compares it to c.Value. If those values differ a ChecksumError
+// will be returned.
+func (c *FileChecksum) Checksum(stream io.Reader) error {
+	c.Hash.Reset()
+	if _, err := io.Copy(c.Hash, stream); err != nil {
+		return fmt.Errorf("Failed to hash: %s", err)
+	}
+
+	if actual := c.Hash.Sum(nil); !bytes.Equal(actual, c.Value) {
+		return &ChecksumError{
+			Hash:     c.Hash,
+			Actual:   actual,
+			Expected: c.Value,
+			File:     "stream",
+		}
+	}
 	return nil
 }
 
