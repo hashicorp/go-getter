@@ -6,7 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/ulikunitz/xz"
+	"github.com/xi2/xz"
 )
 
 // XzDecompressor is an implementation of Decompressor that can
@@ -32,7 +32,7 @@ func (d *XzDecompressor) Decompress(dst, src string, dir bool) error {
 	defer f.Close()
 
 	// xz compression is second
-	xzR, err := xz.NewReader(f)
+	xzR, err := xz.NewReader(f, 0)
 	if err != nil {
 		return err
 	}

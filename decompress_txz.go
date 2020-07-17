@@ -5,7 +5,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/ulikunitz/xz"
+	"github.com/xi2/xz"
 )
 
 // TarXzDecompressor is an implementation of Decompressor that can
@@ -30,7 +30,7 @@ func (d *TarXzDecompressor) Decompress(dst, src string, dir bool) error {
 	defer f.Close()
 
 	// xz compression is second
-	txzR, err := xz.NewReader(f)
+	txzR, err := xz.NewReader(f, 0)
 	if err != nil {
 		return fmt.Errorf("Error opening an xz reader for %s: %s", src, err)
 	}
