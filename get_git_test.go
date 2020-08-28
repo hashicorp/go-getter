@@ -172,9 +172,9 @@ func TestGitGetter_shallowCloneWithTag(t *testing.T) {
 	dst := tempDir(t)
 
 	repo := testGitRepo(t, "upstream")
-	repo.commitFile("upstream.txt", "0")
-	repo.commitFile("upstream.txt", "1")
+	repo.commitFile("v1.0.txt", "0")
 	repo.git("tag", "v1.0")
+	repo.commitFile("v1.1.txt", "1")
 
 	// Specifiy a clone depth of 1 with a tag
 	q := repo.url.Query()
@@ -197,6 +197,18 @@ func TestGitGetter_shallowCloneWithTag(t *testing.T) {
 	out := strings.TrimSpace(string(b))
 	if out != "1" {
 		t.Fatalf("expected rev-list count to be '1' but got %v", out)
+	}
+
+	// Verify the v1.0 file exists
+	mainPath := filepath.Join(dst, "v1.0.txt")
+	if _, err := os.Stat(mainPath); err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	// Verify the v1.1 file does not exists
+	mainPath := filepath.Join(dst, "v1.1.txt")
+	if _, err := os.Stat(mainPath); err == nil {
+		t.Fatalf("expected v1.1 file to not exist")
 	}
 }
 
