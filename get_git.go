@@ -27,6 +27,7 @@ type GitGetter struct {
 }
 
 var defaultBranchRegexp = regexp.MustCompile(`\s->\sorigin/(.*)`)
+var lsRemoteSymRefRegexp = regexp.MustCompile(`ref: refs/heads/([^\s]+).*`)
 
 func (g *GitGetter) ClientMode(_ *url.URL) (ClientMode, error) {
 	return ClientModeDir, nil
@@ -114,7 +115,7 @@ func (g *GitGetter) Get(dst string, u *url.URL) error {
 	if err == nil {
 		err = g.update(ctx, dst, sshKeyFile, ref, depth)
 	} else {
-		err = g.clone(ctx, dst, sshKeyFile, u, depth)
+		err = g.clone(ctx, dst, sshKeyFile, u, ref, depth)
 	}
 	if err != nil {
 		return err
@@ -166,14 +167,17 @@ func (g *GitGetter) checkout(dst string, ref string) error {
 	return getRunCommand(cmd)
 }
 
-func (g *GitGetter) clone(ctx context.Context, dst, sshKeyFile string, u *url.URL, depth int) error {
+func (g *GitGetter) clone(ctx context.Context, dst, sshKeyFile string, u *url.URL, ref string, depth int) error {
 	args := []string{"clone"}
 
+	if ref == "" {
+		ref = findRemoteDefaultBranch(u)
+	}
 	if depth > 0 {
 		args = append(args, "--depth", strconv.Itoa(depth))
 	}
 
-	args = append(args, u.String(), dst)
+	args = append(args, "--branch", ref, u.String(), dst)
 	cmd := exec.CommandContext(ctx, "git", args...)
 	setupGitEnv(cmd, sshKeyFile)
 	return getRunCommand(cmd)
@@ -230,6 +234,20 @@ func findDefaultBranch(dst string) string {
 	cmd.Stdout = &stdoutbuf
 	err := cmd.Run()
 	matches := defaultBranchRegexp.FindStringSubmatch(stdoutbuf.String())
+	if err != nil || matches == nil {
+		return "master"
+	}
+	return matches[len(matches)-1]
+}
+
+// findRemoteDefaultBranch checks the remote repo's HEAD symref to return the remote repo's
+// default branch. "master" is returned if no HEAD symref exists.
+func findRemoteDefaultBranch(u *url.URL) string {
+	var stdoutbuf bytes.Buffer
+	cmd := exec.Command("git", "ls-remote", "--symref", u.String(), "HEAD")
+	cmd.Stdout = &stdoutbuf
+	err := cmd.Run()
+	matches := lsRemoteSymRefRegexp.FindStringSubmatch(stdoutbuf.String())
 	if err != nil || matches == nil {
 		return "master"
 	}
