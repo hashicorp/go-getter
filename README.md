@@ -304,6 +304,19 @@ The "scp-style" addresses _cannot_ be used in conjunction with the `ssh://`
 scheme prefix, because in that case the colon is used to mark an optional
 port number to connect on, rather than to delimit the path from the host.
 
+Git repositories that reside on the local filesystem can be accessed by
+prefixing the `git::` forcing token to the file path. Both absolute and
+relative paths are accepted, and may contain query parameters and/or the a
+double-slash `//` subdirectory component. Some examples:
+
+#### Git File Path Examples
+
+- `git::/path/to/some/git/repo`
+- `git::/path/to/some/git/repo//some/subdir`
+- `git::/path/to/some/git/repo//some/subdir?ref=v1.2.3`
+- `git::./path/to/some/git/repo//some/subdir?ref=v1.2.3`
+- `git::../../path/to/some/git/repo//some/subdir?ref=v1.2.3`
+
 ### Mercurial (`hg`)
 
   * `rev` - The Mercurial revision to checkout.
