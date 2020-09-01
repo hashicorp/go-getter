@@ -179,20 +179,15 @@ func (g *Getter) getObject(ctx context.Context, client *s3.S3, dst, bucket, key,
 
 func (g *Getter) getAWSConfig(region string, url *url.URL, creds *credentials.Credentials) *aws.Config {
 	conf := &aws.Config{}
-	if creds == nil {
-		// Grab the metadata URL
-		metadataURL := os.Getenv("AWS_METADATA_URL")
-		if metadataURL == "" {
-			metadataURL = "http://169.254.169.254:80/latest"
-		}
-
+	metadataURLOverride := os.Getenv("AWS_METADATA_URL")
+	if creds == nil && metadataURLOverride != "" {
 		creds = credentials.NewChainCredentials(
 			[]credentials.Provider{
 				&credentials.EnvProvider{},
 				&credentials.SharedCredentialsProvider{Filename: "", Profile: ""},
 				&ec2rolecreds.EC2RoleProvider{
 					Client: ec2metadata.New(session.New(&aws.Config{
-						Endpoint: aws.String(metadataURL),
+						Endpoint: aws.String(metadataURLOverride),
 					})),
 				},
 			})
@@ -211,7 +206,7 @@ func (g *Getter) getAWSConfig(region string, url *url.URL, creds *credentials.Cr
 		conf.Region = aws.String(region)
 	}
 
-	return conf
+	return conf.WithCredentialsChainVerboseErrors(true)
 }
 
 func (g *Getter) parseUrl(u *url.URL) (region, bucket, path, version string, creds *credentials.Credentials, err error) {
