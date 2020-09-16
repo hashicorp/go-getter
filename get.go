@@ -80,6 +80,7 @@ func init() {
 			new(GitHubDetector),
 			new(GitDetector),
 			new(BitBucketDetector),
+			new(GitLabDetector),
 		},
 		},
 		new(HgGetter),
