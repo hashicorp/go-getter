@@ -30,9 +30,10 @@ func (g *S3Getter) ClientMode(u *url.URL) (ClientMode, error) {
 	}
 
 	// Create client config
-	config := g.getAWSConfig(region, u, creds)
-	sess := session.New(config)
-	client := s3.New(sess)
+	client, err := g.newS3Client(region, u, creds)
+	if err != nil {
+		return 0, err
+	}
 
 	// List the object(s) at the given prefix
 	req := &s3.ListObjectsInput{
@@ -88,9 +89,10 @@ func (g *S3Getter) Get(dst string, u *url.URL) error {
 		return err
 	}
 
-	config := g.getAWSConfig(region, u, creds)
-	sess := session.New(config)
-	client := s3.New(sess)
+	client, err := g.newS3Client(region, u, creds)
+	if err != nil {
+		return err
+	}
 
 	// List files in path, keep listing until no more objects are found
 	lastMarker := ""
@@ -144,9 +146,11 @@ func (g *S3Getter) GetFile(dst string, u *url.URL) error {
 		return err
 	}
 
-	config := g.getAWSConfig(region, u, creds)
-	sess := session.New(config)
-	client := s3.New(sess)
+	client, err := g.newS3Client(region, u, creds)
+	if err != nil {
+		return err
+	}
+
 	return g.getObject(ctx, client, dst, bucket, path, version)
 }
 
@@ -260,4 +264,26 @@ func (g *S3Getter) parseUrl(u *url.URL) (region, bucket, path, version string, c
 	}
 
 	return
+}
+
+func (g *S3Getter) newS3Client(
+	region string, url *url.URL, creds *credentials.Credentials,
+) (*s3.S3, error) {
+	var sess *session.Session
+
+	if profile := url.Query().Get("aws_profile"); profile != "" {
+		var err error
+		sess, err = session.NewSessionWithOptions(session.Options{
+			Profile:           profile,
+			SharedConfigState: session.SharedConfigEnable,
+		})
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		config := g.getAWSConfig(region, url, creds)
+		sess = session.New(config)
+	}
+
+	return s3.New(sess), nil
 }
