@@ -11,7 +11,9 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/credentials/ec2rolecreds"
+	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
 	"github.com/aws/aws-sdk-go/aws/ec2metadata"
+	"github.com/aws/aws-sdk-go/aws/endpoints"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 )
@@ -24,13 +26,13 @@ type S3Getter struct {
 
 func (g *S3Getter) ClientMode(u *url.URL) (ClientMode, error) {
 	// Parse URL
-	region, bucket, path, _, creds, err := g.parseUrl(u)
+	region, bucket, path, _, role, creds, err := g.parseUrl(u)
 	if err != nil {
 		return 0, err
 	}
 
 	// Create client config
-	client, err := g.newS3Client(region, u, creds)
+	client, err := g.newS3Client(region, u, creds, role)
 	if err != nil {
 		return 0, err
 	}
@@ -66,7 +68,7 @@ func (g *S3Getter) Get(dst string, u *url.URL) error {
 	ctx := g.Context()
 
 	// Parse URL
-	region, bucket, path, _, creds, err := g.parseUrl(u)
+	region, bucket, path, _, role, creds, err := g.parseUrl(u)
 	if err != nil {
 		return err
 	}
@@ -89,7 +91,7 @@ func (g *S3Getter) Get(dst string, u *url.URL) error {
 		return err
 	}
 
-	client, err := g.newS3Client(region, u, creds)
+	client, err := g.newS3Client(region, u, creds, role)
 	if err != nil {
 		return err
 	}
@@ -141,12 +143,12 @@ func (g *S3Getter) Get(dst string, u *url.URL) error {
 
 func (g *S3Getter) GetFile(dst string, u *url.URL) error {
 	ctx := g.Context()
-	region, bucket, path, version, creds, err := g.parseUrl(u)
+	region, bucket, path, version, role, creds, err := g.parseUrl(u)
 	if err != nil {
 		return err
 	}
 
-	client, err := g.newS3Client(region, u, creds)
+	client, err := g.newS3Client(region, u, creds, role)
 	if err != nil {
 		return err
 	}
@@ -176,7 +178,7 @@ func (g *S3Getter) getObject(ctx context.Context, client *s3.S3, dst, bucket, ke
 	return copyReader(dst, resp.Body, 0666, g.client.umask())
 }
 
-func (g *S3Getter) getAWSConfig(region string, url *url.URL, creds *credentials.Credentials) *aws.Config {
+func (g *S3Getter) getAWSConfig(region string, url *url.URL, creds *credentials.Credentials, role string) *aws.Config {
 	conf := &aws.Config{}
 	metadataURLOverride := os.Getenv("AWS_METADATA_URL")
 	if creds == nil && metadataURLOverride != "" {
@@ -190,6 +192,11 @@ func (g *S3Getter) getAWSConfig(region string, url *url.URL, creds *credentials.
 					})),
 				},
 			})
+	}
+
+	if role != "" {
+		assumeConf := &aws.Config{Credentials: creds, STSRegionalEndpoint: endpoints.RegionalSTSEndpoint}
+		creds = stscreds.NewCredentials(session.New(assumeConf), role)
 	}
 
 	if creds != nil {
@@ -208,7 +215,7 @@ func (g *S3Getter) getAWSConfig(region string, url *url.URL, creds *credentials.
 	return conf.WithCredentialsChainVerboseErrors(true)
 }
 
-func (g *S3Getter) parseUrl(u *url.URL) (region, bucket, path, version string, creds *credentials.Credentials, err error) {
+func (g *S3Getter) parseUrl(u *url.URL) (region, bucket, path, version, role string, creds *credentials.Credentials, err error) {
 	// This just check whether we are dealing with S3 or
 	// any other S3 compliant service. S3 has a predictable
 	// url as others do not
@@ -263,11 +270,13 @@ func (g *S3Getter) parseUrl(u *url.URL) (region, bucket, path, version string, c
 		)
 	}
 
+	role = u.Query().Get("aws_iam_role")
+
 	return
 }
 
 func (g *S3Getter) newS3Client(
-	region string, url *url.URL, creds *credentials.Credentials,
+	region string, url *url.URL, creds *credentials.Credentials, role string,
 ) (*s3.S3, error) {
 	var sess *session.Session
 
@@ -281,7 +290,7 @@ func (g *S3Getter) newS3Client(
 			return nil, err
 		}
 	} else {
-		config := g.getAWSConfig(region, url, creds)
+		config := g.getAWSConfig(region, url, creds, role)
 		sess = session.New(config)
 	}
 

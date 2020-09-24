@@ -111,6 +111,22 @@ func TestS3Getter_GetFile_notfound(t *testing.T) {
 	}
 }
 
+func TestS3Getter_GetFile_role(t *testing.T) {
+	g := new(S3Getter)
+	dst := tempTestFile(t)
+
+	// Download
+	err := g.GetFile(
+		dst, testURL("https://s3.amazonaws.com/hc-oss-test/go-getter/folder/main.tf?aws_iam_role=arn:aws:iam::123456789012:role/S3Access"))
+	if err == nil {
+		t.Fatalf("expected error, got none")
+	}
+
+	if reqerr, ok := err.(awserr.RequestFailure); !ok || reqerr.StatusCode() != 403 {
+		t.Fatalf("expected AccessDenied error")
+	}
+}
+
 func TestS3Getter_ClientMode_dir(t *testing.T) {
 	g := new(S3Getter)
 
@@ -180,6 +196,7 @@ func TestS3Getter_Url(t *testing.T) {
 		bucket  string
 		path    string
 		version string
+		role    string
 	}{
 		{
 			name:    "AWSv1234",
@@ -188,6 +205,7 @@ func TestS3Getter_Url(t *testing.T) {
 			bucket:  "bucket",
 			path:    "foo/bar.baz",
 			version: "1234",
+			role:    "",
 		},
 		{
 			name:    "localhost-1",
@@ -196,6 +214,7 @@ func TestS3Getter_Url(t *testing.T) {
 			bucket:  "test-bucket",
 			path:    "hello.txt",
 			version: "1",
+			role:    "",
 		},
 		{
 			name:    "localhost-2",
@@ -204,6 +223,7 @@ func TestS3Getter_Url(t *testing.T) {
 			bucket:  "test-bucket",
 			path:    "hello.txt",
 			version: "1",
+			role:    "",
 		},
 		{
 			name:    "localhost-3",
@@ -212,6 +232,16 @@ func TestS3Getter_Url(t *testing.T) {
 			bucket:  "test-bucket",
 			path:    "hello.txt",
 			version: "",
+			role:    "",
+		},
+		{
+			name:    "AWSv1234",
+			url:     "s3::https://s3-eu-west-1.amazonaws.com/bucket/foo/bar.baz?aws_iam_role=arn:aws:iam::123456789012:role/S3Access",
+			region:  "eu-west-1",
+			bucket:  "bucket",
+			path:    "foo/bar.baz",
+			version: "",
+			role:    "arn:aws:iam::123456789012:role/S3Access",
 		},
 	}
 
@@ -228,7 +258,7 @@ func TestS3Getter_Url(t *testing.T) {
 				t.Fatalf("expected forced protocol to be s3")
 			}
 
-			region, bucket, path, version, creds, err := g.parseUrl(u)
+			region, bucket, path, version, role, creds, err := g.parseUrl(u)
 
 			if err != nil {
 				t.Fatalf("err: %s", err)
@@ -244,6 +274,9 @@ func TestS3Getter_Url(t *testing.T) {
 			}
 			if version != pt.version {
 				t.Fatalf("expected %s, got %s", pt.version, version)
+			}
+			if role != pt.role {
+				t.Fatalf("execpected %s, got %s", pt.role, role)
 			}
 			if &creds == nil {
 				t.Fatalf("expected to not be nil")

@@ -319,6 +319,7 @@ are also supported. If the query parameters are present, these take priority.
   * `aws_access_key_secret` - AWS access key secret.
   * `aws_access_token` - AWS access token if this is being used.
   * `aws_profile` - Use this profile from local ~/.aws/ config. Takes priority over the other three.
+  * `aws_iam_role` - Use this role on-top of the other provided credentials. Is ignored when using a profile as that already has a way to describe the same.
 
 #### Using IAM Instance Profiles with S3
 
