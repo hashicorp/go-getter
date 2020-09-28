@@ -29,10 +29,6 @@ func TestBitBucketDetector(t *testing.T) {
 			"bitbucket.org/hashicorp/tf-test-git.git",
 			"git::https://bitbucket.org/hashicorp/tf-test-git.git",
 		},
-		{
-			"bitbucket.org/hashicorp/tf-test-hg",
-			"hg::https://bitbucket.org/hashicorp/tf-test-hg",
-		},
 	}
 
 	pwd := "/pwd"
