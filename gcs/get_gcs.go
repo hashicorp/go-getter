@@ -73,7 +73,7 @@ func (g *Getter) Get(ctx context.Context, req *getter.Request) error {
 	}
 
 	// Create all the parent directories
-	if err := os.MkdirAll(filepath.Dir(req.Dst), req.mode(0755)); err != nil {
+	if err := os.MkdirAll(filepath.Dir(req.Dst), req.Mode(0755)); err != nil {
 		return err
 	}
 
@@ -132,7 +132,7 @@ func (g *Getter) getObject(ctx context.Context, client *storage.Client, dst, buc
 	defer rc.Close()
 
 	// Create all the parent directories
-	if err := os.MkdirAll(filepath.Dir(dst), g.client.mode(0755)); err != nil {
+	if err := os.MkdirAll(filepath.Dir(dst), req.Mode(0755)); err != nil {
 		return err
 	}
 

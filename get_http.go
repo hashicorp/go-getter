@@ -116,9 +116,9 @@ func (g *HttpGetter) Get(ctx context.Context, req *Request) error {
 	// into a temporary directory, then copy over the proper subdir.
 	source, subDir := SourceDirSubdir(source)
 	req = &Request{
-		Mode: ModeDir,
-		Src:  source,
-		Dst:  req.Dst,
+		GetMode: ModeDir,
+		Src:     source,
+		Dst:     req.Dst,
 	}
 	if subDir == "" {
 		_, err = DefaultClient.Get(ctx, req)
@@ -142,11 +142,11 @@ func (g *HttpGetter) GetFile(ctx context.Context, req *Request) error {
 		}
 	}
 	// Create all the parent directories if needed
-	if err := os.MkdirAll(filepath.Dir(req.Dst), req.mode(0755)); err != nil {
+	if err := os.MkdirAll(filepath.Dir(req.Dst), req.Mode(0755)); err != nil {
 		return err
 	}
 
-	f, err := os.OpenFile(req.Dst, os.O_RDWR|os.O_CREATE, req.mode(0666))
+	f, err := os.OpenFile(req.Dst, os.O_RDWR|os.O_CREATE, req.Mode(0666))
 	if err != nil {
 		return err
 	}
@@ -252,7 +252,7 @@ func (g *HttpGetter) getSubdir(ctx context.Context, req *Request, source, subDir
 	}
 
 	// Make the final destination
-	if err := os.MkdirAll(req.Dst, req.mode(0755)); err != nil {
+	if err := os.MkdirAll(req.Dst, req.Mode(0755)); err != nil {
 		return err
 	}
 

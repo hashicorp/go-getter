@@ -36,9 +36,9 @@ func TestGetter(t *testing.T) {
 	g := new(Getter)
 	dst := testing_helper.TempDir(t)
 	req := &getter.Request{
-		Src:  "s3.amazonaws.com/hc-oss-test/go-getter/folder",
-		Dst:  dst,
-		Mode: getter.ModeAny,
+		Src:     "s3.amazonaws.com/hc-oss-test/go-getter/folder",
+		Dst:     dst,
+		GetMode: getter.ModeAny,
 	}
 
 	c := getter.Client{
@@ -93,9 +93,9 @@ func TestGetter_GetFile(t *testing.T) {
 	defer os.RemoveAll(filepath.Dir(dst))
 
 	req := &getter.Request{
-		Dst:  dst,
-		Src:  "s3.amazonaws.com/hc-oss-test/go-getter/folder/main.tf",
-		Mode: getter.ModeFile,
+		Dst:     dst,
+		Src:     "s3.amazonaws.com/hc-oss-test/go-getter/folder/main.tf",
+		GetMode: getter.ModeFile,
 	}
 
 	c := getter.Client{
@@ -123,9 +123,9 @@ func TestGetter_GetFile_badParams(t *testing.T) {
 	defer os.RemoveAll(filepath.Dir(dst))
 
 	req := &getter.Request{
-		Src:  "s3.amazonaws.com/hc-oss-test/go-getter/folder/main.tf?aws_access_key_id=foo&aws_access_key_secret=bar&aws_access_token=baz",
-		Dst:  dst,
-		Mode: getter.ModeFile,
+		Src:     "s3.amazonaws.com/hc-oss-test/go-getter/folder/main.tf?aws_access_key_id=foo&aws_access_key_secret=bar&aws_access_token=baz",
+		Dst:     dst,
+		GetMode: getter.ModeFile,
 	}
 
 	c := getter.Client{
@@ -151,9 +151,9 @@ func TestGetter_GetFile_notfound(t *testing.T) {
 	defer os.RemoveAll(filepath.Dir(dst))
 
 	req := &getter.Request{
-		Src:  "s3.amazonaws.com/hc-oss-test/go-getter/folder/404.tf",
-		Dst:  dst,
-		Mode: getter.ModeFile,
+		Src:     "s3.amazonaws.com/hc-oss-test/go-getter/folder/404.tf",
+		Dst:     dst,
+		GetMode: getter.ModeFile,
 	}
 
 	c := getter.Client{

@@ -100,9 +100,9 @@ func TestGetter_GetFile(t *testing.T) {
 	ctx := context.Background()
 
 	req := &getter.Request{
-		Src:  "www.googleapis.com/storage/v1/go-getter-test/go-getter/folder/main.tf",
-		Dst:  dst,
-		Mode: getter.ModeFile,
+		Src:     "www.googleapis.com/storage/v1/go-getter-test/go-getter/folder/main.tf",
+		Dst:     dst,
+		GetMode: getter.ModeFile,
 	}
 
 	c := getter.Client{

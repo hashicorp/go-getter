@@ -84,7 +84,7 @@ func (g *Getter) Get(ctx context.Context, req *getter.Request) error {
 	}
 
 	// Create all the parent directories
-	if err := os.MkdirAll(filepath.Dir(req.Dst), req.mode(0755)); err != nil {
+	if err := os.MkdirAll(filepath.Dir(req.Dst), req.Mode(0755)); err != nil {
 		return err
 	}
 
@@ -167,7 +167,7 @@ func (g *Getter) getObject(ctx context.Context, client *s3.S3, req *getter.Reque
 	}
 
 	// Create all the parent directories
-	if err := os.MkdirAll(filepath.Dir(dst), req.mode(0755)); err != nil {
+	if err := os.MkdirAll(filepath.Dir(dst), req.Mode(0755)); err != nil {
 		return err
 	}
 

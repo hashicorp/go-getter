@@ -38,9 +38,9 @@ type Request struct {
 	// decompressing an archive
 	Umask os.FileMode
 
-	// Mode is the method of download the client will use. See Mode
-	// for documentation.
-	Mode Mode
+	// GetMode is the method of download the client will use. See Mode for
+	// documentation.
+	GetMode Mode
 
 	// Copy, in local file mode if set to true, will copy data instead of using
 	// a symlink. If false, attempts to symlink to speed up the operation and
@@ -74,9 +74,9 @@ func (c *Request) umask() os.FileMode {
 	return c.Umask
 }
 
-// mode returns file mode umasked by the Request umask
-func (c *Request) mode(m os.FileMode) os.FileMode {
-	return mode(m, c.umask())
+// Mode returns file Mode umasked by the Request umask
+func (req *Request) Mode(m os.FileMode) os.FileMode {
+	return mode(m, req.umask())
 }
 
 // mode returns the file mode masked by the umask
