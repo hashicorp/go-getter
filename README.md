@@ -83,6 +83,8 @@ is built-in by default:
     file URLs.
   * GitHub URLs, such as "github.com/mitchellh/vagrant" are automatically
     changed to Git protocol over HTTP.
+  * GitLab URLs, such as "gitlab.com/inkscape/inkscape" are automatically 
+    changed to Git protocol over HTTP.
   * BitBucket URLs, such as "bitbucket.org/mitchellh/vagrant" are automatically
     changed to a Git or mercurial protocol using the BitBucket API.
 
