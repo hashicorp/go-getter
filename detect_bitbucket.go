@@ -58,8 +58,6 @@ func (d *BitBucketDetector) detectHTTP(src string) (string, bool, error) {
 		}
 
 		return "git::" + u.String(), true, nil
-	case "hg":
-		return "hg::" + u.String(), true, nil
 	default:
 		return "", true, fmt.Errorf("unknown BitBucket SCM type: %s", info.SCM)
 	}
