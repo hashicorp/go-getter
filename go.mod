@@ -9,7 +9,7 @@ require (
 	github.com/hashicorp/go-version v1.1.0
 	github.com/mitchellh/go-homedir v1.0.0
 	github.com/mitchellh/go-testing-interface v1.0.0
-	github.com/ulikunitz/xz v0.5.5
+	github.com/ulikunitz/xz v0.5.8
 )
 
 go 1.13
