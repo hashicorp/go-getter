@@ -64,3 +64,22 @@ type Request struct {
 func (req *Request) URL() *url.URL {
 	return req.u
 }
+
+// umask returns the effective umask for the Request, defaulting to the process
+// umask
+func (c *Request) umask() os.FileMode {
+	if c == nil {
+		return 0
+	}
+	return c.Umask
+}
+
+// mode returns file mode umasked by the Request umask
+func (c *Request) mode(m os.FileMode) os.FileMode {
+	return mode(m, c.umask())
+}
+
+// mode returns the file mode masked by the umask
+func mode(mode, umask os.FileMode) os.FileMode {
+	return mode & ^umask
+}

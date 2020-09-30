@@ -35,20 +35,6 @@ type GetResult struct {
 	Dst string
 }
 
-// umask returns the effective umask for the Client, defaulting to the process umask
-func (c *Request) umask() os.FileMode {
-	if c == nil {
-		return 0
-	}
-	return c.Umask
-}
-
-// mode returns file mode umasked by the Request umask
-func (c *Request) mode(mode os.FileMode) os.FileMode {
-	m := mode & ^c.umask()
-	return m
-}
-
 // Get downloads the configured source to the destination.
 func (c *Client) Get(ctx context.Context, req *Request) (*GetResult, error) {
 	if err := c.configure(); err != nil {

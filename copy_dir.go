@@ -7,11 +7,6 @@ import (
 	"strings"
 )
 
-// mode returns the file mode masked by the umask
-func mode(mode, umask os.FileMode) os.FileMode {
-	return mode & ^umask
-}
-
 // copyDir copies the src directory contents into dst. Both directories
 // should already exist.
 //
