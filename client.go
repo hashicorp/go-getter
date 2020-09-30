@@ -35,6 +35,20 @@ type GetResult struct {
 	Dst string
 }
 
+// umask returns the effective umask for the Client, defaulting to the process umask
+func (c *Request) umask() os.FileMode {
+	if c == nil {
+		return 0
+	}
+	return c.Umask
+}
+
+// mode returns file mode umasked by the Request umask
+func (c *Request) mode(mode os.FileMode) os.FileMode {
+	m := mode & ^c.umask()
+	return m
+}
+
 // Get downloads the configured source to the destination.
 func (c *Client) Get(ctx context.Context, req *Request) (*GetResult, error) {
 	if err := c.configure(); err != nil {
@@ -228,7 +242,7 @@ func (c *Client) get(ctx context.Context, req *Request, g Getter) (*GetResult, *
 		if decompressor != nil {
 			// We have a decompressor, so decompress the current destination
 			// into the final destination with the proper mode.
-			err := decompressor.Decompress(decompressDst, req.Dst, decompressDir)
+			err := decompressor.Decompress(decompressDst, req.Dst, decompressDir, req.umask())
 			if err != nil {
 				return nil, &getError{true, err}
 			}
@@ -274,7 +288,7 @@ func (c *Client) get(ctx context.Context, req *Request, g Getter) (*GetResult, *
 		if err := os.RemoveAll(req.realDst); err != nil {
 			return nil, &getError{true, err}
 		}
-		if err := os.MkdirAll(req.realDst, 0755); err != nil {
+		if err := os.MkdirAll(req.realDst, req.mode(0755)); err != nil {
 			return nil, &getError{true, err}
 		}
 
@@ -284,7 +298,7 @@ func (c *Client) get(ctx context.Context, req *Request, g Getter) (*GetResult, *
 			return nil, &getError{true, err}
 		}
 
-		err = copyDir(ctx, req.realDst, subDir, false)
+		err = copyDir(ctx, req.realDst, subDir, false, req.umask())
 		if err != nil {
 			return nil, &getError{false, err}
 		}

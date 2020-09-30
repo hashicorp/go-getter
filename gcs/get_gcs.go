@@ -15,7 +15,7 @@ import (
 
 // Getter is a Getter implementation that will download a module from
 // a GCS bucket.
-type Getter struct {}
+type Getter struct{}
 
 func (g *Getter) Mode(ctx context.Context, u *url.URL) (getter.Mode, error) {
 
@@ -73,7 +73,7 @@ func (g *Getter) Get(ctx context.Context, req *getter.Request) error {
 	}
 
 	// Create all the parent directories
-	if err := os.MkdirAll(filepath.Dir(req.Dst), 0755); err != nil {
+	if err := os.MkdirAll(filepath.Dir(req.Dst), req.mode(0755)); err != nil {
 		return err
 	}
 
@@ -124,7 +124,7 @@ func (g *Getter) GetFile(ctx context.Context, req *getter.Request) error {
 	return g.getObject(ctx, client, req.Dst, bucket, object)
 }
 
-func (g *Getter) getObject(ctx context.Context, client *storage.Client, dst, bucket, object string) error {
+func (g *Getter) getObject(ctx context.Context, client *storage.Client, dst, bucket, object string, umask os.FileMode) error {
 	rc, err := client.Bucket(bucket).Object(object).NewReader(ctx)
 	if err != nil {
 		return err
@@ -132,18 +132,11 @@ func (g *Getter) getObject(ctx context.Context, client *storage.Client, dst, buc
 	defer rc.Close()
 
 	// Create all the parent directories
-	if err := os.MkdirAll(filepath.Dir(dst), 0755); err != nil {
+	if err := os.MkdirAll(filepath.Dir(dst), g.client.mode(0755)); err != nil {
 		return err
 	}
 
-	f, err := os.Create(dst)
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-
-	_, err = getter.Copy(ctx, f, rc)
-	return err
+	return copyReader(dst, rc, 0666, umask)
 }
 
 func (g *Getter) parseURL(u *url.URL) (bucket, path string, err error) {

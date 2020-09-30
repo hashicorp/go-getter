@@ -2,6 +2,7 @@ package getter
 
 import (
 	"net/url"
+	"os"
 )
 
 type Request struct {
@@ -32,6 +33,10 @@ type Request struct {
 	// If both Request.Src and Forced contains a forced getter, the one in the Request.Src will
 	// be considered and will override the value of this field.
 	Forced string
+
+	// Umask is used to mask file permissions when storing local files or
+	// decompressing an archive
+	Umask os.FileMode
 
 	// Mode is the method of download the client will use. See Mode
 	// for documentation.
