@@ -136,7 +136,7 @@ func (g *Getter) getObject(ctx context.Context, client *storage.Client, dst, buc
 		return err
 	}
 
-	return copyReader(dst, rc, 0666, umask)
+	return req.CopyReader(dst, rc, 0666)
 }
 
 func (g *Getter) parseURL(u *url.URL) (bucket, path string, err error) {

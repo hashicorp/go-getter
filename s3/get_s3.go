@@ -171,7 +171,7 @@ func (g *Getter) getObject(ctx context.Context, client *s3.S3, req *getter.Reque
 		return err
 	}
 
-	return copyReader(dst, resp.Body, 0666, req.umask())
+	return req.CopyReader(dst, resp.Body, 0666)
 }
 
 func (g *Getter) getAWSConfig(region string, url *url.URL, creds *credentials.Credentials) *aws.Config {

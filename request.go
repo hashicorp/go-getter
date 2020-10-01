@@ -1,6 +1,7 @@
 package getter
 
 import (
+	"io"
 	"net/url"
 	"os"
 )
@@ -67,11 +68,15 @@ func (req *Request) URL() *url.URL {
 
 // umask returns the effective umask for the Request, defaulting to the process
 // umask
-func (c *Request) umask() os.FileMode {
-	if c == nil {
+func (req *Request) umask() os.FileMode {
+	if req == nil {
 		return 0
 	}
-	return c.Umask
+	return req.Umask
+}
+
+func (req *Request) CopyReader(dst string, src io.Reader, fmode os.FileMode) error {
+	return copyReader(dst, src, fmode, req.Umask)
 }
 
 // Mode returns file Mode umasked by the Request umask
