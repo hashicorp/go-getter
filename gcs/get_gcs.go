@@ -101,7 +101,7 @@ func (g *Getter) Get(ctx context.Context, req *getter.Request) error {
 			}
 			objDst = filepath.Join(req.Dst, objDst)
 			// Download the matching object.
-			err = g.getObject(ctx, client, objDst, bucket, obj.Name)
+			err = g.getObject(ctx, client, req, objDst, bucket, obj.Name)
 			if err != nil {
 				return err
 			}
@@ -121,10 +121,12 @@ func (g *Getter) GetFile(ctx context.Context, req *getter.Request) error {
 	if err != nil {
 		return err
 	}
-	return g.getObject(ctx, client, req.Dst, bucket, object)
+	return g.getObject(ctx, client, req, req.Dst, bucket, object)
 }
 
-func (g *Getter) getObject(ctx context.Context, client *storage.Client, dst, bucket, object string, umask os.FileMode) error {
+func (g *Getter) getObject(
+	ctx context.Context, client *storage.Client, req *getter.Request, dst, bucket, object string,
+) error {
 	rc, err := client.Bucket(bucket).Object(object).NewReader(ctx)
 	if err != nil {
 		return err

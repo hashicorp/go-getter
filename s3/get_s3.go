@@ -88,7 +88,7 @@ func (g *Getter) Get(ctx context.Context, req *getter.Request) error {
 		return err
 	}
 
-	client, err := g.newS3Client(region, u, creds)
+	client, err := g.newS3Client(region, req.URL(), creds)
 	if err != nil {
 		return err
 	}
@@ -129,7 +129,7 @@ func (g *Getter) Get(ctx context.Context, req *getter.Request) error {
 			}
 			objDst = filepath.Join(req.Dst, objDst)
 
-			if err := g.getObject(ctx, client, objDst, bucket, objPath, ""); err != nil {
+			if err := g.getObject(ctx, client, req, objDst, bucket, objPath, ""); err != nil {
 				return err
 			}
 		}
@@ -149,10 +149,10 @@ func (g *Getter) GetFile(ctx context.Context, req *getter.Request) error {
 		return err
 	}
 
-	return g.getObject(ctx, client, req, bucket, path, version)
+	return g.getObject(ctx, client, req, req.Dst, bucket, path, version)
 }
 
-func (g *Getter) getObject(ctx context.Context, client *s3.S3, req *getter.Request, bucket, key, version string) error {
+func (g *Getter) getObject(ctx context.Context, client *s3.S3, req *getter.Request, dst, bucket, key, version string) error {
 	s3req := &s3.GetObjectInput{
 		Bucket: aws.String(bucket),
 		Key:    aws.String(key),
@@ -308,7 +308,7 @@ func (g *Getter) validScheme(scheme string) bool {
 	return scheme == "s3"
 }
 
-func (g *S3Getter) newS3Client(
+func (g *Getter) newS3Client(
 	region string, url *url.URL, creds *credentials.Credentials,
 ) (*s3.S3, error) {
 	var sess *session.Session
