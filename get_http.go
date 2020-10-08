@@ -116,16 +116,16 @@ func (g *HttpGetter) Get(ctx context.Context, req *Request) error {
 	// into a temporary directory, then copy over the proper subdir.
 	source, subDir := SourceDirSubdir(source)
 	req = &Request{
-		Mode: ModeDir,
-		Src:  source,
-		Dst:  req.Dst,
+		GetMode: ModeDir,
+		Src:     source,
+		Dst:     req.Dst,
 	}
 	if subDir == "" {
 		_, err = DefaultClient.Get(ctx, req)
 		return err
 	}
 	// We have a subdir, time to jump some hoops
-	return g.getSubdir(ctx, req.Dst, source, subDir)
+	return g.getSubdir(ctx, req, source, subDir)
 }
 
 // GetFile fetches the file from src and stores it at dst.
@@ -142,11 +142,11 @@ func (g *HttpGetter) GetFile(ctx context.Context, req *Request) error {
 		}
 	}
 	// Create all the parent directories if needed
-	if err := os.MkdirAll(filepath.Dir(req.Dst), 0755); err != nil {
+	if err := os.MkdirAll(filepath.Dir(req.Dst), req.Mode(0755)); err != nil {
 		return err
 	}
 
-	f, err := os.OpenFile(req.Dst, os.O_RDWR|os.O_CREATE, os.FileMode(0666))
+	f, err := os.OpenFile(req.Dst, os.O_RDWR|os.O_CREATE, req.Mode(0666))
 	if err != nil {
 		return err
 	}
@@ -220,7 +220,7 @@ func (g *HttpGetter) GetFile(ctx context.Context, req *Request) error {
 
 // getSubdir downloads the source into the destination, but with
 // the proper subdir.
-func (g *HttpGetter) getSubdir(ctx context.Context, dst, source, subDir string) error {
+func (g *HttpGetter) getSubdir(ctx context.Context, req *Request, source, subDir string) error {
 	// Create a temporary directory to store the full source. This has to be
 	// a non-existent directory.
 	td, tdcloser, err := safetemp.Dir("", "getter")
@@ -247,16 +247,16 @@ func (g *HttpGetter) getSubdir(ctx context.Context, dst, source, subDir string) 
 	}
 
 	// Copy the subdirectory into our actual destination.
-	if err := os.RemoveAll(dst); err != nil {
+	if err := os.RemoveAll(req.Dst); err != nil {
 		return err
 	}
 
 	// Make the final destination
-	if err := os.MkdirAll(dst, 0755); err != nil {
+	if err := os.MkdirAll(req.Dst, req.Mode(0755)); err != nil {
 		return err
 	}
 
-	return copyDir(ctx, dst, sourcePath, false)
+	return copyDir(ctx, req.Dst, sourcePath, false, req.umask())
 }
 
 // parseMeta looks for the first meta tag in the given reader that

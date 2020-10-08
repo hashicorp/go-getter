@@ -409,7 +409,7 @@ func TestGitGetter_sshSCPStyle(t *testing.T) {
 		Dst: dst,
 		Pwd: ".",
 
-		Mode: ModeDir,
+		GetMode: ModeDir,
 	}
 	getter := &GitGetter{[]Detector{
 		new(GitDetector),
@@ -452,7 +452,7 @@ func TestGitGetter_sshExplicitPort(t *testing.T) {
 		Dst: dst,
 		Pwd: ".",
 
-		Mode: ModeDir,
+		GetMode: ModeDir,
 	}
 	client := &Client{
 		Getters: []Getter{new(GitGetter)},
@@ -489,7 +489,7 @@ func TestGitGetter_sshSCPStyleInvalidScheme(t *testing.T) {
 		Dst: dst,
 		Pwd: ".",
 
-		Mode: ModeDir,
+		GetMode: ModeDir,
 	}
 
 	client := &Client{

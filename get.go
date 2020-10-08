@@ -98,9 +98,9 @@ func init() {
 // folder doesn't need to exist. It will be created if it doesn't exist.
 func Get(ctx context.Context, dst, src string) (*GetResult, error) {
 	req := &Request{
-		Src:  src,
-		Dst:  dst,
-		Mode: ModeDir,
+		Src:     src,
+		Dst:     dst,
+		GetMode: ModeDir,
 	}
 	return DefaultClient.Get(ctx, req)
 }
@@ -113,9 +113,9 @@ func Get(ctx context.Context, dst, src string) (*GetResult, error) {
 // archive, it will be unpacked directly into dst.
 func GetAny(ctx context.Context, dst, src string) (*GetResult, error) {
 	req := &Request{
-		Src:  src,
-		Dst:  dst,
-		Mode: ModeAny,
+		Src:     src,
+		Dst:     dst,
+		GetMode: ModeAny,
 	}
 	return DefaultClient.Get(ctx, req)
 }
@@ -124,9 +124,9 @@ func GetAny(ctx context.Context, dst, src string) (*GetResult, error) {
 // dst.
 func GetFile(ctx context.Context, dst, src string) (*GetResult, error) {
 	req := &Request{
-		Src:  src,
-		Dst:  dst,
-		Mode: ModeFile,
+		Src:     src,
+		Dst:     dst,
+		GetMode: ModeFile,
 	}
 	return DefaultClient.Get(ctx, req)
 }

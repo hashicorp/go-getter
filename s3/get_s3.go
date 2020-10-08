@@ -30,9 +30,10 @@ func (g *Getter) Mode(ctx context.Context, u *url.URL) (getter.Mode, error) {
 	}
 
 	// Create client config
-	config := g.getAWSConfig(region, u, creds)
-	sess := session.New(config)
-	client := s3.New(sess)
+	client, err := g.newS3Client(region, u, creds)
+	if err != nil {
+		return 0, err
+	}
 
 	// List the object(s) at the given prefix
 	req := &s3.ListObjectsInput{
@@ -83,13 +84,14 @@ func (g *Getter) Get(ctx context.Context, req *getter.Request) error {
 	}
 
 	// Create all the parent directories
-	if err := os.MkdirAll(filepath.Dir(req.Dst), 0755); err != nil {
+	if err := os.MkdirAll(filepath.Dir(req.Dst), req.Mode(0755)); err != nil {
 		return err
 	}
 
-	config := g.getAWSConfig(region, req.URL(), creds)
-	sess := session.New(config)
-	client := s3.New(sess)
+	client, err := g.newS3Client(region, req.URL(), creds)
+	if err != nil {
+		return err
+	}
 
 	// List files in path, keep listing until no more objects are found
 	lastMarker := ""
@@ -127,7 +129,7 @@ func (g *Getter) Get(ctx context.Context, req *getter.Request) error {
 			}
 			objDst = filepath.Join(req.Dst, objDst)
 
-			if err := g.getObject(ctx, client, objDst, bucket, objPath, ""); err != nil {
+			if err := g.getObject(ctx, client, req, objDst, bucket, objPath, ""); err != nil {
 				return err
 			}
 		}
@@ -142,39 +144,34 @@ func (g *Getter) GetFile(ctx context.Context, req *getter.Request) error {
 		return err
 	}
 
-	config := g.getAWSConfig(region, req.URL(), creds)
-	sess := session.New(config)
-	client := s3.New(sess)
-	return g.getObject(ctx, client, req.Dst, bucket, path, version)
+	client, err := g.newS3Client(region, req.URL(), creds)
+	if err != nil {
+		return err
+	}
+
+	return g.getObject(ctx, client, req, req.Dst, bucket, path, version)
 }
 
-func (g *Getter) getObject(ctx context.Context, client *s3.S3, dst, bucket, key, version string) error {
-	req := &s3.GetObjectInput{
+func (g *Getter) getObject(ctx context.Context, client *s3.S3, req *getter.Request, dst, bucket, key, version string) error {
+	s3req := &s3.GetObjectInput{
 		Bucket: aws.String(bucket),
 		Key:    aws.String(key),
 	}
 	if version != "" {
-		req.VersionId = aws.String(version)
+		s3req.VersionId = aws.String(version)
 	}
 
-	resp, err := client.GetObject(req)
+	resp, err := client.GetObject(s3req)
 	if err != nil {
 		return err
 	}
 
 	// Create all the parent directories
-	if err := os.MkdirAll(filepath.Dir(dst), 0755); err != nil {
+	if err := os.MkdirAll(filepath.Dir(dst), req.Mode(0755)); err != nil {
 		return err
 	}
 
-	f, err := os.Create(dst)
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-
-	_, err = getter.Copy(ctx, f, resp.Body)
-	return err
+	return req.CopyReader(dst, resp.Body, 0666)
 }
 
 func (g *Getter) getAWSConfig(region string, url *url.URL, creds *credentials.Credentials) *aws.Config {
@@ -309,4 +306,26 @@ func (g *Getter) Detect(req *getter.Request) (bool, error) {
 
 func (g *Getter) validScheme(scheme string) bool {
 	return scheme == "s3"
+}
+
+func (g *Getter) newS3Client(
+	region string, url *url.URL, creds *credentials.Credentials,
+) (*s3.S3, error) {
+	var sess *session.Session
+
+	if profile := url.Query().Get("aws_profile"); profile != "" {
+		var err error
+		sess, err = session.NewSessionWithOptions(session.Options{
+			Profile:           profile,
+			SharedConfigState: session.SharedConfigEnable,
+		})
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		config := g.getAWSConfig(region, url, creds)
+		sess = session.New(config)
+	}
+
+	return s3.New(sess), nil
 }

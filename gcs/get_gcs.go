@@ -15,7 +15,7 @@ import (
 
 // Getter is a Getter implementation that will download a module from
 // a GCS bucket.
-type Getter struct {}
+type Getter struct{}
 
 func (g *Getter) Mode(ctx context.Context, u *url.URL) (getter.Mode, error) {
 
@@ -73,7 +73,7 @@ func (g *Getter) Get(ctx context.Context, req *getter.Request) error {
 	}
 
 	// Create all the parent directories
-	if err := os.MkdirAll(filepath.Dir(req.Dst), 0755); err != nil {
+	if err := os.MkdirAll(filepath.Dir(req.Dst), req.Mode(0755)); err != nil {
 		return err
 	}
 
@@ -101,7 +101,7 @@ func (g *Getter) Get(ctx context.Context, req *getter.Request) error {
 			}
 			objDst = filepath.Join(req.Dst, objDst)
 			// Download the matching object.
-			err = g.getObject(ctx, client, objDst, bucket, obj.Name)
+			err = g.getObject(ctx, client, req, objDst, bucket, obj.Name)
 			if err != nil {
 				return err
 			}
@@ -121,10 +121,12 @@ func (g *Getter) GetFile(ctx context.Context, req *getter.Request) error {
 	if err != nil {
 		return err
 	}
-	return g.getObject(ctx, client, req.Dst, bucket, object)
+	return g.getObject(ctx, client, req, req.Dst, bucket, object)
 }
 
-func (g *Getter) getObject(ctx context.Context, client *storage.Client, dst, bucket, object string) error {
+func (g *Getter) getObject(
+	ctx context.Context, client *storage.Client, req *getter.Request, dst, bucket, object string,
+) error {
 	rc, err := client.Bucket(bucket).Object(object).NewReader(ctx)
 	if err != nil {
 		return err
@@ -132,18 +134,11 @@ func (g *Getter) getObject(ctx context.Context, client *storage.Client, dst, buc
 	defer rc.Close()
 
 	// Create all the parent directories
-	if err := os.MkdirAll(filepath.Dir(dst), 0755); err != nil {
+	if err := os.MkdirAll(filepath.Dir(dst), req.Mode(0755)); err != nil {
 		return err
 	}
 
-	f, err := os.Create(dst)
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-
-	_, err = getter.Copy(ctx, f, rc)
-	return err
+	return req.CopyReader(dst, rc, 0666)
 }
 
 func (g *Getter) parseURL(u *url.URL) (bucket, path string, err error) {

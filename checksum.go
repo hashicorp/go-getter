@@ -219,10 +219,10 @@ func (c *Client) checksumFromFile(ctx context.Context, checksumURL string, check
 	defer os.Remove(tempfile)
 
 	req := &Request{
-		Pwd:  pwd,
-		Mode: ModeFile,
-		Src:  checksumURL,
-		Dst:  tempfile,
+		Pwd:     pwd,
+		GetMode: ModeFile,
+		Src:     checksumURL,
+		Dst:     tempfile,
 		// ProgressListener: c.ProgressListener, TODO(adrien): pass progress bar ?
 	}
 

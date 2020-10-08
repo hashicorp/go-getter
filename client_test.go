@@ -2,10 +2,11 @@ package getter
 
 import (
 	"context"
-	testing_helper "github.com/hashicorp/go-getter/v2/helper/testing"
 	"os"
 	"path/filepath"
 	"testing"
+
+	testing_helper "github.com/hashicorp/go-getter/v2/helper/testing"
 )
 
 func TestSmb_ClientGet(t *testing.T) {
@@ -51,9 +52,9 @@ func TestSmb_ClientGet(t *testing.T) {
 			}
 
 			req := &Request{
-				Dst:  dst,
-				Src:  tt.rawURL,
-				Mode: tt.mode,
+				Dst:     dst,
+				Src:     tt.rawURL,
+				GetMode: tt.mode,
 			}
 
 			result, err := DefaultClient.Get(context.Background(), req)

@@ -46,10 +46,10 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	// Build the client
 	req := &getter.Request{
-		Src:  args[0],
-		Dst:  args[1],
-		Pwd:  pwd,
-		Mode: mode,
+		Src:     args[0],
+		Dst:     args[1],
+		Pwd:     pwd,
+		GetMode: mode,
 	}
 	if *progress {
 		req.ProgressListener = defaultProgressBar

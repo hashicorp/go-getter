@@ -1,7 +1,9 @@
 package getter
 
 import (
+	"io"
 	"net/url"
+	"os"
 )
 
 type Request struct {
@@ -33,9 +35,13 @@ type Request struct {
 	// be considered and will override the value of this field.
 	Forced string
 
-	// Mode is the method of download the client will use. See Mode
-	// for documentation.
-	Mode Mode
+	// Umask is used to mask file permissions when storing local files or
+	// decompressing an archive
+	Umask os.FileMode
+
+	// GetMode is the method of download the client will use. See Mode for
+	// documentation.
+	GetMode Mode
 
 	// Copy, in local file mode if set to true, will copy data instead of using
 	// a symlink. If false, attempts to symlink to speed up the operation and
@@ -58,4 +64,27 @@ type Request struct {
 
 func (req *Request) URL() *url.URL {
 	return req.u
+}
+
+// umask returns the effective umask for the Request, defaulting to the process
+// umask
+func (req *Request) umask() os.FileMode {
+	if req == nil {
+		return 0
+	}
+	return req.Umask
+}
+
+func (req *Request) CopyReader(dst string, src io.Reader, fmode os.FileMode) error {
+	return copyReader(dst, src, fmode, req.Umask)
+}
+
+// Mode returns file Mode umasked by the Request umask
+func (req *Request) Mode(m os.FileMode) os.FileMode {
+	return mode(m, req.umask())
+}
+
+// mode returns the file mode masked by the umask
+func mode(mode, umask os.FileMode) os.FileMode {
+	return mode & ^umask
 }
