@@ -48,7 +48,7 @@ func Detect(src string, pwd string, ds []Detector) (string, error) {
 	getSrc, subDir := SourceDirSubdir(getSrc)
 
 	u, err := url.Parse(getSrc)
-	if err == nil && u.Scheme != "" {
+	if err == nil && u.Scheme != "" && u.Scheme != "file" {
 		// Valid URL
 		return src, nil
 	}

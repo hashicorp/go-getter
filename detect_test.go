@@ -13,6 +13,8 @@ func TestDetect(t *testing.T) {
 		Err    bool
 	}{
 		{"./foo", "/foo", "file:///foo/foo", false},
+		{`X:\foo\bar`, `X:\baz`, `file://X:/foo/bar`, false}, // Windows-style full path with drive letter
+		{`.\bar`, `X:\foo`, `file://X:/foo/bar`, false},      // Windows-style relative path
 		{"git::./foo", "/foo", "git::file:///foo/foo", false},
 		{
 			"git::github.com/hashicorp/foo",
