@@ -1,3 +1,9 @@
+### This builds, packages, signs, performs AV and malware scanning, and
+### creates a new GitHub release for the newest version of go-getter. 
+### The GitHub release step performs the actions outlined in 
+### release.goreleaser.yml. A release is triggered when a new tag 
+### is pushed in the format vX.X.X
+
 name: Release
 
 on:
@@ -51,7 +57,7 @@ jobs:
         uses: goreleaser/goreleaser-action@v1
         with:
           version: latest
-          args: release --skip-validate
+          args: release --skip-validate --timeout "60m"
         env:
           PGP_KEY_ID: ${{ secrets.PGP_KEY_ID }}
           CODESIGN_IMAGE: ${{ steps.codesign.outputs.image }}

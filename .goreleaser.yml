@@ -21,7 +21,7 @@ builds:
     flags:
       - -trimpath
     ldflags:
-      - '-X "main.GitCommit=$(shell git rev-parse HEAD)"'
+      - -X main.GitCommit={{ .Commit }}
   - mod_timestamp: '{{ .CommitTimestamp }}'
     targets:
       - linux_386
@@ -29,7 +29,7 @@ builds:
     flags:
       - -trimpath
     ldflags:
-      - '-X "main.GitCommit=$(shell git rev-parse HEAD)"'
+      - -X main.GitCommit={{ .Commit }}
 
 archives:
   - format: zip
