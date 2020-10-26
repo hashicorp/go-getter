@@ -67,6 +67,10 @@ type Client struct {
 	// By default a no op progress listener is used.
 	ProgressListener ProgressTracker
 
+	// FileMatches allows to filter files that should be fetched from a source directory
+	// By default, all files are matched
+	FileMatches FileMatcher
+
 	Options []ClientOption
 }
 

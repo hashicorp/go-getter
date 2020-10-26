@@ -10,6 +10,11 @@ func (c *Client) Configure(opts ...ClientOption) error {
 	if c.Ctx == nil {
 		c.Ctx = context.Background()
 	}
+
+	c.FileMatches = func(string, string) bool {
+		return true
+	}
+
 	c.Options = opts
 	for _, opt := range opts {
 		err := opt(c)

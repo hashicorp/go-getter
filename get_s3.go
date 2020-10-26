@@ -117,6 +117,9 @@ func (g *S3Getter) Get(dst string, u *url.URL) error {
 		for _, object := range resp.Contents {
 			lastMarker = aws.StringValue(object.Key)
 			objPath := aws.StringValue(object.Key)
+			if !g.client.FileMatches(path, objPath) {
+				continue
+			}
 
 			// If the key ends with a backslash assume it is a directory and ignore
 			if strings.HasSuffix(objPath, "/") {
