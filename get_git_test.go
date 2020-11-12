@@ -162,6 +162,61 @@ func TestGitGetter_shallowClone(t *testing.T) {
 	}
 }
 
+func TestGitGetter_branchshallowClone(t *testing.T) {
+	if !testHasGit {
+		t.Log("git not found, skipping")
+		t.Skip()
+	}
+
+	g := new(GitGetter)
+	dst := tempDir(t)
+
+	repo := testGitRepo(t, "branch")
+	repo.git("checkout", "-b", "test-branch")
+	repo.commitFile("branch.txt", "0")
+	repo.commitFile("branch.txt", "1")
+
+	// Specifiy a clone depth of 1
+	q := repo.url.Query()
+	q.Add("depth", "1")
+	q.Add("ref", "test-branch")
+	repo.url.RawQuery = q.Encode()
+
+	if err := g.Get(dst, repo.url); err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	// Verify the main file exists
+	mainPath := filepath.Join(dst, "branch.txt")
+	if _, err := os.Stat(mainPath); err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	// Get again should work
+	if err := g.Get(dst, repo.url); err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	// Verify the main file exists
+	mainPath = filepath.Join(dst, "branch.txt")
+	if _, err := os.Stat(mainPath); err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	// Assert rev-list count is '1'
+	cmd := exec.Command("git", "rev-list", "HEAD", "--count")
+	cmd.Dir = dst
+	b, err := cmd.Output()
+	if err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	out := strings.TrimSpace(string(b))
+	if out != "1" {
+		t.Fatalf("expected rev-list count to be '1' but got %v", out)
+	}
+}
+
 func TestGitGetter_branchUpdate(t *testing.T) {
 	if !testHasGit {
 		t.Skip("git not found, skipping")
