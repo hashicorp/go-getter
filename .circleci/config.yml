@@ -27,7 +27,7 @@ commands:
 jobs:
   linux-tests:
     docker:
-      - image: circleci/golang:<< parameters.go-version >>
+      - image: docker.mirror.hashicorp.services/circleci/golang:<< parameters.go-version >>
     parameters:
       go-version:
         type: string
