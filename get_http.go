@@ -137,7 +137,7 @@ func (g *HttpGetter) Get(dst string, u *url.URL) error {
 // falsely identified as being replaced, or corrupted with extra bytes
 // appended.
 func (g *HttpGetter) GetFile(dst string, src *url.URL) error {
-	ctx := g.Context()
+	//ctx := g.Context()
 	if g.Netrc {
 		// Add auth from netrc if we can
 		if err := addAuthFromNetrc(src); err != nil {
@@ -214,7 +214,7 @@ func (g *HttpGetter) GetFile(dst string, src *url.URL) error {
 	}
 	defer body.Close()
 
-	n, err := Copy(ctx, f, body)
+	n, err := io.Copy(f, io.TeeReader(body, g.client.ProgressListener))
 	if err == nil && n < resp.ContentLength {
 		err = io.ErrShortWrite
 	}

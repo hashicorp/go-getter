@@ -35,4 +35,5 @@ type ProgressTracker interface {
 	// download in progress ( stream ).
 	// When the download is finished, body shall be closed.
 	TrackProgress(src string, currentSize, totalSize int64, stream io.ReadCloser) (body io.ReadCloser)
+	Write(p []byte) (int, error)
 }
