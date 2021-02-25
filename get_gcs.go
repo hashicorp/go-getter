@@ -124,7 +124,6 @@ func (g *GCSGetter) GetFile(dst string, u *url.URL) error {
 	if err != nil {
 		return err
 	}
-	fmt.Println(object)
 
 	client, err := storage.NewClient(ctx)
 	if err != nil {
