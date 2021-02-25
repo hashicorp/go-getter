@@ -6,6 +6,8 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"regexp"
+	"strconv"
 	"strings"
 
 	"cloud.google.com/go/storage"
@@ -22,7 +24,7 @@ func (g *GCSGetter) ClientMode(u *url.URL) (ClientMode, error) {
 	ctx := g.Context()
 
 	// Parse URL
-	bucket, object, err := g.parseURL(u)
+	bucket, object, _, err := g.parseURL(u)
 	if err != nil {
 		return 0, err
 	}
@@ -59,7 +61,7 @@ func (g *GCSGetter) Get(dst string, u *url.URL) error {
 	ctx := g.Context()
 
 	// Parse URL
-	bucket, object, err := g.parseURL(u)
+	bucket, object, _, err := g.parseURL(u)
 	if err != nil {
 		return err
 	}
@@ -105,7 +107,7 @@ func (g *GCSGetter) Get(dst string, u *url.URL) error {
 			}
 			objDst = filepath.Join(dst, objDst)
 			// Download the matching object.
-			err = g.getObject(ctx, client, objDst, bucket, obj.Name)
+			err = g.getObject(ctx, client, objDst, bucket, obj.Name, "")
 			if err != nil {
 				return err
 			}
@@ -118,20 +120,32 @@ func (g *GCSGetter) GetFile(dst string, u *url.URL) error {
 	ctx := g.Context()
 
 	// Parse URL
-	bucket, object, err := g.parseURL(u)
+	bucket, object, fragment, err := g.parseURL(u)
 	if err != nil {
 		return err
 	}
+	fmt.Println(object)
 
 	client, err := storage.NewClient(ctx)
 	if err != nil {
 		return err
 	}
-	return g.getObject(ctx, client, dst, bucket, object)
+	return g.getObject(ctx, client, dst, bucket, object, fragment)
 }
 
-func (g *GCSGetter) getObject(ctx context.Context, client *storage.Client, dst, bucket, object string) error {
-	rc, err := client.Bucket(bucket).Object(object).NewReader(ctx)
+func (g *GCSGetter) getObject(ctx context.Context, client *storage.Client, dst, bucket, object, fragment string) error {
+	var rc *storage.Reader
+	var err error
+	fragmentHasGeneration := regexp.MustCompile("^\\d+$").MatchString(fragment)
+	if fragmentHasGeneration {
+		generation, err := strconv.ParseInt(fragment, 10, 64)
+		if err != nil {
+			return err
+		}
+		rc, err = client.Bucket(bucket).Object(object).Generation(generation).NewReader(ctx)
+	} else {
+		rc, err = client.Bucket(bucket).Object(object).NewReader(ctx)
+	}
 	if err != nil {
 		return err
 	}
@@ -145,7 +159,7 @@ func (g *GCSGetter) getObject(ctx context.Context, client *storage.Client, dst, 
 	return copyReader(dst, rc, 0666, g.client.umask())
 }
 
-func (g *GCSGetter) parseURL(u *url.URL) (bucket, path string, err error) {
+func (g *GCSGetter) parseURL(u *url.URL) (bucket, path, fragment string, err error) {
 	if strings.Contains(u.Host, "googleapis.com") {
 		hostParts := strings.Split(u.Host, ".")
 		if len(hostParts) != 3 {
@@ -160,6 +174,7 @@ func (g *GCSGetter) parseURL(u *url.URL) (bucket, path string, err error) {
 		}
 		bucket = pathParts[3]
 		path = pathParts[4]
+		fragment = u.Fragment
 	}
 	return
 }
