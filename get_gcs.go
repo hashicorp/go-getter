@@ -6,7 +6,6 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strconv"
 	"strings"
 
@@ -135,8 +134,7 @@ func (g *GCSGetter) GetFile(dst string, u *url.URL) error {
 func (g *GCSGetter) getObject(ctx context.Context, client *storage.Client, dst, bucket, object, fragment string) error {
 	var rc *storage.Reader
 	var err error
-	fragmentHasGeneration := regexp.MustCompile("^\\d+$").MatchString(fragment)
-	if fragmentHasGeneration {
+	if fragment != "" {
 		generation, err := strconv.ParseInt(fragment, 10, 64)
 		if err != nil {
 			return err
