@@ -103,7 +103,7 @@ func TestGCSGetter_GetGenerationFile(t *testing.T) {
 		t.Fatalf("err: %s", err)
 	}
 
-	// Verify the main file exists
+	// Verify contents are valid for this generation
 	content, err := ioutil.ReadFile(dst)
 	if err != nil {
 		t.Fatalf("err: %s", err)
@@ -119,7 +119,7 @@ func TestGCSGetter_GetGenerationFile(t *testing.T) {
 		t.Fatalf("err: %s", err)
 	}
 
-	// Verify the main file exists
+	// Verify contents are valid for this generation
 	content, err = ioutil.ReadFile(dst)
 	if err != nil {
 		t.Fatalf("err: %s", err)
