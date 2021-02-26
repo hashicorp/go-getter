@@ -125,7 +125,7 @@ func TestGCSGetter_GetGenerationFile(t *testing.T) {
 		t.Fatalf("err: %s", err)
 	}
 	if string(content) != "b" {
-		t.Fatalf("expected file contents from generation to be `a` but got `%s`", content)
+		t.Fatalf("expected file contents from generation to be `b` but got `%s`", content)
 	}
 
 }
