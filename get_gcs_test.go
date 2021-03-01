@@ -1,6 +1,7 @@
 package getter
 
 import (
+	"io/ioutil"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -86,6 +87,47 @@ func TestGCSGetter_GetFile(t *testing.T) {
 		t.Fatalf("err: %s", err)
 	}
 	assertContents(t, dst, "# Main\n")
+}
+
+func TestGCSGetter_GetGenerationFile(t *testing.T) {
+	defer initGCPCredentials(t)()
+
+	g := new(GCSGetter)
+	dst := tempTestFile(t)
+	defer os.RemoveAll(filepath.Dir(dst))
+
+	// Download
+	err := g.GetFile(
+		dst, testURL("https://www.googleapis.com/storage/v1/go-getter-testcase-data/DO_NOT_DELETE/generation_test.txt#1614317688843055"))
+	if err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	// Verify contents are valid for this generation
+	content, err := ioutil.ReadFile(dst)
+	if err != nil {
+		t.Fatalf("err: %s", err)
+	}
+	if string(content) != "a" {
+		t.Fatalf("expected file contents from generation to be `a` but got `%s`", content)
+	}
+
+	// Download
+	err = g.GetFile(
+		dst, testURL("https://www.googleapis.com/storage/v1/go-getter-testcase-data/DO_NOT_DELETE/generation_test.txt#1614317705239142"))
+	if err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	// Verify contents are valid for this generation
+	content, err = ioutil.ReadFile(dst)
+	if err != nil {
+		t.Fatalf("err: %s", err)
+	}
+	if string(content) != "b" {
+		t.Fatalf("expected file contents from generation to be `b` but got `%s`", content)
+	}
+
 }
 
 func TestGCSGetter_GetFile_notfound(t *testing.T) {
@@ -180,7 +222,7 @@ func TestGCSGetter_Url(t *testing.T) {
 				t.Fatalf("expected forced protocol to be gcs")
 			}
 
-			bucket, path, err := g.parseURL(u)
+			bucket, path, _, err := g.parseURL(u)
 
 			if err != nil {
 				t.Fatalf("err: %s", err)
