@@ -34,6 +34,11 @@ func TestS3Detector(t *testing.T) {
 			"bucket.s3-eu-west-1.amazonaws.com/foo/bar.baz",
 			"s3::https://s3-eu-west-1.amazonaws.com/bucket/foo/bar.baz",
 		},
+		// 5 parts Virtual hosted-style
+		{
+			"bucket.s3.eu-west-1.amazonaws.com/foo/bar.baz",
+			"s3::https://s3.eu-west-1.amazonaws.com/bucket/foo/bar.baz",
+		},
 		// Path style
 		{
 			"s3.amazonaws.com/bucket/foo",
