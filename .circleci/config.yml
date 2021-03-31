@@ -15,6 +15,9 @@ commands:
         type: string
       platform:
         type: string
+      govet:
+        type: string
+        default: ""
     steps:
       - run:
           name: "Run go tests"
@@ -22,7 +25,7 @@ commands:
             PACKAGE_NAMES=$(go list ./... | circleci tests split --split-by=timings --timings-type=classname)
             echo "Running $(echo $PACKAGE_NAMES | wc -w) packages"
             echo $PACKAGE_NAMES
-            << parameters.cmd >> --format=short-verbose --junitfile $TEST_RESULTS_PATH/go-getter/gotestsum-report.xml -- -p 2 -cover -coverprofile=<< parameters.platform >>_cov_$CIRCLE_NODE_INDEX.part $PACKAGE_NAMES
+            << parameters.cmd >> --format=short-verbose --junitfile $TEST_RESULTS_PATH/go-getter/gotestsum-report.xml -- -p 2 -cover -race -vet=<< parameters.govet >> -coverprofile=<< parameters.platform >>_cov_$CIRCLE_NODE_INDEX.part $PACKAGE_NAMES
         
 jobs:
   linux-tests:
@@ -140,6 +143,9 @@ jobs:
       - run-gotests:
           cmd: "./gotestsum.exe"
           platform: "win"
+          # Otherwise gcc is required for race detector
+          # See https://github.com/golang/go/issues/27089
+          govet: "off"
 
       # Save coverage report parts
       - persist_to_workspace:
