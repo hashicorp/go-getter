@@ -298,6 +298,23 @@ func TestHttpGetter_file(t *testing.T) {
 	assertContents(t, dst, "Hello\n")
 }
 
+// TestHttpGetter_http2server tests that http.Request is not reused
+// between HEAD & GET, which would lead to race condition in HTTP/2.
+// This test is only meaningful for the race detector (go test -race).
+func TestHttpGetter_http2server(t *testing.T) {
+	g := new(HttpGetter)
+	src, err := url.Parse("https://releases.hashicorp.com/terraform/0.14.0/terraform_0.14.0_SHA256SUMS")
+	if err != nil {
+		t.Fatal(err)
+	}
+	dst := tempTestFile(t)
+
+	err = g.GetFile(dst, src)
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
 func TestHttpGetter_auth(t *testing.T) {
 	ln := testHttpServer(t)
 	defer ln.Close()
