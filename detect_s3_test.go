@@ -27,6 +27,10 @@ func TestS3Detector(t *testing.T) {
 			"s3::https://s3-eu-west-1.amazonaws.com/bucket/foo",
 		},
 		{
+			"bucket.s3-cn-north-1.amazonaws.com.cn/foo",
+			"s3::https://s3-cn-north-1.amazonaws.com.cn/bucket/foo",
+		},
+		{
 			"bucket.s3-eu-west-1.amazonaws.com/foo/bar",
 			"s3::https://s3-eu-west-1.amazonaws.com/bucket/foo/bar",
 		},
@@ -38,6 +42,10 @@ func TestS3Detector(t *testing.T) {
 		{
 			"s3.amazonaws.com/bucket/foo",
 			"s3::https://s3.amazonaws.com/bucket/foo",
+		},
+		{
+			"s3.amazonaws.com.cn/bucket/foo",
+			"s3::https://s3.amazonaws.com.cn/bucket/foo",
 		},
 		{
 			"s3.amazonaws.com/bucket/foo/bar",
