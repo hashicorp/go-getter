@@ -98,7 +98,7 @@ func TestGCSGetter_GetGenerationFile(t *testing.T) {
 
 	// Download
 	err := g.GetFile(
-		dst, testURL("https://www.googleapis.com/storage/v1/go-getter-testcase-data/DO_NOT_DELETE/generation_test.txt#1614317688843055"))
+		dst, testURL("https://www.googleapis.com/storage/v1/go-getter-test/go-getter/versioned.txt#1615905097179533"))
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
@@ -108,13 +108,13 @@ func TestGCSGetter_GetGenerationFile(t *testing.T) {
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
-	if string(content) != "a" {
+	if string(content) != "a\n" {
 		t.Fatalf("expected file contents from generation to be `a` but got `%s`", content)
 	}
 
 	// Download
 	err = g.GetFile(
-		dst, testURL("https://www.googleapis.com/storage/v1/go-getter-testcase-data/DO_NOT_DELETE/generation_test.txt#1614317705239142"))
+		dst, testURL("https://www.googleapis.com/storage/v1/go-getter-test/go-getter/versioned.txt#1615905174141919"))
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
@@ -124,7 +124,7 @@ func TestGCSGetter_GetGenerationFile(t *testing.T) {
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
-	if string(content) != "b" {
+	if string(content) != "b\n" {
 		t.Fatalf("expected file contents from generation to be `b` but got `%s`", content)
 	}
 
