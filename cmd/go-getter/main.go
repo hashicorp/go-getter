@@ -14,6 +14,7 @@ import (
 func main() {
 	modeRaw := flag.String("mode", "any", "get mode (any, file, dir)")
 	progress := flag.Bool("progress", false, "display terminal progress")
+	insecure := flag.Bool("insecure", false, "do not verify server's certificate chain (not recommended)")
 	flag.Parse()
 	args := flag.Args()
 	if len(args) < 2 {
@@ -44,6 +45,11 @@ func main() {
 	opts := []getter.ClientOption{}
 	if *progress {
 		opts = append(opts, getter.WithProgress(defaultProgressBar))
+	}
+
+	if *insecure {
+		log.Println("WARNING: Using Insecure TLS transport!")
+		opts = append(opts, getter.WithInsecure())
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
