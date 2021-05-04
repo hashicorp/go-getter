@@ -2,6 +2,7 @@ package getter
 
 import (
 	"context"
+	"crypto/tls"
 	"encoding/xml"
 	"fmt"
 	"io"
@@ -11,6 +12,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/hashicorp/go-cleanhttp"
 	safetemp "github.com/hashicorp/go-safetemp"
 )
 
@@ -74,6 +76,11 @@ func (g *HttpGetter) Get(dst string, u *url.URL) error {
 
 	if g.Client == nil {
 		g.Client = httpClient
+		if g.client != nil && g.client.Insecure {
+			insecureTransport := cleanhttp.DefaultTransport()
+			insecureTransport.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
+			g.Client.Transport = insecureTransport
+		}
 	}
 
 	// Add terraform-get to the parameter.
@@ -157,6 +164,11 @@ func (g *HttpGetter) GetFile(dst string, src *url.URL) error {
 
 	if g.Client == nil {
 		g.Client = httpClient
+		if g.client != nil && g.client.Insecure {
+			insecureTransport := cleanhttp.DefaultTransport()
+			insecureTransport.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
+			g.Client.Transport = insecureTransport
+		}
 	}
 
 	var currentFileSize int64
