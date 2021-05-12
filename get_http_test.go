@@ -1,6 +1,7 @@
 package getter
 
 import (
+	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"errors"
@@ -404,6 +405,42 @@ func TestHttpGetter_cleanhttp(t *testing.T) {
 	}
 }
 
+func TestHttpGetter__RespectsContextCanceled(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel() // cancel immediately
+
+	ln := testHttpServer(t)
+
+	var u url.URL
+	u.Scheme = "http"
+	u.Host = ln.Addr().String()
+	u.Path = "/file"
+	dst := tempDir(t)
+
+	rt := hookableHTTPRoundTripper{
+		before: func(req *http.Request) {
+			err := req.Context().Err()
+			if !errors.Is(err, context.Canceled) {
+				t.Fatalf("Expected http.Request with canceled.Context, got: %v", err)
+			}
+		},
+		RoundTripper: http.DefaultTransport,
+	}
+
+	g := new(HttpGetter)
+	g.client = &Client{
+		Ctx: ctx,
+	}
+	g.Client = &http.Client{
+		Transport: &rt,
+	}
+
+	err := g.Get(dst, &u)
+	if !errors.Is(err, context.Canceled) {
+		t.Fatalf("expected context.Canceled, got: %v", err)
+	}
+}
+
 func testHttpServer(t *testing.T) net.Listener {
 	ln, err := net.Listen("tcp", "127.0.0.1:0")
 	if err != nil {
@@ -531,3 +568,15 @@ machine %s
 login foo
 password bar
 `
+
+type hookableHTTPRoundTripper struct {
+	before func(req *http.Request)
+	http.RoundTripper
+}
+
+func (m *hookableHTTPRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
+	if m.before != nil {
+		m.before(req)
+	}
+	return m.RoundTripper.RoundTrip(req)
+}
