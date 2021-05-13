@@ -190,6 +190,22 @@ func TestS3Getter_Url(t *testing.T) {
 			version: "1234",
 		},
 		{
+			name:    "AWSVhostDot",
+			url:     "s3::https://bucket.s3.eu-west-1.amazonaws.com/foo/bar.baz?version=1234",
+			region:  "eu-west-1",
+			bucket:  "bucket",
+			path:    "foo/bar.baz",
+			version: "1234",
+		},
+		{
+			name:    "AWSVhostDash",
+			url:     "s3::https://bucket.s3-eu-west-1.amazonaws.com/foo/bar.baz?version=1234",
+			region:  "eu-west-1",
+			bucket:  "bucket",
+			path:    "foo/bar.baz",
+			version: "1234",
+		},
+		{
 			name:    "localhost-1",
 			url:     "s3::http://127.0.0.1:9000/test-bucket/hello.txt?aws_access_key_id=TESTID&aws_access_key_secret=TestSecret&region=us-east-2&version=1",
 			region:  "us-east-2",

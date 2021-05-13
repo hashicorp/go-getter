@@ -427,6 +427,12 @@ func TestGetFile_checksum_from_file(t *testing.T) {
 			true,
 			false,
 		},
+		{
+			// checksum file does not have EOL, ends line with EOF
+			"?checksum=file:" + httpChecksums.URL + "/sha512-p-EOF.sum",
+			true,
+			false,
+		},
 	}
 
 	for _, tc := range cases {

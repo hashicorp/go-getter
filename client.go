@@ -39,6 +39,10 @@ type Client struct {
 	// for documentation.
 	Mode ClientMode
 
+	// Umask is used to mask file permissions when storing local files or decompressing
+	// an archive
+	Umask os.FileMode
+
 	// Detectors is the list of detectors that are tried on the source.
 	// If this is nil, then the default Detectors will be used.
 	Detectors []Detector
@@ -63,7 +67,30 @@ type Client struct {
 	// By default a no op progress listener is used.
 	ProgressListener ProgressTracker
 
+	// Insecure controls whether a client verifies the server's
+	// certificate chain and host name. If Insecure is true, crypto/tls
+	// accepts any certificate presented by the server and any host name in that
+	// certificate. In this mode, TLS is susceptible to machine-in-the-middle
+	// attacks unless custom verification is used. This should be used only for
+	// testing or in combination with VerifyConnection or VerifyPeerCertificate.
+	// This is identical to tls.Config.InsecureSkipVerify.
+	Insecure bool
+
 	Options []ClientOption
+}
+
+// umask returns the effective umask for the Client, defaulting to the process umask
+func (c *Client) umask() os.FileMode {
+	if c == nil {
+		return 0
+	}
+	return c.Umask
+}
+
+// mode returns file mode umasked by the Client umask
+func (c *Client) mode(mode os.FileMode) os.FileMode {
+	m := mode & ^c.umask()
+	return m
 }
 
 // Get downloads the configured source to the destination.
@@ -233,7 +260,7 @@ func (c *Client) Get() error {
 		if decompressor != nil {
 			// We have a decompressor, so decompress the current destination
 			// into the final destination with the proper mode.
-			err := decompressor.Decompress(decompressDst, dst, decompressDir)
+			err := decompressor.Decompress(decompressDst, dst, decompressDir, c.umask())
 			if err != nil {
 				return err
 			}
@@ -271,7 +298,7 @@ func (c *Client) Get() error {
 		// if we're specifying a subdir.
 		err := g.Get(dst, u)
 		if err != nil {
-			err = fmt.Errorf("error downloading '%s': %s", src, err)
+			err = fmt.Errorf("error downloading '%s': %s", u.Redacted(), err)
 			return err
 		}
 	}
@@ -281,7 +308,7 @@ func (c *Client) Get() error {
 		if err := os.RemoveAll(realDst); err != nil {
 			return err
 		}
-		if err := os.MkdirAll(realDst, 0755); err != nil {
+		if err := os.MkdirAll(realDst, c.mode(0755)); err != nil {
 			return err
 		}
 
@@ -291,7 +318,7 @@ func (c *Client) Get() error {
 			return err
 		}
 
-		return copyDir(c.Ctx, realDst, subDir, false)
+		return copyDir(c.Ctx, realDst, subDir, false, c.umask())
 	}
 
 	return nil

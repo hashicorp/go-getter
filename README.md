@@ -1,9 +1,9 @@
 # go-getter
 
-[![CircleCI](https://circleci.com/gh/hashicorp/go-getter/tree/master.svg?style=svg)][circleci]
+[![CircleCI](https://circleci.com/gh/hashicorp/go-getter/tree/main.svg?style=svg)][circleci]
 [![Go Documentation](http://img.shields.io/badge/go-documentation-blue.svg?style=flat-square)][godocs]
 
-[circleci]: https://circleci.com/gh/hashicorp/go-getter/tree/master
+[circleci]: https://circleci.com/gh/hashicorp/go-getter/tree/main
 [godocs]: http://godoc.org/github.com/hashicorp/go-getter
 
 go-getter is a library for Go (golang) for downloading files or directories
@@ -79,6 +79,8 @@ is built-in by default:
   * File paths such as "./foo" are automatically changed to absolute
     file URLs.
   * GitHub URLs, such as "github.com/mitchellh/vagrant" are automatically
+    changed to Git protocol over HTTP.
+  * GitLab URLs, such as "gitlab.com/inkscape/inkscape" are automatically 
     changed to Git protocol over HTTP.
   * BitBucket URLs, such as "bitbucket.org/mitchellh/vagrant" are automatically
     changed to a Git or mercurial protocol using the BitBucket API.
@@ -316,6 +318,7 @@ are also supported. If the query parameters are present, these take priority.
   * `aws_access_key_id` - AWS access key.
   * `aws_access_key_secret` - AWS access key secret.
   * `aws_access_token` - AWS access token if this is being used.
+  * `aws_profile` - Use this profile from local ~/.aws/ config. Takes priority over the other three.
 
 #### Using IAM Instance Profiles with S3
 
