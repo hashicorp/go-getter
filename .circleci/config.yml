@@ -26,7 +26,7 @@ commands:
             echo "Running $(echo $PACKAGE_NAMES | wc -w) packages"
             echo $PACKAGE_NAMES
             << parameters.cmd >> --format=short-verbose --junitfile $TEST_RESULTS_PATH/go-getter/gotestsum-report.xml -- -p 2 -cover -race -vet=<< parameters.govet >> -coverprofile=<< parameters.platform >>_cov_$CIRCLE_NODE_INDEX.part $PACKAGE_NAMES
-        
+
 jobs:
   linux-tests:
     docker:
@@ -34,7 +34,7 @@ jobs:
     parameters:
       go-version:
         type: string
-    environment: 
+    environment:
       <<: *ENVIRONMENT
     parallelism: 4
     steps:
@@ -85,7 +85,7 @@ jobs:
           path: *TEST_RESULTS_PATH
 
   windows-tests:
-    executor: 
+    executor:
       name: win/default
       shell: bash --login -eo pipefail
     environment:
@@ -96,12 +96,12 @@ jobs:
         type: string
       gotestsum-version:
         type: string
-    steps: 
+    steps:
       - run: git config --global core.autocrlf false
       - checkout
       - attach_workspace:
           at: .
-      - run: 
+      - run:
           name: Setup (remove pre-installed go)
           command: |
             rm -rf "c:\Go"
@@ -112,16 +112,16 @@ jobs:
             - win-golang-<< parameters.go-version >>-cache-v1
             - win-gomod-cache-{{ checksum "go.mod" }}-v1
 
-      - run: 
+      - run:
           name: Install go version << parameters.go-version >>
-          command: | 
+          command: |
             if [ ! -d "c:\go" ]; then
               echo "Cache not found, installing new version of go"
               curl --fail --location https://dl.google.com/go/go<< parameters.go-version >>.windows-amd64.zip --output go.zip
               unzip go.zip -d "/c"
             fi
 
-      - run: 
+      - run:
           command: go mod download
 
       - save_cache:
@@ -165,12 +165,12 @@ workflows:
           context: go-getter
           matrix:
             parameters:
-              go-version: ["1.14.1"]
+              go-version: ["1.15.13"]
           name: linux-test-go-<< matrix.go-version >>
       - windows-tests:
           context: go-getter
           matrix:
             parameters:
-              go-version: ["1.14.1"]
+              go-version: ["1.15.13"]
               gotestsum-version: ["0.4.1"]
           name: win-test-go-<< matrix.go-version >>
