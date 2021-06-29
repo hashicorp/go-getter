@@ -42,7 +42,7 @@ func TestTar(t *testing.T) {
 		cases[i].Input = filepath.Join("./testdata", "decompress-tar", tc.Input)
 	}
 
-	TestDecompressor(t, new(tarDecompressor), cases)
+	TestDecompressor(t, new(TarDecompressor), cases)
 }
 
 // testDecompressPermissions decompresses a directory and checks the permissions of the expanded files
@@ -76,7 +76,7 @@ func testDecompressorPermissions(t *testing.T, d Decompressor, input string, exp
 }
 
 func TestDecompressTarPermissions(t *testing.T) {
-	d := new(tarDecompressor)
+	d := new(TarDecompressor)
 	input := "./test-fixtures/decompress-tar/permissions.tar"
 
 	var expected map[string]int
