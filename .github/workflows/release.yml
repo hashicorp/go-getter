@@ -67,8 +67,8 @@ jobs:
           ARTIFACTORY_USER: ${{ secrets.ARTIFACTORY_USER }}
           CIRCLE_TOKEN: ${{ secrets.CIRCLE_TOKEN }}
           SIGNORE_SIGNER: ${{secrets.SIGNORE_SIGNER}}
-          SIGNORE_CLIENT_ID: $${{secrets.SIGNORE_CLIENT_ID}
-          SIGNORE_CLIENT_SECRET: $${{secrets.SIGNORE_CLIENT_SECRET}
+          SIGNORE_CLIENT_ID: ${{secrets.SIGNORE_CLIENT_ID}}
+          SIGNORE_CLIENT_SECRET: ${{secrets.SIGNORE_CLIENT_SECRET}}
       - name: Run clamAV antivirus scanner
         run: sudo clamscan /home/runner/work/$REPO/$REPO/dist/
         env:
@@ -77,4 +77,3 @@ jobs:
         run: sudo maldet -a /home/runner/work/$REPO/$REPO/dist/
         env:
           REPO: ${{ github.event.repository.name }}
-
