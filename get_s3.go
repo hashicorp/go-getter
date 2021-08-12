@@ -176,7 +176,7 @@ func (g *S3Getter) getObject(ctx context.Context, client *s3.S3, dst, bucket, ke
 	return copyReader(dst, resp.Body, 0666, g.client.umask())
 }
 
-func (g *S3Getter) getAWSConfig(region string, url *url.URL, creds *credentials.Credentials) *aws.Config {
+func (g *S3Getter) getAWSConfig(url *url.URL, creds *credentials.Credentials) *aws.Config {
 	conf := &aws.Config{}
 	metadataURLOverride := os.Getenv("AWS_METADATA_URL")
 	if creds == nil && metadataURLOverride != "" {
@@ -201,9 +201,6 @@ func (g *S3Getter) getAWSConfig(region string, url *url.URL, creds *credentials.
 	}
 
 	conf.Credentials = creds
-	if region != "" {
-		conf.Region = aws.String(region)
-	}
 
 	return conf.WithCredentialsChainVerboseErrors(true)
 }
@@ -302,8 +299,17 @@ func (g *S3Getter) newS3Client(
 			return nil, err
 		}
 	} else {
-		config := g.getAWSConfig(region, url, creds)
+		config := g.getAWSConfig(url, creds)
 		sess = session.New(config)
+	}
+
+	// When using an AWS_PROFILE, the region is coming from your ~/.aws/config
+	// This may not exist in your profile, and it also may differ from the bucket
+	// location, so we need to override and explicitly bind what region we're
+	// intending based on the bucket location otherwise it's possible to get
+	// a MissingRegion error.
+	if region != "" {
+		sess.Config.Region = aws.String(region)
 	}
 
 	return s3.New(sess), nil
