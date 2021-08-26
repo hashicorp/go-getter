@@ -3,7 +3,6 @@ package getter
 import "net/url"
 
 // RedactURL is a port of url.Redacted from the standard library,
-``
 // which is like url.String but replaces any password with "xxxxx".
 // Only the password in u.URL is redacted. This allows the library
 // to maintain compatibility with go1.14.
