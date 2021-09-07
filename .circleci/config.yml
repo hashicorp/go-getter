@@ -165,12 +165,12 @@ workflows:
           context: go-getter
           matrix:
             parameters:
-              go-version: ["1.15.13"]
+              go-version: ["1.15.13", "1.14.15"]
           name: linux-test-go-<< matrix.go-version >>
       - windows-tests:
           context: go-getter
           matrix:
             parameters:
-              go-version: ["1.15.13"]
+              go-version: ["1.15.13", "1.14.15"]
               gotestsum-version: ["0.4.1"]
           name: win-test-go-<< matrix.go-version >>
