@@ -114,7 +114,7 @@ func (g *GitGetter) Get(dst string, u *url.URL) error {
 	if err == nil {
 		err = g.update(ctx, dst, sshKeyFile, ref, depth)
 	} else {
-		err = g.clone(ctx, dst, sshKeyFile, u, depth)
+		err = g.clone(ctx, dst, sshKeyFile, u, ref, depth)
 	}
 	if err != nil {
 		return err
@@ -166,11 +166,18 @@ func (g *GitGetter) checkout(dst string, ref string) error {
 	return getRunCommand(cmd)
 }
 
-func (g *GitGetter) clone(ctx context.Context, dst, sshKeyFile string, u *url.URL, depth int) error {
+func (g *GitGetter) clone(ctx context.Context, dst, sshKeyFile string, u *url.URL, ref string, depth int) error {
 	args := []string{"clone"}
 
 	if depth > 0 {
+		if ref == "" {
+			args = append(args, "--no-single-branch")
+		}
 		args = append(args, "--depth", strconv.Itoa(depth))
+	}
+
+	if ref != "" {
+		args = append(args, "--branch", ref)
 	}
 
 	args = append(args, u.String(), dst)
