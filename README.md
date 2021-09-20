@@ -35,15 +35,24 @@ $ go get github.com/hashicorp/go-getter
 
 go-getter also has a command you can use to test URL strings:
 
+install via `go install`:
 ```
 $ go install github.com/hashicorp/go-getter/cmd/go-getter
 ...
+```
 
-$ go-getter github.com/foo/bar ./foo
+install via [asdf](https://asdf-vm.com) version manager:
+```
+$ asdf plugin add go-getter
+$ asdf install go-getter latest
 ...
 ```
 
 The command is useful for verifying URL structures.
+```
+$ go-getter github.com/foo/bar ./foo
+...
+```
 
 ## URL Format
 
