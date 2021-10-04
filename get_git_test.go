@@ -206,7 +206,7 @@ func TestGitGetter_shallowCloneWithTag(t *testing.T) {
 	}
 
 	// Verify the v1.1 file does not exists
-	mainPath := filepath.Join(dst, "v1.1.txt")
+	mainPath = filepath.Join(dst, "v1.1.txt")
 	if _, err := os.Stat(mainPath); err == nil {
 		t.Fatalf("expected v1.1 file to not exist")
 	}
