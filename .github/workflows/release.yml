@@ -27,8 +27,6 @@ jobs:
         uses: hashicorp/setup-signore@v1
         with:
           github-token: ${{secrets.SIGNORE_TOKEN}}
-          client-id: $${{secrets.SIGNORE_CLIENT_ID}}
-          client-secret: $${{secrets.SIGNORE_CLIENT_SECRET}}
       - name: Install hc-codesign
         id: codesign
         run: |
