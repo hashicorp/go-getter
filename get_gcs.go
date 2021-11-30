@@ -168,15 +168,11 @@ func (g *GCSGetter) parseURL(u *url.URL) (bucket, path string, err error) {
 
 func (g *GCSGetter) getClient(ctx context.Context) (client *storage.Client, err error) {
 	var opts []option.ClientOption
-	var tokenSource oauth2.TokenSource
 
 	if v, ok := os.LookupEnv("GOOGLE_OAUTH_ACCESS_TOKEN"); ok {
-		tokenSource = oauth2.StaticTokenSource(&oauth2.Token{
+		tokenSource := oauth2.StaticTokenSource(&oauth2.Token{
 			AccessToken: v,
 		})
-	}
-
-	if tokenSource != nil {
 		opts = append(opts, option.WithTokenSource(tokenSource))
 	}
 
