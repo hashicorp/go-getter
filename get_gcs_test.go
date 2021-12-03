@@ -237,3 +237,22 @@ func TestGCSGetter_Url(t *testing.T) {
 		})
 	}
 }
+
+func TestGCSGetter_GetFile_OAuthAccessToken(t *testing.T) {
+	g := new(GCSGetter)
+	dst := tempTestFile(t)
+	defer os.RemoveAll(filepath.Dir(dst))
+
+	// Download
+	err := g.GetFile(
+		dst, testURL("https://www.googleapis.com/storage/v1/go-getter-test/go-getter/folder/main.tf"))
+	if err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	// Verify the main file exists
+	if _, err := os.Stat(dst); err != nil {
+		t.Fatalf("err: %s", err)
+	}
+	assertContents(t, dst, "# Main\n")
+}
