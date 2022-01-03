@@ -13,7 +13,12 @@ func RedactURL(u *url.URL) string {
 
 	ru := *u
 	if _, has := ru.User.Password(); has {
-		ru.User = url.UserPassword(ru.User.Username(), "xxxxx")
+		ru.User = url.UserPassword(ru.User.Username(), "redacted")
+	}
+	q := ru.Query()
+	if q.Get("sshkey") != "" {
+		q.Set("sshkey", "redacted")
+		ru.RawQuery = q.Encode()
 	}
 	return ru.String()
 }
