@@ -239,6 +239,9 @@ func TestGCSGetter_Url(t *testing.T) {
 }
 
 func TestGCSGetter_GetFile_OAuthAccessToken(t *testing.T) {
+	if os.Getenv("GOOGLE_OAUTH_ACCESS_TOKEN") == "" {
+		t.Skip("Skipping; set GOOGLE_OAUTH_ACCESS_TOKEN to run")
+	}
 	g := new(GCSGetter)
 	dst := tempTestFile(t)
 	defer os.RemoveAll(filepath.Dir(dst))
