@@ -3,9 +3,10 @@ package getter
 import "net/url"
 
 // RedactURL is a port of url.Redacted from the standard library,
-// which is like url.String but replaces any password with "xxxxx".
+// which is like url.String but replaces any password with "redacted".
 // Only the password in u.URL is redacted. This allows the library
 // to maintain compatibility with go1.14.
+// This port was also extended to redact SSH key from URL query parameter.
 func RedactURL(u *url.URL) string {
 	if u == nil {
 		return ""
