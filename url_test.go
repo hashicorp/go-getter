@@ -19,7 +19,7 @@ func TestRedactURL(t *testing.T) {
 				Path:   "this:that",
 				User:   url.UserPassword("user", "password"),
 			},
-			want: "http://user:xxxxx@host.tld/this:that",
+			want: "http://user:redacted@host.tld/this:that",
 		},
 		{
 			name: "blank Password",
@@ -39,7 +39,7 @@ func TestRedactURL(t *testing.T) {
 				Path:   "this:that",
 				User:   url.UserPassword("", "password"),
 			},
-			want: "http://:xxxxx@host.tld/this:that",
+			want: "http://:redacted@host.tld/this:that",
 		},
 		{
 			name: "blank Username, blank Password",
@@ -59,6 +59,28 @@ func TestRedactURL(t *testing.T) {
 			name: "nil URL",
 			url:  nil,
 			want: "",
+		},
+		{
+			name: "non-blank SSH key in URL query parameter",
+			url: &url.URL{
+				Scheme:   "ssh",
+				User:     url.User("git"),
+				Host:     "github.com",
+				Path:     "hashicorp/go-getter-test-private.git",
+				RawQuery: "sshkey=LS0tLS1CRUdJTiBPUE",
+			},
+			want: "ssh://git@github.com/hashicorp/go-getter-test-private.git?sshkey=redacted",
+		},
+		{
+			name: "blank SSH key in URL query parameter",
+			url: &url.URL{
+				Scheme:   "ssh",
+				User:     url.User("git"),
+				Host:     "github.com",
+				Path:     "hashicorp/go-getter-test-private.git",
+				RawQuery: "sshkey=",
+			},
+			want: "ssh://git@github.com/hashicorp/go-getter-test-private.git?sshkey=",
 		},
 	}
 
