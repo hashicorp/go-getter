@@ -495,6 +495,7 @@ func TestGetFile_checksum_from_file(t *testing.T) {
 		WantTransfer bool
 		WantErr      bool
 	}{
+
 		{
 			"",
 			true,
@@ -548,6 +549,13 @@ func TestGetFile_checksum_from_file(t *testing.T) {
 			true,
 			false,
 		},
+
+		// sha512
+		{
+			"?checksum=file:" + checksums + "/CHECKSUM_sha256_gpg",
+			true,
+			false,
+		},
 	}
 
 	for _, tc := range cases {
@@ -572,6 +580,7 @@ func TestGetFile_checksum_from_file(t *testing.T) {
 				testing_helper.AssertContents(t, dst, "I am a file with some content\n")
 			}
 		})
+		return
 	}
 }
 
