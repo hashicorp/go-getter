@@ -6,4 +6,4 @@ WORKDIR /go-getter
 
 RUN go mod download
 RUN apt-get update
-RUN apt-get -y install smbclient
+RUN DEBIAN_FRONTEND=noninteractive apt-get -yq install smbclient
