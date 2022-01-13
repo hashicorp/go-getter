@@ -1,5 +1,5 @@
 # Dockerfile to create a go-getter container with smbclient dependency that is used by the get_smb.go tests
-FROM golang:latest
+FROM golang:1.15
 
 COPY . /go-getter
 WORKDIR /go-getter
