@@ -307,6 +307,11 @@ func (c *Client) checksumFromFile(ctx context.Context, checksumURL string, check
 // for BSD type sums parseChecksumLine guesses the hashing algorithm
 // by checking the length of the checksum.
 func parseChecksumLine(line string) (*FileChecksum, error) {
+	switch line[0] {
+	case '#', '/', '-':
+		return nil, nil // skip
+	}
+	//TODO: this function will fail if we pass a checksum for a path with spaces
 	parts := strings.Fields(line)
 
 	switch len(parts) {
