@@ -162,7 +162,7 @@ func (g *GitGetter) GetFile(dst string, u *url.URL) error {
 }
 
 func (g *GitGetter) checkout(dst string, ref string) error {
-	cmd := exec.Command("git", "checkout", ref)
+	cmd := exec.Command("git", "checkout", ref, "--")
 	cmd.Dir = dst
 	return getRunCommand(cmd)
 }
