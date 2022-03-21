@@ -40,7 +40,6 @@ func init() {
 		"txz":     txzDecompressor,
 		"zip":     new(ZipDecompressor),
 		"tar":     tarDecompressor,
-		"ova":     tarDecompressor,
 	}
 }
 
