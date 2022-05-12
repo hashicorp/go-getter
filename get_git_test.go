@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"context"
 	"encoding/base64"
+	"errors"
+	"fmt"
 	"io/ioutil"
 	"net/url"
 	"os"
@@ -731,6 +733,89 @@ func TestGitGetter_Detector(t *testing.T) {
 				t.Errorf("wrong result\ninput: %s\ngot:   %s\nwant:  %s", tc.Input, req.Src, tc.Output)
 			}
 		})
+	}
+}
+
+func TestGitGetter_subdirectory_symlink(t *testing.T) {
+	dst := testing_helper.TempDir(t)
+
+	repo := testGitRepo(t, "repo-with-symlink")
+	innerDir := filepath.Join(repo.dir, "this-directory-contains-a-symlink")
+	if err := os.Mkdir(innerDir, 0700); err != nil {
+		t.Fatal(err)
+	}
+	path := filepath.Join(innerDir, "this-is-a-symlink")
+	if err := os.Symlink("/etc/passwd", path); err != nil {
+		t.Fatal(err)
+	}
+	repo.git("add", path)
+	repo.git("commit", "-m", "Adding "+path)
+
+	u, err := url.Parse(fmt.Sprintf("git::%s//this-directory-contains-a-symlink", repo.url.String()))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	req := &Request{
+		Src:     u.String(),
+		Dst:     dst,
+		Pwd:     ".",
+		GetMode: ModeDir,
+	}
+	getter := &GitGetter{
+		Detectors: []Detector{
+			new(GitDetector),
+			new(GitHubDetector),
+		},
+	}
+	client := &Client{
+		Getters:         []Getter{getter},
+		DisableSymlinks: true,
+	}
+
+	ctx := context.Background()
+	_, err = client.Get(ctx, req)
+	if err == nil {
+		t.Fatalf("expected client get to fail")
+	}
+	if !errors.Is(err, ErrSymlinkCopy) {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestGitGetter_subdirectory_traversal(t *testing.T) {
+	dst := testing_helper.TempDir(t)
+
+	repo := testGitRepo(t, "empty-repo")
+	u, err := url.Parse(fmt.Sprintf("git::%s//../../../../../../etc/passwd", repo.url.String()))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	req := &Request{
+		Src:     u.String(),
+		Dst:     dst,
+		Pwd:     ".",
+		GetMode: ModeDir,
+	}
+
+	getter := &GitGetter{
+		Detectors: []Detector{
+			new(GitDetector),
+			new(GitHubDetector),
+		},
+	}
+	client := &Client{
+		Getters: []Getter{getter},
+	}
+
+	ctx := context.Background()
+	_, err = client.Get(ctx, req)
+	if err == nil {
+		t.Fatalf("expected client get to fail")
+	}
+	if !strings.Contains(err.Error(), "subdirectory component contain path traversal out of the repository") {
+		t.Fatalf("unexpected error: %v", err)
 	}
 }
 

@@ -256,7 +256,7 @@ func (g *HttpGetter) getSubdir(ctx context.Context, req *Request, source, subDir
 		return err
 	}
 
-	return copyDir(ctx, req.Dst, sourcePath, false, req.umask())
+	return copyDir(ctx, req.Dst, sourcePath, false, req.DisableSymlinks, req.umask())
 }
 
 // parseMeta looks for the first meta tag in the given reader that
