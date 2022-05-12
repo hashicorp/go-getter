@@ -50,6 +50,18 @@ func (c *Client) Get(ctx context.Context, req *Request) (*GetResult, error) {
 	// and then copy over the proper subdir.
 	req.Src, req.subDir = SourceDirSubdir(req.Src)
 	if req.subDir != "" {
+		// Check if the subdirectory is attempting to traverse upwards, outside of
+		// the cloned repository path.
+		req.subDir = filepath.Clean(req.subDir)
+		if containsDotDot(req.subDir) {
+			return nil, fmt.Errorf("subdirectory component contain path traversal out of the repository")
+		}
+
+		// Prevent absolute paths, remove a leading path separator from the subdirectory
+		if req.subDir[0] == os.PathSeparator {
+			req.subDir = req.subDir[1:]
+		}
+
 		td, tdcloser, err := safetemp.Dir("", "getter")
 		if err != nil {
 			return nil, err
@@ -197,6 +209,10 @@ func (c *Client) get(ctx context.Context, req *Request, g Getter) (*GetResult, *
 				req.u.RawQuery = q.Encode()
 
 				filename = v
+			}
+
+			if containsDotDot(filename) {
+				return nil, &getError{true, fmt.Errorf("filename query parameter contain path traversal")}
 			}
 
 			req.Dst = filepath.Join(req.Dst, filename)
