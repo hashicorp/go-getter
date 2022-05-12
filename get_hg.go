@@ -8,6 +8,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"time"
 
 	urlhelper "github.com/hashicorp/go-getter/v2/helper/url"
 	safetemp "github.com/hashicorp/go-safetemp"
@@ -15,7 +16,12 @@ import (
 
 // HgGetter is a Getter implementation that will download a module from
 // a Mercurial repository.
-type HgGetter struct{}
+type HgGetter struct {
+
+	// Timeout sets a deadline which all hg CLI operations should
+	// complete within. Defaults to zero which means no timeout.
+	Timeout time.Duration
+}
 
 func (g *HgGetter) Mode(ctx context.Context, _ *url.URL) (Mode, error) {
 	return ModeDir, nil
@@ -49,13 +55,20 @@ func (g *HgGetter) Get(ctx context.Context, req *Request) error {
 	if err != nil && !os.IsNotExist(err) {
 		return err
 	}
+
+	if g.Timeout > 0 {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, g.Timeout)
+		defer cancel()
+	}
+
 	if err != nil {
-		if err := g.clone(req.Dst, newURL); err != nil {
+		if err := g.clone(ctx, req.Dst, newURL); err != nil {
 			return err
 		}
 	}
 
-	if err := g.pull(req.Dst, newURL); err != nil {
+	if err := g.pull(ctx, req.Dst, newURL); err != nil {
 		return err
 	}
 
@@ -102,13 +115,13 @@ func (g *HgGetter) GetFile(ctx context.Context, req *Request) error {
 	return fg.GetFile(ctx, req)
 }
 
-func (g *HgGetter) clone(dst string, u *url.URL) error {
-	cmd := exec.Command("hg", "clone", "-U", "--", u.String(), dst)
+func (g *HgGetter) clone(ctx context.Context, dst string, u *url.URL) error {
+	cmd := exec.CommandContext(ctx, "hg", "clone", "-U", "--", u.String(), dst)
 	return getRunCommand(cmd)
 }
 
-func (g *HgGetter) pull(dst string, u *url.URL) error {
-	cmd := exec.Command("hg", "pull")
+func (g *HgGetter) pull(ctx context.Context, dst string, u *url.URL) error {
+	cmd := exec.CommandContext(ctx, "hg", "pull")
 	cmd.Dir = dst
 	return getRunCommand(cmd)
 }

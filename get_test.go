@@ -784,7 +784,7 @@ func TestGetFile_inplace_badChecksum(t *testing.T) {
 	}
 }
 
-func TestgetForcedGetter(t *testing.T) {
+func TestGetForcedGetter(t *testing.T) {
 	type args struct {
 		src string
 	}

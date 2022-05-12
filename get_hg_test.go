@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	testing_helper "github.com/hashicorp/go-getter/v2/helper/testing"
 )
@@ -171,8 +172,7 @@ func TestHgGetter_HgArgumentsNotAllowed(t *testing.T) {
 			// Other failures indicate that hg interpreted the argument passed in the URL
 			name: "arguments passed in the repository URL",
 			req: Request{
-				u: &url.URL{Path: "--config=alias.clone=false"},
-			},
+				u: &url.URL{Path: "--config=alias.clone=false"}},
 			errChk: func(t testing.TB, err error) {
 				if err == nil {
 					return
@@ -198,5 +198,27 @@ func TestHgGetter_HgArgumentsNotAllowed(t *testing.T) {
 			err := g.Get(ctx, &tt.req)
 			tt.errChk(t, err)
 		})
+	}
+}
+
+func TestHgGetter_GetWithTimeout(t *testing.T) {
+	if !testHasHg {
+		t.Log("hg not found, skipping")
+		t.Skip()
+	}
+	ctx := context.Background()
+	g := &HgGetter{
+		Timeout: 1 * time.Millisecond,
+	}
+
+	dst := testing_helper.TempDir(t)
+	defer os.RemoveAll(filepath.Dir(dst))
+	req := &Request{
+		Dst: dst,
+		u:   testModuleURL("basic-hg/foo.txt"),
+	}
+
+	if err := g.Get(ctx, req); err == nil {
+		t.Fatalf("err: %s", err.Error())
 	}
 }

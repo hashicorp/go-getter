@@ -342,12 +342,13 @@ func TestGitGetter_gitVersion(t *testing.T) {
 	os.Setenv("PATH", dir)
 
 	// Asking for a higher version throws an error
-	if err := checkGitVersion("2.3"); err == nil {
+	ctx := context.Background()
+	if err := checkGitVersion(ctx, "2.3"); err == nil {
 		t.Fatal("expect git version error")
 	}
 
 	// Passes when version is satisfied
-	if err := checkGitVersion("1.9"); err != nil {
+	if err := checkGitVersion(ctx, "1.9"); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -411,11 +412,12 @@ func TestGitGetter_sshSCPStyle(t *testing.T) {
 
 		GetMode: ModeDir,
 	}
-	getter := &GitGetter{[]Detector{
-		new(GitDetector),
-		new(BitBucketDetector),
-		new(GitHubDetector),
-	},
+	getter := &GitGetter{
+		Detectors: []Detector{
+			new(GitDetector),
+			new(BitBucketDetector),
+			new(GitHubDetector),
+		},
 	}
 	client := &Client{
 		Getters: []Getter{getter},
@@ -623,11 +625,12 @@ func TestGitGetter_GitHubDetector(t *testing.T) {
 	}
 
 	pwd := "/pwd"
-	f := &GitGetter{[]Detector{
-		new(GitDetector),
-		new(BitBucketDetector),
-		new(GitHubDetector),
-	},
+	f := &GitGetter{
+		Detectors: []Detector{
+			new(GitDetector),
+			new(BitBucketDetector),
+			new(GitHubDetector),
+		},
 	}
 	for i, tc := range cases {
 		req := &Request{
@@ -704,11 +707,12 @@ func TestGitGetter_Detector(t *testing.T) {
 	}
 
 	pwd := "/pwd"
-	getter := &GitGetter{[]Detector{
-		new(GitDetector),
-		new(BitBucketDetector),
-		new(GitHubDetector),
-	},
+	getter := &GitGetter{
+		Detectors: []Detector{
+			new(GitDetector),
+			new(BitBucketDetector),
+			new(GitHubDetector),
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.Input, func(t *testing.T) {

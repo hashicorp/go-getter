@@ -6,11 +6,12 @@ import (
 )
 
 func TestDetect(t *testing.T) {
-	gitGetter := &GitGetter{[]Detector{
-		new(GitDetector),
-		new(BitBucketDetector),
-		new(GitHubDetector),
-	},
+	gitGetter := &GitGetter{
+		Detectors: []Detector{
+			new(GitDetector),
+			new(BitBucketDetector),
+			new(GitHubDetector),
+		},
 	}
 	cases := []struct {
 		Input  string
