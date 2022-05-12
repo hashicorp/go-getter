@@ -103,7 +103,7 @@ func (g *HgGetter) GetFile(ctx context.Context, req *Request) error {
 }
 
 func (g *HgGetter) clone(dst string, u *url.URL) error {
-	cmd := exec.Command("hg", "clone", "-U", u.String(), dst)
+	cmd := exec.Command("hg", "clone", "-U", "--", u.String(), dst)
 	return getRunCommand(cmd)
 }
 
@@ -116,7 +116,7 @@ func (g *HgGetter) pull(dst string, u *url.URL) error {
 func (g *HgGetter) update(ctx context.Context, dst string, u *url.URL, rev string) error {
 	args := []string{"update"}
 	if rev != "" {
-		args = append(args, rev)
+		args = append(args, "--", rev)
 	}
 
 	cmd := exec.CommandContext(ctx, "hg", args...)
