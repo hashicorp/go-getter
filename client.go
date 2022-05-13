@@ -49,6 +49,9 @@ func (c *Client) Get(ctx context.Context, req *Request) (*GetResult, error) {
 		return nil, err
 	}
 
+	// Pass along the configured Getter client in the context for usage with the X-Terraform-Get feature.
+	ctx = NewContextWithClient(ctx, c)
+
 	// Store this locally since there are cases we swap this
 	if req.GetMode == ModeInvalid {
 		req.GetMode = ModeAny
