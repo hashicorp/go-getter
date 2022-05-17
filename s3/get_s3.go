@@ -158,6 +158,13 @@ func (g *Getter) Get(ctx context.Context, req *getter.Request) error {
 }
 
 func (g *Getter) GetFile(ctx context.Context, req *getter.Request) error {
+
+	if g.Timeout > 0 {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, g.Timeout)
+		defer cancel()
+	}
+
 	region, bucket, path, version, creds, err := g.parseUrl(req.URL())
 	if err != nil {
 		return err
