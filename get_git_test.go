@@ -2,7 +2,10 @@ package getter
 
 import (
 	"bytes"
+	"context"
 	"encoding/base64"
+	"errors"
+	"fmt"
 	"io/ioutil"
 	"net/url"
 	"os"
@@ -436,12 +439,12 @@ func TestGitGetter_gitVersion(t *testing.T) {
 	os.Setenv("PATH", dir)
 
 	// Asking for a higher version throws an error
-	if err := checkGitVersion("2.3"); err == nil {
+	if err := checkGitVersion(context.Background(), "2.3"); err == nil {
 		t.Fatal("expect git version error")
 	}
 
 	// Passes when version is satisfied
-	if err := checkGitVersion("1.9"); err != nil {
+	if err := checkGitVersion(context.Background(), "1.9"); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -690,6 +693,120 @@ func TestGitGetter_setupGitEnvWithExisting_sshKey(t *testing.T) {
 	actual := strings.TrimSpace(string(out))
 	if actual != "ssh -o StrictHostKeyChecking=no -o IdentitiesOnly=yes -i /tmp/foo.pem" {
 		t.Fatalf("unexpected GIT_SSH_COMMAND: %q", actual)
+	}
+}
+
+func TestGitGetter_subdirectory_symlink(t *testing.T) {
+	if !testHasGit {
+		t.Skip("git not found, skipping")
+	}
+
+	g := new(GitGetter)
+	dst := tempDir(t)
+
+	target, err := ioutil.TempFile("", "link-target")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.Remove(target.Name())
+
+	repo := testGitRepo(t, "repo-with-symlink")
+	innerDir := filepath.Join(repo.dir, "this-directory-contains-a-symlink")
+	if err := os.Mkdir(innerDir, 0700); err != nil {
+		t.Fatal(err)
+	}
+	path := filepath.Join(innerDir, "this-is-a-symlink")
+	if err := os.Symlink(target.Name(), path); err != nil {
+		t.Fatal(err)
+	}
+
+	repo.git("add", path)
+	repo.git("commit", "-m", "Adding "+path)
+
+	u, err := url.Parse(fmt.Sprintf("git::%s//this-directory-contains-a-symlink", repo.url.String()))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	client := &Client{
+		Src:             u.String(),
+		Dst:             dst,
+		Pwd:             ".",
+		Mode:            ClientModeDir,
+		DisableSymlinks: true,
+		Detectors: []Detector{
+			new(GitDetector),
+		},
+		Getters: map[string]Getter{
+			"git": g,
+		},
+	}
+
+	err = client.Get()
+
+	if runtime.GOOS == "windows" {
+		// Windows doesn't handle symlinks as one might expect with git.
+		//
+		// https://github.com/git-for-windows/git/wiki/Symbolic-Links
+		filepath.Walk(dst, func(path string, info os.FileInfo, err error) error {
+			if strings.Contains(path, "this-is-a-symlink") {
+				if info.Mode()&os.ModeSymlink == os.ModeSymlink {
+					// If you see this test fail in the future, you've probably enabled
+					// symlinks within git on your Windows system. Our CI/CD system does
+					// not do this, so this is this is the only way we can make this test
+					// make any sense.
+					t.Fatalf("windows git should not have cloned a symlink")
+				}
+			}
+			return nil
+		})
+	} else {
+		// We can rely on POSIX compliant systems running git to do the right thing.
+		if err == nil {
+			t.Fatalf("expected client get to fail")
+		}
+		if !errors.Is(err, ErrSymlinkCopy) {
+			t.Fatalf("unexpected error: %v", err)
+		}
+	}
+
+}
+
+func TestGitGetter_subdirectory(t *testing.T) {
+	if !testHasGit {
+		t.Skip("git not found, skipping")
+	}
+
+	g := new(GitGetter)
+	dst := tempDir(t)
+
+	repo := testGitRepo(t, "empty-repo")
+	u, err := url.Parse(fmt.Sprintf("git::%s//../../../../../../etc/passwd", repo.url.String()))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	client := &Client{
+		Src: u.String(),
+		Dst: dst,
+		Pwd: ".",
+
+		Mode: ClientModeDir,
+
+		Detectors: []Detector{
+			new(GitDetector),
+		},
+		Getters: map[string]Getter{
+			"git": g,
+		},
+	}
+
+	err = client.Get()
+	if err == nil {
+		t.Fatalf("expected client get to fail")
+	}
+	if !strings.Contains(err.Error(), "subdirectory component contain path traversal out of the repository") {
+		t.Fatalf("unexpected error: %v", err)
 	}
 }
 

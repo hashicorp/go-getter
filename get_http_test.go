@@ -9,12 +9,15 @@ import (
 	"io/ioutil"
 	"net"
 	"net/http"
+	"net/http/httputil"
 	"net/url"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
 	"testing"
+
+	"github.com/hashicorp/go-cleanhttp"
 )
 
 func TestHttpGetter_impl(t *testing.T) {
@@ -34,8 +37,27 @@ func TestHttpGetter_header(t *testing.T) {
 	u.Host = ln.Addr().String()
 	u.Path = "/header"
 
-	// Get it!
-	if err := g.Get(dst, &u); err != nil {
+	// Get it, which should error because it uses the file protocol.
+	err := g.Get(dst, &u)
+
+	if !strings.Contains(err.Error(), "download not supported for scheme 'file'") {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// But, using a wrapper client with a file getter will work.
+	c := &Client{
+		Getters: map[string]Getter{
+			"http": g,
+			"file": new(FileGetter),
+		},
+		Src:  u.String(),
+		Dst:  dst,
+		Mode: ClientModeDir,
+	}
+
+	err = c.Get()
+
+	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
@@ -44,6 +66,7 @@ func TestHttpGetter_header(t *testing.T) {
 	if _, err := os.Stat(mainPath); err != nil {
 		t.Fatalf("err: %s", err)
 	}
+
 }
 
 func TestHttpGetter_requestHeader(t *testing.T) {
@@ -87,8 +110,27 @@ func TestHttpGetter_meta(t *testing.T) {
 	u.Host = ln.Addr().String()
 	u.Path = "/meta"
 
-	// Get it!
-	if err := g.Get(dst, &u); err != nil {
+	// Get it, which should error because it uses the file protocol.
+	err := g.Get(dst, &u)
+
+	if !strings.Contains(err.Error(), "download not supported for scheme 'file'") {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// But, using a wrapper client with a file getter will work.
+	c := &Client{
+		Getters: map[string]Getter{
+			"http": g,
+			"file": new(FileGetter),
+		},
+		Src:  u.String(),
+		Dst:  dst,
+		Mode: ClientModeDir,
+	}
+
+	err = c.Get()
+
+	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
@@ -330,14 +372,27 @@ func TestHttpGetter_auth(t *testing.T) {
 	u.Path = "/meta-auth"
 	u.User = url.UserPassword("foo", "bar")
 
-	// Get it!
-	if err := g.Get(dst, &u); err != nil {
-		t.Fatalf("err: %s", err)
+	// Get it, which should error because it uses the file protocol.
+	err := g.Get(dst, &u)
+
+	if !strings.Contains(err.Error(), "download not supported for scheme 'file'") {
+		t.Fatalf("unexpected error: %v", err)
 	}
 
-	// Verify the main file exists
-	mainPath := filepath.Join(dst, "main.tf")
-	if _, err := os.Stat(mainPath); err != nil {
+	// But, using a wrapper client with a file getter will work.
+	c := &Client{
+		Getters: map[string]Getter{
+			"http": g,
+			"file": new(FileGetter),
+		},
+		Src:  u.String(),
+		Dst:  dst,
+		Mode: ClientModeDir,
+	}
+
+	err = c.Get()
+
+	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
 }
@@ -360,8 +415,27 @@ func TestHttpGetter_authNetrc(t *testing.T) {
 	defer closer()
 	defer tempEnv(t, "NETRC", path)()
 
-	// Get it!
-	if err := g.Get(dst, &u); err != nil {
+	// Get it, which should error because it uses the file protocol.
+	err := g.Get(dst, &u)
+
+	if !strings.Contains(err.Error(), "download not supported for scheme 'file'") {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// But, using a wrapper client with a file getter will work.
+	c := &Client{
+		Getters: map[string]Getter{
+			"http": g,
+			"file": new(FileGetter),
+		},
+		Src:  u.String(),
+		Dst:  dst,
+		Mode: ClientModeDir,
+	}
+
+	err = c.Get()
+
+	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
@@ -399,8 +473,27 @@ func TestHttpGetter_cleanhttp(t *testing.T) {
 	u.Host = ln.Addr().String()
 	u.Path = "/header"
 
-	// Get it!
-	if err := g.Get(dst, &u); err != nil {
+	// Get it, which should error because it uses the file protocol.
+	err := g.Get(dst, &u)
+
+	if !strings.Contains(err.Error(), "download not supported for scheme 'file'") {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// But, using a wrapper client with a file getter will work.
+	c := &Client{
+		Getters: map[string]Getter{
+			"http": g,
+			"file": new(FileGetter),
+		},
+		Src:  u.String(),
+		Dst:  dst,
+		Mode: ClientModeDir,
+	}
+
+	err = c.Get()
+
+	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
 }
@@ -439,6 +532,326 @@ func TestHttpGetter__RespectsContextCanceled(t *testing.T) {
 	if !errors.Is(err, context.Canceled) {
 		t.Fatalf("expected context.Canceled, got: %v", err)
 	}
+}
+
+func TestHttpGetter__XTerraformGetLimit(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	ln := testHttpServerWithXTerraformGetLoop(t)
+
+	var u url.URL
+	u.Scheme = "http"
+	u.Host = ln.Addr().String()
+	u.Path = "/loop"
+	dst := tempDir(t)
+
+	g := new(HttpGetter)
+	g.XTerraformGetLimit = 10
+	g.client = &Client{
+		Ctx: ctx,
+	}
+	g.Client = &http.Client{}
+
+	err := g.Get(dst, &u)
+	if !strings.Contains(err.Error(), "too many X-Terraform-Get redirects") {
+		t.Fatalf("too many X-Terraform-Get redirects, got: %v", err)
+	}
+}
+
+func TestHttpGetter__XTerraformGetDisabled(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	ln := testHttpServerWithXTerraformGetLoop(t)
+
+	var u url.URL
+	u.Scheme = "http"
+	u.Host = ln.Addr().String()
+	u.Path = "/loop"
+	dst := tempDir(t)
+
+	g := new(HttpGetter)
+	g.XTerraformGetDisabled = true
+	g.client = &Client{
+		Ctx: ctx,
+	}
+	g.Client = &http.Client{}
+
+	err := g.Get(dst, &u)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestHttpGetter__XTerraformGetProxyBypass(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	ln := testHttpServerWithXTerraformGetProxyBypass(t)
+
+	proxyLn := testHttpServerProxy(t, ln.Addr().String())
+
+	t.Logf("starting malicious server on: %v", ln.Addr().String())
+	t.Logf("starting proxy on: %v", proxyLn.Addr().String())
+
+	var u url.URL
+	u.Scheme = "http"
+	u.Host = ln.Addr().String()
+	u.Path = "/start"
+	dst := tempDir(t)
+
+	proxy, err := url.Parse(fmt.Sprintf("http://%s/", proxyLn.Addr().String()))
+	if err != nil {
+		t.Fatalf("failed to parse proxy URL: %v", err)
+	}
+
+	transport := cleanhttp.DefaultTransport()
+	transport.Proxy = http.ProxyURL(proxy)
+
+	httpGetter := new(HttpGetter)
+	httpGetter.XTerraformGetLimit = 10
+	httpGetter.Client = &http.Client{
+		Transport: transport,
+	}
+
+	client := &Client{
+		Ctx: ctx,
+		Getters: map[string]Getter{
+			"http": httpGetter,
+		},
+	}
+
+	client.Src = u.String()
+	client.Dst = dst
+
+	err = client.Get()
+	if err != nil {
+		t.Logf("client get error: %v", err)
+	}
+}
+
+func TestHttpGetter__XTerraformGetConfiguredGettersBypass(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	ln := testHttpServerWithXTerraformGetConfiguredGettersBypass(t)
+
+	var u url.URL
+	u.Scheme = "http"
+	u.Host = ln.Addr().String()
+	u.Path = "/start"
+	dst := tempDir(t)
+
+	rt := hookableHTTPRoundTripper{
+		before: func(req *http.Request) {
+			t.Logf("making request")
+		},
+		RoundTripper: http.DefaultTransport,
+	}
+
+	httpGetter := new(HttpGetter)
+	httpGetter.XTerraformGetLimit = 10
+	httpGetter.Client = &http.Client{
+		Transport: &rt,
+	}
+
+	client := &Client{
+		Ctx:  ctx,
+		Mode: ClientModeDir,
+		Getters: map[string]Getter{
+			"http": httpGetter,
+		},
+	}
+
+	t.Logf("%v", u.String())
+
+	client.Src = u.String()
+	client.Dst = dst
+
+	err := client.Get()
+	if err != nil {
+		if !strings.Contains(err.Error(), "no getter available for X-Terraform-Get source protocol") {
+			t.Fatalf("expected no getter available for X-Terraform-Get source protocol, got: %v", err)
+		}
+	}
+}
+
+func TestHttpGetter__endless_body(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	ln := testHttpServerWithEndlessBody(t)
+
+	var u url.URL
+	u.Scheme = "http"
+	u.Host = ln.Addr().String()
+	u.Path = "/"
+	dst := tempDir(t)
+
+	httpGetter := new(HttpGetter)
+	httpGetter.MaxBytes = 10
+	httpGetter.DoNotCheckHeadFirst = true
+
+	client := &Client{
+		Ctx:  ctx,
+		Mode: ClientModeFile,
+		// Mode: ClientModeDir,
+		Getters: map[string]Getter{
+			"http": httpGetter,
+		},
+	}
+
+	t.Logf("%v", u.String())
+
+	client.Src = u.String()
+	client.Dst = dst
+
+	err := client.Get()
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestHttpGetter_subdirLink(t *testing.T) {
+	ln := testHttpServerSubDir(t)
+	defer ln.Close()
+
+	httpGetter := new(HttpGetter)
+	dst, err := ioutil.TempDir("", "tf")
+	if err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	t.Logf("dst: %q", dst)
+
+	var u url.URL
+	u.Scheme = "http"
+	u.Host = ln.Addr().String()
+	u.Path = "/regular-subdir//meta-subdir"
+
+	t.Logf("url: %q", u.String())
+
+	client := &Client{
+		Src:  u.String(),
+		Dst:  dst,
+		Mode: ClientModeAny,
+		Getters: map[string]Getter{
+			"http": httpGetter,
+		},
+	}
+
+	err = client.Get()
+	if err != nil {
+		t.Fatalf("get err: %v", err)
+	}
+}
+
+func testHttpServerWithXTerraformGetLoop(t *testing.T) net.Listener {
+	t.Helper()
+
+	ln, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	header := fmt.Sprintf("http://%v:%v", ln.Addr().String(), "/loop")
+
+	mux := http.NewServeMux()
+	mux.HandleFunc("/loop", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("X-Terraform-Get", header)
+		t.Logf("serving loop")
+	})
+
+	var server http.Server
+	server.Handler = mux
+	go server.Serve(ln)
+
+	return ln
+}
+
+func testHttpServerWithXTerraformGetProxyBypass(t *testing.T) net.Listener {
+	t.Helper()
+
+	ln, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	header := fmt.Sprintf("http://%v/bypass", ln.Addr().String())
+
+	mux := http.NewServeMux()
+	mux.HandleFunc("/start/start", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("X-Terraform-Get", header)
+		t.Logf("serving start")
+	})
+
+	mux.HandleFunc("/bypass", func(w http.ResponseWriter, r *http.Request) {
+		t.Fail()
+		t.Logf("bypassed proxy")
+	})
+
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		t.Logf("serving HTTP server path: %v", r.URL.Path)
+	})
+
+	var server http.Server
+	server.Handler = mux
+	go server.Serve(ln)
+
+	return ln
+}
+
+func testHttpServerWithXTerraformGetConfiguredGettersBypass(t *testing.T) net.Listener {
+	t.Helper()
+
+	ln, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	header := fmt.Sprintf("git::http://%v/some/repository.git", ln.Addr().String())
+
+	mux := http.NewServeMux()
+	mux.HandleFunc("/start", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("X-Terraform-Get", header)
+		t.Logf("serving start")
+	})
+
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		t.Logf("serving git HTTP server path: %v", r.URL.Path)
+	})
+
+	var server http.Server
+	server.Handler = mux
+	go server.Serve(ln)
+
+	return ln
+}
+
+func testHttpServerProxy(t *testing.T, upstreamHost string) net.Listener {
+	t.Helper()
+
+	ln, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	mux := http.NewServeMux()
+
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		t.Logf("serving proxy: %v: %#+v", r.URL.Path, r.Header)
+		// create the reverse proxy
+		proxy := httputil.NewSingleHostReverseProxy(r.URL)
+		// Note that ServeHttp is non blocking & uses a go routine under the hood
+		proxy.ServeHTTP(w, r)
+	})
+
+	var server http.Server
+	server.Handler = mux
+	go server.Serve(ln)
+
+	return ln
 }
 
 func testHttpServer(t *testing.T) net.Listener {
@@ -504,6 +917,29 @@ func testHttpHandlerMetaAuth(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(fmt.Sprintf(testHttpMetaStr, testModuleURL("basic").String())))
 }
 
+func testHttpServerWithEndlessBody(t *testing.T) net.Listener {
+	t.Helper()
+
+	ln, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	mux := http.NewServeMux()
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		for {
+			w.Write([]byte(".\n"))
+		}
+	})
+
+	var server http.Server
+	server.Handler = mux
+	go server.Serve(ln)
+
+	return ln
+}
+
 func testHttpHandlerMetaSubdir(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(fmt.Sprintf(testHttpMetaStr, testModuleURL("basic//subdir").String())))
 }
@@ -546,6 +982,29 @@ func testHttpHandlerNoRange(w http.ResponseWriter, r *http.Request) {
 		}
 		w.Write(load)
 	}
+}
+
+func testHttpServerSubDir(t *testing.T) net.Listener {
+	t.Helper()
+
+	ln, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	mux := http.NewServeMux()
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodGet:
+			t.Logf("serving: %v: %v: %#+[1]v", r.Method, r.URL.String(), r.Header)
+		}
+	})
+
+	var server http.Server
+	server.Handler = mux
+	go server.Serve(ln)
+
+	return ln
 }
 
 const testHttpMetaStr = `
