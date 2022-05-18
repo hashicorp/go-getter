@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/url"
@@ -740,21 +741,30 @@ func TestGitGetter_subdirectory_symlink(t *testing.T) {
 			"git": g,
 		},
 	}
-	client.Get()
-	// err = client.Get()
-	// if err == nil {
-	// 	t.Fatalf("expected client get to fail")
-	// }
-	// if !errors.Is(err, ErrSymlinkCopy) {
-	// 	t.Fatalf("unexpected error: %v", err)
-	// }
 
-	filepath.Walk(dst, func(path string, info os.FileInfo, err error) error {
-		fmt.Fprintf(os.Stderr, "path: %q\n", path)
-		fmt.Fprintf(os.Stderr, "info: %v", info.Mode())
-		fmt.Fprintf(os.Stderr, "err: %v", err)
-		return nil
-	})
+	err = client.Get()
+
+	if runtime.GOOS == "windows" {
+		// Windows doesn't handle symlinks as one might expect with git.
+		//
+		// https://github.com/git-for-windows/git/wiki/Symbolic-Links
+		filepath.Walk(dst, func(path string, info os.FileInfo, err error) error {
+			if strings.Contains(path, "this-is-a-symlink") {
+				if info.Mode()&os.ModeSymlink == os.ModeSymlink {
+					t.Fatalf("windows git should not have cloned a symlink")
+				}
+			}
+			return nil
+		})
+	} else {
+		// We can rely on POSXI compliant systems do the right thing.
+		if err == nil {
+			t.Fatalf("expected client get to fail")
+		}
+		if !errors.Is(err, ErrSymlinkCopy) {
+			t.Fatalf("unexpected error: %v", err)
+		}
+	}
 
 }
 
