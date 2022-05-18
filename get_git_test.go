@@ -724,7 +724,7 @@ func TestGitGetter_subdirectory_symlink(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if fileInfo.Mode()&os.ModeSymlink != 0 {
+	if fileInfo.Mode()&os.ModeSymlink != os.ModeSymlink {
 		t.Fatalf("What's going on with %q?: %v: %v (%[3]d): %v (%[4]d)", path, fileInfo.Mode(), fileInfo.Mode()&os.ModeSymlink, os.ModeSymlink)
 	}
 
