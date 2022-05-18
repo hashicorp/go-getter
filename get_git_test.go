@@ -2,7 +2,10 @@ package getter
 
 import (
 	"bytes"
+	"context"
 	"encoding/base64"
+	"errors"
+	"fmt"
 	"io/ioutil"
 	"net/url"
 	"os"
@@ -436,12 +439,12 @@ func TestGitGetter_gitVersion(t *testing.T) {
 	os.Setenv("PATH", dir)
 
 	// Asking for a higher version throws an error
-	if err := checkGitVersion("2.3"); err == nil {
+	if err := checkGitVersion(context.Background(), "2.3"); err == nil {
 		t.Fatal("expect git version error")
 	}
 
 	// Passes when version is satisfied
-	if err := checkGitVersion("1.9"); err != nil {
+	if err := checkGitVersion(context.Background(), "1.9"); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -690,6 +693,83 @@ func TestGitGetter_setupGitEnvWithExisting_sshKey(t *testing.T) {
 	actual := strings.TrimSpace(string(out))
 	if actual != "ssh -o StrictHostKeyChecking=no -o IdentitiesOnly=yes -i /tmp/foo.pem" {
 		t.Fatalf("unexpected GIT_SSH_COMMAND: %q", actual)
+	}
+}
+
+func TestGitGetter_subdirectory_symlink(t *testing.T) {
+	g := new(GitGetter)
+	dst := tempDir(t)
+
+	repo := testGitRepo(t, "repo-with-symlink")
+	innerDir := filepath.Join(repo.dir, "this-directory-contains-a-symlink")
+	if err := os.Mkdir(innerDir, 0700); err != nil {
+		t.Fatal(err)
+	}
+	path := filepath.Join(innerDir, "this-is-a-symlink")
+	if err := os.Symlink("/etc/passwd", path); err != nil {
+		t.Fatal(err)
+	}
+	repo.git("add", path)
+	repo.git("commit", "-m", "Adding "+path)
+
+	u, err := url.Parse(fmt.Sprintf("git::%s//this-directory-contains-a-symlink", repo.url.String()))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	client := &Client{
+		Src:             u.String(),
+		Dst:             dst,
+		Pwd:             ".",
+		Mode:            ClientModeDir,
+		DisableSymlinks: true,
+		Detectors: []Detector{
+			new(GitDetector),
+		},
+		Getters: map[string]Getter{
+			"git": g,
+		},
+	}
+	err = client.Get()
+	if err == nil {
+		t.Fatalf("expected client get to fail")
+	}
+	if !errors.Is(err, ErrSymlinkCopy) {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestGitGetter_subdirectory(t *testing.T) {
+	g := new(GitGetter)
+	dst := tempDir(t)
+
+	repo := testGitRepo(t, "empty-repo")
+	u, err := url.Parse(fmt.Sprintf("git::%s//../../../../../../etc/passwd", repo.url.String()))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	client := &Client{
+		Src: u.String(),
+		Dst: dst,
+		Pwd: ".",
+
+		Mode: ClientModeDir,
+
+		Detectors: []Detector{
+			new(GitDetector),
+		},
+		Getters: map[string]Getter{
+			"git": g,
+		},
+	}
+
+	err = client.Get()
+	if err == nil {
+		t.Fatalf("expected client get to fail")
+	}
+	if !strings.Contains(err.Error(), "subdirectory component contain path traversal out of the repository") {
+		t.Fatalf("unexpected error: %v", err)
 	}
 }
 

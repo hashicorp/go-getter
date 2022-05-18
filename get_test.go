@@ -492,6 +492,21 @@ func TestGetFile_filename(t *testing.T) {
 	}
 }
 
+func TestGetFile_filename_path_traversal(t *testing.T) {
+	dst := tempDir(t)
+	u := testModule("basic-file/foo.txt")
+
+	u += "?filename=../../../../../../../../../../../../../tmp/bar.txt"
+
+	err := GetAny(dst, u)
+	if err == nil {
+		t.Fatalf("expected error")
+	}
+	if !strings.Contains(err.Error(), "filename query parameter contain path traversal") {
+		t.Fatalf("unexpected err: %s", err)
+	}
+}
+
 func TestGetFile_checksumSkip(t *testing.T) {
 	dst := tempTestFile(t)
 	defer os.RemoveAll(filepath.Dir(dst))

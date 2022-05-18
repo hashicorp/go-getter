@@ -16,8 +16,11 @@ func mode(mode, umask os.FileMode) os.FileMode {
 // should already exist.
 //
 // If ignoreDot is set to true, then dot-prefixed files/folders are ignored.
-func copyDir(ctx context.Context, dst string, src string, ignoreDot bool, umask os.FileMode) error {
-	src, err := filepath.EvalSymlinks(src)
+func copyDir(ctx context.Context, dst string, src string, ignoreDot bool, disableSymlinks bool, umask os.FileMode) error {
+	// We can safely evaluate the symlinks here, even if disabled, because they
+	// will be checked before actual use in walkFn and copyFile
+	var err error
+	src, err = filepath.EvalSymlinks(src)
 	if err != nil {
 		return err
 	}
@@ -36,6 +39,12 @@ func copyDir(ctx context.Context, dst string, src string, ignoreDot bool, umask 
 				return filepath.SkipDir
 			} else {
 				return nil
+			}
+		}
+
+		if disableSymlinks {
+			if info.Mode()&os.ModeSymlink == os.ModeSymlink {
+				return ErrSymlinkCopy
 			}
 		}
 
@@ -59,7 +68,7 @@ func copyDir(ctx context.Context, dst string, src string, ignoreDot bool, umask 
 		}
 
 		// If we have a file, copy the contents.
-		_, err = copyFile(ctx, dstPath, path, info.Mode(), umask)
+		_, err = copyFile(ctx, dstPath, path, disableSymlinks, info.Mode(), umask)
 		return err
 	}
 
