@@ -43,7 +43,7 @@ func copyDir(ctx context.Context, dst string, src string, ignoreDot bool, disabl
 		}
 
 		if disableSymlinks {
-			if info.Mode()&os.ModeSymlink == os.ModeSymlink {
+			if info.Mode()&os.ModeSymlink != 0 {
 				return ErrSymlinkCopy
 			}
 		}

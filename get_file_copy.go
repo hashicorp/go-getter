@@ -56,7 +56,7 @@ func copyFile(ctx context.Context, dst, src string, disableSymlinks bool, fmode,
 		if err != nil {
 			return 0, fmt.Errorf("failed to check copy file source for symlinks: %w", err)
 		}
-		if fileInfo.Mode()&os.ModeSymlink == os.ModeSymlink {
+		if fileInfo.Mode()&os.ModeSymlink != 0 {
 			return 0, ErrSymlinkCopy
 		}
 	}
