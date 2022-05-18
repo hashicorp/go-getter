@@ -348,6 +348,27 @@ func TestGetFile_archive(t *testing.T) {
 	// Verify the main file exists
 	testing_helper.AssertContents(t, dst, "Hello\n")
 }
+func TestGetFile_filename_path_traversal(t *testing.T) {
+	dst := testing_helper.TempDir(t)
+	u := testModule("basic-file/foo.txt")
+
+	u += "?filename=../../../../../../../../../../../../../tmp/bar.txt"
+
+	ctx := context.Background()
+	op, err := GetAny(ctx, dst, u)
+
+	if op != nil {
+		t.Fatalf("unexpected op: %v", op)
+	}
+
+	if err == nil {
+		t.Fatalf("expected error")
+	}
+
+	if !strings.Contains(err.Error(), "filename query parameter contain path traversal") {
+		t.Fatalf("unexpected err: %s", err)
+	}
+}
 
 func TestGetFile_archiveChecksum(t *testing.T) {
 	ctx := context.Background()
@@ -763,7 +784,7 @@ func TestGetFile_inplace_badChecksum(t *testing.T) {
 	}
 }
 
-func TestgetForcedGetter(t *testing.T) {
+func TestGetForcedGetter(t *testing.T) {
 	type args struct {
 		src string
 	}

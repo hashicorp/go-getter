@@ -2,6 +2,7 @@ package getter
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -13,6 +14,9 @@ import (
 	"github.com/hashicorp/go-multierror"
 	safetemp "github.com/hashicorp/go-safetemp"
 )
+
+// ErrSymlinkCopy means that a copy of a symlink was encountered on a request with DisableSymlinks enabled.
+var ErrSymlinkCopy = errors.New("copying of symlinks has been disabled")
 
 // Client is a client for downloading things.
 //
@@ -27,6 +31,10 @@ type Client struct {
 	// Getters is the list of protocols supported by this client. If this
 	// is nil, then the default Getters variable will be used.
 	Getters []Getter
+
+	// Disable symlinks is used to prevent copying or writing files through symlinks for Get requests.
+	// When set to true any copying or writing through symlinks will result in a ErrSymlinkCopy error.
+	DisableSymlinks bool
 }
 
 // GetResult is the result of a Client.Get
@@ -41,15 +49,36 @@ func (c *Client) Get(ctx context.Context, req *Request) (*GetResult, error) {
 		return nil, err
 	}
 
+	// Pass along the configured Getter client in the context for usage with the X-Terraform-Get feature.
+	ctx = NewContextWithClient(ctx, c)
+
 	// Store this locally since there are cases we swap this
 	if req.GetMode == ModeInvalid {
 		req.GetMode = ModeAny
 	}
 
+	// Client setting takes precedence for all requests
+	if c.DisableSymlinks {
+		req.DisableSymlinks = true
+	}
+
 	// If there is a subdir component, then we download the root separately
 	// and then copy over the proper subdir.
 	req.Src, req.subDir = SourceDirSubdir(req.Src)
+
 	if req.subDir != "" {
+		// Check if the subdirectory is attempting to traverse upwards, outside of
+		// the cloned repository path.
+		req.subDir = filepath.Clean(req.subDir)
+		if containsDotDot(req.subDir) {
+			return nil, fmt.Errorf("subdirectory component contain path traversal out of the repository")
+		}
+
+		// Prevent absolute paths, remove a leading path separator from the subdirectory
+		if req.subDir[0] == os.PathSeparator {
+			req.subDir = req.subDir[1:]
+		}
+
 		td, tdcloser, err := safetemp.Dir("", "getter")
 		if err != nil {
 			return nil, err
@@ -123,7 +152,7 @@ func (c *Client) get(ctx context.Context, req *Request, g Getter) (*GetResult, *
 	// Determine if we have an archive type
 	archiveV := q.Get("archive")
 	if archiveV != "" {
-		// Delete the paramter since it is a magic parameter we don't
+		// Delete the parameter since it is a magic parameter we don't
 		// want to pass on to the Getter
 		q.Del("archive")
 		req.u.RawQuery = q.Encode()
@@ -197,6 +226,10 @@ func (c *Client) get(ctx context.Context, req *Request, g Getter) (*GetResult, *
 				req.u.RawQuery = q.Encode()
 
 				filename = v
+			}
+
+			if containsDotDot(filename) {
+				return nil, &getError{true, fmt.Errorf("filename query parameter contain path traversal")}
 			}
 
 			req.Dst = filepath.Join(req.Dst, filename)
@@ -284,7 +317,7 @@ func (c *Client) get(ctx context.Context, req *Request, g Getter) (*GetResult, *
 			return nil, &getError{true, err}
 		}
 
-		err = copyDir(ctx, req.realDst, subDir, false, req.umask())
+		err = copyDir(ctx, req.realDst, subDir, false, req.DisableSymlinks, req.umask())
 		if err != nil {
 			return nil, &getError{false, err}
 		}

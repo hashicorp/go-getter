@@ -21,8 +21,8 @@ URLs. For example: "github.com/hashicorp/go-getter" would turn into a
 Git URL. Or "./foo" would turn into a file URL. These are extensible.
 
 This library is used by [Terraform](https://terraform.io) for
-downloading modules and [Nomad](https://nomadproject.io) for downloading
-binaries.
+downloading modules, [Packer](https://packer.io) for downloading binaries, and
+[Nomad](https://nomadproject.io) for downloading binaries.
 
 ## Installation and Usage
 
@@ -46,6 +46,16 @@ $ go-getter github.com/foo/bar ./foo
 ```
 
 The command is useful for verifying URL structures.
+
+## Security
+Fetching resources from user-supplied URLs is an inherently dangerous operation and may
+leave your application vulnerable to [server side request forgery](https://owasp.org/www-community/attacks/Server_Side_Request_Forgery),
+[path traversal](https://owasp.org/www-community/attacks/Path_Traversal), [denial of service](https://owasp.org/www-community/attacks/Denial_of_Service)
+or other security flaws.
+
+go-getter contains mitigations for some of these security issues, but should still be used with
+caution in security-critical contexts. See the available [security options](#Security-Options) that
+can be configured to mitigate some of these risks.
 
 ## URL Format
 
@@ -83,7 +93,7 @@ is built-in by default:
     file URLs.
   * GitHub URLs, such as "github.com/mitchellh/vagrant" are automatically
     changed to Git protocol over HTTP.
-  * GitLab URLs, such as "gitlab.com/inkscape/inkscape" are automatically 
+  * GitLab URLs, such as "gitlab.com/inkscape/inkscape" are automatically
     changed to Git protocol over HTTP.
   * BitBucket URLs, such as "bitbucket.org/mitchellh/vagrant" are automatically
     changed to a Git or mercurial protocol using the BitBucket API.
@@ -178,7 +188,7 @@ checksum string. Examples:
 ```
 ./foo.txt?checksum=file:./foo.txt.sha256sum
 ```
- 
+
 When checksumming from a file - ex: with `checksum=file:url` - go-getter will
 get the file linked in the URL after `file:` using the same configuration. For
 example, in `file:http://releases.ubuntu.com/cosmic/MD5SUMS` go-getter will
@@ -279,7 +289,7 @@ None
     from a private key file on disk, you would run `base64 -w0 <file>`.
 
     **Note**: Git 2.3+ is required to use this feature.
-  
+
   * `depth` - The Git clone depth. The provided number specifies the last `n`
     revisions to clone from the repository.
 
@@ -374,21 +384,21 @@ files from a smb shared folder whenever the url is prefixed with `smb://`.
 
 ⚠️ The [`smbclient`](https://www.samba.org/samba/docs/current/man-html/smbclient.1.html) command is available only for Linux.
 This is the ONLY option for a Linux user and therefore the client must be installed.
-    
+
 The `smbclient` cli is not available for Windows and MacOS. The go-getter
 will try to get files using the file system, when this happens the getter uses the FileGetter implementation.
 
-When connecting to a smb server, the OS creates a local mount in a system specific volume folder, and go-getter will 
+When connecting to a smb server, the OS creates a local mount in a system specific volume folder, and go-getter will
 try to access the following folders when looking for local mounts.
 
 - MacOS: /Volumes/<shared_path>
 - Windows: \\\\\<host>\\\<shared_path>
 
-The following examples work for all the OSes:  
+The following examples work for all the OSes:
 - smb://host/shared/dir (downloads directory content)
-- smb://host/shared/dir/file (downloads file) 
+- smb://host/shared/dir/file (downloads file)
 
-The following examples work for Linux:  
+The following examples work for Linux:
 - smb://username:password@host/shared/dir (downloads directory content)
 - smb://username@host/shared/dir
 - smb://username:password@host/shared/dir/file (downloads file)
@@ -396,13 +406,85 @@ The following examples work for Linux:
 
 ⚠️ The above examples also work on the other OSes but the authentication is not used to access the file system.
 
-   
-        
+
+
 #### SMB Testing
 The test for `get_smb.go` requires a smb server running which can be started inside a docker container by
-running `make start-smb`. Once the container is up the shared folder can be accessed via `smb://<ip|name>/public/<dir|file>` or 
-`smb://user:password@<ip|name>/private/<dir|file>` by another container or machine in the same network. 
+running `make start-smb`. Once the container is up the shared folder can be accessed via `smb://<ip|name>/public/<dir|file>` or
+`smb://user:password@<ip|name>/private/<dir|file>` by another container or machine in the same network.
 
-To run the tests inside `get_smb_test.go` and `client_test.go`, prepare the environment with `make smbtests-prepare`. On prepare some 
+To run the tests inside `get_smb_test.go` and `client_test.go`, prepare the environment with `make smbtests-prepare`. On prepare some
 mock files and directories will be added to the shared folder and a go-getter container will start together with the samba server.
-Once the environment for testing is prepared, run `make smbtests` to run the tests. 
+Once the environment for testing is prepared, run `make smbtests` to run the tests.
+
+### Security Options
+
+**Disable Symlinks**
+
+In your getter client config, we recommend using the `DisableSymlinks` option,
+which prevents writing through or copying from symlinks (which may point outside the directory).
+
+```go
+client := getter.Client{
+    // This will prevent copying or writing files through symlinks
+    DisableSymlinks: true,
+}
+```
+
+**Disable or Limit `X-Terraform-Get`**
+
+Go-Getter supports arbitrary redirects via the `X-Terraform-Get` header. This functionality
+exists to support [Terraform use cases](https://www.terraform.io/language/modules/sources#http-urls),
+but is likely not needed in most applications.
+
+For code that uses the `HttpGetter`, add the following configuration options:
+
+```go
+var httpGetter = &getter.HttpGetter{
+    // Most clients should disable X-Terraform-Get
+    // See the note below
+    XTerraformGetDisabled: true,
+    // Your software probably doesn’t rely on X-Terraform-Get, but
+    // if it does, you should set the above field to false, plus
+    // set XTerraformGet Limit to prevent endless redirects
+    // XTerraformGetLimit: 10,
+}
+```
+
+**Enforce Timeouts**
+
+The `HttpGetter` supports timeouts and other resource-constraining configuration options. The `GitGetter` and `HgGetter`
+only support timeouts.
+
+Configuration for the `HttpGetter`:
+
+```go
+var httpGetter = &getter.HttpGetter{
+    // Disable pre-fetch HEAD requests
+    DoNotCheckHeadFirst: true,
+
+    // As an alternative to the above setting, you can
+    // set a reasonable timeout for HEAD requests
+    // HeadFirstTimeout: 10 * time.Second,
+    // Read timeout for HTTP operations
+    ReadTimeout: 30 * time.Second,
+    // Set the maximum number of bytes
+    // that can be read by the getter
+    MaxBytes: 500000000, // 500 MB
+}
+```
+
+For code that uses the `GitGetter` or `HgGetter`, set the `Timeout` option:
+```go
+var gitGetter = &getter.GitGetter{
+    // Set a reasonable timeout for git operations
+    Timeout: 5 * time.Minute,
+}
+```
+
+```go
+var hgGetter = &getter.HgGetter{
+    // Set a reasonable timeout for hg operations
+    Timeout: 5 * time.Minute,
+}
+```

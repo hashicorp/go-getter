@@ -14,6 +14,7 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
+	"time"
 
 	urlhelper "github.com/hashicorp/go-getter/v2/helper/url"
 	safetemp "github.com/hashicorp/go-safetemp"
@@ -24,6 +25,10 @@ import (
 // a git repository.
 type GitGetter struct {
 	Detectors []Detector
+
+	// Timeout sets a deadline which all hg CLI operations should
+	// complete within. Defaults to zero which means no timeout.
+	Timeout time.Duration
 }
 
 var defaultBranchRegexp = regexp.MustCompile(`\s->\sorigin/(.*)`)
@@ -71,10 +76,16 @@ func (g *GitGetter) Get(ctx context.Context, req *Request) error {
 		req.u.RawQuery = q.Encode()
 	}
 
+	if g.Timeout > 0 {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, g.Timeout)
+		defer cancel()
+	}
+
 	var sshKeyFile string
 	if sshKey != "" {
 		// Check that the git version is sufficiently new.
-		if err := checkGitVersion("2.3"); err != nil {
+		if err := checkGitVersion(ctx, "2.3"); err != nil {
 			return fmt.Errorf("Error using ssh key: %v", err)
 		}
 
@@ -121,7 +132,7 @@ func (g *GitGetter) Get(ctx context.Context, req *Request) error {
 
 	// Next: check out the proper tag/branch if it is specified, and checkout
 	if ref != "" {
-		if err := g.checkout(req.Dst, ref); err != nil {
+		if err := g.checkout(ctx, req.Dst, ref); err != nil {
 			return err
 		}
 	}
@@ -163,8 +174,8 @@ func (g *GitGetter) GetFile(ctx context.Context, req *Request) error {
 	return fg.GetFile(ctx, req)
 }
 
-func (g *GitGetter) checkout(dst string, ref string) error {
-	cmd := exec.Command("git", "checkout", ref)
+func (g *GitGetter) checkout(ctx context.Context, dst string, ref string) error {
+	cmd := exec.CommandContext(ctx, "git", "checkout", ref)
 	cmd.Dir = dst
 	return getRunCommand(cmd)
 }
@@ -192,18 +203,18 @@ func (g *GitGetter) update(ctx context.Context, dst, sshKeyFile, ref string, dep
 		// Not a branch, switch to default branch. This will also catch
 		// non-existent branches, in which case we want to switch to default
 		// and then checkout the proper branch later.
-		ref = findDefaultBranch(dst)
+		ref = findDefaultBranch(ctx, dst)
 	}
 
 	// We have to be on a branch to pull
-	if err := g.checkout(dst, ref); err != nil {
+	if err := g.checkout(ctx, dst, ref); err != nil {
 		return err
 	}
 
 	if depth > 0 {
-		cmd = exec.Command("git", "pull", "--depth", strconv.Itoa(depth), "--ff-only")
+		cmd = exec.CommandContext(ctx, "git", "pull", "--depth", strconv.Itoa(depth), "--ff-only")
 	} else {
-		cmd = exec.Command("git", "pull", "--ff-only")
+		cmd = exec.CommandContext(ctx, "git", "pull", "--ff-only")
 	}
 
 	cmd.Dir = dst
@@ -226,9 +237,9 @@ func (g *GitGetter) fetchSubmodules(ctx context.Context, dst, sshKeyFile string,
 // findDefaultBranch checks the repo's origin remote for its default branch
 // (generally "master"). "master" is returned if an origin default branch
 // can't be determined.
-func findDefaultBranch(dst string) string {
+func findDefaultBranch(ctx context.Context, dst string) string {
 	var stdoutbuf bytes.Buffer
-	cmd := exec.Command("git", "branch", "-r", "--points-at", "refs/remotes/origin/HEAD")
+	cmd := exec.CommandContext(ctx, "git", "branch", "-r", "--points-at", "refs/remotes/origin/HEAD")
 	cmd.Dir = dst
 	cmd.Stdout = &stdoutbuf
 	err := cmd.Run()
@@ -278,13 +289,13 @@ func setupGitEnv(cmd *exec.Cmd, sshKeyFile string) {
 // checkGitVersion is used to check the version of git installed on the system
 // against a known minimum version. Returns an error if the installed version
 // is older than the given minimum.
-func checkGitVersion(min string) error {
+func checkGitVersion(ctx context.Context, min string) error {
 	want, err := version.NewVersion(min)
 	if err != nil {
 		return err
 	}
 
-	out, err := exec.Command("git", "version").Output()
+	out, err := exec.CommandContext(ctx, "git", "version").Output()
 	if err != nil {
 		return err
 	}

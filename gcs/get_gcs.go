@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"cloud.google.com/go/storage"
 	"github.com/hashicorp/go-getter/v2"
@@ -15,9 +16,20 @@ import (
 
 // Getter is a Getter implementation that will download a module from
 // a GCS bucket.
-type Getter struct{}
+type Getter struct {
+
+	// Timeout sets a deadline which all GCS operations should
+	// complete within. Zero value means no timeout.
+	Timeout time.Duration
+}
 
 func (g *Getter) Mode(ctx context.Context, u *url.URL) (getter.Mode, error) {
+
+	if g.Timeout > 0 {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, g.Timeout)
+		defer cancel()
+	}
 
 	// Parse URL
 	bucket, object, err := g.parseURL(u)
@@ -54,6 +66,13 @@ func (g *Getter) Mode(ctx context.Context, u *url.URL) (getter.Mode, error) {
 }
 
 func (g *Getter) Get(ctx context.Context, req *getter.Request) error {
+
+	if g.Timeout > 0 {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, g.Timeout)
+		defer cancel()
+	}
+
 	// Parse URL
 	bucket, object, err := g.parseURL(req.URL())
 	if err != nil {
@@ -111,6 +130,13 @@ func (g *Getter) Get(ctx context.Context, req *getter.Request) error {
 }
 
 func (g *Getter) GetFile(ctx context.Context, req *getter.Request) error {
+
+	if g.Timeout > 0 {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, g.Timeout)
+		defer cancel()
+	}
+
 	// Parse URL
 	bucket, object, err := g.parseURL(req.URL())
 	if err != nil {

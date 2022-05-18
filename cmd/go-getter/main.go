@@ -16,6 +16,7 @@ import (
 func main() {
 	modeRaw := flag.String("mode", "any", "get mode (any, file, dir)")
 	progress := flag.Bool("progress", false, "display terminal progress")
+	noSymlinks := flag.Bool("disable-symlinks", false, "prevent copying or writing files through symlinks")
 	flag.Parse()
 	args := flag.Args()
 	if len(args) < 2 {
@@ -54,11 +55,15 @@ func main() {
 	if *progress {
 		req.ProgressListener = defaultProgressBar
 	}
-
 	wg := sync.WaitGroup{}
 	wg.Add(1)
 
 	client := getter.DefaultClient
+
+	// Disable symlinks for all client requests
+	if *noSymlinks {
+		client.DisableSymlinks = true
+	}
 
 	getters := getter.Getters
 	getters = append(getters, new(gcs.Getter))
