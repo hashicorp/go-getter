@@ -101,6 +101,11 @@ func TestHgGetter_GetFile(t *testing.T) {
 }
 
 func TestHgGetter_HgArgumentsNotAllowed(t *testing.T) {
+	if !testHasHg {
+		t.Log("hg not found, skipping")
+		t.Skip()
+	}
+
 	g := new(HgGetter)
 
 	// If arguments are allowed in the destination, this Get call will fail

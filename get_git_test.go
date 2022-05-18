@@ -697,6 +697,10 @@ func TestGitGetter_setupGitEnvWithExisting_sshKey(t *testing.T) {
 }
 
 func TestGitGetter_subdirectory_symlink(t *testing.T) {
+	if !testHasGit {
+		t.Skip("git not found, skipping")
+	}
+
 	g := new(GitGetter)
 	dst := tempDir(t)
 
@@ -740,6 +744,10 @@ func TestGitGetter_subdirectory_symlink(t *testing.T) {
 }
 
 func TestGitGetter_subdirectory(t *testing.T) {
+	if !testHasGit {
+		t.Skip("git not found, skipping")
+	}
+
 	g := new(GitGetter)
 	dst := tempDir(t)
 
