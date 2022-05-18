@@ -113,7 +113,6 @@ func (g *HgGetter) GetFile(dst string, u *url.URL) error {
 	return fg.GetFile(dst, u)
 }
 
-
 func (g *HgGetter) clone(ctx context.Context, dst string, u *url.URL) error {
 	cmd := exec.CommandContext(ctx, "hg", "clone", "-U", "--", u.String(), dst)
 	return getRunCommand(cmd)
