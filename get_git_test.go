@@ -704,13 +704,19 @@ func TestGitGetter_subdirectory_symlink(t *testing.T) {
 	g := new(GitGetter)
 	dst := tempDir(t)
 
+	target, err := ioutil.TempFile("", "link-target")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.Remove(target.Name())
+
 	repo := testGitRepo(t, "repo-with-symlink")
 	innerDir := filepath.Join(repo.dir, "this-directory-contains-a-symlink")
 	if err := os.Mkdir(innerDir, 0700); err != nil {
 		t.Fatal(err)
 	}
 	path := filepath.Join(innerDir, "this-is-a-symlink")
-	if err := os.Symlink("/etc/passwd", path); err != nil {
+	if err := os.Symlink(target.Name(), path); err != nil {
 		t.Fatal(err)
 	}
 	repo.git("add", path)
