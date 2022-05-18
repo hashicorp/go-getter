@@ -2,6 +2,7 @@ package getter
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -31,9 +32,16 @@ func copyDir(ctx context.Context, dst string, src string, ignoreDot bool, disabl
 		}
 
 		if disableSymlinks {
-			if info.Mode()&os.ModeSymlink == os.ModeSymlink {
+			fileInfo, err := os.Lstat(path)
+			if err != nil {
+				return fmt.Errorf("failed to check copy file source for symlinks: %w", err)
+			}
+			if fileInfo.Mode()&os.ModeSymlink == os.ModeSymlink {
 				return ErrSymlinkCopy
 			}
+			// if info.Mode()&os.ModeSymlink == os.ModeSymlink {
+			// 	return ErrSymlinkCopy
+			// }
 		}
 
 		if path == src {
