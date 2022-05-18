@@ -750,9 +750,9 @@ func TestGitGetter_subdirectory_symlink(t *testing.T) {
 	// }
 
 	filepath.Walk(dst, func(path string, info os.FileInfo, err error) error {
-		t.Logf("path: %q", path)
-		t.Logf("info: %v", info.Mode())
-		t.Logf("err: %v", err)
+		fmt.Fprintf(os.Stderr, "path: %q\n", path)
+		fmt.Fprintf(os.Stderr, "info: %v", info.Mode())
+		fmt.Fprintf(os.Stderr, "err: %v", err)
 		return nil
 	})
 
