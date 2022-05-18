@@ -720,6 +720,14 @@ func TestGitGetter_subdirectory_symlink(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	fileInfo, err := os.Lstat(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if fileInfo.Mode()&os.ModeSymlink != 0 {
+		t.Fatalf("Hmmmm this symlink check for %q failed. What's going on here?: %v", path, fileInfo.Mode())
+	}
+
 	repo.git("add", path)
 	repo.git("commit", "-m", "Adding "+path)
 
