@@ -29,6 +29,13 @@ func copyDir(ctx context.Context, dst string, src string, ignoreDot bool, disabl
 		if err != nil {
 			return err
 		}
+
+		if disableSymlinks {
+			if info.Mode()&os.ModeSymlink == os.ModeSymlink {
+				return ErrSymlinkCopy
+			}
+		}
+
 		if path == src {
 			return nil
 		}
@@ -39,12 +46,6 @@ func copyDir(ctx context.Context, dst string, src string, ignoreDot bool, disabl
 				return filepath.SkipDir
 			} else {
 				return nil
-			}
-		}
-
-		if disableSymlinks {
-			if info.Mode()&os.ModeSymlink != 0 {
-				return ErrSymlinkCopy
 			}
 		}
 
