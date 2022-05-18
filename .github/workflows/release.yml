@@ -38,6 +38,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.CODESIGN_GITHUB_TOKEN }}
       - name: Install wget & clamAV antivirus scanner
         run : |
+           sudo apt-get update
            sudo apt-get -qq install -y ca-certificates wget clamav
            wget --version
       - name: Install maldet malware scanner
