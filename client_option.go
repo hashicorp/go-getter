@@ -2,7 +2,7 @@ package getter
 
 import (
 	"context"
-	"io/fs"
+	"os"
 )
 
 // ClientOption is used to configure a client.
@@ -92,7 +92,7 @@ func WithMode(mode ClientMode) ClientOption {
 
 // WithUmask specifies how to mask file permissions when storing local
 // files or decompressing an archive.
-func WithUmask(mode fs.FileMode) ClientOption {
+func WithUmask(mode os.FileMode) ClientOption {
 	return func(c *Client) error {
 		c.Umask = mode
 		return nil
