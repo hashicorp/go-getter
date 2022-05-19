@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
@@ -20,9 +21,21 @@ import (
 
 // Getter is a Getter implementation that will download a module from
 // a S3 bucket.
-type Getter struct{}
+type Getter struct {
+
+	// Timeout sets a deadline which all S3 operations should
+	// complete within. Zero value means no timeout.
+	Timeout time.Duration
+}
 
 func (g *Getter) Mode(ctx context.Context, u *url.URL) (getter.Mode, error) {
+
+	if g.Timeout > 0 {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, g.Timeout)
+		defer cancel()
+	}
+
 	// Parse URL
 	region, bucket, path, _, creds, err := g.parseUrl(u)
 	if err != nil {
@@ -40,7 +53,7 @@ func (g *Getter) Mode(ctx context.Context, u *url.URL) (getter.Mode, error) {
 		Bucket: aws.String(bucket),
 		Prefix: aws.String(path),
 	}
-	resp, err := client.ListObjects(req)
+	resp, err := client.ListObjectsWithContext(ctx, req)
 	if err != nil {
 		return 0, err
 	}
@@ -63,6 +76,12 @@ func (g *Getter) Mode(ctx context.Context, u *url.URL) (getter.Mode, error) {
 }
 
 func (g *Getter) Get(ctx context.Context, req *getter.Request) error {
+
+	if g.Timeout > 0 {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, g.Timeout)
+		defer cancel()
+	}
 
 	// Parse URL
 	region, bucket, path, _, creds, err := g.parseUrl(req.URL())
@@ -105,7 +124,7 @@ func (g *Getter) Get(ctx context.Context, req *getter.Request) error {
 			s3Req.Marker = aws.String(lastMarker)
 		}
 
-		resp, err := client.ListObjects(s3Req)
+		resp, err := client.ListObjectsWithContext(ctx, s3Req)
 		if err != nil {
 			return err
 		}
@@ -139,6 +158,13 @@ func (g *Getter) Get(ctx context.Context, req *getter.Request) error {
 }
 
 func (g *Getter) GetFile(ctx context.Context, req *getter.Request) error {
+
+	if g.Timeout > 0 {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, g.Timeout)
+		defer cancel()
+	}
+
 	region, bucket, path, version, creds, err := g.parseUrl(req.URL())
 	if err != nil {
 		return err
@@ -161,7 +187,7 @@ func (g *Getter) getObject(ctx context.Context, client *s3.S3, req *getter.Reque
 		s3req.VersionId = aws.String(version)
 	}
 
-	resp, err := client.GetObject(s3req)
+	resp, err := client.GetObjectWithContext(ctx, s3req)
 	if err != nil {
 		return err
 	}

@@ -49,11 +49,11 @@ commands:
 jobs:
   linux-tests:
     docker:
-      - image: circleci/golang:<< parameters.go-version >>
+      - image: cimg/go:<< parameters.go-version >>
     parameters:
       go-version:
         type: string
-    environment: 
+    environment:
       <<: *ENVIRONMENT
     parallelism: 4
     steps:
@@ -104,7 +104,7 @@ jobs:
           path: *TEST_RESULTS_PATH
 
   windows-tests:
-    executor: 
+    executor:
       name: win/default
       shell: bash --login -eo pipefail
     environment:
@@ -115,12 +115,12 @@ jobs:
         type: string
       gotestsum-version:
         type: string
-    steps: 
+    steps:
       - run: git config --global core.autocrlf false
       - checkout
       - attach_workspace:
           at: .
-      - run: 
+      - run:
           name: Setup (remove pre-installed go)
           command: |
             rm -rf "c:\Go"
@@ -131,16 +131,16 @@ jobs:
             - win-golang-<< parameters.go-version >>-cache-v1
             - win-gomod-cache-{{ checksum "go.mod" }}-v1
 
-      - run: 
+      - run:
           name: Install go version << parameters.go-version >>
-          command: | 
+          command: |
             if [ ! -d "c:\go" ]; then
               echo "Cache not found, installing new version of go"
               curl --fail --location https://dl.google.com/go/go<< parameters.go-version >>.windows-amd64.zip --output go.zip
               unzip go.zip -d "/c"
             fi
 
-      - run: 
+      - run:
           command: go mod download
 
       - save_cache:
@@ -176,7 +176,7 @@ jobs:
 
   go-smb-test:
     docker:
-      - image: circleci/golang:<< parameters.go-version >>
+      - image: cimg/go:<< parameters.go-version >>
     parameters:
       go-version:
         type: string

@@ -76,12 +76,13 @@ func init() {
 	// The order of the Getters in the list may affect the result
 	// depending if the Request.Src is detected as valid by multiple getters
 	Getters = []Getter{
-		&GitGetter{[]Detector{
-			new(GitHubDetector),
-			new(GitDetector),
-			new(BitBucketDetector),
-			new(GitLabDetector),
-		},
+		&GitGetter{
+			Detectors: []Detector{
+				new(GitHubDetector),
+				new(GitDetector),
+				new(BitBucketDetector),
+				new(GitLabDetector),
+			},
 		},
 		new(HgGetter),
 		new(SmbClientGetter),

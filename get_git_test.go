@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"context"
 	"encoding/base64"
+	"errors"
+	"fmt"
 	"io/ioutil"
 	"net/url"
 	"os"
@@ -342,12 +344,13 @@ func TestGitGetter_gitVersion(t *testing.T) {
 	os.Setenv("PATH", dir)
 
 	// Asking for a higher version throws an error
-	if err := checkGitVersion("2.3"); err == nil {
+	ctx := context.Background()
+	if err := checkGitVersion(ctx, "2.3"); err == nil {
 		t.Fatal("expect git version error")
 	}
 
 	// Passes when version is satisfied
-	if err := checkGitVersion("1.9"); err != nil {
+	if err := checkGitVersion(ctx, "1.9"); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -411,11 +414,12 @@ func TestGitGetter_sshSCPStyle(t *testing.T) {
 
 		GetMode: ModeDir,
 	}
-	getter := &GitGetter{[]Detector{
-		new(GitDetector),
-		new(BitBucketDetector),
-		new(GitHubDetector),
-	},
+	getter := &GitGetter{
+		Detectors: []Detector{
+			new(GitDetector),
+			new(BitBucketDetector),
+			new(GitHubDetector),
+		},
 	}
 	client := &Client{
 		Getters: []Getter{getter},
@@ -623,11 +627,12 @@ func TestGitGetter_GitHubDetector(t *testing.T) {
 	}
 
 	pwd := "/pwd"
-	f := &GitGetter{[]Detector{
-		new(GitDetector),
-		new(BitBucketDetector),
-		new(GitHubDetector),
-	},
+	f := &GitGetter{
+		Detectors: []Detector{
+			new(GitDetector),
+			new(BitBucketDetector),
+			new(GitHubDetector),
+		},
 	}
 	for i, tc := range cases {
 		req := &Request{
@@ -704,11 +709,12 @@ func TestGitGetter_Detector(t *testing.T) {
 	}
 
 	pwd := "/pwd"
-	getter := &GitGetter{[]Detector{
-		new(GitDetector),
-		new(BitBucketDetector),
-		new(GitHubDetector),
-	},
+	getter := &GitGetter{
+		Detectors: []Detector{
+			new(GitDetector),
+			new(BitBucketDetector),
+			new(GitHubDetector),
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.Input, func(t *testing.T) {
@@ -727,6 +733,108 @@ func TestGitGetter_Detector(t *testing.T) {
 				t.Errorf("wrong result\ninput: %s\ngot:   %s\nwant:  %s", tc.Input, req.Src, tc.Output)
 			}
 		})
+	}
+}
+
+func TestGitGetter_subdirectory_symlink(t *testing.T) {
+	dst := testing_helper.TempDir(t)
+
+	repo := testGitRepo(t, "repo-with-symlink")
+	innerDir := filepath.Join(repo.dir, "this-directory-contains-a-symlink")
+	if err := os.Mkdir(innerDir, 0700); err != nil {
+		t.Fatal(err)
+	}
+	path := filepath.Join(innerDir, "this-is-a-symlink")
+	if err := os.Symlink("/etc/passwd", path); err != nil {
+		t.Fatal(err)
+	}
+	repo.git("add", path)
+	repo.git("commit", "-m", "Adding "+path)
+
+	u, err := url.Parse(fmt.Sprintf("git::%s//this-directory-contains-a-symlink", repo.url.String()))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	req := &Request{
+		Src:     u.String(),
+		Dst:     dst,
+		Pwd:     ".",
+		GetMode: ModeDir,
+	}
+	getter := &GitGetter{
+		Detectors: []Detector{
+			new(GitDetector),
+			new(GitHubDetector),
+		},
+	}
+	client := &Client{
+		Getters:         []Getter{getter},
+		DisableSymlinks: true,
+	}
+
+	ctx := context.Background()
+	_, err = client.Get(ctx, req)
+	if runtime.GOOS == "windows" {
+		// Windows doesn't handle symlinks as one might expect with git.
+		//
+		// https://github.com/git-for-windows/git/wiki/Symbolic-Links
+		filepath.Walk(dst, func(path string, info os.FileInfo, err error) error {
+			if strings.Contains(path, "this-is-a-symlink") {
+				if info.Mode()&os.ModeSymlink == os.ModeSymlink {
+					// If you see this test fail in the future, you've probably enabled
+					// symlinks within git on your Windows system. Our CI/CD system does
+					// not do this, so this is the only way we can make this test
+					// make any sense.
+					t.Fatalf("windows git should not have cloned a symlink")
+				}
+			}
+			return nil
+		})
+	} else {
+		// We can rely on POSIX compliant systems running git to do the right thing.
+		if err == nil {
+			t.Fatalf("expected client get to fail")
+		}
+		if !errors.Is(err, ErrSymlinkCopy) {
+			t.Fatalf("unexpected error: %v", err)
+		}
+	}
+}
+
+func TestGitGetter_subdirectory_traversal(t *testing.T) {
+	dst := testing_helper.TempDir(t)
+
+	repo := testGitRepo(t, "empty-repo")
+	u, err := url.Parse(fmt.Sprintf("git::%s//../../../../../../etc/passwd", repo.url.String()))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	req := &Request{
+		Src:     u.String(),
+		Dst:     dst,
+		Pwd:     ".",
+		GetMode: ModeDir,
+	}
+
+	getter := &GitGetter{
+		Detectors: []Detector{
+			new(GitDetector),
+			new(GitHubDetector),
+		},
+	}
+	client := &Client{
+		Getters: []Getter{getter},
+	}
+
+	ctx := context.Background()
+	_, err = client.Get(ctx, req)
+	if err == nil {
+		t.Fatalf("expected client get to fail")
+	}
+	if !strings.Contains(err.Error(), "subdirectory component contain path traversal out of the repository") {
+		t.Fatalf("unexpected error: %v", err)
 	}
 }
 

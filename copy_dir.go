@@ -11,7 +11,7 @@ import (
 // should already exist.
 //
 // If ignoreDot is set to true, then dot-prefixed files/folders are ignored.
-func copyDir(ctx context.Context, dst string, src string, ignoreDot bool, umask os.FileMode) error {
+func copyDir(ctx context.Context, dst string, src string, ignoreDot bool, disableSymlinks bool, umask os.FileMode) error {
 	src, err := filepath.EvalSymlinks(src)
 	if err != nil {
 		return err
@@ -31,6 +31,12 @@ func copyDir(ctx context.Context, dst string, src string, ignoreDot bool, umask 
 				return filepath.SkipDir
 			} else {
 				return nil
+			}
+		}
+
+		if disableSymlinks {
+			if info.Mode()&os.ModeSymlink == os.ModeSymlink {
+				return ErrSymlinkCopy
 			}
 		}
 
@@ -54,7 +60,7 @@ func copyDir(ctx context.Context, dst string, src string, ignoreDot bool, umask 
 		}
 
 		// If we have a file, copy the contents.
-		_, err = copyFile(ctx, dstPath, path, info.Mode(), umask)
+		_, err = copyFile(ctx, dstPath, path, disableSymlinks, info.Mode(), umask)
 		return err
 	}
 

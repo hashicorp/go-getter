@@ -2,10 +2,13 @@ package getter
 
 import (
 	"context"
+	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"testing"
+	"time"
 
 	testing_helper "github.com/hashicorp/go-getter/v2/helper/testing"
 )
@@ -117,4 +120,105 @@ func TestHgGetter_GetFile(t *testing.T) {
 		t.Fatalf("err: %s", err)
 	}
 	testing_helper.AssertContents(t, dst, "Hello\n")
+}
+func TestHgGetter_HgArgumentsNotAllowed(t *testing.T) {
+	if !testHasHg {
+		t.Log("hg not found, skipping")
+		t.Skip()
+	}
+	ctx := context.Background()
+
+	tc := []struct {
+		name   string
+		req    Request
+		errChk func(testing.TB, error)
+	}{
+		{
+			// If arguments are allowed in the destination, this request to Get will fail
+			name: "arguments allowed in destination",
+			req: Request{
+				Dst: "--config=alias.clone=!touch ./TEST",
+				u:   testModuleURL("basic-hg"),
+			},
+			errChk: func(t testing.TB, err error) {
+				if err != nil {
+					t.Errorf("Expected no err, got: %s", err)
+				}
+			},
+		},
+		{
+			// Test arguments passed into the `rev` parameter
+			// This clone call will fail regardless, but an exit code of 1 indicates
+			// that the `false` command executed
+			// We are expecting an hg parse error
+			name: "arguments passed into rev parameter",
+			req: Request{
+				u: testModuleURL("basic-hg?rev=--config=alias.update=!false"),
+			},
+			errChk: func(t testing.TB, err error) {
+				if err == nil {
+					return
+				}
+
+				if !strings.Contains(err.Error(), "hg: parse error") {
+					t.Errorf("Expected no err, got: %s", err)
+				}
+			},
+		},
+		{
+			// Test arguments passed in the repository URL
+			// This Get call will fail regardless, but it should fail
+			// because the repository can't be found.
+			// Other failures indicate that hg interpreted the argument passed in the URL
+			name: "arguments passed in the repository URL",
+			req: Request{
+				u: &url.URL{Path: "--config=alias.clone=false"}},
+			errChk: func(t testing.TB, err error) {
+				if err == nil {
+					return
+				}
+
+				if !strings.Contains(err.Error(), "repository --config=alias.clone=false not found") {
+					t.Errorf("Expected no err, got: %s", err)
+				}
+			},
+		},
+	}
+	for _, tt := range tc {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			g := new(HgGetter)
+
+			if tt.req.Dst == "" {
+				dst := testing_helper.TempDir(t)
+				tt.req.Dst = dst
+			}
+
+			defer os.RemoveAll(tt.req.Dst)
+			err := g.Get(ctx, &tt.req)
+			tt.errChk(t, err)
+		})
+	}
+}
+
+func TestHgGetter_GetWithTimeout(t *testing.T) {
+	if !testHasHg {
+		t.Log("hg not found, skipping")
+		t.Skip()
+	}
+	ctx := context.Background()
+	g := &HgGetter{
+		Timeout: 1 * time.Millisecond,
+	}
+
+	dst := testing_helper.TempDir(t)
+	defer os.RemoveAll(filepath.Dir(dst))
+	req := &Request{
+		Dst: dst,
+		u:   testModuleURL("basic-hg/foo.txt"),
+	}
+
+	if err := g.Get(ctx, req); err == nil {
+		t.Fatalf("err: %s", err.Error())
+	}
 }

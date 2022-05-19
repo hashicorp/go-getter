@@ -58,6 +58,10 @@ type Request struct {
 	// By default a no op progress listener is used.
 	ProgressListener ProgressTracker
 
+	// Disable symlinks is used to prevent copying or writing files through symlinks.
+	// When set to true any copying or writing through symlinks will result in a ErrSymlinkCopy error.
+	DisableSymlinks bool
+
 	u               *url.URL
 	subDir, realDst string
 }
