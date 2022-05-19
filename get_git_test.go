@@ -784,7 +784,7 @@ func TestGitGetter_subdirectory_symlink(t *testing.T) {
 				if info.Mode()&os.ModeSymlink == os.ModeSymlink {
 					// If you see this test fail in the future, you've probably enabled
 					// symlinks within git on your Windows system. Our CI/CD system does
-					// not do this, so this is this is the only way we can make this test
+					// not do this, so this is the only way we can make this test
 					// make any sense.
 					t.Fatalf("windows git should not have cloned a symlink")
 				}
