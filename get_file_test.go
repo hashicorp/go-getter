@@ -1,5 +1,3 @@
-// +build test unix
-
 package getter
 
 import (
