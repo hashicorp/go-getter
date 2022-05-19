@@ -747,7 +747,6 @@ func TestHttpGetter__XTerraformGetConfiguredGettersBypass(t *testing.T) {
 				GetMode: ModeDir,
 			}
 
-
 			_, err := client.Get(ctx, &req)
 			// For configured getters that support git, the git repository doesn't exist so error will not be nil.
 			// If we get a nil error when we expect one other than the git error git exited with -1 we should fail.
