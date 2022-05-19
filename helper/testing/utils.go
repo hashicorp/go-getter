@@ -34,7 +34,7 @@ func AssertContents(t *testing.T, path string, contents string) {
 	}
 
 	if !reflect.DeepEqual(data, []byte(contents)) {
-		t.Fatalf("bad. expected:\n\n%s\n\nGot:\n\n%s", contents, string(data))
+		t.Fatalf("bad. expected:\n\n%q\n\nGot:\n\n%q", contents, string(data))
 	}
 }
 

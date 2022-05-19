@@ -1,4 +1,4 @@
-// +build test unix
+// +build test windows
 
 package getter
 
@@ -55,6 +55,7 @@ func TestFileGetter_sourceFile(t *testing.T) {
 	// With a source URL that is a path to a file
 	u := testModuleURL("basic")
 	u.Path += "/main.tf"
+	u.RawPath = u.Path
 
 	req := &Request{
 		Dst: dst,
@@ -73,6 +74,7 @@ func TestFileGetter_sourceNoExist(t *testing.T) {
 	// With a source URL that doesn't exist
 	u := testModuleURL("basic")
 	u.Path += "/main"
+	u.RawPath = u.Path
 
 	req := &Request{
 		Dst: dst,
@@ -165,7 +167,7 @@ func TestFileGetter_GetFile(t *testing.T) {
 	}
 
 	// Verify the main file exists
-	testing_helper.AssertContents(t, dst, "Hello\n")
+	testing_helper.AssertContents(t, dst, "Hello\r\n")
 }
 
 func TestFileGetter_GetFile_Copy(t *testing.T) {
@@ -196,7 +198,7 @@ func TestFileGetter_GetFile_Copy(t *testing.T) {
 	}
 
 	// Verify the main file exists
-	testing_helper.AssertContents(t, dst, "Hello\n")
+	testing_helper.AssertContents(t, dst, "Hello\r\n")
 }
 
 // https://github.com/hashicorp/terraform/issues/8418
