@@ -702,23 +702,23 @@ func TestHttpGetter__XTerraformGetConfiguredGettersBypass(t *testing.T) {
 		errExpected       bool
 	}{
 		{name: "configured getter for git protocol switch", configuredGetters: []Getter{new(GitGetter)}, errExpected: false},
-		{name: "configured getter for multiple protocol switch", configuredGetters: []Getter{new(HgGetter), new(GitGetter), new(FileGetter)}, errExpected: false},
+		{name: "configured getter for multiple protocol switch", configuredGetters: []Getter{new(GitGetter), new(HgGetter), new(FileGetter)}, errExpected: false},
 		{name: "configured getter for file protocol switch", configuredGetters: []Getter{new(FileGetter)}, errExpected: true},
 	}
-
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	ln := testHttpServerWithXTerraformGetConfiguredGettersBypass(t)
-
-	var u url.URL
-	u.Scheme = "http"
-	u.Host = ln.Addr().String()
-	u.Path = "/start"
 
 	for _, tt := range tc {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
+			ctx, cancel := context.WithCancel(context.Background())
+			defer cancel()
+
+			ln := testHttpServerWithXTerraformGetConfiguredGettersBypass(t)
+
+			var u url.URL
+			u.Scheme = "http"
+			u.Host = ln.Addr().String()
+			u.Path = "/start"
+
 			dst := testing_helper.TempDir(t)
 
 			rt := hookableHTTPRoundTripper{
@@ -747,11 +747,15 @@ func TestHttpGetter__XTerraformGetConfiguredGettersBypass(t *testing.T) {
 				GetMode: ModeDir,
 			}
 
+
 			_, err := client.Get(ctx, &req)
+			// For configured getters that support git, the git repository doesn't exist so error will not be nil.
+			// If we get a nil error when we expect one other than the git error git exited with -1 we should fail.
 			if tt.errExpected && err == nil {
 				t.Fatalf("error expected")
 			}
-			if err != nil {
+			// We only care about the error messages that indicate that we can download the git header URL
+			if tt.errExpected && err != nil {
 				if !strings.Contains(err.Error(), "download not supported for scheme") {
 					t.Fatalf("expected download not supported for scheme, got: %v", err)
 				}
