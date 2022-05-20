@@ -48,7 +48,7 @@ func TestHttpGetter_header(t *testing.T) {
 
 	// Get it, which should error because it uses the file protocol.
 	err := g.Get(ctx, req)
-	if !strings.Contains(err.Error(), "") {
+	if !strings.Contains(err.Error(), "no getter available for X-Terraform-Get source protocol") {
 		t.Fatalf("unexpected error: %v", err)
 	}
 	// But, using a wrapper client with a file getter will work.
