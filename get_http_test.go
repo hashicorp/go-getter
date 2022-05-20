@@ -48,7 +48,7 @@ func TestHttpGetter_header(t *testing.T) {
 
 	// Get it, which should error because it uses the file protocol.
 	err := g.Get(ctx, req)
-	if !strings.Contains(err.Error(), "download not supported for scheme") {
+	if !strings.Contains(err.Error(), "no getter available for X-Terraform-Get source protocol") {
 		t.Fatalf("unexpected error: %v", err)
 	}
 	// But, using a wrapper client with a file getter will work.
@@ -127,7 +127,7 @@ func TestHttpGetter_meta(t *testing.T) {
 
 	// Get it, which should error because it uses the file protocol.
 	err := g.Get(ctx, req)
-	if !strings.Contains(err.Error(), "download not supported for scheme") {
+	if !strings.Contains(err.Error(), "no getter available for X-Terraform-Get source protocol:") {
 		t.Fatalf("unexpected error: %v", err)
 	}
 	// But, using a wrapper client with a file getter will work.
@@ -427,7 +427,7 @@ func TestHttpGetter_auth(t *testing.T) {
 
 	// Get it, which should error because it uses the file protocol.
 	err := g.Get(ctx, req)
-	if !strings.Contains(err.Error(), "download not supported for scheme") {
+	if !strings.Contains(err.Error(), "no getter available for X-Terraform-Get source protocol:") {
 		t.Fatalf("unexpected error: %v", err)
 	}
 	// But, using a wrapper client with a file getter will work.
@@ -477,7 +477,7 @@ func TestHttpGetter_authNetrc(t *testing.T) {
 
 	// Get it, which should error because it uses the file protocol.
 	err := g.Get(ctx, req)
-	if !strings.Contains(err.Error(), "download not supported for scheme") {
+	if !strings.Contains(err.Error(), "no getter available for X-Terraform-Get source protocol:") {
 		t.Fatalf("unexpected error: %v", err)
 	}
 	// But, using a wrapper client with a file getter will work.
@@ -536,7 +536,7 @@ func TestHttpGetter_cleanhttp(t *testing.T) {
 
 	// Get it, which should error because it uses the file protocol.
 	err := g.Get(ctx, req)
-	if !strings.Contains(err.Error(), "download not supported for scheme") {
+	if !strings.Contains(err.Error(), "no getter available for X-Terraform-Get source protocol:") {
 		t.Fatalf("unexpected error: %v", err)
 	}
 	// But, using a wrapper client with a file getter will work.
@@ -755,8 +755,8 @@ func TestHttpGetter__XTerraformGetConfiguredGettersBypass(t *testing.T) {
 			}
 			// We only care about the error messages that indicate that we can download the git header URL
 			if tt.errExpected && err != nil {
-				if !strings.Contains(err.Error(), "download not supported for scheme") {
-					t.Fatalf("expected download not supported for scheme, got: %v", err)
+				if !strings.Contains(err.Error(), "no getter available for X-Terraform-Get source protocol:") {
+					t.Fatalf("expected no getter available for X-Terraform-Get source protocol:, got: %v", err)
 				}
 			}
 		})
@@ -978,8 +978,8 @@ func TestHttpGetter_XTerraformWithClientFromContext(t *testing.T) {
 			}
 
 			if err != nil {
-				if !strings.Contains(err.Error(), "download not supported for scheme") {
-					t.Fatalf("expected download not supported for scheme, got: %v", err)
+				if !strings.Contains(err.Error(), "no getter available for X-Terraform-Get source protocol:") {
+					t.Fatalf("expected no getter available for X-Terraform-Get source protocol:, got: %v", err)
 				}
 				return
 			}
