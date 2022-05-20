@@ -453,7 +453,7 @@ func (g *HttpGetter) getXTerraformSource(ctx context.Context, req *Request, sour
 
 		if !allowed {
 			protocol := strings.Split(source, ":")[0]
-			return fmt.Errorf("download not supported for scheme %q", protocol)
+			return fmt.Errorf("no getter available for X-Terraform-Get source protocol: %q", protocol)
 		}
 
 		_, err := client.Get(ctx, req)
