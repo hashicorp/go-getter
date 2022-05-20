@@ -19,6 +19,7 @@ import (
 	"os/exec"
 	"regexp"
 	"syscall"
+	"time"
 
 	cleanhttp "github.com/hashicorp/go-cleanhttp"
 )
@@ -70,7 +71,10 @@ var DefaultClient = &Client{
 
 func init() {
 	httpGetter := &HttpGetter{
-		Netrc: true,
+		Netrc:                 true,
+		XTerraformGetDisabled: true,
+		HeadFirstTimeout:      10 * time.Second,
+		ReadTimeout:           30 * time.Second,
 	}
 
 	// The order of the Getters in the list may affect the result
