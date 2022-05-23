@@ -6,6 +6,6 @@ replace github.com/hashicorp/go-getter/v2 => ../
 
 require (
 	cloud.google.com/go/storage v1.6.0
-	github.com/hashicorp/go-getter/v2 v2.0.1
+	github.com/hashicorp/go-getter/v2 v2.1.0
 	google.golang.org/api v0.21.0
 )
