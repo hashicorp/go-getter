@@ -26,7 +26,7 @@ import (
 type GitGetter struct {
 	Detectors []Detector
 
-	// Timeout sets a deadline which all hg CLI operations should
+	// Timeout sets a deadline which all git CLI operations should
 	// complete within. Defaults to zero which means no timeout.
 	Timeout time.Duration
 }
