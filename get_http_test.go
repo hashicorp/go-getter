@@ -584,6 +584,47 @@ func TestHttpGetter__XTerraformGetDisabled(t *testing.T) {
 	}
 }
 
+type testCustomDetector struct{}
+
+func (testCustomDetector) Detect(src, _ string) (string, bool, error) {
+	if strings.HasPrefix(src, "custom|") {
+		return "http://" + src[7:], true, nil
+	}
+	return "", false, nil
+}
+
+// test a source url with no protocol
+func TestHttpGetter__XTerraformGetDetected(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	ln := testHttpServerWithXTerraformGetDetected(t)
+
+	var u url.URL
+	u.Scheme = "http"
+	u.Host = ln.Addr().String()
+	u.Path = "/first"
+	dst := tempDir(t)
+
+	c := &Client{
+		Ctx:  ctx,
+		Src:  u.String(),
+		Dst:  dst,
+		Mode: ClientModeDir,
+		Options: []ClientOption{
+			func(c *Client) error {
+				c.Detectors = append(c.Detectors, testCustomDetector{})
+				return nil
+			},
+		},
+	}
+
+	err := c.Get()
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
 func TestHttpGetter__XTerraformGetProxyBypass(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -696,7 +737,6 @@ func TestHttpGetter__endless_body(t *testing.T) {
 	client := &Client{
 		Ctx:  ctx,
 		Mode: ClientModeFile,
-		// Mode: ClientModeDir,
 		Getters: map[string]Getter{
 			"http": httpGetter,
 		},
@@ -761,6 +801,36 @@ func testHttpServerWithXTerraformGetLoop(t *testing.T) net.Listener {
 	mux.HandleFunc("/loop", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("X-Terraform-Get", header)
 		t.Logf("serving loop")
+	})
+
+	var server http.Server
+	server.Handler = mux
+	go server.Serve(ln)
+
+	return ln
+}
+
+func testHttpServerWithXTerraformGetDetected(t *testing.T) net.Listener {
+	t.Helper()
+
+	ln, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	// This location requires a custom detector to work.
+	first := fmt.Sprintf("custom|%s/archive.tar.gz", ln.Addr())
+
+	mux := http.NewServeMux()
+	mux.HandleFunc("/first", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("X-Terraform-Get", first)
+	})
+	mux.HandleFunc("/archive.tar.gz", func(w http.ResponseWriter, r *http.Request) {
+		f, err := ioutil.ReadFile("testdata/archive.tar.gz")
+		if err != nil {
+			t.Fatal(err)
+		}
+		w.Write(f)
 	})
 
 	var server http.Server
