@@ -57,6 +57,10 @@ go-getter contains mitigations for some of these security issues, but should sti
 caution in security-critical contexts. See the available [security options](#Security-Options) that
 can be configured to mitigate some of these risks.
 
+go-getter may return values that contain caller-provided query parameters that can contain sensitive data.
+Context around what parameters are and are not sensitive is known only by the caller of go-getter, and specific to each use case.
+We recommend the caller ensure that go-getter's return values (e.g., error messages) are properly handled and sanitized to ensure
+sensitive data is not persisted to logs.
 ## URL Format
 
 go-getter uses a single string URL as input to download from a variety of
