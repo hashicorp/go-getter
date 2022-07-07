@@ -9,13 +9,19 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"strconv"
 	"strings"
 	"syscall"
 )
 
 // SmbClientGetter is a Getter implementation that will download a module from
 // a shared folder using smbclient cli.
-type SmbClientGetter struct{}
+type SmbClientGetter struct {
+
+	// Timeout in seconds sets a deadline which all smb client CLI operations should
+	// complete within. Defaults to zero which means to use the default client timeout of 20 seconds.
+	Timeout int
+}
 
 func (g *SmbClientGetter) Mode(ctx context.Context, u *url.URL) (Mode, error) {
 	if u.Host == "" || u.Path == "" {
@@ -216,6 +222,10 @@ func (g *SmbClientGetter) smbclientCmdArgs(used *url.Userinfo, hostPath string, 
 	baseCmd = append(baseCmd, hostPath)
 	baseCmd = append(baseCmd, "--directory")
 	baseCmd = append(baseCmd, fileDir)
+	if g.Timeout > 0 {
+		baseCmd = append(baseCmd, "-t")
+		baseCmd = append(baseCmd, strconv.Itoa(g.Timeout))
+	}
 	return baseCmd
 }
 
@@ -254,7 +264,8 @@ func (g *SmbClientGetter) isDirectory(args []string, object string) (bool, error
 }
 
 func (g *SmbClientGetter) runSmbClientCommand(dst string, args []string) (string, error) {
-	cmd := exec.Command("smbclient", args...)
+	ctx := context.Background()
+	cmd := exec.CommandContext(ctx, "smbclient", args...)
 
 	if dst != "" {
 		cmd.Dir = dst
