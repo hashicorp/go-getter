@@ -364,7 +364,19 @@ Some examples for these addressing schemes:
 
 #### GCS Authentication
 
-In order to access to GCS, authentication credentials should be provided. More information can be found [here](https://cloud.google.com/docs/authentication/getting-started)
+In order to access GCS, authentication credentials should be provided.
+
+If running `go-getter` on a GCP compute resource, authentication can occur via the service account attached to
+that compute resource (such as when running `go-getter` from a Google Kubernetes Engine instance).
+
+Otherwise, options for environment-variable based authentication include:
+- `GOOGLE_0AUTH_ACCESS_TOKEN` - A raw Google Cloud Platform 0Auth access token.
+- `GOOGLE_APPLICATION_CREDENTIALS` - The path to your service account's key file.
+- `GOOGLE_CREDENTIALS` - Your service account's key file contents but without new lines or tabs.
+
+Any one of the above environment variable options is by themselves sufficient for authentication to GCS. 
+
+More information can be found [here](https://cloud.google.com/docs/authentication/getting-started)
 
 #### GCS Bucket Examples
 
