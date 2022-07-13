@@ -212,6 +212,11 @@ func (g *GCSGetter) getClient(ctx context.Context) (client *storage.Client, err 
 		opts = append(opts, option.WithTokenSource(tokenSource))
 	}
 
+	if v, ok := os.LookupEnv("GOOGLE_CREDENTIALS"); ok {
+		vBytes := []byte(v)
+		opts = append(opts, option.WithCredentialsJSON(vBytes))
+	}
+
 	newClient, err := storage.NewClient(ctx, opts...)
 	if err != nil {
 		return nil, err
