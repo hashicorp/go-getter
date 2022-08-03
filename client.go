@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -317,11 +318,43 @@ func (c *Client) get(ctx context.Context, req *Request, g Getter) (*GetResult, *
 			return nil, &getError{true, err}
 		}
 
-		err = copyDir(ctx, req.realDst, subDir, false, req.DisableSymlinks, req.umask())
-		if err != nil {
-			return nil, &getError{false, err}
+		if stat, err := os.Stat(subDir); err != nil {
+			return nil, &getError{false, fmt.Errorf("failed to stat '%s': %w", subDir, err)}
+		} else if stat.IsDir() {
+			err = copyDir(ctx, req.realDst, subDir, false, req.DisableSymlinks, req.umask())
+			if err != nil {
+				return nil, &getError{false, err}
+			}
+			return &GetResult{req.realDst}, nil
+		} else {
+			src, err := os.Open(subDir)
+			if err != nil {
+				return nil, &getError{false, fmt.Errorf("failed to open local source file at '%s': %w", subDir, err)}
+			}
+			//goland:noinspection GoUnhandledErrorResult
+			defer src.Close()
+
+			target := filepath.Join(req.realDst, filepath.Base(subDir))
+			dst, err := os.Create(target)
+			if err != nil {
+				return nil, &getError{false, fmt.Errorf("failed to open local target file at '%s': %w", target, err)}
+			}
+			//goland:noinspection GoUnhandledErrorResult
+			defer dst.Close()
+
+			buf := make([]byte, 1024*20) // 20k buffer should usually suffice for 99% of files
+			for {
+				n, err := src.Read(buf)
+				if err != nil && err != io.EOF {
+					return nil, &getError{false, fmt.Errorf("failed to read local source file at '%s': %w", subDir, err)}
+				} else if n == 0 {
+					break
+				} else if _, err := dst.Write(buf[:n]); err != nil {
+					return nil, &getError{false, fmt.Errorf("failed to write to local source file at '%s': %w", target, err)}
+				}
+			}
+			return &GetResult{target}, nil
 		}
-		return &GetResult{req.realDst}, nil
 	}
 
 	return &GetResult{req.Dst}, nil
