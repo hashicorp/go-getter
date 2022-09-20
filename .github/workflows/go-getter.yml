@@ -1,0 +1,132 @@
+name: go-getter
+
+on: [push]
+
+env:
+  TEST_RESULTS_PATH: /tmp/test-results
+
+jobs:
+
+  linux-tests:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        go-version:
+          - 1.14.15
+          - 1.15.13
+          - 1.19
+    
+    steps:
+      - name: Setup go
+        uses: actions/setup-go@v3
+        with:
+          go-version: ${{ matrix.go-version }}
+      
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Create test directory
+        run: |
+          mkdir -p ${{ env.TEST_RESULTS_PATH }}
+
+      - name: Download go modules
+        run: go mod download
+      
+      - name: Cache / restore go modules
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+      
+      # Check go fmt output because it does not report non-zero when there are fmt changes
+      - name: Run gofmt
+        run: |
+          go fmt ./...
+          files=$(go fmt ./...)
+            if [ -n "$files" ]; then
+              echo "The following file(s) do not conform to go fmt:"
+              echo "$files"
+              exit 1
+            fi
+      
+      # Install gotestsum with go get for 1.14.15 & 1.15.3; otherwise default to go install 
+      - name: Install gotestsum
+        run: |
+            if [ ${{ matrix.go-version }} != 1.19 ]; then
+                go get gotest.tools/gotestsum@v1.8.2; else
+                go install gotest.tools/gotestsum@v1.8.2
+            fi
+        
+      - name: Run go tests
+        run: |
+          PACKAGE_NAMES=$(go list ./...)
+          echo "Running $(echo $PACKAGE_NAMES | wc -w) packages"
+          echo $PACKAGE_NAMES
+          gotestsum --format=short-verbose --junitfile $TEST_RESULTS_PATH/go-getter/gotestsum-report.xml -- -p 2 -cover -coverprofile=linux_cov.part $PACKAGE_NAMES
+      
+      # Save coverage report parts
+      - name: Upload and save artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: linux test results
+          path: linux_cov.part
+
+  windows-tests:
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        go-version:
+          - 1.14.15 
+          - 1.15.13
+          - 1.19
+
+    steps:
+      - name: Run git config #Windows-only
+        run: git config --global core.autocrlf false
+
+      - name: Setup Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: ${{ matrix.go-version }}
+      
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Download go modules
+        run: go mod download
+        
+      - name: Setup cache for go modules
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~\go\pkg\mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+      
+      # Install gotestsum with go get for 1.14.15 & 1.15.3; otherwise default to go install 
+      - name: Install gotestsum
+        shell: bash
+        run: |
+          if [ ${{ matrix.go-version }} != 1.19 ]; then
+              go get gotest.tools/gotestsum@v1.8.2; else
+              go install gotest.tools/gotestsum@v1.8.2
+          fi 
+      
+      - name: Run go tests
+        shell: bash
+        run: |
+          PACKAGE_NAMES=$(go list ./...)
+          echo "Running $(echo $PACKAGE_NAMES | wc -w) packages"
+          echo $PACKAGE_NAMES
+          gotestsum --format=short-verbose --junitfile $TEST_RESULTS_PATH/go-getter/gotestsum-report.xml -- -p 2 -cover -race -coverprofile=win_cov.part $PACKAGE_NAMES
+      
+      # Save coverage report parts
+      - name: Upload and save artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: windows test results
+          path: win_cov.part
