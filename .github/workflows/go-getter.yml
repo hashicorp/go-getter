@@ -61,6 +61,8 @@ jobs:
             fi
         
       - name: Run go tests
+        env:
+          GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
         run: |
           PACKAGE_NAMES=$(go list ./...)
           echo "Running $(echo $PACKAGE_NAMES | wc -w) packages"
@@ -117,6 +119,8 @@ jobs:
           fi 
       
       - name: Run go tests
+        env:
+          GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
         shell: bash
         run: |
           PACKAGE_NAMES=$(go list ./...)
