@@ -68,6 +68,7 @@ jobs:
           aws-region: us-east-1
           role-to-assume: arn:aws:iam::388664967494:role/hc-go-getter-test
           role-session-name: ${{ github.run_id }}
+          audience: https://github.com/hashicorp
         
       - name: Run go tests
         env:
@@ -135,6 +136,7 @@ jobs:
           aws-region: us-east-1
           role-to-assume: arn:aws:iam::388664967494:role/hc-go-getter-test
           role-session-name: ${{ github.run_id }}
+          audience: https://github.com/hashicorp
       
       - name: Run go tests
         env:
