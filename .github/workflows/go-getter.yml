@@ -15,7 +15,9 @@ jobs:
           - 1.14.15
           - 1.15.13
           - 1.19
-    
+    permissions:
+      id-token: write
+      contents: read
     steps:
       - name: Setup go
         uses: actions/setup-go@v3
@@ -59,6 +61,13 @@ jobs:
                 go get gotest.tools/gotestsum@v1.8.2; else
                 go install gotest.tools/gotestsum@v1.8.2
             fi
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-region: us-east-1
+          role-to-assume: arn:aws:iam::388664967494:role/hc-go-getter-test
+          role-session-name: ${{ github.run_id }}
         
       - name: Run go tests
         env:
@@ -84,7 +93,9 @@ jobs:
           - 1.14.15 
           - 1.15.13
           - 1.19
-
+    permissions:
+      id-token: write
+      contents: read
     steps:
       - name: Run git config #Windows-only
         run: git config --global core.autocrlf false
@@ -117,6 +128,13 @@ jobs:
               go get gotest.tools/gotestsum@v1.8.2; else
               go install gotest.tools/gotestsum@v1.8.2
           fi 
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-region: us-east-1
+          role-to-assume: arn:aws:iam::388664967494:role/hc-go-getter-test
+          role-session-name: ${{ github.run_id }}
       
       - name: Run go tests
         env:
