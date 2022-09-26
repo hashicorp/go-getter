@@ -75,6 +75,7 @@ jobs:
         with:
           workload_identity_provider: 'projects/328212837253/locations/global/workloadIdentityPools/hc-go-getter-test/providers/hc-go-getter-test'
           service_account: hc-go-getter-test@hc-e56c0f7c21c448d2be9e7696073.iam.gserviceaccount.com
+          audience: https://github.com/hashicorp
         
       - name: Run go tests
         run: |
@@ -147,6 +148,7 @@ jobs:
         with:
           workload_identity_provider: 'projects/328212837253/locations/global/workloadIdentityPools/hc-go-getter-test/providers/hc-go-getter-test'
           service_account: hc-go-getter-test@hc-e56c0f7c21c448d2be9e7696073.iam.gserviceaccount.com
+          audience: https://github.com/hashicorp
       
       - name: Run go tests
         shell: bash
