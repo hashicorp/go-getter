@@ -69,10 +69,14 @@ jobs:
           role-to-assume: arn:aws:iam::388664967494:role/hc-go-getter-test
           role-session-name: ${{ github.run_id }}
           audience: https://github.com/hashicorp
+
+      - name: 'Authenticate to Google Cloud'
+        uses: 'google-github-actions/auth@v0.4.0'
+        with:
+          workload_identity_provider: 'projects/328212837253/locations/global/workloadIdentityPools/hc-go-getter-test/providers/hc-go-getter-test'
+          service_account: hc-go-getter-test@hc-e56c0f7c21c448d2be9e7696073.iam.gserviceaccount.com
         
       - name: Run go tests
-        env:
-          GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
         run: |
           PACKAGE_NAMES=$(go list ./...)
           echo "Running $(echo $PACKAGE_NAMES | wc -w) packages"
@@ -137,10 +141,14 @@ jobs:
           role-to-assume: arn:aws:iam::388664967494:role/hc-go-getter-test
           role-session-name: ${{ github.run_id }}
           audience: https://github.com/hashicorp
+
+      - name: 'Authenticate to Google Cloud'
+        uses: 'google-github-actions/auth@v0.4.0'
+        with:
+          workload_identity_provider: 'projects/328212837253/locations/global/workloadIdentityPools/hc-go-getter-test/providers/hc-go-getter-test'
+          service_account: hc-go-getter-test@hc-e56c0f7c21c448d2be9e7696073.iam.gserviceaccount.com
       
       - name: Run go tests
-        env:
-          GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
         shell: bash
         run: |
           PACKAGE_NAMES=$(go list ./...)
