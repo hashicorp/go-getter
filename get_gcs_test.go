@@ -72,9 +72,9 @@ func TestGCSGetter_GetGenerationFile(t *testing.T) {
 	dst := tempTestFile(t)
 	defer os.RemoveAll(filepath.Dir(dst))
 
-	// Download
+	// Download Previous Version
 	err := g.GetFile(
-		dst, testURL("https://www.googleapis.com/storage/v1/hc-go-getter-test/go-getter/versioned.txt#1615905097179533"))
+		dst, testURL("https://www.googleapis.com/storage/v1/hc-go-getter-test/go-getter/versioned.txt#1664219586926715"))
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
@@ -88,9 +88,9 @@ func TestGCSGetter_GetGenerationFile(t *testing.T) {
 		t.Fatalf("expected file contents from generation to be `a` but got `%s`", content)
 	}
 
-	// Download
+	// Download Current Version
 	err = g.GetFile(
-		dst, testURL("https://www.googleapis.com/storage/v1/hc-go-getter-test/go-getter/versioned.txt#1615905174141919"))
+		dst, testURL("https://www.googleapis.com/storage/v1/hc-go-getter-test/go-getter/versioned.txt#1664226903901093"))
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
