@@ -74,7 +74,7 @@ func TestGCSGetter_GetGenerationFile(t *testing.T) {
 
 	// Download Previous Version
 	err := g.GetFile(
-		dst, testURL("https://www.googleapis.com/storage/v1/hc-go-getter-test/go-getter/versioned.txt#1664219586926715"))
+		dst, testURL("https://www.googleapis.com/storage/v1/hc-go-getter-test/go-getter/versioned.txt#1664282135302009"))
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
@@ -84,13 +84,13 @@ func TestGCSGetter_GetGenerationFile(t *testing.T) {
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
-	if string(content) != "a\n" {
-		t.Fatalf("expected file contents from generation to be `a` but got `%s`", content)
+	if string(content) != "old\n" {
+		t.Fatalf("expected file contents from generation to be `old` but got `%s`", content)
 	}
 
 	// Download Current Version
 	err = g.GetFile(
-		dst, testURL("https://www.googleapis.com/storage/v1/hc-go-getter-test/go-getter/versioned.txt#1664226903901093"))
+		dst, testURL("https://www.googleapis.com/storage/v1/hc-go-getter-test/go-getter/versioned.txt#1664282167903672"))
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
@@ -100,8 +100,8 @@ func TestGCSGetter_GetGenerationFile(t *testing.T) {
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
-	if string(content) != "b\n" {
-		t.Fatalf("expected file contents from generation to be `b` but got `%s`", content)
+	if string(content) != "new\n" {
+		t.Fatalf("expected file contents from generation to be `new` but got `%s`", content)
 	}
 
 }
