@@ -12,6 +12,8 @@ jobs:
     strategy:
       matrix:
         go-version:
+          - 1.17
+          - 1.18
           - 1.19
     permissions:
       id-token: write
@@ -32,7 +34,7 @@ jobs:
       - name: Download go modules
         run: go mod download
       
-      - name: Cache / restore go modules
+      - name: Setup cache for go modules
         uses: actions/cache@v3
         with:
           path: |
@@ -55,7 +57,6 @@ jobs:
       
       - name: Install gotestsum
         run: go install gotest.tools/gotestsum@v1.8.2
-
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v1
@@ -91,6 +92,8 @@ jobs:
     strategy:
       matrix:
         go-version:
+          - 1.17
+          - 1.18
           - 1.19
     permissions:
       id-token: write
@@ -124,7 +127,6 @@ jobs:
         shell: bash
         run: go install gotest.tools/gotestsum@v1.8.2
         
-
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
