@@ -5,6 +5,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/aws/aws-sdk-go/aws/awserr"
@@ -223,6 +224,34 @@ func TestGetter_Mode_collision(t *testing.T) {
 	}
 	if mode != getter.ModeFile {
 		t.Fatal("expect ModeFile")
+	}
+}
+
+func TestGetAny_S3_malformed(t *testing.T) {
+	ctx := context.Background()
+
+	g := new(Getter)
+	dst := testing_helper.TempTestFile(t)
+	defer os.RemoveAll(filepath.Dir(dst))
+
+	req := &getter.Request{
+		Src:     "s3::https://s3-eu-west-2.amazonaws.com/picat-was-here//malformed",
+		Dst:     dst,
+		GetMode: getter.ModeFile,
+	}
+
+	c := getter.Client{
+		Getters: []getter.Getter{g},
+	}
+
+	_, err := c.Get(ctx, req)
+	if err == nil {
+		t.Fatalf("expected error, got none")
+	}
+
+	expectedErrMsg := "URL is not a valid S3 URL"
+	if !strings.Contains(err.Error(), expectedErrMsg) {
+		t.Fatalf("expected %q error, but got %v", expectedErrMsg, err)
 	}
 }
 
