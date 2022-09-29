@@ -13,4 +13,6 @@ require (
 	github.com/ulikunitz/xz v0.5.8
 )
 
-go 1.13
+require github.com/hashicorp/errwrap v1.0.0 // indirect
+
+go 1.18
