@@ -110,9 +110,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Download go modules
-        run: go mod download
-        
       - name: Setup cache for go modules
         uses: actions/cache@v3
         with:
@@ -122,6 +119,9 @@ jobs:
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
           restore-keys: |
             ${{ runner.os }}-go-
+
+      - name: Download go modules
+        run: go mod download
        
       - name: Install gotestsum
         shell: bash
