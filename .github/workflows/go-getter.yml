@@ -30,10 +30,7 @@ jobs:
       - name: Create test directory
         run: |
           mkdir -p ${{ env.TEST_RESULTS_PATH }}
-
-      - name: Download go modules
-        run: go mod download
-      
+  
       - name: Setup cache for go modules
         uses: actions/cache@v3
         with:
@@ -43,6 +40,9 @@ jobs:
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
           restore-keys: |
             ${{ runner.os }}-go-
+      
+      - name: Download go modules
+        run: go mod download
       
       # Check go fmt output because it does not report non-zero when there are fmt changes
       - name: Run gofmt
