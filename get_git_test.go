@@ -305,6 +305,50 @@ func TestGitGetter_shallowCloneWithCommitID(t *testing.T) {
 	}
 }
 
+func TestGitGetter_branchAmbiguous(t *testing.T) {
+	if !testHasGit {
+		t.Skip("git not found, skipping")
+	}
+
+	g := new(GitGetter)
+	dst := tempDir(t)
+
+	repo := testGitRepo(t, "branch")
+	repo.commitFileInDir("file.txt", "ambiguous", "branch-and-file-with-same-name")
+	commitID, err := repo.latestCommit()
+	if err != nil {
+		t.Fatal(err)
+	}
+	repo.git("checkout", "-b", "ambiguous")
+	repo.commitFile("branch.txt", "branch")
+	repo.git("checkout", commitID)
+
+	q := repo.url.Query()
+	q.Add("ref", "ambiguous")
+	repo.url.RawQuery = q.Encode()
+
+	if err := g.Get(dst, repo.url); err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	// Verify the main file exists
+	mainPath := filepath.Join(dst, "branch.txt")
+	if _, err := os.Stat(mainPath); err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	// Get again should work
+	if err := g.Get(dst, repo.url); err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	// Verify the main file exists
+	mainPath = filepath.Join(dst, "branch.txt")
+	if _, err := os.Stat(mainPath); err != nil {
+		t.Fatalf("err: %s", err)
+	}
+}
+
 func TestGitGetter_branchUpdate(t *testing.T) {
 	if !testHasGit {
 		t.Skip("git not found, skipping")
@@ -866,6 +910,22 @@ func (r *gitRepo) commitFile(file, content string) {
 	}
 	r.git("add", file)
 	r.git("commit", "-m", "Adding "+file)
+}
+
+// commitFile writes and commits a text file to the repo.
+func (r *gitRepo) commitFileInDir(file, dir, content string) {
+	dir_path := filepath.Join(r.dir, dir)
+	if err := os.Mkdir(dir_path, 0755); err != nil {
+		r.t.Fatal(err)
+	}
+
+	rel_file_path := filepath.Join(dir, file)
+	file_path := filepath.Join(dir_path, file)
+	if err := ioutil.WriteFile(file_path, []byte(content), 0600); err != nil {
+		r.t.Fatal(err)
+	}
+	r.git("add", rel_file_path)
+	r.git("commit", "-m", "Adding "+rel_file_path)
 }
 
 // latestCommit returns the full commit id of the latest commit on the current
