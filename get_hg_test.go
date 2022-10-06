@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 	"time"
@@ -124,6 +125,11 @@ func TestHgGetter_GetFile(t *testing.T) {
 func TestHgGetter_HgArgumentsNotAllowed(t *testing.T) {
 	if !testHasHg {
 		t.Log("hg not found, skipping")
+		t.Skip()
+	}
+
+	if runtime.GOOS == "windows" {
+		t.Log("skipping for Windows OS for now")
 		t.Skip()
 	}
 	ctx := context.Background()
