@@ -351,7 +351,7 @@ be used automatically.
 #### S3 Bucket Examples
 
 S3 has several addressing schemes used to reference your bucket. These are
-listed here: http://docs.aws.amazon.com/AmazonS3/latest/dev/UsingBucket.html#access-bucket-intro
+listed here: https://docs.aws.amazon.com/AmazonS3/latest/userguide/access-bucket-intro.html
 
 Some examples for these addressing schemes:
 - s3::https://s3.amazonaws.com/bucket/foo
