@@ -129,7 +129,7 @@ func TestHgGetter_HgArgumentsNotAllowed(t *testing.T) {
 	}
 
 	if runtime.GOOS == "windows" {
-		t.Log("skipping for Windows OS for now")
+		t.Log("skipping on Windows OS for now")
 		t.Skip()
 	}
 	ctx := context.Background()
