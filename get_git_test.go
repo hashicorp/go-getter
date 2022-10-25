@@ -624,6 +624,9 @@ func TestGitGetter_submodule(t *testing.T) {
 
 	// Set up the grandchild
 	gc := testGitRepo(t, "grandchild")
+	// Due to  CVE-2022-39253 (https://github.blog/2022-10-18-git-security-vulnerabilities-announced/#cve-2022-39253)
+	// we are allowing file transport globally.
+	gc.git("config", "--global", "protocol.file.allow", "always")
 	gc.commitFile("grandchild.txt", "grandchild")
 
 	// Set up the child
