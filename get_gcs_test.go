@@ -8,6 +8,9 @@ import (
 	"testing"
 )
 
+//Note for external contributors: In order to run the GCS test suite, you will only be able to be run
+// in GitHub Actions when you open a PR.
+
 func TestGCSGetter_impl(t *testing.T) {
 	var _ Getter = new(GCSGetter)
 }
