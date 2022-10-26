@@ -9,7 +9,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/awserr"
 )
 
-//Note for external contributors: In order to run the GCS test suite, you will only be able to be run
+// Note for external contributors: In order to run the S3 test suite, you will only be able to be run
 // in GitHub Actions when you open a PR.
 
 func TestS3Getter_impl(t *testing.T) {
