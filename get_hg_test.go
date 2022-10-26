@@ -129,6 +129,8 @@ func TestHgGetter_HgArgumentsNotAllowed(t *testing.T) {
 	}
 
 	if runtime.GOOS == "windows" {
+	        // Please refer to https://github.com/hashicorp/go-getter/pull/388/files#r1005819432
+	        // for more context why we are temporarily skipping Windows OS.
 		t.Log("skipping on Windows OS for now")
 		t.Skip()
 	}
