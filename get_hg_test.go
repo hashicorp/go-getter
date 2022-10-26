@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 	"time"
@@ -124,6 +125,13 @@ func TestHgGetter_GetFile(t *testing.T) {
 func TestHgGetter_HgArgumentsNotAllowed(t *testing.T) {
 	if !testHasHg {
 		t.Log("hg not found, skipping")
+		t.Skip()
+	}
+
+	if runtime.GOOS == "windows" {
+	        // Please refer to https://github.com/hashicorp/go-getter/pull/388/files#r1005819432
+	        // for more context why we are temporarily skipping Windows OS.
+		t.Log("skipping on Windows OS for now")
 		t.Skip()
 	}
 	ctx := context.Background()
