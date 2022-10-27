@@ -14,7 +14,7 @@ import (
 	urlhelper "github.com/hashicorp/go-getter/v2/helper/url"
 )
 
-// Note for external contributors: In order to run the s3 test suite, you will only be able to be run
+// Note for external contributors: In order to run the s3 test suite, you will only be able to be run these tests
 // in GitHub Actions when you open a PR.
 
 func TestGetter_impl(t *testing.T) {
