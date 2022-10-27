@@ -14,17 +14,8 @@ import (
 	urlhelper "github.com/hashicorp/go-getter/v2/helper/url"
 )
 
-func init() {
-	// These are well known restricted IAM keys to a HashiCorp-managed bucket
-	// in a private AWS account that only has access to the open source test
-	// resources.
-	//
-	// We do the string concat below to avoid AWS autodetection of a key. This
-	// key is locked down an IAM policy that is read-only so we're purposely
-	// exposing it.
-	os.Setenv("AWS_ACCESS_KEY", "AKIAITTDR"+"WY2STXOZE2A")
-	os.Setenv("AWS_SECRET_KEY", "oMwSyqdass2kPF"+"/7ORZA9dlb/iegz+89B0Cy01Ea")
-}
+// Note for external contributors: In order to run the s3 test suite, you will only be able to be run these tests
+// in GitHub Actions when you open a PR.
 
 func TestGetter_impl(t *testing.T) {
 	var _ getter.Getter = new(Getter)
@@ -36,7 +27,7 @@ func TestGetter(t *testing.T) {
 	g := new(Getter)
 	dst := testing_helper.TempDir(t)
 	req := &getter.Request{
-		Src:     "s3.amazonaws.com/hc-oss-test/go-getter/folder",
+		Src:     "s3.amazonaws.com/hc-go-getter-test/go-getter/folder",
 		Dst:     dst,
 		GetMode: getter.ModeAny,
 	}
@@ -64,7 +55,7 @@ func TestGetter_subdir(t *testing.T) {
 	g := new(Getter)
 	dst := testing_helper.TempDir(t)
 	req := &getter.Request{
-		Src: "s3::https://s3.amazonaws.com/hc-oss-test/go-getter/folder/subfolder",
+		Src: "s3::https://s3.amazonaws.com/hc-go-getter-test/go-getter/folder/subfolder",
 		Dst: dst,
 	}
 
@@ -94,7 +85,7 @@ func TestGetter_GetFile(t *testing.T) {
 
 	req := &getter.Request{
 		Dst:     dst,
-		Src:     "s3.amazonaws.com/hc-oss-test/go-getter/folder/main.tf",
+		Src:     "s3.amazonaws.com/hc-go-getter-test/go-getter/folder/main.tf",
 		GetMode: getter.ModeFile,
 	}
 
@@ -123,7 +114,7 @@ func TestGetter_GetFile_badParams(t *testing.T) {
 	defer os.RemoveAll(filepath.Dir(dst))
 
 	req := &getter.Request{
-		Src:     "s3.amazonaws.com/hc-oss-test/go-getter/folder/main.tf?aws_access_key_id=foo&aws_access_key_secret=bar&aws_access_token=baz",
+		Src:     "s3.amazonaws.com/hc-go-getter-test/go-getter/folder/main.tf?aws_access_key_id=foo&aws_access_key_secret=bar&aws_access_token=baz",
 		Dst:     dst,
 		GetMode: getter.ModeFile,
 	}
@@ -151,7 +142,7 @@ func TestGetter_GetFile_notfound(t *testing.T) {
 	defer os.RemoveAll(filepath.Dir(dst))
 
 	req := &getter.Request{
-		Src:     "s3.amazonaws.com/hc-oss-test/go-getter/folder/404.tf",
+		Src:     "s3.amazonaws.com/hc-go-getter-test/go-getter/folder/404.tf",
 		Dst:     dst,
 		GetMode: getter.ModeFile,
 	}
@@ -173,7 +164,7 @@ func TestGetter_Mode_dir(t *testing.T) {
 
 	// Check client mode on a key prefix with only a single key.
 	mode, err := g.Mode(ctx,
-		urlhelper.MustParse("https://s3.amazonaws.com/hc-oss-test/go-getter/folder"))
+		urlhelper.MustParse("https://s3.amazonaws.com/hc-go-getter-test/go-getter/folder"))
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
@@ -189,7 +180,7 @@ func TestGetter_Mode_file(t *testing.T) {
 
 	// Check client mode on a key prefix which contains sub-keys.
 	mode, err := g.Mode(ctx,
-		urlhelper.MustParse("https://s3.amazonaws.com/hc-oss-test/go-getter/folder/main.tf"))
+		urlhelper.MustParse("https://s3.amazonaws.com/hc-go-getter-test/go-getter/folder/main.tf"))
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
@@ -209,7 +200,7 @@ func TestGetter_Mode_notfound(t *testing.T) {
 	// prefix is handled properly (e.g., "/fold" and "/folder" don't put the
 	// client mode into "dir".
 	mode, err := g.Mode(ctx,
-		urlhelper.MustParse("https://s3.amazonaws.com/hc-oss-test/go-getter/fold"))
+		urlhelper.MustParse("https://s3.amazonaws.com/hc-go-getter-test/go-getter/fold"))
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
@@ -226,7 +217,7 @@ func TestGetter_Mode_collision(t *testing.T) {
 	// Check that the client mode is "file" if there is both an object and a
 	// folder with a common prefix (i.e., a "collision" in the namespace).
 	mode, err := g.Mode(ctx,
-		urlhelper.MustParse("https://s3.amazonaws.com/hc-oss-test/go-getter/collision/foo"))
+		urlhelper.MustParse("https://s3.amazonaws.com/hc-go-getter-test/go-getter/collision/foo"))
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}

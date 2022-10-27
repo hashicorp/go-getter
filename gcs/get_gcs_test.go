@@ -13,35 +13,21 @@ import (
 	urlhelper "github.com/hashicorp/go-getter/v2/helper/url"
 )
 
-// initGCPCredentials writes a temporary GCS credentials file if necessary and
-// returns the path and a function to clean it up. allAuthenticatedUsers can
-// access go-getter-test with read only access.
-func initGCPCredentials(t *testing.T) func() {
-	if gc := os.Getenv("GOOGLE_CREDENTIALS"); gc != "" &&
-		os.Getenv("GOOGLE_APPLICATION_CREDENTIALS") == "" {
-		file, cleanup := testing_helper.TempFileWithContent(t, gc)
-		os.Setenv("GOOGLE_APPLICATION_CREDENTIALS", file)
-		return func() {
-			os.Setenv("GOOGLE_APPLICATION_CREDENTIALS", "")
-			cleanup()
-		}
-	}
-	return func() {}
-}
+// Note for external contributors: In order to run the GCS test suite, you will only be able to be run these tests
+// in GitHub Actions when you open a PR.
 
 func TestGetter_impl(t *testing.T) {
 	var _ getter.Getter = new(Getter)
 }
 
 func TestGetter(t *testing.T) {
-	defer initGCPCredentials(t)()
 
 	g := new(Getter)
 	dst := testing_helper.TempDir(t)
 	ctx := context.Background()
 
 	req := &getter.Request{
-		Src: "www.googleapis.com/storage/v1/go-getter-test/go-getter/folder",
+		Src: "www.googleapis.com/storage/v1/hc-go-getter-test/go-getter/folder",
 		Dst: dst,
 	}
 
@@ -63,14 +49,13 @@ func TestGetter(t *testing.T) {
 }
 
 func TestGetter_subdir(t *testing.T) {
-	defer initGCPCredentials(t)()
 
 	g := new(Getter)
 	dst := testing_helper.TempDir(t)
 	ctx := context.Background()
 
 	req := &getter.Request{
-		Src: "www.googleapis.com/storage/v1/go-getter-test/go-getter/folder/subfolder",
+		Src: "www.googleapis.com/storage/v1/hc-go-getter-test/go-getter/folder/subfolder",
 		Dst: dst,
 	}
 
@@ -92,7 +77,6 @@ func TestGetter_subdir(t *testing.T) {
 }
 
 func TestGetter_GetFile(t *testing.T) {
-	defer initGCPCredentials(t)()
 
 	g := new(Getter)
 	dst := testing_helper.TempTestFile(t)
@@ -100,7 +84,7 @@ func TestGetter_GetFile(t *testing.T) {
 	ctx := context.Background()
 
 	req := &getter.Request{
-		Src:     "www.googleapis.com/storage/v1/go-getter-test/go-getter/folder/main.tf",
+		Src:     "www.googleapis.com/storage/v1/hc-go-getter-test/go-getter/folder/main.tf",
 		Dst:     dst,
 		GetMode: getter.ModeFile,
 	}
@@ -129,7 +113,7 @@ func TestGetter_GetFile_notfound(t *testing.T) {
 	ctx := context.Background()
 
 	req := &getter.Request{
-		Src: "https://www.googleapis.com/storage/v1/go-getter-test/go-getter/folder/404.tf",
+		Src: "https://www.googleapis.com/storage/v1/hc-go-getter-test/go-getter/folder/404.tf",
 		Dst: dst,
 	}
 
@@ -145,14 +129,13 @@ func TestGetter_GetFile_notfound(t *testing.T) {
 }
 
 func TestGetter_Mode_dir(t *testing.T) {
-	defer initGCPCredentials(t)()
 
 	g := new(Getter)
 	ctx := context.Background()
 
 	// Check client mode on a key prefix with only a single key.
 	mode, err := g.Mode(ctx,
-		urlhelper.MustParse("https://www.googleapis.com/storage/v1/go-getter-test/go-getter/folder/subfolder"))
+		urlhelper.MustParse("https://www.googleapis.com/storage/v1/hc-go-getter-test/go-getter/folder/subfolder"))
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
@@ -162,14 +145,13 @@ func TestGetter_Mode_dir(t *testing.T) {
 }
 
 func TestGetter_Mode_file(t *testing.T) {
-	defer initGCPCredentials(t)()
 
 	g := new(Getter)
 	ctx := context.Background()
 
 	// Check client mode on a key prefix which contains sub-keys.
 	mode, err := g.Mode(ctx,
-		urlhelper.MustParse("https://www.googleapis.com/storage/v1/go-getter-test/go-getter/folder/subfolder/sub.tf"))
+		urlhelper.MustParse("https://www.googleapis.com/storage/v1/hc-go-getter-test/go-getter/folder/subfolder/sub.tf"))
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
@@ -179,15 +161,13 @@ func TestGetter_Mode_file(t *testing.T) {
 }
 
 func TestGetter_Mode_notfound(t *testing.T) {
-	defer initGCPCredentials(t)()
-
 	g := new(Getter)
 	ctx := context.Background()
 
 	// Check the client mode when a non-existent key is looked up. This does not
 	// return an error, but rather should just return the file mode.
 	mode, err := g.Mode(ctx,
-		urlhelper.MustParse("https://www.googleapis.com/storage/v1/go-getter-test/go-getter/foobar"))
+		urlhelper.MustParse("https://www.googleapis.com/storage/v1/hc-go-getter-test/go-getter/foobar"))
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
@@ -197,7 +177,6 @@ func TestGetter_Mode_notfound(t *testing.T) {
 }
 
 func TestGetter_Url(t *testing.T) {
-	defer initGCPCredentials(t)()
 
 	var gcstests = []struct {
 		name   string
@@ -207,8 +186,8 @@ func TestGetter_Url(t *testing.T) {
 	}{
 		{
 			name:   "test1",
-			url:    "https://www.googleapis.com/storage/v1/go-getter-test/go-getter/foo/null.zip",
-			bucket: "go-getter-test",
+			url:    "https://www.googleapis.com/storage/v1/hc-go-getter-test/go-getter/foo/null.zip",
+			bucket: "hc-go-getter-test",
 			path:   "go-getter/foo/null.zip",
 		},
 	}

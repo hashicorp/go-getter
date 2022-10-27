@@ -15,6 +15,10 @@ jobs:
           - 1.17
           - 1.18
           - 1.19
+        directory:
+          - s3
+          - gcs
+          - .
     permissions:
       id-token: write
       contents: read
@@ -80,6 +84,7 @@ jobs:
             diff tmpdir/go.mod go.mod
 
       - name: Run Go tests
+        working-directory: ${{ matrix.directory }}
         run: |
           PACKAGE_NAMES=$(go list ./...)
           echo "Running $(echo $PACKAGE_NAMES | wc -w) packages"
@@ -101,6 +106,10 @@ jobs:
           - 1.17
           - 1.18
           - 1.19
+        directory:
+          - s3
+          - gcs
+          - .
     permissions:
       id-token: write
       contents: read
@@ -112,7 +121,7 @@ jobs:
         uses: actions/setup-go@v3
         with:
           go-version: ${{ matrix.go-version }}
-      
+
       - name: Checkout code
         uses: actions/checkout@v3
 
@@ -127,11 +136,11 @@ jobs:
             ${{ runner.os }}-go-
       - name: Download go modules
         run: go mod download
-       
+
       - name: Install gotestsum
         shell: bash
         run: go install gotest.tools/gotestsum@v1.8.2
-        
+
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
@@ -146,7 +155,7 @@ jobs:
           workload_identity_provider: 'projects/328212837253/locations/global/workloadIdentityPools/hc-go-getter-test/providers/github-hc-go-getter-test'
           service_account: hc-go-getter-test@hc-e56c0f7c21c448d2be9e7696073.iam.gserviceaccount.com
           audience: https://github.com/hashicorp
-      
+
       - name: Run Go cmd
         run: |
             cd cmd/go-getter
@@ -155,6 +164,7 @@ jobs:
       
       - name: Run Go tests
         shell: bash
+        working-directory: ${{ matrix.directory }}
         run: |
           PACKAGE_NAMES=$(go list ./...)
           echo "Running $(echo $PACKAGE_NAMES | wc -w) packages"
@@ -167,7 +177,7 @@ jobs:
         with:
           name: windows test results
           path: ${{ env.TEST_RESULTS_PATH }}
-      
+
   go-smb-tests:
     runs-on: ubuntu-latest
     strategy:
@@ -184,7 +194,7 @@ jobs:
         uses: actions/setup-go@v3
         with:
           go-version: ${{ matrix.go-version }}
-      
+
       - name: Checkout code
         uses: actions/checkout@v3
 
