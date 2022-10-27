@@ -14,17 +14,8 @@ import (
 	urlhelper "github.com/hashicorp/go-getter/v2/helper/url"
 )
 
-func init() {
-	// These are well known restricted IAM keys to a HashiCorp-managed bucket
-	// in a private AWS account that only has access to the open source test
-	// resources.
-	//
-	// We do the string concat below to avoid AWS autodetection of a key. This
-	// key is locked down an IAM policy that is read-only so we're purposely
-	// exposing it.
-	os.Setenv("AWS_ACCESS_KEY", "AKIAITTDR"+"WY2STXOZE2A")
-	os.Setenv("AWS_SECRET_KEY", "oMwSyqdass2kPF"+"/7ORZA9dlb/iegz+89B0Cy01Ea")
-}
+// Note for external contributors: In order to run the s3 test suite, you will only be able to be run
+// in GitHub Actions when you open a PR.
 
 func TestGetter_impl(t *testing.T) {
 	var _ getter.Getter = new(Getter)
