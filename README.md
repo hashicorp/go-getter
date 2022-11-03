@@ -354,11 +354,27 @@ S3 has several addressing schemes used to reference your bucket. These are
 listed here: https://docs.aws.amazon.com/AmazonS3/latest/userguide/access-bucket-intro.html
 
 Some examples for these addressing schemes:
-- s3::https://s3.amazonaws.com/bucket/foo
-- s3::https://s3-eu-west-1.amazonaws.com/bucket/foo
-- bucket.s3.amazonaws.com/foo
-- bucket.s3-eu-west-1.amazonaws.com/foo/bar
-- "s3::http://127.0.0.1:9000/test-bucket/hello.txt?aws_access_key_id=KEYID&aws_access_key_secret=SECRETKEY&region=us-east-2"
+- virtual-host style without http protocol prefix
+    - bucket.s3.amazonaws.com/foo
+    - bucket.s3-eu-west-1.amazonaws.com/foo/bar
+- path-based style without http protocol prefix
+    - s3.eu-west-1.amazonaws.com/bucket/bar
+- s3 protocol
+    - s3://s3.amazonaws.com/bucket/foo
+- forced protocol without http protocol prefix
+    - s3::s3.amazonaws.com/bucket/foo
+    - s3::s3-eu-west-1.amazonaws.com/bucket/foo
+- forced protocol with http protocol prefix
+    - s3::https://s3.amazonaws.com/bucket/foo
+    - s3::https://s3-eu-west-1.amazonaws.com/bucket/foo
+    - "s3::http://127.0.0.1:9000/test-bucket/hello.txt?aws_access_key_id=KEYID&aws_access_key_secret=SECRETKEY&region=us-east-2"
+
+
+Unsupported formats (will _not_ work)
+- virtual-host style with http protocol prefix
+    - https://bucket.s3.amazonaws.com/foo
+- path-based style with http protocol prefix
+    - https://bucket.s3-eu-west-1.amazonaws.com/foo/bar
 
 ### GCS (`gcs`)
 
