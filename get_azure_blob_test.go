@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-func TestAzureBlobGet(t *testing.T) {
+func TestAzureBlobGetter_Get(t *testing.T) {
 	t.Parallel()
 
 	ab := new(AzureBlobGetter)
