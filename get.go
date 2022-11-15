@@ -136,7 +136,7 @@ func getRunCommand(cmd *exec.Cmd) error {
 		}
 	}
 
-	return fmt.Errorf("error running %s: %s", cmd.Path, buf.String())
+	return fmt.Errorf("error running %s: err: %v, %s", cmd.Path, err, buf.String())
 }
 
 // getForcedGetter takes a source and returns the tuple of the forced
