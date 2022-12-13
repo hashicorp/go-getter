@@ -255,6 +255,9 @@ func (g *HttpGetter) Get(dst string, u *url.URL) error {
 
 	if g.Header != nil {
 		req.Header = g.Header.Clone()
+		if host := req.Header.Get("Host"); host != "" {
+			req.Host = host
+		}
 	}
 
 	resp, err := g.Client.Do(req)
@@ -433,6 +436,9 @@ func (g *HttpGetter) GetFile(dst string, src *url.URL) error {
 		}
 		if g.Header != nil {
 			req.Header = g.Header.Clone()
+			if host := req.Header.Get("Host"); host != "" {
+				req.Host = host
+			}
 		}
 		headResp, err := g.Client.Do(req)
 		if err == nil {
@@ -469,6 +475,9 @@ func (g *HttpGetter) GetFile(dst string, src *url.URL) error {
 	}
 	if g.Header != nil {
 		req.Header = g.Header.Clone()
+		if host := req.Header.Get("Host"); host != "" {
+			req.Host = host
+		}
 	}
 	if currentFileSize > 0 {
 		req.Header.Set("Range", fmt.Sprintf("bytes=%d-", currentFileSize))
