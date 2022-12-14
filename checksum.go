@@ -28,8 +28,8 @@ type FileChecksum struct {
 }
 
 // String returns the hash type and the hash separated by a colon, for example:
-//	"md5:090992ba9fd140077b0661cb75f7ce13"
-//	"sha1:ebfb681885ddf1234c18094a45bbeafd91467911"
+//  "md5:090992ba9fd140077b0661cb75f7ce13"
+//  "sha1:ebfb681885ddf1234c18094a45bbeafd91467911"
 func (c *FileChecksum) String() string {
 	return c.Type + ":" + hex.EncodeToString(c.Value)
 }
@@ -85,9 +85,9 @@ func (c *FileChecksum) Checksum(filePath string) error {
 // GetChecksum extracts the checksum from the `checksum` parameter
 // of the src of the Request
 // ex:
-//	http://hashicorp.com/terraform?checksum=<checksumValue>
-//	http://hashicorp.com/terraform?checksum=<checksumType>:<checksumValue>
-//	http://hashicorp.com/terraform?checksum=file:<checksum_url>
+//  http://hashicorp.com/terraform?checksum=<checksumValue>
+//  http://hashicorp.com/terraform?checksum=<checksumType>:<checksumValue>
+//  http://hashicorp.com/terraform?checksum=file:<checksum_url>
 // when the checksum is in a file, GetChecksum will first client.Get it
 // in a temporary directory, parse the content of the file and finally delete it.
 // The content of a checksum file is expected to be BSD style or GNU style.
@@ -95,12 +95,12 @@ func (c *FileChecksum) Checksum(filePath string) error {
 // and as a result, relative files will only be found when Request.Pwd is set.
 //
 // BSD-style checksum:
-//	MD5 (file1) = <checksum>
-//	MD5 (file2) = <checksum>
+//  MD5 (file1) = <checksum>
+//  MD5 (file2) = <checksum>
 //
 // GNU-style:
-//	<checksum>  file1
-//	<checksum> *file2
+//  <checksum>  file1
+//  <checksum> *file2
 func (c *Client) GetChecksum(ctx context.Context, req *Request) (*FileChecksum, error) {
 	var err error
 	if req.U == nil {
