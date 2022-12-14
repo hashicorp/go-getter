@@ -62,12 +62,12 @@ type Request struct {
 	// When set to true any copying or writing through symlinks will result in a ErrSymlinkCopy error.
 	DisableSymlinks bool
 
-	u               *url.URL
+	U               *url.URL
 	subDir, realDst string
 }
 
 func (req *Request) URL() *url.URL {
-	return req.u
+	return req.U
 }
 
 // umask returns the effective umask for the Request, defaulting to the process

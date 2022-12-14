@@ -32,7 +32,7 @@ func (g *HgGetter) Get(ctx context.Context, req *Request) error {
 		return fmt.Errorf("hg must be available and on the PATH")
 	}
 
-	newURL, err := urlhelper.Parse(req.u.String())
+	newURL, err := urlhelper.Parse(req.U.String())
 	if err != nil {
 		return err
 	}
@@ -88,14 +88,14 @@ func (g *HgGetter) GetFile(ctx context.Context, req *Request) error {
 
 	// Get the filename, and strip the filename from the URL so we can
 	// just get the repository directly.
-	filename := filepath.Base(req.u.Path)
-	req.u.Path = filepath.Dir(req.u.Path)
+	filename := filepath.Base(req.U.Path)
+	req.U.Path = filepath.Dir(req.U.Path)
 	dst := req.Dst
 	req.Dst = td
 
 	// If we're on Windows, we need to set the host to "localhost" for hg
 	if runtime.GOOS == "windows" {
-		req.u.Host = "localhost"
+		req.U.Host = "localhost"
 	}
 
 	// Get the full repository
@@ -104,7 +104,7 @@ func (g *HgGetter) GetFile(ctx context.Context, req *Request) error {
 	}
 
 	// Copy the single file
-	req.u, err = urlhelper.Parse(fmtFileURL(filepath.Join(td, filename)))
+	req.U, err = urlhelper.Parse(fmtFileURL(filepath.Join(td, filename)))
 	if err != nil {
 		return err
 	}
