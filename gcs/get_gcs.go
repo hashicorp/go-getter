@@ -164,7 +164,8 @@ func (g *Getter) getObject(
 		return err
 	}
 
-	return req.CopyReader(dst, rc, 0666)
+	// There is no limit set for the size of an object from GCS
+	return req.CopyReader(dst, rc, 0666, 0)
 }
 
 func (g *Getter) parseURL(u *url.URL) (bucket, path string, err error) {
