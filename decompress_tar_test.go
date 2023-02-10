@@ -1,10 +1,13 @@
 package getter
 
 import (
+	"archive/tar"
+	"bytes"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"testing"
 	"time"
 )
@@ -43,6 +46,86 @@ func TestTar(t *testing.T) {
 	}
 
 	TestDecompressor(t, new(TarDecompressor), cases)
+}
+
+func TestTarLimits(t *testing.T) {
+	b := bytes.NewBuffer(nil)
+
+	tw := tar.NewWriter(b)
+
+	var files = []struct {
+		Name, Body string
+	}{
+		{"readme.txt", "This archive contains some text files."},
+		{"gopher.txt", "Gopher names:\nCharlie\nRonald\nGlenn"},
+		{"todo.txt", "Get animal handling license."},
+	}
+
+	for _, file := range files {
+		hdr := &tar.Header{
+			Name: file.Name,
+			Mode: 0600,
+			Size: int64(len(file.Body)),
+		}
+		if err := tw.WriteHeader(hdr); err != nil {
+			t.Fatal(err)
+		}
+		if _, err := tw.Write([]byte(file.Body)); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	if err := tw.Close(); err != nil {
+		t.Fatal(err)
+	}
+
+	td, err := ioutil.TempDir("", "getter")
+	if err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	tarFilePath := filepath.Join(td, "input.tar")
+
+	err = ioutil.WriteFile(tarFilePath, b.Bytes(), 0666)
+	if err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	t.Run("file size limit", func(t *testing.T) {
+		d := new(TarDecompressor)
+
+		d.FileSizeLimit = 35
+
+		dst := filepath.Join(td, "subdir", "file-size-limit-result")
+
+		err = d.Decompress(dst, tarFilePath, true, 0022)
+
+		if err == nil {
+			t.Fatal("expected file size limit to error")
+		}
+
+		if !strings.Contains(err.Error(), "tar archive larger than limit: 35") {
+			t.Fatalf("unexpected error: %q", err.Error())
+		}
+	})
+
+	t.Run("files limit", func(t *testing.T) {
+		d := new(TarDecompressor)
+
+		d.FilesLimit = 2
+
+		dst := filepath.Join(td, "subdir", "files-limit-result")
+
+		err = d.Decompress(dst, tarFilePath, true, 0022)
+
+		if err == nil {
+			t.Fatal("expected files limit to error")
+		}
+
+		if !strings.Contains(err.Error(), "tar archive contains too many files: 3 > 2") {
+			t.Fatalf("unexpected error: %q", err.Error())
+		}
+	})
 }
 
 // testDecompressPermissions decompresses a directory and checks the permissions of the expanded files

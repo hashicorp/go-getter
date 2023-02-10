@@ -79,8 +79,8 @@ func (req *Request) umask() os.FileMode {
 	return req.Umask
 }
 
-func (req *Request) CopyReader(dst string, src io.Reader, fmode os.FileMode) error {
-	return copyReader(dst, src, fmode, req.Umask)
+func (req *Request) CopyReader(dst string, src io.Reader, fmode os.FileMode, fileSizeLimit int64) error {
+	return copyReader(dst, src, fmode, req.Umask, fileSizeLimit)
 }
 
 // Mode returns file Mode umasked by the Request umask
