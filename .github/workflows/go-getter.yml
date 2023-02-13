@@ -1,6 +1,13 @@
 name: go-getter
 
-on: [push]
+on: 
+  push:
+    branches:
+      - v2
+  pull_request:
+    branches:
+      - v2
+
 
 env:
   TEST_RESULTS_PATH: /tmp/test-results
