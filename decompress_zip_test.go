@@ -173,7 +173,7 @@ func TestDecompressZipBomb(t *testing.T) {
 
 	zipFilePath := filepath.Join(td, "input.zip")
 
-	err = os.WriteFile(zipFilePath, buf.Bytes(), 0666)
+	err = ioutil.WriteFile(zipFilePath, buf.Bytes(), 0666)
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
