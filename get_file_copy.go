@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"syscall"
 )
 
 // readerFunc is syntactic sugar for read interface.
@@ -32,7 +33,13 @@ func Copy(ctx context.Context, dst io.Writer, src io.Reader) (int64, error) {
 
 // copyReader copies from an io.Reader into a file, using umask to create the dst file
 func copyReader(dst string, src io.Reader, fmode, umask os.FileMode, fileSizeLimit int64) error {
-	dstF, err := os.OpenFile(dst, os.O_RDWR|os.O_CREATE|os.O_TRUNC, fmode)
+	dstF, err := os.OpenFile(dst, os.O_RDWR|os.O_CREATE|os.O_TRUNC|os.O_EXCL, fmode)
+	if err != nil {
+		if e, ok := err.(*os.PathError); ok && e.Err == syscall.EEXIST {
+			os.Remove(dst)
+			dstF, err = os.OpenFile(dst, os.O_RDWR|os.O_CREATE|os.O_TRUNC, fmode)
+		}
+	}
 	if err != nil {
 		return err
 	}
@@ -71,7 +78,13 @@ func copyFile(ctx context.Context, dst, src string, disableSymlinks bool, fmode,
 	}
 	defer srcF.Close()
 
-	dstF, err := os.OpenFile(dst, os.O_RDWR|os.O_CREATE|os.O_TRUNC, fmode)
+	dstF, err := os.OpenFile(dst, os.O_RDWR|os.O_CREATE|os.O_TRUNC|os.O_EXCL, fmode)
+	if err != nil {
+		if e, ok := err.(*os.PathError); ok && e.Err == syscall.EEXIST {
+			os.Remove(dst)
+			dstF, err = os.OpenFile(dst, os.O_RDWR|os.O_CREATE|os.O_TRUNC, fmode)
+		}
+	}
 	if err != nil {
 		return 0, err
 	}
