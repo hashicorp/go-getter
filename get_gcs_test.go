@@ -230,3 +230,25 @@ func TestGCSGetter_GetFile_OAuthAccessToken(t *testing.T) {
 	}
 	assertContents(t, dst, "# Main\n")
 }
+
+func TestGCSGetter_GetFile_Credentials(t *testing.T) {
+	if os.Getenv("GOOGLE_CREDENTIALS") == "" {
+		t.Skip("Skipping; set GOOGLE_CREDENTIALS to run")
+	}
+	g := new(GCSGetter)
+	dst := tempTestFile(t)
+	defer os.RemoveAll(filepath.Dir(dst))
+
+	// Download
+	err := g.GetFile(
+		dst, testURL("https://www.googleapis.com/storage/v1/go-getter-test/go-getter/folder/main.tf"))
+	if err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	// Verify the main file exists
+	if _, err := os.Stat(dst); err != nil {
+		t.Fatalf("err: %s", err)
+	}
+	assertContents(t, dst, "# Main\n")
+}
