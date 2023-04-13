@@ -48,7 +48,7 @@ func (g *GitGetter) Get(ctx context.Context, req *Request) error {
 	//
 	// This is not necessary in versions of Go which have patched
 	// CVE-2019-14809 (e.g. Go 1.12.8+)
-	if portStr := req.u.Port(); portStr != "" {
+	if portStr := req.U.Port(); portStr != "" {
 		if _, err := strconv.ParseUint(portStr, 10, 16); err != nil {
 			return fmt.Errorf("invalid port number %q; if using the \"scp-like\" git address scheme where a colon introduces the path instead, remove the ssh:// portion and use just the git:: prefix", portStr)
 		}
@@ -57,7 +57,7 @@ func (g *GitGetter) Get(ctx context.Context, req *Request) error {
 	// Extract some query parameters we use
 	var ref, sshKey string
 	var depth int
-	q := req.u.Query()
+	q := req.U.Query()
 	if len(q) > 0 {
 		ref = q.Get("ref")
 		q.Del("ref")
@@ -71,9 +71,9 @@ func (g *GitGetter) Get(ctx context.Context, req *Request) error {
 		q.Del("depth")
 
 		// Copy the URL
-		var newU url.URL = *req.u
-		req.u = &newU
-		req.u.RawQuery = q.Encode()
+		var newU url.URL = *req.U
+		req.U = &newU
+		req.U.RawQuery = q.Encode()
 	}
 
 	if g.Timeout > 0 {
@@ -152,8 +152,8 @@ func (g *GitGetter) GetFile(ctx context.Context, req *Request) error {
 
 	// Get the filename, and strip the filename from the URL so we can
 	// just get the repository directly.
-	filename := filepath.Base(req.u.Path)
-	req.u.Path = filepath.Dir(req.u.Path)
+	filename := filepath.Base(req.U.Path)
+	req.U.Path = filepath.Dir(req.U.Path)
 	dst := req.Dst
 	req.Dst = td
 
@@ -163,7 +163,7 @@ func (g *GitGetter) GetFile(ctx context.Context, req *Request) error {
 	}
 
 	// Copy the single file
-	req.u, err = urlhelper.Parse(fmtFileURL(filepath.Join(td, filename)))
+	req.U, err = urlhelper.Parse(fmtFileURL(filepath.Join(td, filename)))
 	if err != nil {
 		return err
 	}
@@ -187,7 +187,7 @@ func (g *GitGetter) clone(ctx context.Context, sshKeyFile string, depth int, req
 		args = append(args, "--depth", strconv.Itoa(depth))
 	}
 
-	args = append(args, req.u.String(), req.Dst)
+	args = append(args, req.U.String(), req.Dst)
 	cmd := exec.CommandContext(ctx, "git", args...)
 	setupGitEnv(cmd, sshKeyFile)
 	return getRunCommand(cmd)

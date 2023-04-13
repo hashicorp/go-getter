@@ -65,7 +65,7 @@ func (g *SmbClientGetter) smbClientMode(u *url.URL) (Mode, error) {
 }
 
 func (g *SmbClientGetter) Get(ctx context.Context, req *Request) error {
-	if req.u.Host == "" || req.u.Path == "" {
+	if req.U.Host == "" || req.U.Path == "" {
 		return new(smbPathError)
 	}
 
@@ -92,12 +92,12 @@ func (g *SmbClientGetter) Get(ctx context.Context, req *Request) error {
 }
 
 func (g *SmbClientGetter) smbclientGet(req *Request) error {
-	hostPath, directory, err := g.findHostAndFilePath(req.u)
+	hostPath, directory, err := g.findHostAndFilePath(req.U)
 	if err != nil {
 		return err
 	}
 
-	cmdArgs := g.smbclientCmdArgs(req.u.User, hostPath, ".")
+	cmdArgs := g.smbclientCmdArgs(req.U.User, hostPath, ".")
 	// check directory exists in the smb shared folder and is a directory
 	isDir, err := g.isDirectory(cmdArgs, directory)
 	if err != nil {
@@ -130,7 +130,7 @@ func (g *SmbClientGetter) smbclientGet(req *Request) error {
 }
 
 func (g *SmbClientGetter) GetFile(ctx context.Context, req *Request) error {
-	if req.u.Host == "" || req.u.Path == "" {
+	if req.U.Host == "" || req.U.Path == "" {
 		return new(smbPathError)
 	}
 
@@ -157,7 +157,7 @@ func (g *SmbClientGetter) GetFile(ctx context.Context, req *Request) error {
 }
 
 func (g *SmbClientGetter) smbclientGetFile(req *Request) error {
-	hostPath, filePath, err := g.findHostAndFilePath(req.u)
+	hostPath, filePath, err := g.findHostAndFilePath(req.U)
 	if err != nil {
 		return err
 	}
@@ -173,7 +173,7 @@ func (g *SmbClientGetter) smbclientGetFile(req *Request) error {
 		filePath = "."
 	}
 
-	cmdArgs := g.smbclientCmdArgs(req.u.User, hostPath, filePath)
+	cmdArgs := g.smbclientCmdArgs(req.U.User, hostPath, filePath)
 	// check file exists in the smb shared folder and is not a directory
 	isDir, err := g.isDirectory(cmdArgs, file)
 	if err != nil {

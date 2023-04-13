@@ -141,13 +141,13 @@ func (ge *getError) Error() string {
 
 func (c *Client) get(ctx context.Context, req *Request, g Getter) (*GetResult, *getError) {
 	u, err := urlhelper.Parse(req.Src)
-	req.u = u
+	req.U = u
 	if err != nil {
 		return nil, &getError{true, err}
 	}
 
 	// We have magic query parameters that we use to signal different features
-	q := req.u.Query()
+	q := req.U.Query()
 
 	// Determine if we have an archive type
 	archiveV := q.Get("archive")
@@ -155,7 +155,7 @@ func (c *Client) get(ctx context.Context, req *Request, g Getter) (*GetResult, *
 		// Delete the parameter since it is a magic parameter we don't
 		// want to pass on to the Getter
 		q.Del("archive")
-		req.u.RawQuery = q.Encode()
+		req.U.RawQuery = q.Encode()
 
 		// If we can parse the value as a bool and it is false, then
 		// set the archive to "-" which should never map to a decompressor
@@ -166,7 +166,7 @@ func (c *Client) get(ctx context.Context, req *Request, g Getter) (*GetResult, *
 		// We don't appear to... but is it part of the filename?
 		matchingLen := 0
 		for k := range c.Decompressors {
-			if strings.HasSuffix(req.u.Path, "."+k) && len(k) > matchingLen {
+			if strings.HasSuffix(req.U.Path, "."+k) && len(k) > matchingLen {
 				archiveV = k
 				matchingLen = len(k)
 			}
@@ -205,11 +205,11 @@ func (c *Client) get(ctx context.Context, req *Request, g Getter) (*GetResult, *
 
 	// Delete the query parameter if we have it.
 	q.Del("checksum")
-	req.u.RawQuery = q.Encode()
+	req.U.RawQuery = q.Encode()
 
 	if req.GetMode == ModeAny {
 		// Ask the getter which client mode to use
-		req.GetMode, err = g.Mode(ctx, req.u)
+		req.GetMode, err = g.Mode(ctx, req.U)
 		if err != nil {
 			return nil, &getError{false, err}
 		}
@@ -217,13 +217,13 @@ func (c *Client) get(ctx context.Context, req *Request, g Getter) (*GetResult, *
 		// Destination is the base name of the URL path in "any" mode when
 		// a file source is detected.
 		if req.GetMode == ModeFile {
-			filename := filepath.Base(req.u.Path)
+			filename := filepath.Base(req.U.Path)
 
 			// Determine if we have a custom file name
 			if v := q.Get("filename"); v != "" {
 				// Delete the query parameter if we have it.
 				q.Del("filename")
-				req.u.RawQuery = q.Encode()
+				req.U.RawQuery = q.Encode()
 
 				filename = v
 			}
@@ -329,13 +329,13 @@ func (c *Client) get(ctx context.Context, req *Request, g Getter) (*GetResult, *
 }
 
 func (c *Client) checkArchive(req *Request) string {
-	q := req.u.Query()
+	q := req.U.Query()
 	archiveV := q.Get("archive")
 	if archiveV != "" {
 		// Delete the paramter since it is a magic parameter we don't
 		// want to pass on to the Getter
 		q.Del("archive")
-		req.u.RawQuery = q.Encode()
+		req.U.RawQuery = q.Encode()
 
 		// If we can parse the value as a bool and it is false, then
 		// set the archive to "-" which should never map to a decompressor
@@ -347,7 +347,7 @@ func (c *Client) checkArchive(req *Request) string {
 		// We don't appear to... but is it part of the filename?
 		matchingLen := 0
 		for k := range c.Decompressors {
-			if strings.HasSuffix(req.u.Path, "."+k) && len(k) > matchingLen {
+			if strings.HasSuffix(req.U.Path, "."+k) && len(k) > matchingLen {
 				archiveV = k
 				matchingLen = len(k)
 			}

@@ -27,23 +27,23 @@ func (g *SmbMountGetter) Mode(ctx context.Context, u *url.URL) (Mode, error) {
 }
 
 func (g *SmbMountGetter) Get(ctx context.Context, req *Request) error {
-	if req.u.Host == "" || req.u.Path == "" {
+	if req.U.Host == "" || req.U.Path == "" {
 		return new(smbPathError)
 	}
 
-	prefix, path := g.findPrefixAndPath(req.u)
-	req.u.Path = prefix + path
+	prefix, path := g.findPrefixAndPath(req.U)
+	req.U.Path = prefix + path
 
 	return new(FileGetter).Get(ctx, req)
 }
 
 func (g *SmbMountGetter) GetFile(ctx context.Context, req *Request) error {
-	if req.u.Host == "" || req.u.Path == "" {
+	if req.U.Host == "" || req.U.Path == "" {
 		return new(smbPathError)
 	}
 
-	prefix, path := g.findPrefixAndPath(req.u)
-	req.u.Path = prefix + path
+	prefix, path := g.findPrefixAndPath(req.U)
+	req.U.Path = prefix + path
 
 	return new(FileGetter).GetFile(ctx, req)
 }

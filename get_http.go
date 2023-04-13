@@ -197,12 +197,12 @@ func (g *HttpGetter) Get(ctx context.Context, req *Request) error {
 		ctx = context.WithValue(ctx, httpMaxBytesValue, g.MaxBytes)
 	}
 	// Copy the URL so we can modify it
-	var newU url.URL = *req.u
-	req.u = &newU
+	var newU url.URL = *req.U
+	req.U = &newU
 
 	if g.Netrc {
 		// Add auth from netrc if we can
-		if err := addAuthFromNetrc(req.u); err != nil {
+		if err := addAuthFromNetrc(req.U); err != nil {
 			return err
 		}
 	}
@@ -221,9 +221,9 @@ func (g *HttpGetter) Get(ctx context.Context, req *Request) error {
 	ctx = context.WithValue(ctx, httpClientValue, g.Client)
 
 	// Add terraform-get to the parameter.
-	q := req.u.Query()
+	q := req.U.Query()
 	q.Add("terraform-get", "1")
-	req.u.RawQuery = q.Encode()
+	req.U.RawQuery = q.Encode()
 
 	readCtx := ctx
 	if g.ReadTimeout > 0 {
@@ -233,7 +233,7 @@ func (g *HttpGetter) Get(ctx context.Context, req *Request) error {
 	}
 
 	// Get the URL
-	httpReq, err := http.NewRequestWithContext(readCtx, "GET", req.u.String(), nil)
+	httpReq, err := http.NewRequestWithContext(readCtx, "GET", req.U.String(), nil)
 	if err != nil {
 		return err
 	}
@@ -308,7 +308,7 @@ func (g *HttpGetter) GetFile(ctx context.Context, req *Request) error {
 
 	if g.Netrc {
 		// Add auth from netrc if we can
-		if err := addAuthFromNetrc(req.u); err != nil {
+		if err := addAuthFromNetrc(req.U); err != nil {
 			return err
 		}
 	}
@@ -343,7 +343,7 @@ func (g *HttpGetter) GetFile(ctx context.Context, req *Request) error {
 		// We first make a HEAD request so we can check
 		// if the server supports range queries. If the server/URL doesn't
 		// support HEAD requests, we just fall back to GET.
-		httpReq, err = http.NewRequestWithContext(headCtx, "HEAD", req.u.String(), nil)
+		httpReq, err = http.NewRequestWithContext(headCtx, "HEAD", req.U.String(), nil)
 		if err != nil {
 			return err
 		}
@@ -379,7 +379,7 @@ func (g *HttpGetter) GetFile(ctx context.Context, req *Request) error {
 		defer cancel()
 	}
 
-	httpReq, err = http.NewRequestWithContext(readCtx, "GET", req.u.String(), nil)
+	httpReq, err = http.NewRequestWithContext(readCtx, "GET", req.U.String(), nil)
 	if err != nil {
 		return err
 	}
@@ -410,7 +410,7 @@ func (g *HttpGetter) GetFile(ctx context.Context, req *Request) error {
 
 	if req.ProgressListener != nil {
 		// track download
-		fn := filepath.Base(req.u.EscapedPath())
+		fn := filepath.Base(req.U.EscapedPath())
 		body = req.ProgressListener.TrackProgress(fn, currentFileSize, currentFileSize+resp.ContentLength, resp.Body)
 	}
 	defer body.Close()
