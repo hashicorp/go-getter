@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net"
 	"net/http"
 	"net/http/httputil"
@@ -787,6 +788,45 @@ func TestHttpGetter_subdirLink(t *testing.T) {
 	}
 }
 
+func TestHttpGetter__ntlm(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	ln := testHttpServer(t)
+
+	var u url.URL
+	u.Scheme = "http"
+	u.Host = ln.Addr().String()
+	u.Path = "/ntlm"
+	u.User = url.UserPassword("test", "test")
+	params := url.Values{}
+	params.Add("ntlm", "")
+	u.RawQuery = params.Encode()
+
+	dst := tempDir(t)
+
+	httpGetter := new(HttpGetter)
+	httpGetter.DoNotCheckHeadFirst = true
+
+	client := &Client{
+		Ctx:  ctx,
+		Mode: ClientModeFile,
+		Getters: map[string]Getter{
+			"http": httpGetter,
+		},
+	}
+
+	t.Logf("%v", u.String())
+
+	client.Src = u.String()
+	client.Dst = dst
+
+	err := client.Get()
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
 func testHttpServerWithXTerraformGetLoop(t *testing.T) net.Listener {
 	t.Helper()
 
@@ -940,6 +980,7 @@ func testHttpServer(t *testing.T) net.Listener {
 	mux.HandleFunc("/meta-subdir-glob", testHttpHandlerMetaSubdirGlob)
 	mux.HandleFunc("/range", testHttpHandlerRange)
 	mux.HandleFunc("/no-range", testHttpHandlerNoRange)
+	mux.HandleFunc("/ntlm", testHttpHandlerNTLM)
 
 	var server http.Server
 	server.Handler = mux
@@ -1052,6 +1093,22 @@ func testHttpHandlerNoRange(w http.ResponseWriter, r *http.Request) {
 		}
 		w.Write(load)
 	}
+}
+
+func testHttpHandlerNTLM(w http.ResponseWriter, r *http.Request) {
+	authHeader := r.Header.Get("Authorization")
+	log.Printf("authHeader: %s", authHeader)
+	if authHeader == "" || strings.HasPrefix(authHeader, "Basic") {
+		w.Header().Set("Www-Authenticate", "Negotiate, NTLM")
+		w.WriteHeader(401)
+		return
+	}
+
+	if strings.HasPrefix(authHeader, "NTLM") || strings.HasPrefix(authHeader, "Negotiate") {
+		w.WriteHeader(200)
+		return
+	}
+	w.WriteHeader(500)
 }
 
 func testHttpServerSubDir(t *testing.T) net.Listener {

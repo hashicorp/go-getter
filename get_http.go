@@ -14,6 +14,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Azure/go-ntlmssp"
 	"github.com/hashicorp/go-cleanhttp"
 	safetemp "github.com/hashicorp/go-safetemp"
 )
@@ -227,6 +228,15 @@ func (g *HttpGetter) Get(dst string, u *url.URL) error {
 				insecureTransport.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
 				client.Transport = insecureTransport
 			}
+
+			if _, ok := u.Query()["ntlm"]; ok {
+				g.Client.Transport.(*http.Transport).MaxIdleConnsPerHost = 0
+				g.Client.Transport.(*http.Transport).DisableKeepAlives = false
+				g.Client.Transport = ntlmssp.Negotiator{
+					RoundTripper: g.Client.Transport,
+				}
+			}
+
 			g.Client = client
 		}
 	}
@@ -406,6 +416,14 @@ func (g *HttpGetter) GetFile(dst string, src *url.URL) error {
 			insecureTransport := cleanhttp.DefaultTransport()
 			insecureTransport.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
 			g.Client.Transport = insecureTransport
+		}
+	}
+
+	if _, ok := src.Query()["ntlm"]; ok {
+		g.Client.Transport.(*http.Transport).MaxIdleConnsPerHost = 0
+		g.Client.Transport.(*http.Transport).DisableKeepAlives = false
+		g.Client.Transport = ntlmssp.Negotiator{
+			RoundTripper: g.Client.Transport,
 		}
 	}
 

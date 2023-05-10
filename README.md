@@ -316,6 +316,14 @@ To use HTTP basic authentication with go-getter, simply prepend `username:passwo
 hostname in the URL such as `https://Aladdin:OpenSesame@www.example.com/index.html`. All special
 characters, including the username and password, must be URL encoded.
 
+#### NTLM
+
+To use NTLM authentication, the query parameter `ntlm` with any value should be appended to the URL, e.g.
+
+```
+https://someuser:somepassword@someurl.com/myfile.txt?ntlm
+```
+
 #### Headers
 
 Optional request headers can be added by supplying them in a custom
