@@ -6,7 +6,6 @@ package getter
 import (
 	"archive/tar"
 	"bytes"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -82,7 +81,7 @@ func TestTarLimits(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	td, err := ioutil.TempDir("", "getter")
+	td, err := os.MkdirTemp("", "getter")
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
@@ -133,7 +132,7 @@ func TestTarLimits(t *testing.T) {
 
 // testDecompressPermissions decompresses a directory and checks the permissions of the expanded files
 func testDecompressorPermissions(t *testing.T, d Decompressor, input string, expected map[string]int, umask os.FileMode) {
-	td, err := ioutil.TempDir("", "getter")
+	td, err := os.MkdirTemp("", "getter")
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
