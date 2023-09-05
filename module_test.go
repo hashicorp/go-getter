@@ -1,7 +1,6 @@
 package getter
 
 import (
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -16,7 +15,7 @@ import (
 const fixtureDir = "./testdata"
 
 func tempDir(t *testing.T) string {
-	dir, err := ioutil.TempDir("", "tf")
+	dir, err := os.MkdirTemp("", "tf")
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
@@ -78,7 +77,7 @@ func testStorage(t *testing.T) Storage {
 }
 
 func assertContents(t *testing.T, path string, contents string) {
-	data, err := ioutil.ReadFile(path)
+	data, err := os.ReadFile(path)
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
