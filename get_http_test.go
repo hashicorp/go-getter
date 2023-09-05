@@ -6,7 +6,6 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"net"
 	"net/http"
 	"net/http/httputil"
@@ -305,7 +304,7 @@ func TestHttpGetter_resume(t *testing.T) {
 		t.Fatalf("finishing download should not error: %v", err)
 	}
 
-	b, err := ioutil.ReadFile(dst)
+	b, err := os.ReadFile(dst)
 	if err != nil {
 		t.Fatalf("readfile failed: %v", err)
 	}
@@ -362,7 +361,7 @@ func TestHttpGetter_resumeNoRange(t *testing.T) {
 		t.Fatalf("finishing download should not error: %v", err)
 	}
 
-	b, err := ioutil.ReadFile(dst)
+	b, err := os.ReadFile(dst)
 	if err != nil {
 		t.Fatalf("readfile failed: %v", err)
 	}
@@ -804,7 +803,7 @@ func TestHttpGetter_subdirLink(t *testing.T) {
 	ln := testHttpServerSubDir(t)
 	defer ln.Close()
 
-	dst, err := ioutil.TempDir("", "tf")
+	dst, err := os.MkdirTemp("", "tf")
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
