@@ -3,7 +3,6 @@ package getter
 import (
 	"archive/zip"
 	"bytes"
-	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
@@ -166,14 +165,14 @@ func TestDecompressZipBomb(t *testing.T) {
 		}
 	}
 
-	td, err := ioutil.TempDir("", "go-getter-zip")
+	td, err := os.MkdirTemp("", "go-getter-zip")
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
 	zipFilePath := filepath.Join(td, "input.zip")
 
-	err = ioutil.WriteFile(zipFilePath, buf.Bytes(), 0666)
+	err = os.WriteFile(zipFilePath, buf.Bytes(), 0666)
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
