@@ -699,6 +699,29 @@ func TestGitGetter_setupGitEnvWithExisting_sshKey(t *testing.T) {
 	}
 }
 
+func TestGitGetter_setupGitEnvWithExisting_noSSHKey(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skipf("skipping on windows since the test requires sh")
+		return
+	}
+
+	// start with an existing ssh command configuration
+	os.Setenv("GIT_SSH_COMMAND", "ssh -o StrictHostKeyChecking=no -o IdentitiesOnly=yes")
+	defer os.Setenv("GIT_SSH_COMMAND", "")
+
+	cmd := exec.Command("/bin/sh", "-c", "echo $GIT_SSH_COMMAND")
+	setupGitEnv(cmd, "")
+	out, err := cmd.Output()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	actual := strings.TrimSpace(string(out))
+	if actual != "ssh -o StrictHostKeyChecking=no -o IdentitiesOnly=yes" {
+		t.Fatalf("unexpected GIT_SSH_COMMAND: %q", actual)
+	}
+}
+
 func TestGitGetter_subdirectory_symlink(t *testing.T) {
 	if !testHasGit {
 		t.Skip("git not found, skipping")
