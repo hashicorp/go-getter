@@ -25,14 +25,14 @@ jobs:
           go-version: ${{ matrix.go-version }}
       
       - name: Checkout code
-        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
+        uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac # v4.0.0
 
       - name: Create test directory
         run: |
           mkdir -p ${{ env.TEST_RESULTS_PATH }}
   
       - name: Setup cache for go modules
-        uses: actions/cache@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8 # v3.3.1
+        uses: actions/cache@704facf57e6136b1bc63b828d79edcd491f0ee84 # v3.3.2
         with:
           path: |
             ~/.cache/go-build
@@ -59,7 +59,7 @@ jobs:
         run: go install gotest.tools/gotestsum@v1.8.2
 
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@5fd3084fc36e372ff1fff382a39b10d03659f355 # v2.2.0
+        uses: aws-actions/configure-aws-credentials@8c3f20df09ac63af7b3ae3d7c91f105f857d8497 # v4.0.0
         with:
           aws-region: us-east-1
           role-to-assume: arn:aws:iam::388664967494:role/hc-go-getter-test
@@ -67,7 +67,7 @@ jobs:
           audience: https://github.com/hashicorp
 
       - name: 'Authenticate to Google Cloud'
-        uses: 'google-github-actions/auth@v0.4.0'
+        uses: google-github-actions/auth@35b0e87d162680511bf346c299f71c9c5c379033 # v1.1.1
         with:
           workload_identity_provider: 'projects/328212837253/locations/global/workloadIdentityPools/hc-go-getter-test/providers/github-hc-go-getter-test'
           service_account: hc-go-getter-test@hc-e56c0f7c21c448d2be9e7696073.iam.gserviceaccount.com
@@ -82,7 +82,7 @@ jobs:
       
       # Save coverage report parts
       - name: Upload and save artifacts
-        uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # v3.1.2
+        uses: actions/upload-artifact@a8a3f3ad30e3422c9c7b888a15615d19a852ae32 # v3.1.3
         with:
           name: linux test results
           path: linux_cov.part
@@ -108,10 +108,10 @@ jobs:
           go-version: ${{ matrix.go-version }}
       
       - name: Checkout code
-        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
+        uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac # v4.0.0
 
       - name: Setup cache for go modules
-        uses: actions/cache@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8 # v3.3.1
+        uses: actions/cache@704facf57e6136b1bc63b828d79edcd491f0ee84 # v3.3.2
         with:
           path: |
             ~\AppData\Local\go-build
@@ -128,7 +128,7 @@ jobs:
         run: go install gotest.tools/gotestsum@v1.8.2
         
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@5fd3084fc36e372ff1fff382a39b10d03659f355 # v2.2.0
+        uses: aws-actions/configure-aws-credentials@8c3f20df09ac63af7b3ae3d7c91f105f857d8497 # v4.0.0
         with:
           aws-region: us-east-1
           role-to-assume: arn:aws:iam::388664967494:role/hc-go-getter-test
@@ -136,7 +136,7 @@ jobs:
           audience: https://github.com/hashicorp
 
       - name: 'Authenticate to Google Cloud'
-        uses: 'google-github-actions/auth@v0.4.0'
+        uses: google-github-actions/auth@35b0e87d162680511bf346c299f71c9c5c379033 # v1.1.1
         with:
           workload_identity_provider: 'projects/328212837253/locations/global/workloadIdentityPools/hc-go-getter-test/providers/github-hc-go-getter-test'
           service_account: hc-go-getter-test@hc-e56c0f7c21c448d2be9e7696073.iam.gserviceaccount.com
@@ -152,7 +152,7 @@ jobs:
       
       # Save coverage report parts
       - name: Upload and save artifacts
-        uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # v3.1.2
+        uses: actions/upload-artifact@a8a3f3ad30e3422c9c7b888a15615d19a852ae32 # v3.1.3
         with:
           name: windows test results
           path: win_cov.part
