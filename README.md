@@ -5,7 +5,7 @@
 [![Go Documentation](http://img.shields.io/badge/go-documentation-blue.svg?style=flat-square)][godocs]
 
 [circleci]: https://circleci.com/gh/hashicorp/go-getter/tree/master
-[godocs]: http://godoc.org/github.com/hashicorp/go-getter
+[godocs]: https://pkg.go.dev/github.com/hashicorp/go-getter/v2
 [appveyor]: https://ci.appveyor.com/project/hashicorp/go-getter/branch/master
 
 go-getter is a library for Go (golang) for downloading files or directories
@@ -27,12 +27,12 @@ downloading modules, [Packer](https://packer.io) for downloading binaries, and
 ## Installation and Usage
 
 Package documentation can be found on
-[GoDoc](http://godoc.org/github.com/hashicorp/go-getter).
+[GoDoc](https://pkg.go.dev/github.com/hashicorp/go-getter/v2).
 
 Installation can be done with a normal `go get`:
 
 ```
-$ go get github.com/hashicorp/go-getter
+$ go get github.com/hashicorp/go-getter/v2
 ```
 
 go-getter also has a command you can use to test URL strings:
