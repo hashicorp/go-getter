@@ -341,7 +341,7 @@ using credentials, then just omit these and the profile, if available will
 be used automatically.
 
 ### Using S3 with Minio
- If you use go-gitter for Minio support, you must consider the following:
+ If you use go-getter for Minio support, you must consider the following:
 
   * `aws_access_key_id` (required) - Minio access key.
   * `aws_access_key_secret` (required) - Minio access key secret.
