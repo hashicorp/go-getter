@@ -9,12 +9,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/credentials"
-	"github.com/aws/aws-sdk-go/aws/credentials/ec2rolecreds"
-	"github.com/aws/aws-sdk-go/aws/ec2metadata"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/credentials"
+	"github.com/aws/aws-sdk-go-v2/credentials/ec2rolecreds"
+	"github.com/aws/aws-sdk-go-v2/feature/ec2/imds"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
 )
 
 // S3Getter is a Getter implementation that will download a module from
@@ -55,7 +55,7 @@ func (g *S3Getter) ClientMode(u *url.URL) (ClientMode, error) {
 		Bucket: aws.String(bucket),
 		Prefix: aws.String(path),
 	}
-	resp, err := client.ListObjectsWithContext(ctx, req)
+	resp, err := client.ListObjects(ctx, req)
 	if err != nil {
 		return 0, err
 	}
@@ -127,17 +127,17 @@ func (g *S3Getter) Get(dst string, u *url.URL) error {
 			req.Marker = aws.String(lastMarker)
 		}
 
-		resp, err := client.ListObjectsWithContext(ctx, req)
+		resp, err := client.ListObjects(ctx, req)
 		if err != nil {
 			return err
 		}
 
-		hasMore = aws.BoolValue(resp.IsTruncated)
+		hasMore = resp.IsTruncated
 
 		// Get each object storing each file relative to the destination path
 		for _, object := range resp.Contents {
-			lastMarker = aws.StringValue(object.Key)
-			objPath := aws.StringValue(object.Key)
+			lastMarker = aws.ToString(object.Key)
+			objPath := lastMarker
 
 			// If the key ends with a backslash assume it is a directory and ignore
 			if strings.HasSuffix(objPath, "/") {
@@ -182,7 +182,7 @@ func (g *S3Getter) GetFile(dst string, u *url.URL) error {
 	return g.getObject(ctx, client, dst, bucket, path, version)
 }
 
-func (g *S3Getter) getObject(ctx context.Context, client *s3.S3, dst, bucket, key, version string) error {
+func (g *S3Getter) getObject(ctx context.Context, client *s3.Client, dst, bucket, key, version string) error {
 	req := &s3.GetObjectInput{
 		Bucket: aws.String(bucket),
 		Key:    aws.String(key),
@@ -191,7 +191,7 @@ func (g *S3Getter) getObject(ctx context.Context, client *s3.S3, dst, bucket, ke
 		req.VersionId = aws.String(version)
 	}
 
-	resp, err := client.GetObjectWithContext(ctx, req)
+	resp, err := client.GetObject(ctx, req)
 	if err != nil {
 		return err
 	}
@@ -205,7 +205,7 @@ func (g *S3Getter) getObject(ctx context.Context, client *s3.S3, dst, bucket, ke
 
 	if g.client != nil && g.client.ProgressListener != nil {
 		fn := filepath.Base(key)
-		body = g.client.ProgressListener.TrackProgress(fn, 0, *resp.ContentLength, resp.Body)
+		body = g.client.ProgressListener.TrackProgress(fn, 0, resp.ContentLength, resp.Body)
 	}
 	defer body.Close()
 
@@ -213,39 +213,42 @@ func (g *S3Getter) getObject(ctx context.Context, client *s3.S3, dst, bucket, ke
 	return copyReader(dst, body, 0666, g.client.umask(), 0)
 }
 
-func (g *S3Getter) getAWSConfig(region string, url *url.URL, creds *credentials.Credentials) *aws.Config {
-	conf := &aws.Config{}
+func (g *S3Getter) getAWSConfig(region string, url *url.URL, staticCreds *credentials.StaticCredentialsProvider) (conf aws.Config, err error) {
+	var loadOptions []func(*config.LoadOptions) error
+	var creds aws.CredentialsProvider
+
 	metadataURLOverride := os.Getenv("AWS_METADATA_URL")
-	if creds == nil && metadataURLOverride != "" {
-		creds = credentials.NewChainCredentials(
-			[]credentials.Provider{
-				&credentials.EnvProvider{},
-				&credentials.SharedCredentialsProvider{Filename: "", Profile: ""},
-				&ec2rolecreds.EC2RoleProvider{
-					Client: ec2metadata.New(session.New(&aws.Config{
-						Endpoint: aws.String(metadataURLOverride),
-					})),
-				},
+	if staticCreds == nil && metadataURLOverride != "" {
+		creds = ec2rolecreds.New(func(o *ec2rolecreds.Options) {
+			o.Client = imds.New(imds.Options{
+				Endpoint:          metadataURLOverride,
+				ClientEnableState: imds.ClientEnabled,
 			})
+		})
+	} else if staticCreds != nil {
+		creds = staticCreds
 	}
 
 	if creds != nil {
-		conf.Endpoint = &url.Host
-		conf.S3ForcePathStyle = aws.Bool(true)
-		if url.Scheme == "http" {
-			conf.DisableSSL = aws.Bool(true)
-		}
+		loadOptions = append(loadOptions,
+			config.WithEC2IMDSClientEnableState(imds.ClientEnabled),
+			config.WithCredentialsProvider(creds),
+			config.WithEndpointResolverWithOptions(aws.EndpointResolverWithOptionsFunc(
+				func(service, region string, options ...interface{}) (aws.Endpoint, error) {
+					return aws.Endpoint{URL: url.Host}, nil
+				},
+			)))
 	}
 
 	conf.Credentials = creds
 	if region != "" {
-		conf.Region = aws.String(region)
+		loadOptions = append(loadOptions, config.WithRegion(region))
 	}
 
-	return conf.WithCredentialsChainVerboseErrors(true)
+	return config.LoadDefaultConfig(context.TODO(), loadOptions...)
 }
 
-func (g *S3Getter) parseUrl(u *url.URL) (region, bucket, path, version string, creds *credentials.Credentials, err error) {
+func (g *S3Getter) parseUrl(u *url.URL) (region, bucket, path, version string, creds *credentials.StaticCredentialsProvider, err error) {
 	// This just check whether we are dealing with S3 or
 	// any other S3 compliant service. S3 has a predictable
 	// url as others do not
@@ -314,34 +317,36 @@ func (g *S3Getter) parseUrl(u *url.URL) (region, bucket, path, version string, c
 	_, hasAwsSecret := u.Query()["aws_access_key_secret"]
 	_, hasAwsToken := u.Query()["aws_access_token"]
 	if hasAwsId || hasAwsSecret || hasAwsToken {
-		creds = credentials.NewStaticCredentials(
+		provider := credentials.NewStaticCredentialsProvider(
 			u.Query().Get("aws_access_key_id"),
 			u.Query().Get("aws_access_key_secret"),
 			u.Query().Get("aws_access_token"),
 		)
+		creds = &provider
 	}
 
 	return
 }
 
 func (g *S3Getter) newS3Client(
-	region string, url *url.URL, creds *credentials.Credentials,
-) (*s3.S3, error) {
-	var sess *session.Session
+	region string, url *url.URL, creds *credentials.StaticCredentialsProvider,
+) (*s3.Client, error) {
+	var err error
+	var cfg aws.Config
 
 	if profile := url.Query().Get("aws_profile"); profile != "" {
-		var err error
-		sess, err = session.NewSessionWithOptions(session.Options{
-			Profile:           profile,
-			SharedConfigState: session.SharedConfigEnable,
-		})
-		if err != nil {
-			return nil, err
-		}
+		cfg, err = config.LoadDefaultConfig(context.TODO(),
+			config.WithSharedConfigProfile(profile),
+		)
 	} else {
-		config := g.getAWSConfig(region, url, creds)
-		sess = session.New(config)
+		cfg, err = g.getAWSConfig(region, url, creds)
 	}
 
-	return s3.New(sess), nil
+	if err != nil {
+		return nil, err
+	}
+
+	return s3.NewFromConfig(cfg, func(opts *s3.Options) {
+		opts.UsePathStyle = true
+	}), nil
 }
