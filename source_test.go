@@ -1,7 +1,6 @@
 package getter
 
 import (
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -54,7 +53,7 @@ func TestSourceDirSubdir(t *testing.T) {
 }
 
 func TestSourceSubdirGlob(t *testing.T) {
-	td, err := ioutil.TempDir("", "subdir-glob")
+	td, err := os.MkdirTemp("", "subdir-glob")
 	if err != nil {
 		t.Fatal(err)
 	}
