@@ -3,6 +3,7 @@ package getter
 import (
 	"context"
 	"fmt"
+	"io"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -328,19 +329,34 @@ func (g *S3Getter) newS3Client(
 	region string, url *url.URL, creds *credentials.Credentials,
 ) (*s3.S3, error) {
 	var sess *session.Session
+	var err error
+
+	var customCABundle io.Reader
+	if bundlePath := os.Getenv("AWS_CA_BUNDLE"); bundlePath != "" {
+		customCABundle, err = os.Open(bundlePath)
+		if err != nil {
+			return nil, err
+		}
+	}
 
 	if profile := url.Query().Get("aws_profile"); profile != "" {
-		var err error
 		sess, err = session.NewSessionWithOptions(session.Options{
 			Profile:           profile,
 			SharedConfigState: session.SharedConfigEnable,
+			CustomCABundle:    customCABundle,
 		})
 		if err != nil {
 			return nil, err
 		}
 	} else {
 		config := g.getAWSConfig(region, url, creds)
-		sess = session.New(config)
+		sess, err = session.NewSessionWithOptions(session.Options{
+			Config:         *config,
+			CustomCABundle: customCABundle,
+		})
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return s3.New(sess), nil
