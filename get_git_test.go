@@ -410,6 +410,49 @@ func TestGitGetter_GetFile(t *testing.T) {
 	assertContents(t, dst, "hello")
 }
 
+func TestGitGetter_githubGetWithFileMode(t *testing.T) {
+	if !testHasGit {
+		t.Skip("git not found, skipping")
+	}
+
+	dst := tempTestFile(t)
+	defer os.RemoveAll(filepath.Dir(dst))
+
+	c := Client{
+		Src:  "git::https://github.com/arikkfir/go-getter/testdata/basic/foo/main.tf?ref=master",
+		Dst:  dst,
+		Mode: ClientModeFile,
+	}
+	if err := c.Get(); err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	// Verify the main file exists
+	if _, err := os.Stat(dst); err != nil {
+		t.Fatalf("err: %s", err)
+	}
+	assertContents(t, dst, "# Hello\n")
+}
+
+func TestGitGetter_githubGetFile(t *testing.T) {
+	if !testHasGit {
+		t.Skip("git not found, skipping")
+	}
+
+	dst := tempTestFile(t)
+	defer os.RemoveAll(filepath.Dir(dst))
+
+	if err := GetFile(dst, "git::https://github.com/arikkfir/go-getter/testdata/basic/foo/main.tf?ref=master"); err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	// Verify the main file exists
+	if _, err := os.Stat(dst); err != nil {
+		t.Fatalf("err: %s", err)
+	}
+	assertContents(t, dst, "# Hello\n")
+}
+
 func TestGitGetter_gitVersion(t *testing.T) {
 	if !testHasGit {
 		t.Skip("git not found, skipping")
