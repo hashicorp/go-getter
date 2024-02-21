@@ -46,7 +46,7 @@ func (d *S3Detector) detectPathStyle(region string, parts []string) (string, boo
 	urlStr := fmt.Sprintf("https://%s.amazonaws.com/%s", region, strings.Join(parts, "/"))
 	url, err := url.Parse(urlStr)
 	if err != nil {
-		return "", false, fmt.Errorf("error parsing S3 URL: %s", err)
+		return "", false, fmt.Errorf("error parsing S3 URL: %w", err)
 	}
 
 	return "s3::" + url.String(), true, nil
@@ -56,7 +56,7 @@ func (d *S3Detector) detectVhostStyle(region, bucket string, parts []string) (st
 	urlStr := fmt.Sprintf("https://%s.amazonaws.com/%s/%s", region, bucket, strings.Join(parts, "/"))
 	url, err := url.Parse(urlStr)
 	if err != nil {
-		return "", false, fmt.Errorf("error parsing S3 URL: %s", err)
+		return "", false, fmt.Errorf("error parsing S3 URL: %w", err)
 	}
 
 	return "s3::" + url.String(), true, nil
@@ -66,7 +66,7 @@ func (d *S3Detector) detectNewVhostStyle(region, bucket string, parts []string) 
 	urlStr := fmt.Sprintf("https://s3.%s.amazonaws.com/%s/%s", region, bucket, strings.Join(parts, "/"))
 	url, err := url.Parse(urlStr)
 	if err != nil {
-		return "", false, fmt.Errorf("error parsing S3 URL: %s", err)
+		return "", false, fmt.Errorf("error parsing S3 URL: %w", err)
 	}
 
 	return "s3::" + url.String(), true, nil

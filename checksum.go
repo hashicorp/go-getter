@@ -53,13 +53,13 @@ func (cerr *ChecksumError) Error() string {
 func (c *FileChecksum) checksum(source string) error {
 	f, err := os.Open(source)
 	if err != nil {
-		return fmt.Errorf("Failed to open file for checksum: %s", err)
+		return fmt.Errorf("Failed to open file for checksum: %w", err)
 	}
 	defer f.Close()
 
 	c.Hash.Reset()
 	if _, err := io.Copy(c.Hash, f); err != nil {
-		return fmt.Errorf("Failed to hash: %s", err)
+		return fmt.Errorf("Failed to hash: %w", err)
 	}
 
 	if actual := c.Hash.Sum(nil); !bytes.Equal(actual, c.Value) {
@@ -128,7 +128,7 @@ func newChecksum(checksumValue, filename string) (*FileChecksum, error) {
 	var err error
 	c.Value, err = hex.DecodeString(checksumValue)
 	if err != nil {
-		return nil, fmt.Errorf("invalid checksum: %s", err)
+		return nil, fmt.Errorf("invalid checksum: %w", err)
 	}
 	return c, nil
 }
@@ -215,7 +215,7 @@ func (c *Client) ChecksumFromFile(checksumFile string, src *url.URL) (*FileCheck
 	}
 	if err = c2.Get(); err != nil {
 		return nil, fmt.Errorf(
-			"Error downloading checksum file: %s", err)
+			"Error downloading checksum file: %w", err)
 	}
 
 	filename := filepath.Base(src.Path)
