@@ -49,15 +49,21 @@ func (g *FileGetter) Get(dst string, u *url.URL) error {
 		return err
 	}
 
-	sourcePath := toBackslash(path)
+	if !g.Copy {
+		sourcePath := toBackslash(path)
 
-	// Use mklink to create a junction point
-	output, err := exec.CommandContext(ctx, "cmd", "/c", "mklink", "/J", dst, sourcePath).CombinedOutput()
-	if err != nil {
-		return fmt.Errorf("failed to run mklink %v %v: %v %q", dst, sourcePath, err, output)
+		// Use mklink to create a junction point
+		output, err := exec.CommandContext(ctx, "cmd", "/c", "mklink", "/J", dst, sourcePath).CombinedOutput()
+		if err != nil {
+			return fmt.Errorf("failed to run mklink %v %v: %v %q", dst, sourcePath, err, output)
+		}
 	}
 
-	return nil
+	if err := os.Mkdir(dst, g.client.mode(0755)); err != nil {
+		return err
+	}
+
+	return copyDir(g.Context(), dst, path, false, g.client.DisableSymlinks, g.client.umask())
 }
 
 func (g *FileGetter) GetFile(dst string, u *url.URL) error {

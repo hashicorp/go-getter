@@ -45,7 +45,15 @@ func (g *FileGetter) Get(dst string, u *url.URL) error {
 		return err
 	}
 
-	return os.Symlink(path, dst)
+	if !g.Copy {
+		return os.Symlink(path, dst)
+	}
+
+	if err := os.Mkdir(dst, g.client.mode(0755)); err != nil {
+		return err
+	}
+
+	return copyDir(g.Context(), dst, path, false, g.client.DisableSymlinks, g.client.umask())
 }
 
 func (g *FileGetter) GetFile(dst string, u *url.URL) error {
