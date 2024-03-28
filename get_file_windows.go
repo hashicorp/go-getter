@@ -1,3 +1,4 @@
+//go:build windows
 // +build windows
 
 package getter
@@ -34,12 +35,12 @@ func (g *FileGetter) Get(dst string, u *url.URL) error {
 	// If the destination already exists, it must be a symlink
 	if err == nil {
 		mode := fi.Mode()
-		if mode&os.ModeSymlink == 0 {
+		if mode&os.ModeSymlink == 0 && !g.Copy {
 			return fmt.Errorf("destination exists and is not a symlink")
 		}
 
 		// Remove the destination
-		if err := os.Remove(dst); err != nil {
+		if err := os.RemoveAll(dst); err != nil {
 			return err
 		}
 	}
@@ -63,7 +64,13 @@ func (g *FileGetter) Get(dst string, u *url.URL) error {
 		return err
 	}
 
-	return copyDir(g.Context(), dst, path, false, g.client.DisableSymlinks, g.client.umask())
+	var disableSymlinks bool
+
+	if g.client != nil && g.client.DisableSymlinks {
+		disableSymlinks = true
+	}
+
+	return copyDir(g.Context(), dst, path, false, disableSymlinks, g.client.umask())
 }
 
 func (g *FileGetter) GetFile(dst string, u *url.URL) error {
