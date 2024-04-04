@@ -51,11 +51,11 @@ func (g *S3Getter) ClientMode(u *url.URL) (ClientMode, error) {
 	}
 
 	// List the object(s) at the given prefix
-	req := &s3.ListObjectsInput{
+	req := &s3.ListObjectsV2Input{
 		Bucket: aws.String(bucket),
 		Prefix: aws.String(path),
 	}
-	resp, err := client.ListObjects(ctx, req)
+	resp, err := client.ListObjectsV2(ctx, req)
 	if err != nil {
 		return 0, err
 	}
@@ -119,15 +119,15 @@ func (g *S3Getter) Get(dst string, u *url.URL) error {
 	lastMarker := ""
 	hasMore := true
 	for hasMore {
-		req := &s3.ListObjectsInput{
+		req := &s3.ListObjectsV2Input{
 			Bucket: aws.String(bucket),
 			Prefix: aws.String(path),
 		}
 		if lastMarker != "" {
-			req.Marker = aws.String(lastMarker)
+			req.Delimiter = aws.String(lastMarker)
 		}
 
-		resp, err := client.ListObjects(ctx, req)
+		resp, err := client.ListObjectsV2(ctx, req)
 		if err != nil {
 			return err
 		}
