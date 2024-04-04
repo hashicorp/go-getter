@@ -245,7 +245,7 @@ func (g *S3Getter) getAWSConfig(region string, url *url.URL, staticCreds *creden
 		loadOptions = append(loadOptions, config.WithRegion(region))
 	}
 
-	return config.LoadDefaultConfig(context.TODO(), loadOptions...)
+	return config.LoadDefaultConfig(g.Context(), loadOptions...)
 }
 
 func (g *S3Getter) parseUrl(u *url.URL) (region, bucket, path, version string, creds *credentials.StaticCredentialsProvider, err error) {
@@ -335,7 +335,7 @@ func (g *S3Getter) newS3Client(
 	var cfg aws.Config
 
 	if profile := url.Query().Get("aws_profile"); profile != "" {
-		cfg, err = config.LoadDefaultConfig(context.TODO(),
+		cfg, err = config.LoadDefaultConfig(g.Context(),
 			config.WithSharedConfigProfile(profile),
 		)
 	} else {
