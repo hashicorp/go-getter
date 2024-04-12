@@ -836,6 +836,36 @@ func TestGitGetter_subdirectory(t *testing.T) {
 	}
 }
 
+func TestGitGetter_BadRemoteUrl(t *testing.T) {
+
+	if !testHasGit {
+		t.Log("git not found, skipping")
+		t.Skip()
+	}
+
+	g := new(GitGetter)
+	dst := tempDir(t)
+
+	// try an option that exists
+	badUrl := "--no-refs"
+
+	u, err := url.Parse(badUrl)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = g.Get(dst, u)
+	if err == nil {
+		t.Fatalf("get succeeded; want error")
+	}
+
+	got := err.Error()
+	want := `repository '--no-refs' does not exist`
+	if !strings.Contains(got, want) {
+		t.Fatalf("wrong error\ngot:  %s\nwant: %q", got, want)
+	}
+}
+
 // gitRepo is a helper struct which controls a single temp git repo.
 type gitRepo struct {
 	t   *testing.T
