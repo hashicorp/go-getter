@@ -18,10 +18,15 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
+        # Note: while strictly speaking quoting the versions is not necessary
+        # however for versions like 1.10, 1.20, 1.30, etc. without quotes, YAML
+        # renders these versions as floats, so the least-significant 0 gets
+        # dropped from the version number, so those become like 1.1, 1.2, 1.3, etc.
+        # To avoid the issue, we quote them systematically.
         go-version:
-          - 1.17
-          - 1.18
-          - 1.19
+          - "1.19"
+          - "1.20"
+          - "1.21"
         directory:
           - s3
           - gcs
@@ -110,9 +115,9 @@ jobs:
     strategy:
       matrix:
         go-version:
-          - 1.17
-          - 1.18
-          - 1.19
+          - "1.19"
+          - "1.20"
+          - "1.21"
         directory:
           - s3
           - gcs
@@ -190,9 +195,9 @@ jobs:
     strategy:
       matrix:
         go-version:
-          - 1.17
-          - 1.18
-          - 1.19
+          - "1.19"
+          - "1.20"
+          - "1.21"
     permissions:
       id-token: write
       contents: read
