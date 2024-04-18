@@ -1,6 +1,6 @@
 name: go-getter
 
-on: 
+on:
   push:
     branches:
       - v2
@@ -39,14 +39,14 @@ jobs:
         uses: actions/setup-go@v3
         with:
           go-version: ${{ matrix.go-version }}
-      
+
       - name: Checkout code
         uses: actions/checkout@v3
 
       - name: Create test directory
         run: |
           mkdir -p ${{ env.TEST_RESULTS_PATH }}/go-getter
-  
+
       - name: Setup cache for go modules
         uses: actions/cache@v3
         with:
@@ -56,10 +56,10 @@ jobs:
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
           restore-keys: |
             ${{ runner.os }}-go-
-      
+
       - name: Download go modules
         run: go mod download
-      
+
       # Check go fmt output because it does not report non-zero when there are fmt changes
       - name: Run gofmt
         run: |
@@ -70,7 +70,7 @@ jobs:
               echo "$files"
               exit 1
             fi
-      
+
       - name: Install gotestsum
         run: go install gotest.tools/gotestsum@v1.8.2
 
@@ -173,7 +173,7 @@ jobs:
             cd cmd/go-getter
             go run . go.mod tmpdir
             diff tmpdir/go.mod go.mod
-      
+
       - name: Run Go tests
         shell: bash
         working-directory: ${{ matrix.directory }}
@@ -182,7 +182,7 @@ jobs:
           echo "Running $(echo $PACKAGE_NAMES | wc -w) packages"
           echo $PACKAGE_NAMES
           gotestsum --format=short-verbose --junitfile $TEST_RESULTS_PATH/go-getter/gotestsum-report.xml -- -p 2 $PACKAGE_NAMES
-      
+
       # Save coverage report parts
       - name: Upload and save artifacts
         uses: actions/upload-artifact@v3
@@ -220,6 +220,6 @@ jobs:
         run: |
           docker-compose build
           docker-compose up -d
-      
+
       - name: Run SMB getter tests
         run: docker exec -i gogetter bash -c "env ACC_SMB_TEST=1 go test -v ./... -run=TestSmb_"
