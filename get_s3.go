@@ -199,7 +199,7 @@ func (g *S3Getter) getObject(ctx context.Context, client *s3.Client, dst, bucket
 
 	if g.client != nil && g.client.ProgressListener != nil {
 		fn := filepath.Base(key)
-		body = g.client.ProgressListener.TrackProgress(fn, 0, resp.ContentLength, resp.Body)
+		body = g.client.ProgressListener.TrackProgress(fn, 0, aws.ToInt64(resp.ContentLength), resp.Body)
 	}
 	defer body.Close()
 
