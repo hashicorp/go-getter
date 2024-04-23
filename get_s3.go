@@ -55,20 +55,23 @@ func (g *S3Getter) ClientMode(u *url.URL) (ClientMode, error) {
 		Bucket: aws.String(bucket),
 		Prefix: aws.String(path),
 	}
-	resp, err := client.ListObjectsV2(ctx, req)
-	if err != nil {
-		return 0, err
-	}
-
-	for _, o := range resp.Contents {
-		// Use file mode on exact match.
-		if *o.Key == path {
-			return ClientModeFile, nil
+	paginator := s3.NewListObjectsV2Paginator(client, req)
+	for paginator.HasMorePages() {
+		output, err := paginator.NextPage(ctx)
+		if err != nil {
+			return 0, err
 		}
 
-		// Use dir mode if child keys are found.
-		if strings.HasPrefix(*o.Key, path+"/") {
-			return ClientModeDir, nil
+		for _, o := range output.Contents {
+			// Use file mode on exact match.
+			if aws.ToString(o.Key) == path {
+				return ClientModeFile, nil
+			}
+
+			// Use dir mode if child keys are found.
+			if strings.HasPrefix(aws.ToString(o.Key), path+"/") {
+				return ClientModeDir, nil
+			}
 		}
 	}
 
@@ -116,28 +119,19 @@ func (g *S3Getter) Get(dst string, u *url.URL) error {
 	}
 
 	// List files in path, keep listing until no more objects are found
-	lastMarker := ""
-	hasMore := true
-	for hasMore {
-		req := &s3.ListObjectsV2Input{
-			Bucket: aws.String(bucket),
-			Prefix: aws.String(path),
-		}
-		if lastMarker != "" {
-			req.Delimiter = aws.String(lastMarker)
-		}
-
-		resp, err := client.ListObjectsV2(ctx, req)
+	req := &s3.ListObjectsV2Input{
+		Bucket: aws.String(bucket),
+		Prefix: aws.String(path),
+	}
+	paginator := s3.NewListObjectsV2Paginator(client, req)
+	for paginator.HasMorePages() {
+		output, err := paginator.NextPage(ctx)
 		if err != nil {
 			return err
 		}
 
-		hasMore = resp.IsTruncated
-
-		// Get each object storing each file relative to the destination path
-		for _, object := range resp.Contents {
-			lastMarker = aws.ToString(object.Key)
-			objPath := lastMarker
+		for _, object := range output.Contents {
+			objPath := aws.ToString(object.Key)
 
 			// If the key ends with a backslash assume it is a directory and ignore
 			if strings.HasSuffix(objPath, "/") {
