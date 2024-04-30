@@ -81,14 +81,11 @@ func TestTarLimits(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	td, err := os.MkdirTemp("", "getter")
-	if err != nil {
-		t.Fatalf("err: %s", err)
-	}
+	td := t.TempDir()
 
 	tarFilePath := filepath.Join(td, "input.tar")
 
-	err = os.WriteFile(tarFilePath, b.Bytes(), 0666)
+	err := os.WriteFile(tarFilePath, b.Bytes(), 0666)
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
@@ -132,15 +129,12 @@ func TestTarLimits(t *testing.T) {
 
 // testDecompressPermissions decompresses a directory and checks the permissions of the expanded files
 func testDecompressorPermissions(t *testing.T, d Decompressor, input string, expected map[string]int, umask os.FileMode) {
-	td, err := os.MkdirTemp("", "getter")
-	if err != nil {
-		t.Fatalf("err: %s", err)
-	}
+	td := t.TempDir()
 
 	// Destination is always joining result so that we have a new path
 	dst := filepath.Join(td, "subdir", "result")
 
-	err = d.Decompress(dst, input, true, umask)
+	err := d.Decompress(dst, input, true, umask)
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
