@@ -53,10 +53,7 @@ func TestSourceDirSubdir(t *testing.T) {
 }
 
 func TestSourceSubdirGlob(t *testing.T) {
-	td, err := os.MkdirTemp("", "subdir-glob")
-	if err != nil {
-		t.Fatal(err)
-	}
+	td := t.TempDir()
 	defer os.RemoveAll(td)
 
 	if err := os.Mkdir(filepath.Join(td, "subdir"), 0755); err != nil {
