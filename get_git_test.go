@@ -169,8 +169,9 @@ func TestGitGetter_remoteWithoutMaster(t *testing.T) {
 		t.Fatalf("err: %s", err)
 	}
 
+	dst2 := tempDir(t)
 	// Get again should work
-	if err := g.Get(dst, repo.url); err != nil {
+	if err := g.Get(dst2, repo.url); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 

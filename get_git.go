@@ -252,6 +252,14 @@ func (g *GitGetter) update(ctx context.Context, dst, sshKeyFile string, u *url.U
 	}
 
 	// Fetch the remote ref
+	cmd = exec.CommandContext(ctx, "git", "fetch", "--tags")
+	cmd.Dir = dst
+	err = getRunCommand(cmd)
+	if err != nil {
+		return err
+	}
+
+	// Fetch the remote ref
 	cmd = exec.CommandContext(ctx, "git", "fetch", "origin", "--", ref)
 	cmd.Dir = dst
 	err = getRunCommand(cmd)
@@ -273,10 +281,11 @@ func (g *GitGetter) update(ctx context.Context, dst, sshKeyFile string, u *url.U
 		return err
 	}
 
+	// Pull the latest changes from the ref branch
 	if depth > 0 {
-		cmd = exec.CommandContext(ctx, "git", "pull", "--depth", strconv.Itoa(depth), "--ff-only")
+		cmd = exec.CommandContext(ctx, "git", "pull", "origin", "--depth", strconv.Itoa(depth), "--ff-only", "--", ref)
 	} else {
-		cmd = exec.CommandContext(ctx, "git", "pull", "--ff-only")
+		cmd = exec.CommandContext(ctx, "git", "pull", "origin", "--ff-only", "--", ref)
 	}
 
 	cmd.Dir = dst
