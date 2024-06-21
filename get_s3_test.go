@@ -1,12 +1,13 @@
 package getter
 
 import (
+	"errors"
 	"net/url"
 	"os"
 	"path/filepath"
 	"testing"
 
-	"github.com/aws/aws-sdk-go/aws/awserr"
+	awshttp "github.com/aws/aws-sdk-go-v2/aws/transport/http"
 )
 
 // Note for external contributors: In order to run the S3 test suite, you will only be able to be run
@@ -84,7 +85,8 @@ func TestS3Getter_GetFile_badParams(t *testing.T) {
 		t.Fatalf("expected error, got none")
 	}
 
-	if reqerr, ok := err.(awserr.RequestFailure); !ok || reqerr.StatusCode() != 403 {
+	var respErr *awshttp.ResponseError
+	if errors.As(err, &respErr) && respErr.HTTPStatusCode() != 403 {
 		t.Fatalf("expected InvalidAccessKeyId error")
 	}
 }
