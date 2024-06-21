@@ -169,8 +169,9 @@ func TestGitGetter_remoteWithoutMaster(t *testing.T) {
 		t.Fatalf("err: %s", err)
 	}
 
+	dst2 := tempDir(t)
 	// Get again should work
-	if err := g.Get(dst, repo.url); err != nil {
+	if err := g.Get(dst2, repo.url); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
@@ -863,6 +864,123 @@ func TestGitGetter_BadRemoteUrl(t *testing.T) {
 	want := `repository '--no-refs' does not exist`
 	if !strings.Contains(got, want) {
 		t.Fatalf("wrong error\ngot:  %s\nwant: %q", got, want)
+	}
+}
+
+func TestGitGetter_BadGitConfig(t *testing.T) {
+	if !testHasGit {
+		t.Log("git not found, skipping")
+		t.Skip()
+	}
+
+	ctx := context.Background()
+	g := new(GitGetter)
+	dst := tempDir(t)
+
+	url, err := url.Parse("https://github.com/hashicorp/go-getter")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = os.Stat(dst)
+	if err != nil && !os.IsNotExist(err) {
+		t.Fatalf(err.Error())
+	}
+	if err == nil {
+		// Update the repository containing the bad git config.
+		// This should remove the bad git config file and initialize a new one.
+		err = g.update(ctx, dst, testGitToken, url, "main", 1)
+	} else {
+		// Clone a repository with a git config file
+		err = g.clone(ctx, dst, testGitToken, url, "main", 1)
+		if err != nil {
+			t.Fatalf(err.Error())
+		}
+
+		// Edit the git config file to simulate a bad git config
+		gitConfigPath := filepath.Join(dst, ".git", "config")
+		err = os.WriteFile(gitConfigPath, []byte("bad config"), 0600)
+		if err != nil {
+			t.Fatalf(err.Error())
+		}
+
+		// Update the repository containing the bad git config.
+		// This should remove the bad git config file and initialize a new one.
+		err = g.update(ctx, dst, testGitToken, url, "main", 1)
+	}
+	if err != nil {
+		t.Fatalf(err.Error())
+	}
+
+	// Check if the .git/config file contains "bad config"
+	gitConfigPath := filepath.Join(dst, ".git", "config")
+	configBytes, err := os.ReadFile(gitConfigPath)
+	if err != nil {
+		t.Fatalf(err.Error())
+	}
+	if strings.Contains(string(configBytes), "bad config") {
+		t.Fatalf("The .git/config file contains 'bad config'")
+	}
+}
+
+func TestGitGetter_BadGitDirName(t *testing.T) {
+	if !testHasGit {
+		t.Log("git not found, skipping")
+		t.Skip()
+	}
+
+	ctx := context.Background()
+	g := new(GitGetter)
+	dst := tempDir(t)
+
+	url, err := url.Parse("https://github.com/hashicorp/go-getter")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = os.Stat(dst)
+	if err != nil && !os.IsNotExist(err) {
+		t.Fatalf(err.Error())
+	}
+	if err == nil {
+		// Remove all variations of .git directories
+		err = removeCaseInsensitiveGitDirectory(dst)
+		if err != nil {
+			t.Fatalf(err.Error())
+		}
+	} else {
+		// Clone a repository with a git directory
+		err = g.clone(ctx, dst, testGitToken, url, "main", 1)
+		if err != nil {
+			t.Fatalf(err.Error())
+		}
+
+		// Rename the .git directory to .GIT
+		oldPath := filepath.Join(dst, ".git")
+		newPath := filepath.Join(dst, ".GIT")
+		err = os.Rename(oldPath, newPath)
+		if err != nil {
+			t.Fatalf(err.Error())
+		}
+
+		// Remove all variations of .git directories
+		err = removeCaseInsensitiveGitDirectory(dst)
+		if err != nil {
+			t.Fatalf(err.Error())
+		}
+	}
+	if err != nil {
+		t.Fatalf(err.Error())
+	}
+
+	// Check if the .GIT directory exists
+	if _, err := os.Stat(filepath.Join(dst, ".GIT")); !os.IsNotExist(err) {
+		t.Fatalf(".GIT directory still exists")
+	}
+
+	// Check if the .git directory exists
+	if _, err := os.Stat(filepath.Join(dst, ".git")); !os.IsNotExist(err) {
+		t.Fatalf(".git directory still exists")
 	}
 }
 
