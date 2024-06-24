@@ -241,10 +241,6 @@ func (c *Client) Get() error {
 
 			// Determine if we have a custom file name
 			if v := q.Get("filename"); v != "" {
-				// Delete the query parameter if we have it.
-				q.Del("filename")
-				u.RawQuery = q.Encode()
-
 				filename = v
 			}
 
@@ -255,6 +251,10 @@ func (c *Client) Get() error {
 			dst = filepath.Join(dst, filename)
 		}
 	}
+
+	// Delete the query parameter if we have it. It won't be used from now on.
+	q.Del("filename")
+	u.RawQuery = q.Encode()
 
 	// If we're not downloading a directory, then just download the file
 	// and return.
