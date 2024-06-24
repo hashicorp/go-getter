@@ -59,12 +59,14 @@ var forcedRegexp = regexp.MustCompile(`^([A-Za-z0-9]+)::(.+)$`)
 // httpClient is the default client to be used by HttpGetters.
 var httpClient = cleanhttp.DefaultClient()
 
-func init() {
+// DefaultGetters returns the default set of getters. This is used by the
+// Client if no Getters are specified. It returns a new independent map.
+func DefaultGetters() map[string]Getter {
 	httpGetter := &HttpGetter{
 		Netrc: true,
 	}
 
-	Getters = map[string]Getter{
+	getters := map[string]Getter{
 		"file":  new(FileGetter),
 		"git":   new(GitGetter),
 		"gcs":   new(GCSGetter),
@@ -73,6 +75,11 @@ func init() {
 		"http":  httpGetter,
 		"https": httpGetter,
 	}
+	return getters
+}
+
+func init() {
+	Getters = DefaultGetters()
 }
 
 // Get downloads the directory specified by src into the folder specified by
