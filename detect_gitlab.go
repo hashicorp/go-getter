@@ -32,7 +32,7 @@ func (d *GitLabDetector) detectHTTP(src string) (string, bool, error) {
 	urlStr := fmt.Sprintf("https://%s", strings.Join(parts[:3], "/"))
 	repoUrl, err := url.Parse(urlStr)
 	if err != nil {
-		return "", true, fmt.Errorf("error parsing GitLab URL: %s", err)
+		return "", true, fmt.Errorf("error parsing GitLab URL: %w", err)
 	}
 
 	if !strings.HasSuffix(repoUrl.Path, ".git") {
