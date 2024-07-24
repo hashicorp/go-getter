@@ -12,7 +12,7 @@ require (
 	github.com/cheggaaa/pb v1.0.29
 	github.com/hashicorp/go-getter/gcs/v2 v2.2.2
 	github.com/hashicorp/go-getter/s3/v2 v2.2.2
-	github.com/hashicorp/go-getter/v2 v2.2.2
+	github.com/hashicorp/go-getter/v2 v2.2.3
 	github.com/mattn/go-runewidth v0.0.8 // indirect
 )
 
