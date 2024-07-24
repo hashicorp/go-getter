@@ -268,6 +268,10 @@ func (g *S3Getter) parseUrl(u *url.URL) (region, bucket, path, version string, c
 				region = "us-east-1"
 			}
 			pathParts := strings.SplitN(u.Path, "/", 3)
+			if len(pathParts) < 3 {
+				err = fmt.Errorf("URL is not a valid S3 URL")
+				return
+			}
 			bucket = pathParts[1]
 			path = pathParts[2]
 		// vhost-style, dash region indication
@@ -279,12 +283,20 @@ func (g *S3Getter) parseUrl(u *url.URL) (region, bucket, path, version string, c
 				return
 			}
 			pathParts := strings.SplitN(u.Path, "/", 2)
+			if len(pathParts) < 2 {
+				err = fmt.Errorf("URL is not a valid S3 URL")
+				return
+			}
 			bucket = hostParts[0]
 			path = pathParts[1]
 		//vhost-style, dot region indication
 		case 5:
 			region = hostParts[2]
 			pathParts := strings.SplitN(u.Path, "/", 2)
+			if len(pathParts) < 3 {
+				err = fmt.Errorf("URL is not a valid S3 URL")
+				return
+			}
 			bucket = hostParts[0]
 			path = pathParts[1]
 
