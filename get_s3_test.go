@@ -165,12 +165,13 @@ func TestS3Getter_ClientMode_collision(t *testing.T) {
 
 func TestS3Getter_Url(t *testing.T) {
 	var s3tests = []struct {
-		name    string
-		url     string
-		region  string
-		bucket  string
-		path    string
-		version string
+		name        string
+		url         string
+		region      string
+		bucket      string
+		path        string
+		version     string
+		expectedErr string
 	}{
 		{
 			name:    "AWSv1234",
@@ -220,6 +221,11 @@ func TestS3Getter_Url(t *testing.T) {
 			path:    "hello.txt",
 			version: "",
 		},
+		{
+			name:        "malformed s3 url",
+			url:         "s3::https://s3.amazonaws.com/bucket",
+			expectedErr: "URL is not a valid S3 URL",
+		},
 	}
 
 	for i, pt := range s3tests {
@@ -238,7 +244,15 @@ func TestS3Getter_Url(t *testing.T) {
 			region, bucket, path, version, creds, err := g.parseUrl(u)
 
 			if err != nil {
-				t.Fatalf("err: %s", err)
+				if pt.expectedErr == "" {
+					t.Fatalf("err: %s", err)
+				}
+				if err.Error() != pt.expectedErr {
+					t.Fatalf("expected %s, got %s", pt.expectedErr, err.Error())
+				}
+				return
+			} else if pt.expectedErr != "" {
+				t.Fatalf("expected error, got none")
 			}
 			if region != pt.region {
 				t.Fatalf("expected %s, got %s", pt.region, region)
@@ -257,4 +271,41 @@ func TestS3Getter_Url(t *testing.T) {
 			}
 		})
 	}
+}
+
+func Test_S3Getter_ParseUrl_Malformed(t *testing.T) {
+	tests := []struct {
+		name string
+		url  string
+	}{
+		{
+			name: "path style",
+			url:  "https://s3.amazonaws.com/bucket",
+		},
+		{
+			name: "vhost-style, dash region indication",
+			url:  "https://bucket.s3-us-east-1.amazonaws.com",
+		},
+		{
+			name: "vhost-style, dot region indication",
+			url:  "https://bucket.s3.us-east-1.amazonaws.com",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := new(S3Getter)
+			u, err := url.Parse(tt.url)
+			if err != nil {
+				t.Fatalf("unexpected error: %s", err)
+			}
+			_, _, _, _, _, err = g.parseUrl(u)
+			if err == nil {
+				t.Fatalf("expected error, got none")
+			}
+			if err.Error() != "URL is not a valid S3 URL" {
+				t.Fatalf("expected error 'URL is not a valid S3 URL', got %s", err.Error())
+			}
+		})
+	}
+
 }
