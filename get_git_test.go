@@ -984,6 +984,38 @@ func TestGitGetter_BadGitDirName(t *testing.T) {
 	}
 }
 
+func TestGitGetter_BadRef(t *testing.T) {
+	if !testHasGit {
+		t.Log("git not found, skipping")
+		t.Skip()
+	}
+
+	ctx := context.Background()
+	g := new(GitGetter)
+	dst := tempDir(t)
+
+	url, err := url.Parse("https://github.com/hashicorp/go-getter")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = os.Stat(dst)
+	if err != nil && !os.IsNotExist(err) {
+		t.Fatalf(err.Error())
+	}
+
+	// Clone a repository with non-existent ref
+	err = g.clone(ctx, dst, "", url, "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", 0)
+	if err == nil {
+		t.Fatalf(err.Error())
+	}
+
+	// Expect that the dst was cleaned up after failed ref checkout
+	if _, err := os.Stat(dst); !os.IsNotExist(err) {
+		t.Fatalf("cloned repository still exists after bad ref checkout")
+	}
+}
+
 // gitRepo is a helper struct which controls a single temp git repo.
 type gitRepo struct {
 	t   *testing.T
