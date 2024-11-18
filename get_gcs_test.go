@@ -4,7 +4,6 @@
 package getter
 
 import (
-	"io/ioutil"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -86,7 +85,7 @@ func TestGCSGetter_GetGenerationFile(t *testing.T) {
 	}
 
 	// Verify contents are valid for this generation
-	content, err := ioutil.ReadFile(dst)
+	content, err := os.ReadFile(dst)
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
@@ -102,7 +101,7 @@ func TestGCSGetter_GetGenerationFile(t *testing.T) {
 	}
 
 	// Verify contents are valid for this generation
-	content, err = ioutil.ReadFile(dst)
+	content, err = os.ReadFile(dst)
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
