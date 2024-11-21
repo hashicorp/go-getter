@@ -252,7 +252,7 @@ func (g *S3Getter) parseUrl(u *url.URL) (region, bucket, path, version string, c
 	// This just check whether we are dealing with S3 or
 	// any other S3 compliant service. S3 has a predictable
 	// url as others do not
-	if strings.Contains(u.Host, "amazonaws.com") {
+	if strings.HasSuffix(u.Host, "amazonaws.com") {
 		// Amazon S3 supports both virtual-hosted–style and path-style URLs to access a bucket, although path-style is deprecated
 		// In both cases few older regions supports dash-style region indication (s3-Region) even if AWS discourages their use.
 		// The same bucket could be reached with:
@@ -305,6 +305,32 @@ func (g *S3Getter) parseUrl(u *url.URL) (region, bucket, path, version string, c
 
 		}
 		if len(hostParts) < 3 && len(hostParts) > 5 {
+			err = fmt.Errorf("URL is not a valid S3 URL")
+			return
+		}
+		version = u.Query().Get("version")
+
+	} else if strings.HasSuffix(u.Host, "amazonaws.com.cn") {
+		// S3 buckets in China:
+		// s3.region.amazonaws.com.cn/bucket/path
+		// bucket.s3.region.amazonaws.com.cn/path
+		hostParts := strings.Split(u.Host, ".")
+		switch len(hostParts) {
+		case 5:
+			if hostParts[0] != "s3" {
+				err = fmt.Errorf("URL is not a valid S3 URL")
+				return
+			}
+			region = hostParts[1]
+			pathParts := strings.SplitN(u.Path, "/", 3)
+			bucket = pathParts[1]
+			path = pathParts[2]
+		case 6:
+			region = hostParts[2]
+			pathParts := strings.SplitN(u.Path, "/", 2)
+			bucket = hostParts[0]
+			path = pathParts[1]
+		default:
 			err = fmt.Errorf("URL is not a valid S3 URL")
 			return
 		}
