@@ -22,6 +22,7 @@ require (
 	golang.org/x/oauth2 v0.1.0
 	google.golang.org/api v0.100.0
 	google.golang.org/genproto v0.0.0-20221025140454-527a21cfbd71 // indirect
+	google.golang.org/protobuf v1.33.0 // indirect
 	gopkg.in/cheggaaa/pb.v1 v1.0.27 // indirect
 )
 
