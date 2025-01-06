@@ -293,6 +293,14 @@ func Test_S3Getter_ParseUrl_Malformed(t *testing.T) {
 			name: "vhost-style, dot region indication",
 			url:  "https://bucket.s3.us-east-1.amazonaws.com",
 		},
+		{
+			name: "invalid host parts",
+			url:  "https://invalid.host.parts.lenght.s3.us-east-1.amazonaws.com",
+		},
+		{
+			name: "invalid host suffix",
+			url:  "https://bucket.s3.amazonaws.com.invalid",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
