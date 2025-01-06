@@ -61,6 +61,12 @@ func TestGCSDetector_MalformedDetectHTTP(t *testing.T) {
 			"gcs::https://www.googleapis.com/storage/v1/my-bucket/foo/bar",
 		},
 		{
+			"empty url",
+			"",
+			"",
+			"",
+		},
+		{
 			"not valid url length",
 			"www.googleapis.com.invalid/storage/v1/",
 			"URL is not a valid GCS URL",
@@ -85,7 +91,12 @@ func TestGCSDetector_MalformedDetectHTTP(t *testing.T) {
 			"",
 		},
 		{
-			"path traversal",
+			"path traversal on bucket",
+			"www.googleapis.com/storage/v1/../foo/bar",
+			"URL is not a valid GCS URL",
+			"",
+		}, {
+			"path traversal on object",
 			"www.googleapis.com/storage/v1/my-bucket/../../../foo/bar",
 			"URL is not a valid GCS URL",
 			"",
