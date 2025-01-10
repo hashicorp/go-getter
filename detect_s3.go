@@ -18,8 +18,17 @@ func (d *S3Detector) Detect(src, _ string) (string, bool, error) {
 		return "", false, nil
 	}
 
-	if strings.Contains(src, ".amazonaws.com/") {
-		return d.detectHTTP(src)
+	if !strings.HasPrefix(src, "http://") && !strings.HasPrefix(src, "https://") {
+		src = "https://" + src
+	}
+
+	parsedURL, err := url.Parse(src)
+	if err != nil {
+		return "", false, fmt.Errorf("error parsing S3 URL")
+	}
+
+	if strings.HasSuffix(parsedURL.Host, ".amazonaws.com") {
+		return d.detectHTTP(strings.ReplaceAll(src, "https://", ""))
 	}
 
 	return "", false, nil

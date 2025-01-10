@@ -234,6 +234,30 @@ func TestGCSGetter_GetFile_OAuthAccessToken(t *testing.T) {
 	assertContents(t, dst, "# Main\n")
 }
 
+func Test_GCSGetter_ParseUrl(t *testing.T) {
+	tests := []struct {
+		name string
+		url  string
+	}{
+		{
+			name: "valid host",
+			url:  "https://www.googleapis.com/storage/v1/hc-go-getter-test/go-getter/foobar",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := new(GCSGetter)
+			u, err := url.Parse(tt.url)
+			if err != nil {
+				t.Fatalf("unexpected error: %s", err)
+			}
+			_, _, _, err = g.parseURL(u)
+			if err != nil {
+				t.Fatalf("wasn't expecting error, got %s", err)
+			}
+		})
+	}
+}
 func Test_GCSGetter_ParseUrl_Malformed(t *testing.T) {
 	tests := []struct {
 		name string

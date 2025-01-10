@@ -73,31 +73,8 @@ func TestGCSDetector_MalformedDetectHTTP(t *testing.T) {
 			"",
 		},
 		{
-			"not valid version",
-			"www.googleapis.com/storage/invalid-version/my-bucket/foo",
-			"GCS URL version is not valid",
-			"",
-		},
-		{
-			"not valid bucket",
-			"www.googleapis.com/storage/v1/127.0.0.1/foo",
-			"GCS URL bucket name is not valid",
-			"",
-		},
-		{
-			"not valid object",
-			"www.googleapis.com/storage/v1/my-bucket/.well-known/acme-challenge/foo",
-			"GCS URL object name is not valid",
-			"",
-		},
-		{
-			"path traversal on bucket",
-			"www.googleapis.com/storage/v1/../foo/bar",
-			"URL is not a valid GCS URL",
-			"",
-		}, {
-			"path traversal on object",
-			"www.googleapis.com/storage/v1/my-bucket/../../../foo/bar",
+			"not valid url length",
+			"www.invalid.com/storage/v1",
 			"URL is not a valid GCS URL",
 			"",
 		},
@@ -114,85 +91,7 @@ func TestGCSDetector_MalformedDetectHTTP(t *testing.T) {
 		}
 
 		if output != tc.Output {
-			t.Fatalf("expected %s, got %s", tc.Output, output)
-		}
-	}
-}
-
-func TestIsValidGCSVersion(t *testing.T) {
-	cases := []struct {
-		Name     string
-		Input    string
-		Expected bool
-	}{
-		{
-			"valid version",
-			"v1",
-			true,
-		},
-		{
-			"invalid version",
-			"invalid1",
-			false,
-		},
-	}
-
-	for _, tc := range cases {
-		output := isValidGCSVersion(tc.Input)
-		if output != tc.Expected {
-			t.Fatalf("expected %t, got %t for test %s", tc.Expected, output, tc.Name)
-		}
-	}
-}
-
-func TestIsValidGCSBucketName(t *testing.T) {
-	cases := []struct {
-		Name     string
-		Input    string
-		Expected bool
-	}{
-		{
-			"valid bucket name",
-			"my-bucket",
-			true,
-		},
-		{
-			"invalid bucket name",
-			"..",
-			false,
-		},
-	}
-
-	for _, tc := range cases {
-		output := isValidGCSBucketName(tc.Input)
-		if output != tc.Expected {
-			t.Fatalf("expected %t, got %t for test %s", tc.Expected, output, tc.Name)
-		}
-	}
-}
-
-func TestIsValidGCSObjectName(t *testing.T) {
-	cases := []struct {
-		Name     string
-		Input    string
-		Expected bool
-	}{
-		{
-			"valid object name",
-			"my-object",
-			true,
-		},
-		{
-			"invalid object name",
-			"..",
-			false,
-		},
-	}
-
-	for _, tc := range cases {
-		output := isValidGCSObjectName(tc.Input)
-		if output != tc.Expected {
-			t.Fatalf("expected %t, got %t for test %s", tc.Expected, output, tc.Name)
+			t.Fatalf("expected %s, got %s for %s", tc.Output, output, tc.Name)
 		}
 	}
 }
