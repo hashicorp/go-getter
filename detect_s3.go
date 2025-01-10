@@ -5,8 +5,9 @@ package getter
 
 import (
 	"fmt"
-	"net/url"
 	"strings"
+
+	urlhelper "github.com/hashicorp/go-getter/helper/url"
 )
 
 // S3Detector implements Detector to detect S3 URLs and turn
@@ -22,7 +23,7 @@ func (d *S3Detector) Detect(src, _ string) (string, bool, error) {
 		src = "https://" + src
 	}
 
-	parsedURL, err := url.Parse(src)
+	parsedURL, err := urlhelper.Parse(src)
 	if err != nil {
 		return "", false, fmt.Errorf("error parsing S3 URL")
 	}
@@ -56,7 +57,7 @@ func (d *S3Detector) detectHTTP(src string) (string, bool, error) {
 
 func (d *S3Detector) detectPathStyle(region string, parts []string) (string, bool, error) {
 	urlStr := fmt.Sprintf("https://%s.amazonaws.com/%s", region, strings.Join(parts, "/"))
-	url, err := url.Parse(urlStr)
+	url, err := urlhelper.Parse(urlStr)
 	if err != nil {
 		return "", false, fmt.Errorf("error parsing S3 URL: %s", err)
 	}
@@ -66,7 +67,7 @@ func (d *S3Detector) detectPathStyle(region string, parts []string) (string, boo
 
 func (d *S3Detector) detectVhostStyle(region, bucket string, parts []string) (string, bool, error) {
 	urlStr := fmt.Sprintf("https://%s.amazonaws.com/%s/%s", region, bucket, strings.Join(parts, "/"))
-	url, err := url.Parse(urlStr)
+	url, err := urlhelper.Parse(urlStr)
 	if err != nil {
 		return "", false, fmt.Errorf("error parsing S3 URL: %s", err)
 	}
@@ -76,7 +77,7 @@ func (d *S3Detector) detectVhostStyle(region, bucket string, parts []string) (st
 
 func (d *S3Detector) detectNewVhostStyle(region, bucket string, parts []string) (string, bool, error) {
 	urlStr := fmt.Sprintf("https://s3.%s.amazonaws.com/%s/%s", region, bucket, strings.Join(parts, "/"))
-	url, err := url.Parse(urlStr)
+	url, err := urlhelper.Parse(urlStr)
 	if err != nil {
 		return "", false, fmt.Errorf("error parsing S3 URL: %s", err)
 	}

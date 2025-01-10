@@ -5,8 +5,9 @@ package getter
 
 import (
 	"fmt"
-	"net/url"
 	"strings"
+
+	urlhelper "github.com/hashicorp/go-getter/helper/url"
 )
 
 // GCSDetector implements Detector to detect GCS URLs and turn
@@ -22,7 +23,7 @@ func (d *GCSDetector) Detect(src, _ string) (string, bool, error) {
 		src = "https://" + src
 	}
 
-	parsedURL, err := url.Parse(src)
+	parsedURL, err := urlhelper.Parse(src)
 	if err != nil {
 		return "", false, fmt.Errorf("error parsing GCS URL")
 	}
@@ -45,7 +46,7 @@ func (d *GCSDetector) detectHTTP(src string) (string, bool, error) {
 	bucket := parts[3]
 	object := strings.Join(parts[4:], "/")
 
-	url, err := url.Parse(fmt.Sprintf("https://www.googleapis.com/storage/%s/%s/%s",
+	url, err := urlhelper.Parse(fmt.Sprintf("https://www.googleapis.com/storage/%s/%s/%s",
 		version, bucket, object))
 	if err != nil {
 		return "", false, fmt.Errorf("error parsing GCS URL: %s", err)
