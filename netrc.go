@@ -56,7 +56,7 @@ func addAuthFromNetrc(u *url.URL) error {
 	// Load up the netrc file
 	net, err := netrc.ParseFile(path)
 	if err != nil {
-		return fmt.Errorf("Error parsing netrc file at %q: %s", path, err)
+		return fmt.Errorf("Error parsing netrc file at %q: %w", path, err)
 	}
 
 	machine := net.FindMachine(u.Host)

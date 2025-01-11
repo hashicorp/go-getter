@@ -39,7 +39,7 @@ func (d *GCSDetector) detectHTTP(src string) (string, bool, error) {
 	url, err := url.Parse(fmt.Sprintf("https://www.googleapis.com/storage/%s/%s/%s",
 		version, bucket, object))
 	if err != nil {
-		return "", false, fmt.Errorf("error parsing GCS URL: %s", err)
+		return "", false, fmt.Errorf("error parsing GCS URL: %w", err)
 	}
 
 	return "gcs::" + url.String(), true, nil
