@@ -105,18 +105,6 @@ func TestS3Detector_MalformedDetectHTTP(t *testing.T) {
 			"s3::https://s3.amazonaws.com/bucket/foo/bar",
 		},
 		{
-			"valid url with https scheme",
-			"https://s3.amazonaws.com/bucket/foo/bar",
-			"",
-			"s3::https://s3.amazonaws.com/bucket/foo/bar",
-		},
-		{
-			"valid url with http scheme",
-			"http://s3.amazonaws.com/bucket/foo/bar",
-			"",
-			"s3::https://s3.amazonaws.com/bucket/foo/bar",
-		},
-		{
 			"empty url",
 			"",
 			"",

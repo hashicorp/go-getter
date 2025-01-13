@@ -61,18 +61,6 @@ func TestGCSDetector_MalformedDetectHTTP(t *testing.T) {
 			"gcs::https://www.googleapis.com/storage/v1/my-bucket/foo/bar",
 		},
 		{
-			"valid url with https scheme",
-			"https://www.googleapis.com/storage/v1/my-bucket/foo/bar",
-			"",
-			"gcs::https://www.googleapis.com/storage/v1/my-bucket/foo/bar",
-		},
-		{
-			"valid url with http scheme",
-			"http://www.googleapis.com/storage/v1/my-bucket/foo/bar",
-			"",
-			"gcs::https://www.googleapis.com/storage/v1/my-bucket/foo/bar",
-		},
-		{
 			"empty url",
 			"",
 			"",
