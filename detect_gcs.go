@@ -29,7 +29,9 @@ func (d *GCSDetector) Detect(src, _ string) (string, bool, error) {
 	}
 
 	if strings.HasSuffix(parsedURL.Host, ".googleapis.com") {
-		return d.detectHTTP(strings.ReplaceAll(src, "https://", ""))
+		src = strings.TrimPrefix(src, "https://")
+		src = strings.TrimPrefix(src, "http://")
+		return d.detectHTTP(src)
 	}
 
 	return "", false, nil
