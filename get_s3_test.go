@@ -278,34 +278,40 @@ func TestS3Getter_Url(t *testing.T) {
 
 func Test_S3Getter_ParseUrl_Malformed(t *testing.T) {
 	tests := []struct {
-		name string
-		url  string
+		name     string
+		input    string
+		expected string
 	}{
 		{
-			name: "path style",
-			url:  "https://s3.amazonaws.com/bucket",
+			name:     "path style",
+			input:    "https://s3.amazonaws.com/bucket",
+			expected: "URL is not a valid S3 URL",
 		},
 		{
-			name: "vhost-style, dash region indication",
-			url:  "https://bucket.s3-us-east-1.amazonaws.com",
+			name:     "vhost-style, dash region indication",
+			input:    "https://bucket.s3-us-east-1.amazonaws.com",
+			expected: "URL is not a valid S3 URL",
 		},
 		{
-			name: "vhost-style, dot region indication",
-			url:  "https://bucket.s3.us-east-1.amazonaws.com",
+			name:     "vhost-style, dot region indication",
+			input:    "https://bucket.s3.us-east-1.amazonaws.com",
+			expected: "URL is not a valid S3 URL",
 		},
 		{
-			name: "invalid host parts",
-			url:  "https://invalid.host.parts.lenght.s3.us-east-1.amazonaws.com",
+			name:     "invalid host parts",
+			input:    "https://invalid.host.parts.lenght.s3.us-east-1.amazonaws.com",
+			expected: "URL is not a valid S3 URL",
 		},
 		{
-			name: "invalid host suffix",
-			url:  "https://bucket.s3.amazonaws.com.invalid",
+			name:     "invalid host suffix",
+			input:    "https://bucket.s3.amazonaws.com.invalid",
+			expected: "URL is not a valid S3 compliant URL",
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			g := new(S3Getter)
-			u, err := url.Parse(tt.url)
+			u, err := url.Parse(tt.input)
 			if err != nil {
 				t.Fatalf("unexpected error: %s", err)
 			}
@@ -313,8 +319,8 @@ func Test_S3Getter_ParseUrl_Malformed(t *testing.T) {
 			if err == nil {
 				t.Fatalf("expected error, got none")
 			}
-			if err.Error() != "URL is not a valid S3 URL" {
-				t.Fatalf("expected error 'URL is not a valid S3 URL', got %s", err.Error())
+			if err.Error() != tt.expected {
+				t.Fatalf("expected error '%s', got %s for %s", tt.expected, err.Error(), tt.name)
 			}
 		})
 	}
