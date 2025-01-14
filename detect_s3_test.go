@@ -90,3 +90,58 @@ func TestS3Detector(t *testing.T) {
 		}
 	}
 }
+
+func TestS3Detector_MalformedDetectHTTP(t *testing.T) {
+	cases := []struct {
+		Name     string
+		Input    string
+		Expected string
+		Output   string
+	}{
+		{
+			"valid url",
+			"s3.amazonaws.com/bucket/foo/bar",
+			"",
+			"s3::https://s3.amazonaws.com/bucket/foo/bar",
+		},
+		{
+			"empty url",
+			"",
+			"",
+			"",
+		},
+		{
+			"not valid url",
+			"bucket/foo/bar",
+			"error parsing S3 URL",
+			"",
+		},
+		{
+			"not valid url domain",
+			"s3.amazonaws.com.invalid/bucket/foo/bar",
+			"error parsing S3 URL",
+			"",
+		},
+		{
+			"not valid url lenght",
+			"http://s3.amazonaws.com",
+			"URL is not a valid S3 URL",
+			"",
+		},
+	}
+
+	pwd := "/pwd"
+	f := new(S3Detector)
+	for _, tc := range cases {
+		output, _, err := f.Detect(tc.Input, pwd)
+		if err != nil {
+			if err.Error() != tc.Expected {
+				t.Fatalf("expected error %s, got %s for %s", tc.Expected, err.Error(), tc.Name)
+			}
+		}
+
+		if output != tc.Output {
+			t.Fatalf("expected %s, got %s for %s", tc.Output, output, tc.Name)
+		}
+	}
+}

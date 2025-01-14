@@ -18,7 +18,7 @@ func (d *GCSDetector) Detect(src, _ string) (string, bool, error) {
 		return "", false, nil
 	}
 
-	if strings.Contains(src, "googleapis.com/") {
+	if strings.Contains(src, ".googleapis.com/") {
 		return d.detectHTTP(src)
 	}
 
