@@ -12,12 +12,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/credentials"
-	"github.com/aws/aws-sdk-go/aws/credentials/ec2rolecreds"
-	"github.com/aws/aws-sdk-go/aws/ec2metadata"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/credentials"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
 )
 
 // S3Getter is a Getter implementation that will download a module from
@@ -48,17 +46,17 @@ func (g *S3Getter) ClientMode(u *url.URL) (ClientMode, error) {
 	}
 
 	// Create client config
-	client, err := g.newS3Client(region, u, creds)
+	client, err := g.newS3Client(ctx, region, u, creds)
 	if err != nil {
 		return 0, err
 	}
 
 	// List the object(s) at the given prefix
-	req := &s3.ListObjectsInput{
+	req := &s3.ListObjectsV2Input{
 		Bucket: aws.String(bucket),
 		Prefix: aws.String(path),
 	}
-	resp, err := client.ListObjectsWithContext(ctx, req)
+	resp, err := client.ListObjectsV2(ctx, req)
 	if err != nil {
 		return 0, err
 	}
@@ -113,34 +111,35 @@ func (g *S3Getter) Get(dst string, u *url.URL) error {
 		return err
 	}
 
-	client, err := g.newS3Client(region, u, creds)
+	client, err := g.newS3Client(ctx, region, u, creds)
 	if err != nil {
 		return err
 	}
 
 	// List files in path, keep listing until no more objects are found
-	lastMarker := ""
+	continuationToken := ""
 	hasMore := true
 	for hasMore {
-		req := &s3.ListObjectsInput{
+		req := &s3.ListObjectsV2Input{
 			Bucket: aws.String(bucket),
 			Prefix: aws.String(path),
 		}
-		if lastMarker != "" {
-			req.Marker = aws.String(lastMarker)
+
+		if continuationToken != "" {
+			req.ContinuationToken = aws.String(continuationToken)
 		}
 
-		resp, err := client.ListObjectsWithContext(ctx, req)
+		resp, err := client.ListObjectsV2(ctx, req)
 		if err != nil {
 			return err
 		}
 
-		hasMore = aws.BoolValue(resp.IsTruncated)
+		hasMore = aws.ToBool(resp.IsTruncated)
 
 		// Get each object storing each file relative to the destination path
 		for _, object := range resp.Contents {
-			lastMarker = aws.StringValue(object.Key)
-			objPath := aws.StringValue(object.Key)
+			continuationToken = aws.ToString(resp.NextContinuationToken)
+			objPath := aws.ToString(object.Key)
 
 			// If the key ends with a backslash assume it is a directory and ignore
 			if strings.HasSuffix(objPath, "/") {
@@ -177,7 +176,7 @@ func (g *S3Getter) GetFile(dst string, u *url.URL) error {
 		return err
 	}
 
-	client, err := g.newS3Client(region, u, creds)
+	client, err := g.newS3Client(ctx, region, u, creds)
 	if err != nil {
 		return err
 	}
@@ -185,7 +184,7 @@ func (g *S3Getter) GetFile(dst string, u *url.URL) error {
 	return g.getObject(ctx, client, dst, bucket, path, version)
 }
 
-func (g *S3Getter) getObject(ctx context.Context, client *s3.S3, dst, bucket, key, version string) error {
+func (g *S3Getter) getObject(ctx context.Context, client *s3.Client, dst, bucket, key, version string) error {
 	req := &s3.GetObjectInput{
 		Bucket: aws.String(bucket),
 		Key:    aws.String(key),
@@ -194,7 +193,7 @@ func (g *S3Getter) getObject(ctx context.Context, client *s3.S3, dst, bucket, ke
 		req.VersionId = aws.String(version)
 	}
 
-	resp, err := client.GetObjectWithContext(ctx, req)
+	resp, err := client.GetObject(ctx, req)
 	if err != nil {
 		return err
 	}
@@ -216,39 +215,7 @@ func (g *S3Getter) getObject(ctx context.Context, client *s3.S3, dst, bucket, ke
 	return copyReader(dst, body, 0666, g.client.umask(), 0)
 }
 
-func (g *S3Getter) getAWSConfig(region string, url *url.URL, creds *credentials.Credentials) *aws.Config {
-	conf := &aws.Config{}
-	metadataURLOverride := os.Getenv("AWS_METADATA_URL")
-	if creds == nil && metadataURLOverride != "" {
-		creds = credentials.NewChainCredentials(
-			[]credentials.Provider{
-				&credentials.EnvProvider{},
-				&credentials.SharedCredentialsProvider{Filename: "", Profile: ""},
-				&ec2rolecreds.EC2RoleProvider{
-					Client: ec2metadata.New(session.New(&aws.Config{
-						Endpoint: aws.String(metadataURLOverride),
-					})),
-				},
-			})
-	}
-
-	if creds != nil {
-		conf.Endpoint = &url.Host
-		conf.S3ForcePathStyle = aws.Bool(true)
-		if url.Scheme == "http" {
-			conf.DisableSSL = aws.Bool(true)
-		}
-	}
-
-	conf.Credentials = creds
-	if region != "" {
-		conf.Region = aws.String(region)
-	}
-
-	return conf.WithCredentialsChainVerboseErrors(true)
-}
-
-func (g *S3Getter) parseUrl(u *url.URL) (region, bucket, path, version string, creds *credentials.Credentials, err error) {
+func (g *S3Getter) parseUrl(u *url.URL) (region, bucket, path, version string, creds *credentials.StaticCredentialsProvider, err error) {
 	// This just check whether we are dealing with S3 or
 	// any other S3 compliant service. S3 has a predictable
 	// url as others do not
@@ -329,34 +296,57 @@ func (g *S3Getter) parseUrl(u *url.URL) (region, bucket, path, version string, c
 	_, hasAwsSecret := u.Query()["aws_access_key_secret"]
 	_, hasAwsToken := u.Query()["aws_access_token"]
 	if hasAwsId || hasAwsSecret || hasAwsToken {
-		creds = credentials.NewStaticCredentials(
+		credentialProvider := credentials.NewStaticCredentialsProvider(
 			u.Query().Get("aws_access_key_id"),
 			u.Query().Get("aws_access_key_secret"),
 			u.Query().Get("aws_access_token"),
 		)
+		creds = &credentialProvider
+	} else {
+		// If no credentials are provided, return an empty provider
+		// to trigger the credential chain resolution.
+		creds = &credentials.StaticCredentialsProvider{}
 	}
 
 	return
 }
 
-func (g *S3Getter) newS3Client(
-	region string, url *url.URL, creds *credentials.Credentials,
-) (*s3.S3, error) {
-	var sess *session.Session
-
-	if profile := url.Query().Get("aws_profile"); profile != "" {
-		var err error
-		sess, err = session.NewSessionWithOptions(session.Options{
-			Profile:           profile,
-			SharedConfigState: session.SharedConfigEnable,
-		})
+func (g *S3Getter) newS3Client(ctx context.Context, region string, url *url.URL, creds *credentials.StaticCredentialsProvider) (*s3.Client, error) {
+	// Handle metadata URL override for EC2 role credentials
+	if metadataURLOverride := os.Getenv("AWS_METADATA_URL"); metadataURLOverride != "" {
+		cfg, err := config.LoadDefaultConfig(
+			ctx,
+			config.WithRegion(region),
+			config.WithEC2IMDSEndpoint(metadataURLOverride),
+		)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to load AWS config with metadata URL override: %w", err)
 		}
-	} else {
-		config := g.getAWSConfig(region, url, creds)
-		sess = session.New(config)
+		return s3.NewFromConfig(cfg), nil
 	}
 
-	return s3.New(sess), nil
+	// Load default AWS configuration with custom credentials
+	cfg, err := config.LoadDefaultConfig(
+		ctx,
+		config.WithRegion(region),
+		config.WithCredentialsProvider(creds),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load AWS config with custom credentials: %w", err)
+	}
+
+	// Configure S3 client with custom endpoint and path-style options
+	client := s3.NewFromConfig(cfg, func(o *s3.Options) {
+		if creds != nil {
+			o.UsePathStyle = true
+			o.BaseEndpoint = &url.Host
+
+			// Disable HTTPS if the URL scheme is HTTP
+			if url.Scheme == "http" {
+				o.EndpointOptions.DisableHTTPS = true
+			}
+		}
+	})
+
+	return client, nil
 }
