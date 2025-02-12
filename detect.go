@@ -32,6 +32,7 @@ func init() {
 		new(S3Detector),
 		new(GCSDetector),
 		new(FileDetector),
+		new(AzureBlobDetector),
 	}
 }
 
