@@ -1,5 +1,7 @@
 module github.com/hashicorp/go-getter
 
+go 1.21
+
 require (
 	cloud.google.com/go/storage v1.29.0
 	github.com/aws/aws-sdk-go v1.44.122
@@ -7,7 +9,6 @@ require (
 	github.com/aws/aws-sdk-go-v2/config v1.29.6
 	github.com/aws/aws-sdk-go-v2/credentials v1.17.59
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.76.1
-	github.com/aws/aws-sdk-go-v2/service/sts v1.33.14
 	github.com/bgentry/go-netrc v0.0.0-20140422174119-9fd32a8b3d3d
 	github.com/cheggaaa/pb v1.0.27
 	github.com/hashicorp/go-cleanhttp v0.5.2
@@ -38,6 +39,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/internal/s3shared v1.18.13 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sso v1.24.15 // indirect
 	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.28.14 // indirect
+	github.com/aws/aws-sdk-go-v2/service/sts v1.33.14 // indirect
 	github.com/aws/smithy-go v1.22.2 // indirect
 	github.com/fatih/color v1.7.0 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
@@ -60,7 +62,3 @@ require (
 	google.golang.org/protobuf v1.33.0 // indirect
 	gopkg.in/cheggaaa/pb.v1 v1.0.27 // indirect
 )
-
-go 1.21
-
-toolchain go1.23.6
