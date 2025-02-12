@@ -302,22 +302,21 @@ func (g *S3Getter) parseUrl(u *url.URL) (region, bucket, path, version string, c
 			u.Query().Get("aws_access_token"),
 		)
 		creds = &credentialProvider
-	} else {
-		// If no credentials are provided, return an empty provider
-		// to trigger the credential chain resolution.
-		creds = &credentials.StaticCredentialsProvider{}
 	}
 
 	return
 }
 
 func (g *S3Getter) newS3Client(ctx context.Context, region string, url *url.URL, creds *credentials.StaticCredentialsProvider) (*s3.Client, error) {
-	// Handle metadata URL override for EC2 role credentials
-	if metadataURLOverride := os.Getenv("AWS_METADATA_URL"); metadataURLOverride != "" {
-		cfg, err := config.LoadDefaultConfig(
+	var cfg aws.Config
+	var err error
+
+	// We first check if the AWS_METADATA_URL is set, if it is we use it to load the config.
+	if creds == nil && os.Getenv("AWS_METADATA_URL") != "" {
+		cfg, err = config.LoadDefaultConfig(
 			ctx,
 			config.WithRegion(region),
-			config.WithEC2IMDSEndpoint(metadataURLOverride),
+			config.WithEC2IMDSEndpoint(os.Getenv("AWS_METADATA_URL")),
 		)
 		if err != nil {
 			return nil, fmt.Errorf("failed to load AWS config with metadata URL override: %w", err)
@@ -325,23 +324,24 @@ func (g *S3Getter) newS3Client(ctx context.Context, region string, url *url.URL,
 		return s3.NewFromConfig(cfg), nil
 	}
 
-	// Load default AWS configuration with custom credentials
-	cfg, err := config.LoadDefaultConfig(
-		ctx,
-		config.WithRegion(region),
-		config.WithCredentialsProvider(creds),
-	)
+	// Otherwise, we load the config with the default settings.
+	cfg, err = config.LoadDefaultConfig(ctx, config.WithRegion(region))
 	if err != nil {
-		return nil, fmt.Errorf("failed to load AWS config with custom credentials: %w", err)
+		return nil, fmt.Errorf("failed to load AWS config: %w", err)
 	}
 
-	// Configure S3 client with custom endpoint and path-style options
+	// If a credential provider is provided, override the default credentials;
+	// otherwise, let the SDK automatically resolve them.
+	if creds != nil {
+		cfg.Credentials = creds
+	}
+
+	// Create the client
 	client := s3.NewFromConfig(cfg, func(o *s3.Options) {
 		if creds != nil {
 			o.UsePathStyle = true
 			o.BaseEndpoint = &url.Host
 
-			// Disable HTTPS if the URL scheme is HTTP
 			if url.Scheme == "http" {
 				o.EndpointOptions.DisableHTTPS = true
 			}
