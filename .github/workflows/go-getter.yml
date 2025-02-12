@@ -12,8 +12,7 @@ jobs:
     strategy:
       matrix:
         go-version:
-          - 1.18
-          - 1.19
+          - 1.21
     permissions:
       id-token: write
       contents: read
@@ -91,8 +90,7 @@ jobs:
     strategy:
       matrix:
         go-version:
-          - 1.18
-          - 1.19
+          - 1.21
     permissions:
       id-token: write
       contents: read
