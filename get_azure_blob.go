@@ -1,10 +1,13 @@
 package getter
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"log"
 	"net/url"
+	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -83,8 +86,85 @@ func (g *AzureBlobGetter) Get(dst string, u *url.URL) error {
 
 	if g.Timeout > 0 {
 		var cancel context.CancelFunc
-		_, cancel = context.WithTimeout(ctx, g.Timeout)
+		ctx, cancel = context.WithTimeout(ctx, g.Timeout)
 		defer cancel()
+	}
+
+	// Parse URL
+	containerName, fileName, creds, err := g.parseUrl(u)
+	if err != nil {
+		return err
+	}
+
+	// Remove destination if it already exists
+	_, err = os.Stat(dst)
+	if err != nil && !os.IsNotExist(err) {
+		return err
+	}
+
+	if err == nil {
+		// Remove the destination
+		if err := os.RemoveAll(dst); err != nil {
+			return err
+		}
+	}
+
+	// Create all the parent directories
+	if err := os.MkdirAll(filepath.Dir(dst), g.client.mode(0755)); err != nil {
+		return err
+	}
+
+	containerClient, err := g.newContainersClient(u, creds)
+	if err != nil {
+		return err
+	}
+
+	blobClient, err := g.newBlobClient(u, creds)
+	if err != nil {
+		return err
+	}
+
+	// List files in path, keep listing until no more objects are found
+	var lastMarker *string
+	hasMore := true
+	max := 1
+	for hasMore {
+		listBlobs := containers.ListBlobsInput{
+			Prefix:     &fileName,
+			MaxResults: &max,
+		}
+		if lastMarker != nil && *lastMarker != "" {
+			listBlobs.Marker = lastMarker
+		}
+
+		resp, err := containerClient.ListBlobs(ctx, containerName, listBlobs)
+		if err != nil {
+			log.Fatal(err)
+			return err
+		}
+
+		hasMore = *resp.NextMarker != ""
+		lastMarker = resp.NextMarker
+		for _, object := range resp.Blobs.Blobs {
+			objPath := object.Name
+
+			// If the key ends with a backslash assume it is a directory and ignore
+			if strings.HasSuffix(objPath, "/") {
+				continue
+			}
+
+			// Get the object destination path
+			objDst, err := filepath.Rel(fileName, objPath)
+			if err != nil {
+				return err
+			}
+			objDst = filepath.Join(dst, objDst)
+
+			if err := g.getObject(ctx, blobClient, containerName, objDst, objPath); err != nil {
+				return err
+			}
+		}
+
 	}
 
 	return nil
@@ -162,4 +242,25 @@ func (g *AzureBlobGetter) newBlobClient(url *url.URL, creds auth.Authorizer) (*b
 	blobClient.Client.SetAuthorizer(creds)
 
 	return blobClient, nil
+}
+
+func (g *AzureBlobGetter) getObject(ctx context.Context, client *blobs.Client, containerName, dst, key string) error {
+	req := blobs.GetInput{}
+
+	resp, err := client.Get(ctx, containerName, key, req)
+	if err != nil {
+		return err
+	}
+
+	if resp.Contents == nil {
+		return nil
+	}
+
+	// Create all the parent directories
+	if err := os.MkdirAll(filepath.Dir(dst), g.client.mode(0755)); err != nil {
+		return err
+	}
+
+	reader := bytes.NewReader(*resp.Contents)
+	return copyReader(dst, reader, 0666, g.client.umask(), 0)
 }
