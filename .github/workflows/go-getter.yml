@@ -81,7 +81,7 @@ jobs:
       
       # Save coverage report parts
       - name: Upload and save artifacts
-        uses: actions/upload-artifact@a8a3f3ad30e3422c9c7b888a15615d19a852ae32 # v3.1.3
+        uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808
         with:
           name: linux test results
           path: linux_cov.part
@@ -150,7 +150,7 @@ jobs:
       
       # Save coverage report parts
       - name: Upload and save artifacts
-        uses: actions/upload-artifact@a8a3f3ad30e3422c9c7b888a15615d19a852ae32 # v3.1.3
+        uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808
         with:
           name: windows test results
           path: win_cov.part
