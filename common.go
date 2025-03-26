@@ -4,11 +4,11 @@
 package getter
 
 import (
-	"io/ioutil"
+	"os"
 )
 
 func tmpFile(dir, pattern string) (string, error) {
-	f, err := ioutil.TempFile(dir, pattern)
+	f, err := os.CreateTemp(dir, pattern)
 	if err != nil {
 		return "", err
 	}
