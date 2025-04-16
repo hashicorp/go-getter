@@ -7,7 +7,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -205,7 +204,7 @@ func (c *Client) Get() error {
 	if decompressor != nil {
 		// Create a temporary directory to store our archive. We delete
 		// this at the end of everything.
-		td, err := ioutil.TempDir("", "getter")
+		td, err := os.MkdirTemp("", "getter")
 		if err != nil {
 			return fmt.Errorf(
 				"Error creating temporary directory for archive: %s", err)
