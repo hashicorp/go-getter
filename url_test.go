@@ -83,7 +83,51 @@ func TestRedactURL(t *testing.T) {
 				Path:     "hashicorp/go-getter-test-private.git",
 				RawQuery: "sshkey=",
 			},
-			want: "ssh://git@github.com/hashicorp/go-getter-test-private.git?sshkey=",
+			want: "ssh://git@github.com/hashicorp/go-getter-test-private.git?sshkey=redacted",
+		},
+		{
+			name: "multiple SSH keys in URL query parameter",
+			url: &url.URL{
+				Scheme:   "ssh",
+				User:     url.User("git"),
+				Host:     "github.com",
+				Path:     "repo.git",
+				RawQuery: "sshkey&sshkey=secretkey",
+			},
+			want: "ssh://git@github.com/repo.git?sshkey=redacted&sshkey=redacted",
+		},
+		{
+			name: "multiple SSH keys with empty and non-empty values",
+			url: &url.URL{
+				Scheme:   "ssh",
+				User:     url.User("git"),
+				Host:     "github.com",
+				Path:     "repo.git",
+				RawQuery: "sshkey&sshkey=secretkey",
+			},
+			want: "ssh://git@github.com/repo.git?sshkey=redacted&sshkey=redacted",
+		},
+		{
+			name: "multiple SSH keys with all empty values",
+			url: &url.URL{
+				Scheme:   "ssh",
+				User:     url.User("git"),
+				Host:     "github.com",
+				Path:     "repo.git",
+				RawQuery: "sshkey&sshkey",
+			},
+			want: "ssh://git@github.com/repo.git?sshkey=redacted&sshkey=redacted",
+		},
+		{
+			name: "multiple SSH keys with mixed empty and blank values",
+			url: &url.URL{
+				Scheme:   "ssh",
+				User:     url.User("git"),
+				Host:     "github.com",
+				Path:     "repo.git",
+				RawQuery: "sshkey=&sshkey=secretkey",
+			},
+			want: "ssh://git@github.com/repo.git?sshkey=redacted&sshkey=redacted",
 		},
 	}
 
