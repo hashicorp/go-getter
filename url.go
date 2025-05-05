@@ -26,7 +26,6 @@ func RedactURL(u *url.URL) string {
 		for i := range values {
 			values[i] = "redacted"
 		}
-		q["sshkey"] = values
 		ru.RawQuery = q.Encode()
 	}
 	return ru.String()
