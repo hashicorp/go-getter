@@ -267,6 +267,11 @@ func (g *GitGetter) update(ctx context.Context, dst, sshKeyFile string, u *url.U
 		return err
 	}
 
+	// If the ref is empty, we need to find the default branch, otherwise fetch command will fail
+	if ref == "" {
+		ref = findRemoteDefaultBranch(ctx, u)
+	}
+
 	// Fetch the remote ref
 	cmd = exec.CommandContext(ctx, "git", "fetch", "origin", "--", ref)
 	cmd.Dir = dst
