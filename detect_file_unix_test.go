@@ -1,6 +1,7 @@
 // Copyright (c) HashiCorp, Inc.
 // SPDX-License-Identifier: MPL-2.0
 
+//go:build test || unix
 // +build test unix
 
 package getter
@@ -20,7 +21,7 @@ func TestFileDetector_relativeSymlink(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	defer os.RemoveAll(tmpDir)
+	defer func() { _ = os.RemoveAll(tmpDir) }()
 
 	// We may have a symlinked tmp dir,
 	// e.g. OSX uses /var -> /private/var
@@ -44,7 +45,7 @@ func TestFileDetector_relativeSymlink(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer os.Chdir(prevDir)
+	defer func() { _ = os.Chdir(prevDir) }()
 
 	err = os.Chdir(subdir)
 	if err != nil {

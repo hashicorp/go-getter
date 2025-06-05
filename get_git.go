@@ -107,7 +107,7 @@ func (g *GitGetter) Get(dst string, u *url.URL) error {
 			return err
 		}
 		sshKeyFile = fh.Name()
-		defer os.Remove(sshKeyFile)
+		defer func() { _ = os.Remove(sshKeyFile) }()
 
 		// Set the permissions prior to writing the key material.
 		if err := os.Chmod(sshKeyFile, 0600); err != nil {
@@ -116,7 +116,7 @@ func (g *GitGetter) Get(dst string, u *url.URL) error {
 
 		// Write the raw key into the temp file.
 		_, err = fh.Write(raw)
-		fh.Close()
+		_ = fh.Close()
 		if err != nil {
 			return err
 		}
@@ -154,7 +154,7 @@ func (g *GitGetter) GetFile(dst string, u *url.URL) error {
 	if err != nil {
 		return err
 	}
-	defer tdcloser.Close()
+	defer func() { _ = tdcloser.Close() }()
 
 	// Get the filename, and strip the filename from the URL so we can
 	// just get the repository directly.

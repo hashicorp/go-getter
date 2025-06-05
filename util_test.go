@@ -41,7 +41,7 @@ func tempFileContents(t *testing.T, contents string) (string, func()) {
 		t.Fatalf("err: %s", err)
 	}
 
-	tf.Close()
+	_ = tf.Close()
 
 	path := tf.Name()
 	return path, func() {

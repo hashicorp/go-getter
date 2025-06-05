@@ -89,7 +89,7 @@ func TestHgGetter_GetFile(t *testing.T) {
 
 	g := new(HgGetter)
 	dst := tempTestFile(t)
-	defer os.RemoveAll(filepath.Dir(dst))
+	defer func() { _ = os.RemoveAll(filepath.Dir(dst)) }()
 
 	// Download
 	if err := g.GetFile(dst, testModuleURL("basic-hg/foo.txt")); err != nil {
@@ -113,7 +113,7 @@ func TestHgGetter_HgArgumentsNotAllowed(t *testing.T) {
 
 	// If arguments are allowed in the destination, this Get call will fail
 	dst := "--config=alias.clone=!false"
-	defer os.RemoveAll(dst)
+	defer func() { _ = os.RemoveAll(dst) }()
 	err := g.Get(dst, testModuleURL("basic-hg"))
 	if err != nil {
 		t.Fatalf("Expected no err, got: %s", err)
