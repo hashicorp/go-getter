@@ -146,7 +146,7 @@ func testDecompressorPermissions(t *testing.T, d Decompressor, input string, exp
 		t.Fatalf("err: %s", err)
 	}
 
-	defer os.RemoveAll(dst)
+	defer func() { _ = os.RemoveAll(dst) }()
 
 	for name, mode := range expected {
 		fi, err := os.Stat(filepath.Join(dst, name))

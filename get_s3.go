@@ -210,7 +210,7 @@ func (g *S3Getter) getObject(ctx context.Context, client *s3.S3, dst, bucket, ke
 		fn := filepath.Base(key)
 		body = g.client.ProgressListener.TrackProgress(fn, 0, *resp.ContentLength, resp.Body)
 	}
-	defer body.Close()
+	defer func() { _ = body.Close() }()
 
 	// There is no limit set for the size of an object from S3
 	return copyReader(dst, body, 0666, g.client.umask(), 0)

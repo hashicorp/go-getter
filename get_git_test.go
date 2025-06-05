@@ -396,7 +396,7 @@ func TestGitGetter_GetFile(t *testing.T) {
 
 	g := new(GitGetter)
 	dst := tempTestFile(t)
-	defer os.RemoveAll(filepath.Dir(dst))
+	defer func() { _ = os.RemoveAll(filepath.Dir(dst)) }()
 
 	repo := testGitRepo(t, "file")
 	repo.commitFile("file.txt", "hello")
@@ -425,7 +425,7 @@ func TestGitGetter_gitVersion(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer os.RemoveAll(dir)
+	defer func() { _ = os.RemoveAll(dir) }()
 
 	script := filepath.Join(dir, "git")
 	err = ioutil.WriteFile(
@@ -437,10 +437,10 @@ func TestGitGetter_gitVersion(t *testing.T) {
 	}
 
 	defer func(v string) {
-		os.Setenv("PATH", v)
+		_ = os.Setenv("PATH", v)
 	}(os.Getenv("PATH"))
 
-	os.Setenv("PATH", dir)
+	_ = os.Setenv("PATH", dir)
 
 	// Asking for a higher version throws an error
 	if err := checkGitVersion(context.Background(), "2.3"); err == nil {
@@ -464,8 +464,8 @@ func TestGitGetter_sshKey(t *testing.T) {
 	encodedKey := base64.StdEncoding.EncodeToString([]byte(testGitToken))
 
 	// avoid getting locked by a github authenticity validation prompt
-	os.Setenv("GIT_SSH_COMMAND", "ssh -o StrictHostKeyChecking=no -o IdentitiesOnly=yes")
-	defer os.Setenv("GIT_SSH_COMMAND", "")
+	_ = os.Setenv("GIT_SSH_COMMAND", "ssh -o StrictHostKeyChecking=no -o IdentitiesOnly=yes")
+	defer func() { _ = os.Setenv("GIT_SSH_COMMAND", "") }()
 
 	u, err := urlhelper.Parse("ssh://git@github.com/hashicorp/test-private-repo" +
 		"?sshkey=" + encodedKey)
@@ -494,8 +494,8 @@ func TestGitGetter_sshSCPStyle(t *testing.T) {
 	encodedKey := base64.StdEncoding.EncodeToString([]byte(testGitToken))
 
 	// avoid getting locked by a github authenticity validation prompt
-	os.Setenv("GIT_SSH_COMMAND", "ssh -o StrictHostKeyChecking=no -o IdentitiesOnly=yes")
-	defer os.Setenv("GIT_SSH_COMMAND", "")
+	_ = os.Setenv("GIT_SSH_COMMAND", "ssh -o StrictHostKeyChecking=no -o IdentitiesOnly=yes")
+	defer func() { _ = os.Setenv("GIT_SSH_COMMAND", "") }()
 
 	// This test exercises the combination of the git detector and the
 	// git getter, to make sure that together they make scp-style URLs work.
@@ -535,8 +535,8 @@ func TestGitGetter_sshExplicitPort(t *testing.T) {
 	encodedKey := base64.StdEncoding.EncodeToString([]byte(testGitToken))
 
 	// avoid getting locked by a github authenticity validation prompt
-	os.Setenv("GIT_SSH_COMMAND", "ssh -o StrictHostKeyChecking=no -o IdentitiesOnly=yes")
-	defer os.Setenv("GIT_SSH_COMMAND", "")
+	_ = os.Setenv("GIT_SSH_COMMAND", "ssh -o StrictHostKeyChecking=no -o IdentitiesOnly=yes")
+	defer func() { _ = os.Setenv("GIT_SSH_COMMAND", "") }()
 
 	// This test exercises the combination of the git detector and the
 	// git getter, to make sure that together they make scp-style URLs work.
@@ -576,8 +576,8 @@ func TestGitGetter_sshSCPStyleInvalidScheme(t *testing.T) {
 	encodedKey := base64.StdEncoding.EncodeToString([]byte(testGitToken))
 
 	// avoid getting locked by a github authenticity validation prompt
-	os.Setenv("GIT_SSH_COMMAND", "ssh -o StrictHostKeyChecking=no -o IdentitiesOnly=yes")
-	defer os.Setenv("GIT_SSH_COMMAND", "")
+	_ = os.Setenv("GIT_SSH_COMMAND", "ssh -o StrictHostKeyChecking=no -o IdentitiesOnly=yes")
+	defer func() { _ = os.Setenv("GIT_SSH_COMMAND", "") }()
 
 	// This test exercises the combination of the git detector and the
 	// git getter, to make sure that together they make scp-style URLs work.
@@ -687,8 +687,8 @@ func TestGitGetter_setupGitEnvWithExisting_sshKey(t *testing.T) {
 	}
 
 	// start with an existing ssh command configuration
-	os.Setenv("GIT_SSH_COMMAND", "ssh -o StrictHostKeyChecking=no -o IdentitiesOnly=yes")
-	defer os.Setenv("GIT_SSH_COMMAND", "")
+	_ = os.Setenv("GIT_SSH_COMMAND", "ssh -o StrictHostKeyChecking=no -o IdentitiesOnly=yes")
+	defer func() { _ = os.Setenv("GIT_SSH_COMMAND", "") }()
 
 	cmd := exec.Command("/bin/sh", "-c", "echo $GIT_SSH_COMMAND")
 	setupGitEnv(cmd, "/tmp/foo.pem")
@@ -710,8 +710,8 @@ func TestGitGetter_setupGitEnvWithNoKeyFile(t *testing.T) {
 	}
 
 	// start with an existing ssh command configuration
-	os.Setenv("GIT_SSH_COMMAND", "ssh -o StrictHostKeyChecking=no")
-	defer os.Setenv("GIT_SSH_COMMAND", "")
+	_ = os.Setenv("GIT_SSH_COMMAND", "ssh -o StrictHostKeyChecking=no")
+	defer func() { _ = os.Setenv("GIT_SSH_COMMAND", "") }()
 
 	cmd := exec.Command("/bin/sh", "-c", "echo $GIT_SSH_COMMAND")
 	setupGitEnv(cmd, "")
@@ -738,7 +738,7 @@ func TestGitGetter_subdirectory_symlink(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer os.Remove(target.Name())
+	defer func() { _ = os.Remove(target.Name()) }()
 
 	repo := testGitRepo(t, "repo-with-symlink")
 	innerDir := filepath.Join(repo.dir, "this-directory-contains-a-symlink")
@@ -778,7 +778,7 @@ func TestGitGetter_subdirectory_symlink(t *testing.T) {
 		// Windows doesn't handle symlinks as one might expect with git.
 		//
 		// https://github.com/git-for-windows/git/wiki/Symbolic-Links
-		filepath.Walk(dst, func(path string, info os.FileInfo, err error) error {
+		_ = filepath.Walk(dst, func(path string, info os.FileInfo, err error) error {
 			if strings.Contains(path, "this-is-a-symlink") {
 				if info.Mode()&os.ModeSymlink == os.ModeSymlink {
 					// If you see this test fail in the future, you've probably enabled

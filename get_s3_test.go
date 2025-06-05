@@ -58,7 +58,7 @@ func TestS3Getter_subdir(t *testing.T) {
 func TestS3Getter_GetFile(t *testing.T) {
 	g := new(S3Getter)
 	dst := tempTestFile(t)
-	defer os.RemoveAll(filepath.Dir(dst))
+	defer func() { _ = os.RemoveAll(filepath.Dir(dst)) }()
 
 	// Download
 	err := g.GetFile(
@@ -77,7 +77,7 @@ func TestS3Getter_GetFile(t *testing.T) {
 func TestS3Getter_GetFile_badParams(t *testing.T) {
 	g := new(S3Getter)
 	dst := tempTestFile(t)
-	defer os.RemoveAll(filepath.Dir(dst))
+	defer func() { _ = os.RemoveAll(filepath.Dir(dst)) }()
 
 	// Download
 	err := g.GetFile(
@@ -95,7 +95,7 @@ func TestS3Getter_GetFile_badParams(t *testing.T) {
 func TestS3Getter_GetFile_notfound(t *testing.T) {
 	g := new(S3Getter)
 	dst := tempTestFile(t)
-	defer os.RemoveAll(filepath.Dir(dst))
+	defer func() { _ = os.RemoveAll(filepath.Dir(dst)) }()
 
 	// Download
 	err := g.GetFile(

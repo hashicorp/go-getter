@@ -41,7 +41,7 @@ func TestGet_progress(t *testing.T) {
 
 	{ // dl without tracking
 		dst := tempTestFile(t)
-		defer os.RemoveAll(filepath.Dir(dst))
+		defer func() { _ = os.RemoveAll(filepath.Dir(dst)) }()
 		if err := GetFile(dst, s.URL+"/file?thig=this&that"); err != nil {
 			t.Fatalf("download failed: %v", err)
 		}
@@ -50,7 +50,7 @@ func TestGet_progress(t *testing.T) {
 	{ // tracking
 		p := &MockProgressTracking{}
 		dst := tempTestFile(t)
-		defer os.RemoveAll(filepath.Dir(dst))
+		defer func() { _ = os.RemoveAll(filepath.Dir(dst)) }()
 		if err := GetFile(dst, s.URL+"/file?thig=this&that", WithProgress(p)); err != nil {
 			t.Fatalf("download failed: %v", err)
 		}

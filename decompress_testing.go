@@ -46,7 +46,7 @@ func TestDecompressor(t testing.TB, d Decompressor, cases []TestDecompressCase) 
 
 		// We use a function so defers work
 		func() {
-			defer os.RemoveAll(td)
+			defer func() { _ = os.RemoveAll(td) }()
 
 			// Decompress
 			err := d.Decompress(dst, tc.Input, tc.Dir, 0022)
@@ -160,7 +160,7 @@ func testMD5(t testing.TB, path string) string {
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	h := md5.New()
 	_, err = io.Copy(h, f)

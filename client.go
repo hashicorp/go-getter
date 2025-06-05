@@ -148,7 +148,7 @@ func (c *Client) Get() error {
 		if err != nil {
 			return err
 		}
-		defer tdcloser.Close()
+		defer func() { _ = tdcloser.Close() }()
 
 		realDst = dst
 		dst = td
@@ -210,7 +210,7 @@ func (c *Client) Get() error {
 			return fmt.Errorf(
 				"Error creating temporary directory for archive: %s", err)
 		}
-		defer os.RemoveAll(td)
+		defer func() { _ = os.RemoveAll(td) }()
 
 		// Swap the download directory to be our temporary path and
 		// store the old values.

@@ -57,7 +57,7 @@ func TestGCSGetter_subdir(t *testing.T) {
 func TestGCSGetter_GetFile(t *testing.T) {
 	g := new(GCSGetter)
 	dst := tempTestFile(t)
-	defer os.RemoveAll(filepath.Dir(dst))
+	defer func() { _ = os.RemoveAll(filepath.Dir(dst)) }()
 
 	// Download
 	err := g.GetFile(
@@ -76,7 +76,7 @@ func TestGCSGetter_GetFile(t *testing.T) {
 func TestGCSGetter_GetGenerationFile(t *testing.T) {
 	g := new(GCSGetter)
 	dst := tempTestFile(t)
-	defer os.RemoveAll(filepath.Dir(dst))
+	defer func() { _ = os.RemoveAll(filepath.Dir(dst)) }()
 
 	// Download Previous Version
 	err := g.GetFile(
@@ -115,7 +115,7 @@ func TestGCSGetter_GetGenerationFile(t *testing.T) {
 func TestGCSGetter_GetFile_notfound(t *testing.T) {
 	g := new(GCSGetter)
 	dst := tempTestFile(t)
-	defer os.RemoveAll(filepath.Dir(dst))
+	defer func() { _ = os.RemoveAll(filepath.Dir(dst)) }()
 
 	// Download
 	err := g.GetFile(
@@ -218,7 +218,7 @@ func TestGCSGetter_GetFile_OAuthAccessToken(t *testing.T) {
 	}
 	g := new(GCSGetter)
 	dst := tempTestFile(t)
-	defer os.RemoveAll(filepath.Dir(dst))
+	defer func() { _ = os.RemoveAll(filepath.Dir(dst)) }()
 
 	// Download
 	err := g.GetFile(

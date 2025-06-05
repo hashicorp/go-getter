@@ -61,7 +61,7 @@ func TestSourceSubdirGlob(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer os.RemoveAll(td)
+	defer func() { _ = os.RemoveAll(td) }()
 
 	if err := os.Mkdir(filepath.Join(td, "subdir"), 0755); err != nil {
 		t.Fatal(err)
