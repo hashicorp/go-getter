@@ -174,6 +174,8 @@ func TestS3Getter_Url(t *testing.T) {
 		bucket      string
 		path        string
 		version     string
+		accessKey   string
+		secretKey   string
 		expectedErr string
 	}{
 		{
@@ -201,28 +203,34 @@ func TestS3Getter_Url(t *testing.T) {
 			version: "1234",
 		},
 		{
-			name:    "localhost-1",
-			url:     "s3::http://127.0.0.1:9000/test-bucket/hello.txt?aws_access_key_id=TESTID&aws_access_key_secret=TestSecret&region=us-east-2&version=1",
-			region:  "us-east-2",
-			bucket:  "test-bucket",
-			path:    "hello.txt",
-			version: "1",
+			name:      "localhost-1",
+			url:       "s3::http://127.0.0.1:9000/test-bucket/hello.txt?aws_access_key_id=TESTID&aws_access_key_secret=TestSecret&region=us-east-2&version=1",
+			region:    "us-east-2",
+			bucket:    "test-bucket",
+			path:      "hello.txt",
+			version:   "1",
+			accessKey: "TESTID",
+			secretKey: "TestSecret",
 		},
 		{
-			name:    "localhost-2",
-			url:     "s3::http://127.0.0.1:9000/test-bucket/hello.txt?aws_access_key_id=TESTID&aws_access_key_secret=TestSecret&version=1",
-			region:  "us-east-1",
-			bucket:  "test-bucket",
-			path:    "hello.txt",
-			version: "1",
+			name:      "localhost-2",
+			url:       "s3::http://127.0.0.1:9000/test-bucket/hello.txt?aws_access_key_id=TESTID&aws_access_key_secret=TestSecret&version=1",
+			region:    "us-east-1",
+			bucket:    "test-bucket",
+			path:      "hello.txt",
+			version:   "1",
+			accessKey: "TESTID",
+			secretKey: "TestSecret",
 		},
 		{
-			name:    "localhost-3",
-			url:     "s3::http://127.0.0.1:9000/test-bucket/hello.txt?aws_access_key_id=TESTID&aws_access_key_secret=TestSecret",
-			region:  "us-east-1",
-			bucket:  "test-bucket",
-			path:    "hello.txt",
-			version: "",
+			name:      "localhost-3",
+			url:       "s3::http://127.0.0.1:9000/test-bucket/hello.txt?aws_access_key_id=TESTID&aws_access_key_secret=TestSecret",
+			region:    "us-east-1",
+			bucket:    "test-bucket",
+			path:      "hello.txt",
+			version:   "",
+			accessKey: "TESTID",
+			secretKey: "TestSecret",
 		},
 		{
 			name:        "malformed s3 url",
@@ -269,8 +277,25 @@ func TestS3Getter_Url(t *testing.T) {
 			if version != pt.version {
 				t.Fatalf("expected %s, got %s", pt.version, version)
 			}
+
 			if creds == nil {
-				t.Fatalf("expected to not be nil")
+				if pt.accessKey != "" || pt.secretKey != "" {
+					t.Fatal("expected credentials, got nil")
+				}
+				return
+			}
+
+			credV, err := creds.Get()
+			if err != nil {
+				t.Fatalf("failed to get credentials: %s", err)
+			}
+
+			if credV.AccessKeyID != pt.accessKey {
+				t.Fatalf("expected %s, got %s", pt.accessKey, credV.AccessKeyID)
+			}
+
+			if credV.SecretAccessKey != pt.secretKey {
+				t.Fatalf("expected %s, got %s", pt.secretKey, credV.SecretAccessKey)
 			}
 		})
 	}
