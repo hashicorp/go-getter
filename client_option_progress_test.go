@@ -27,7 +27,7 @@ func (p *MockProgressTracking) TrackProgress(src string,
 		p.downloaded = map[string]int{}
 	}
 
-	v, _ := p.downloaded[src]
+	v := p.downloaded[src]
 	p.downloaded[src] = v + 1
 	return stream
 }

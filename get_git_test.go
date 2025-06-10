@@ -603,7 +603,7 @@ func TestGitGetter_sshSCPStyleInvalidScheme(t *testing.T) {
 
 	got := err.Error()
 	want1, want2 := `invalid source string`, `invalid port number "hashicorp"`
-	if !(strings.Contains(got, want1) || strings.Contains(got, want2)) {
+	if !strings.Contains(got, want1) && !strings.Contains(got, want2) {
 		t.Fatalf("wrong error\ngot:  %s\nwant: %q or %q", got, want1, want2)
 	}
 }
@@ -621,7 +621,7 @@ func TestGitGetter_submodule(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		return strings.Replace(relpath, `\`, `/`, -1)
+		return strings.ReplaceAll(relpath, `\`, `/`)
 		// on windows git still prefers relatives paths
 		// containing `/` for submodules
 	}
@@ -887,7 +887,7 @@ func TestGitGetter_BadGitConfig(t *testing.T) {
 
 	_, err = os.Stat(dst)
 	if err != nil && !os.IsNotExist(err) {
-		t.Fatalf(err.Error())
+		t.Fatal(err.Error())
 	}
 	if err == nil {
 		// Update the repository containing the bad git config.
@@ -897,14 +897,14 @@ func TestGitGetter_BadGitConfig(t *testing.T) {
 		// Clone a repository with a git config file
 		err = g.clone(ctx, dst, testGitToken, url, "main", 1)
 		if err != nil {
-			t.Fatalf(err.Error())
+			t.Fatal(err.Error())
 		}
 
 		// Edit the git config file to simulate a bad git config
 		gitConfigPath := filepath.Join(dst, ".git", "config")
 		err = os.WriteFile(gitConfigPath, []byte("bad config"), 0600)
 		if err != nil {
-			t.Fatalf(err.Error())
+			t.Fatal(err.Error())
 		}
 
 		// Update the repository containing the bad git config.
@@ -912,14 +912,14 @@ func TestGitGetter_BadGitConfig(t *testing.T) {
 		err = g.update(ctx, dst, testGitToken, url, "main", 1)
 	}
 	if err != nil {
-		t.Fatalf(err.Error())
+		t.Fatal(err.Error())
 	}
 
 	// Check if the .git/config file contains "bad config"
 	gitConfigPath := filepath.Join(dst, ".git", "config")
 	configBytes, err := os.ReadFile(gitConfigPath)
 	if err != nil {
-		t.Fatalf(err.Error())
+		t.Fatal(err.Error())
 	}
 	if strings.Contains(string(configBytes), "bad config") {
 		t.Fatalf("The .git/config file contains 'bad config'")
@@ -943,19 +943,19 @@ func TestGitGetter_BadGitDirName(t *testing.T) {
 
 	_, err = os.Stat(dst)
 	if err != nil && !os.IsNotExist(err) {
-		t.Fatalf(err.Error())
+		t.Fatal(err.Error())
 	}
 	if err == nil {
 		// Remove all variations of .git directories
 		err = removeCaseInsensitiveGitDirectory(dst)
 		if err != nil {
-			t.Fatalf(err.Error())
+			t.Fatal(err.Error())
 		}
 	} else {
 		// Clone a repository with a git directory
 		err = g.clone(ctx, dst, testGitToken, url, "main", 1)
 		if err != nil {
-			t.Fatalf(err.Error())
+			t.Fatal(err.Error())
 		}
 
 		// Rename the .git directory to .GIT
@@ -963,17 +963,17 @@ func TestGitGetter_BadGitDirName(t *testing.T) {
 		newPath := filepath.Join(dst, ".GIT")
 		err = os.Rename(oldPath, newPath)
 		if err != nil {
-			t.Fatalf(err.Error())
+			t.Fatal(err.Error())
 		}
 
 		// Remove all variations of .git directories
 		err = removeCaseInsensitiveGitDirectory(dst)
 		if err != nil {
-			t.Fatalf(err.Error())
+			t.Fatal(err.Error())
 		}
 	}
 	if err != nil {
-		t.Fatalf(err.Error())
+		t.Fatal(err.Error())
 	}
 
 	// Check if the .GIT directory exists
@@ -1004,13 +1004,13 @@ func TestGitGetter_BadRef(t *testing.T) {
 
 	_, err = os.Stat(dst)
 	if err != nil && !os.IsNotExist(err) {
-		t.Fatalf(err.Error())
+		t.Fatal(err.Error())
 	}
 
 	// Clone a repository with non-existent ref
 	err = g.clone(ctx, dst, "", url, "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", 0)
 	if err == nil {
-		t.Fatalf(err.Error())
+		t.Fatal(err.Error())
 	}
 
 	// Expect that the dst was cleaned up after failed ref checkout

@@ -93,7 +93,7 @@ func TestDecompressor(t testing.TB, d Decompressor, cases []TestDecompressCase) 
 			expected := tc.DirList
 			if runtime.GOOS == "windows" {
 				for i, v := range expected {
-					expected[i] = strings.Replace(v, "/", "\\", -1)
+					expected[i] = strings.ReplaceAll(v, "/", "\\")
 				}
 			}
 

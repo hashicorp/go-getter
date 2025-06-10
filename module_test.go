@@ -76,10 +76,6 @@ func testURL(s string) *url.URL {
 	return u
 }
 
-func testStorage(t *testing.T) Storage {
-	return &FolderStorage{StorageDir: tempDir(t)}
-}
-
 func assertContents(t *testing.T, path string, contents string) {
 	data, err := ioutil.ReadFile(path)
 	if err != nil {

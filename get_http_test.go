@@ -972,7 +972,7 @@ func testHttpHandlerHeader(w http.ResponseWriter, r *http.Request) {
 }
 
 func testHttpHandlerMeta(w http.ResponseWriter, r *http.Request) {
-	_, _ = w.Write([]byte(fmt.Sprintf(testHttpMetaStr, testModuleURL("basic").String())))
+	_, _ = fmt.Fprintf(w, testHttpMetaStr, testModuleURL("basic").String())
 }
 
 func testHttpHandlerMetaAuth(w http.ResponseWriter, r *http.Request) {
@@ -987,7 +987,7 @@ func testHttpHandlerMetaAuth(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, _ = w.Write([]byte(fmt.Sprintf(testHttpMetaStr, testModuleURL("basic").String())))
+	_, _ = fmt.Fprintf(w, testHttpMetaStr, testModuleURL("basic").String())
 }
 
 func testHttpServerWithEndlessBody(t *testing.T) net.Listener {
@@ -1014,15 +1014,11 @@ func testHttpServerWithEndlessBody(t *testing.T) net.Listener {
 }
 
 func testHttpHandlerMetaSubdir(w http.ResponseWriter, r *http.Request) {
-	_, _ = w.Write([]byte(fmt.Sprintf(testHttpMetaStr, testModuleURL("basic//subdir").String())))
+	_, _ = fmt.Fprintf(w, testHttpMetaStr, testModuleURL("basic//subdir").String())
 }
 
 func testHttpHandlerMetaSubdirGlob(w http.ResponseWriter, r *http.Request) {
-	_, _ = w.Write([]byte(fmt.Sprintf(testHttpMetaStr, testModuleURL("basic//sub*").String())))
-}
-
-func testHttpHandlerNone(w http.ResponseWriter, r *http.Request) {
-	_, _ = w.Write([]byte(testHttpNoneStr))
+	_, _ = fmt.Fprintf(w, testHttpMetaStr, testModuleURL("basic//sub*").String())
 }
 
 func testHttpHandlerRange(w http.ResponseWriter, r *http.Request) {
@@ -1084,13 +1080,6 @@ const testHttpMetaStr = `
 <html>
 <head>
 <meta name="terraform-get" content="%s">
-</head>
-</html>
-`
-
-const testHttpNoneStr = `
-<html>
-<head>
 </head>
 </html>
 `

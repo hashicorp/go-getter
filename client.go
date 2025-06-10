@@ -135,7 +135,7 @@ func (c *Client) Get() error {
 	if subDir != "" {
 		// Check if the subdirectory is attempting to traverse updwards, outside of
 		// the cloned repository path.
-		subDir := filepath.Clean(subDir)
+		subDir = filepath.Clean(subDir)
 		if containsDotDot(subDir) {
 			return fmt.Errorf("subdirectory component contain path traversal out of the repository")
 		}
