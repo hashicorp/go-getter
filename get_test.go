@@ -13,7 +13,7 @@ import (
 func TestGet_badSchema(t *testing.T) {
 	dst := tempDir(t)
 	u := testModule("basic")
-	u = strings.Replace(u, "file", "nope", -1)
+	u = strings.ReplaceAll(u, "file", "nope")
 
 	if err := Get(dst, u); err == nil {
 		t.Fatal("should error")

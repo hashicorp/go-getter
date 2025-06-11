@@ -170,7 +170,8 @@ func (g *GCSGetter) getObject(ctx context.Context, client *storage.Client, dst, 
 	var rc *storage.Reader
 	var err error
 	if fragment != "" {
-		generation, err := strconv.ParseInt(fragment, 10, 64)
+		var generation int64
+		generation, err = strconv.ParseInt(fragment, 10, 64)
 		if err != nil {
 			return err
 		}
