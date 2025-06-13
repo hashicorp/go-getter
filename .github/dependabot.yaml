@@ -17,9 +17,7 @@ updates:
           - "*"
 
   - package-ecosystem: "gomod"
-    directories:
-      - "/"
-      - "/v2"
+    directory: "/"
     schedule:
       interval: "weekly"
       day: "sunday"
