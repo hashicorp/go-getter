@@ -331,15 +331,41 @@ func (g *S3Getter) parseUrl(u *url.URL) (region, bucket, path, version string, c
 		}
 	}
 
+	_, hasProfileEnvKey := u.Query()["aws_profile_env_key"]
 	_, hasAwsId := u.Query()["aws_access_key_id"]
 	_, hasAwsSecret := u.Query()["aws_access_key_secret"]
 	_, hasAwsToken := u.Query()["aws_access_token"]
+
 	if hasAwsId || hasAwsSecret || hasAwsToken {
 		creds = credentials.NewStaticCredentials(
 			u.Query().Get("aws_access_key_id"),
 			u.Query().Get("aws_access_key_secret"),
 			u.Query().Get("aws_access_token"),
 		)
+	} else if hasProfileEnvKey {
+		profileEnvironmentKey := u.Query().Get("aws_profile_env_key")
+		profileName := os.Getenv(profileEnvironmentKey)
+
+		_, hasRequireProfileEnvKey := u.Query()["require_profile_env_key"]
+		if hasRequireProfileEnvKey && profileName == "" {
+			// Allow config authors to decide if a missing environment key is an
+			// error. If so, then we can present a clear indication of what went wrong
+			// if the key was unset in the environment. If the key is not required,
+			// then the config is flexible. It can use the profile key when set in the
+			// environment (such as using multiple accounts from a local workstation)
+			// but then fallback to standard credential resolution if the key is unset
+			// (e.g., use the service role which might already have cross-account
+			// access when running from inside AWS)
+			err = fmt.Errorf("The environment key %s is required but not set",
+				profileEnvironmentKey)
+			return
+		}
+
+		if profileName != "" {
+			emptyToAcceptStandardIniFileResolution := ""
+			creds = credentials.NewSharedCredentials(
+				emptyToAcceptStandardIniFileResolution, profileName)
+		}
 	}
 
 	return
