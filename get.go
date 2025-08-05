@@ -73,6 +73,7 @@ func init() {
 		"gcs":   new(GCSGetter),
 		"hg":    new(HgGetter),
 		"s3":    new(S3Getter),
+		"oss":   new(OSSGetter),
 		"http":  httpGetter,
 		"https": httpGetter,
 	}
