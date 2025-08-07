@@ -447,7 +447,7 @@ func (g *HttpGetter) GetFile(dst string, src *url.URL) error {
 					if fi, err := f.Stat(); err == nil {
 						if _, err = f.Seek(0, io.SeekEnd); err == nil {
 							currentFileSize = fi.Size()
-							if currentFileSize >= headResp.ContentLength {
+							if currentFileSize >= headResp.ContentLength && currentFileSize != 0 {
 								// file already present
 								return nil
 							}
