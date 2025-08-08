@@ -49,6 +49,8 @@ func (g *GitGetter) Get(dst string, u *url.URL) error {
 		defer cancel()
 	}
 
+	g.client.DisableSymlinks = true
+
 	if _, err := exec.LookPath("git"); err != nil {
 		return fmt.Errorf("git must be available and on the PATH")
 	}

@@ -30,8 +30,10 @@ func copyDir(ctx context.Context, dst string, src string, ignoreDot bool, disabl
 	}
 
 	// Check if the resolved path tries to escape upward from the original
-	if rel, err := filepath.Rel(filepath.Dir(src), resolved); err != nil || filepath.IsAbs(rel) || containsDotDot(rel) {
-		return fmt.Errorf("symlink path traversal detected")
+	if disableSymlinks && src != resolved {
+		if rel, err := filepath.Rel(filepath.Dir(src), resolved); err != nil || filepath.IsAbs(rel) || containsDotDot(rel) {
+			return fmt.Errorf("symlink path traversal detected")
+		}
 	}
 
 	walkFn := func(path string, info os.FileInfo, err error) error {
