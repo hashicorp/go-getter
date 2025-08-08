@@ -851,6 +851,10 @@ func TestGitGetter_subdirectory_malicious_symlink(t *testing.T) {
 		t.Fatalf("expected /etc/passwd to not exist in destination")
 	}
 
+	if !errors.Is(err, ErrSymlinkCopy) {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
 }
 
 func TestGitGetter_subdirectory(t *testing.T) {
