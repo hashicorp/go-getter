@@ -24,9 +24,14 @@ func copyDir(ctx context.Context, dst string, src string, ignoreDot bool, disabl
 	// We can safely evaluate the symlinks here, even if disabled, because they
 	// will be checked before actual use in walkFn and copyFile
 	var err error
-	src, err = filepath.EvalSymlinks(src)
+	resolved, err := filepath.EvalSymlinks(src)
 	if err != nil {
 		return err
+	}
+
+	// Check if the resolved path tries to escape upward from the original
+	if rel, err := filepath.Rel(filepath.Dir(src), resolved); err != nil || filepath.IsAbs(rel) || containsDotDot(rel) {
+		return fmt.Errorf("symlink path traversal detected")
 	}
 
 	walkFn := func(path string, info os.FileInfo, err error) error {
@@ -42,12 +47,9 @@ func copyDir(ctx context.Context, dst string, src string, ignoreDot bool, disabl
 			if fileInfo.Mode()&os.ModeSymlink == os.ModeSymlink {
 				return ErrSymlinkCopy
 			}
-			// if info.Mode()&os.ModeSymlink == os.ModeSymlink {
-			// 	return ErrSymlinkCopy
-			// }
 		}
 
-		if path == src {
+		if path == resolved {
 			return nil
 		}
 
@@ -62,16 +64,15 @@ func copyDir(ctx context.Context, dst string, src string, ignoreDot bool, disabl
 
 		// The "path" has the src prefixed to it. We need to join our
 		// destination with the path without the src on it.
-		dstPath := filepath.Join(dst, path[len(src):])
+		dstPath := filepath.Join(dst, path[len(resolved):])
 
 		// If we have a directory, make that subdirectory, then continue
 		// the walk.
 		if info.IsDir() {
-			if path == filepath.Join(src, dst) {
+			if path == filepath.Join(resolved, dst) {
 				// dst is in src; don't walk it.
 				return nil
 			}
-
 			if err := os.MkdirAll(dstPath, mode(0755, umask)); err != nil {
 				return err
 			}
@@ -84,5 +85,5 @@ func copyDir(ctx context.Context, dst string, src string, ignoreDot bool, disabl
 		return err
 	}
 
-	return filepath.Walk(src, walkFn)
+	return filepath.Walk(resolved, walkFn)
 }
