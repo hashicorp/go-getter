@@ -807,6 +807,11 @@ func TestGitGetter_subdirectory_malicious_symlink(t *testing.T) {
 		t.Skip("git not found, skipping")
 	}
 
+	if runtime.GOOS == "windows" {
+		t.Skip("skipping on windows since the test requires sh")
+		return
+	}
+
 	g := new(GitGetter)
 	dst := tempDir(t)
 
