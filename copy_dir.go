@@ -31,7 +31,8 @@ func copyDir(ctx context.Context, dst string, src string, ignoreDot bool, disabl
 
 	// Check if the resolved path tries to escape upward from the original
 	if disableSymlinks {
-		if rel, err := filepath.Rel(filepath.Dir(src), resolved); err != nil || filepath.IsAbs(rel) || containsDotDot(rel) {
+		rel, err := filepath.Rel(filepath.Dir(src), resolved)
+		if err != nil || filepath.IsAbs(rel) || containsDotDot(rel) {
 			return ErrSymlinkCopy
 		}
 	}
