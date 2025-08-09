@@ -302,6 +302,9 @@ func (g *GitGetter) update(ctx context.Context, dst, sshKeyFile string, u *url.U
 
 // fetchSubmodules downloads any configured submodules recursively.
 func (g *GitGetter) fetchSubmodules(ctx context.Context, dst, sshKeyFile string, depth int) error {
+	if g.client != nil {
+		g.client.DisableSymlinks = true
+	}
 	args := []string{"submodule", "update", "--init", "--recursive"}
 	if depth > 0 {
 		args = append(args, "--depth", strconv.Itoa(depth))
