@@ -9,7 +9,6 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"net"
 	"net/http"
 	"net/http/httputil"
@@ -253,7 +252,7 @@ func TestHttpGetter_resume(t *testing.T) {
 		t.Fatalf("finishing download should not error: %v", err)
 	}
 
-	b, err := ioutil.ReadFile(dst)
+	b, err := os.ReadFile(dst)
 	if err != nil {
 		t.Fatalf("readfile failed: %v", err)
 	}
@@ -309,7 +308,7 @@ func TestHttpGetter_resumeNoRange(t *testing.T) {
 		t.Fatalf("finishing download should not error: %v", err)
 	}
 
-	b, err := ioutil.ReadFile(dst)
+	b, err := os.ReadFile(dst)
 	if err != nil {
 		t.Fatalf("readfile failed: %v", err)
 	}
@@ -761,7 +760,7 @@ func TestHttpGetter_subdirLink(t *testing.T) {
 	defer func() { _ = ln.Close() }()
 
 	httpGetter := new(HttpGetter)
-	dst, err := ioutil.TempDir("", "tf")
+	dst, err := os.MkdirTemp("", "tf")
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
@@ -829,7 +828,7 @@ func testHttpServerWithXTerraformGetDetected(t *testing.T) net.Listener {
 		w.Header().Set("X-Terraform-Get", first)
 	})
 	mux.HandleFunc("/archive.tar.gz", func(w http.ResponseWriter, r *http.Request) {
-		f, err := ioutil.ReadFile("testdata/archive.tar.gz")
+		f, err := os.ReadFile("testdata/archive.tar.gz")
 		if err != nil {
 			t.Fatal(err)
 		}

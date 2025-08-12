@@ -9,7 +9,6 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"net/url"
 	"os"
 	"os/exec"
@@ -421,14 +420,14 @@ func TestGitGetter_gitVersion(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("skipping on windows since the test requires sh")
 	}
-	dir, err := ioutil.TempDir("", "go-getter")
+	dir, err := os.MkdirTemp("", "go-getter")
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer func() { _ = os.RemoveAll(dir) }()
 
 	script := filepath.Join(dir, "git")
-	err = ioutil.WriteFile(
+	err = os.WriteFile(
 		script,
 		[]byte("#!/bin/sh\necho \"git version 2.0 (Some Metadata Here)\n\""),
 		0700)
@@ -734,7 +733,7 @@ func TestGitGetter_subdirectory_symlink(t *testing.T) {
 	g := new(GitGetter)
 	dst := tempDir(t)
 
-	target, err := ioutil.TempFile("", "link-target")
+	target, err := os.CreateTemp("", "link-target")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1088,7 +1087,7 @@ type gitRepo struct {
 
 // testGitRepo creates a new test git repository.
 func testGitRepo(t *testing.T, name string) *gitRepo {
-	dir, err := ioutil.TempDir("", "go-getter")
+	dir, err := os.MkdirTemp("", "go-getter")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1130,7 +1129,7 @@ func (r *gitRepo) git(args ...string) {
 // commitFile writes and commits a text file to the repo.
 func (r *gitRepo) commitFile(file, content string) {
 	path := filepath.Join(r.dir, file)
-	if err := ioutil.WriteFile(path, []byte(content), 0600); err != nil {
+	if err := os.WriteFile(path, []byte(content), 0600); err != nil {
 		r.t.Fatal(err)
 	}
 	r.git("add", file)
