@@ -31,5 +31,12 @@ func (c *Client) configure() error {
 	if c.Getters == nil {
 		c.Getters = Getters
 	}
+
+	// Set the client for each getter, so the top-level client can know
+	// the getter-specific client functions or progress tracking.
+	for _, getter := range c.Getters {
+		getter.SetClient(c)
+	}
+
 	return nil
 }

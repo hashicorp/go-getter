@@ -1,10 +1,13 @@
 package getter
 
 import (
+	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"os"
 	"path/filepath"
+	"testing"
 
 	urlhelper "github.com/hashicorp/go-getter/v2/helper/url"
 )
@@ -42,4 +45,16 @@ func testModuleURL(n string) *url.URL {
 	}
 
 	return u
+}
+
+func tempDir(t *testing.T) string {
+	dir, err := ioutil.TempDir("", "tf")
+	if err != nil {
+		t.Fatalf("err: %s", err)
+	}
+	if err := os.RemoveAll(dir); err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	return dir
 }

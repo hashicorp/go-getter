@@ -605,6 +605,9 @@ func TestGetFile_checksum_from_file(t *testing.T) {
 	}
 }
 
+// SetClient implements the Getter interface for MockGetter.
+func (m *MockGetter) SetClient(c *Client) {}
+
 func TestGetFile_checksumURL(t *testing.T) {
 	ctx := context.Background()
 

@@ -17,6 +17,7 @@ import (
 // SmbClientGetter is a Getter implementation that will download a module from
 // a shared folder using smbclient cli.
 type SmbClientGetter struct {
+	getter
 
 	// Timeout in seconds sets a deadline which all smb client CLI operations should
 	// complete within. Defaults to zero which means to use the default client timeout of 20 seconds.

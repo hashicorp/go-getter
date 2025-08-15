@@ -24,6 +24,9 @@ var ErrSymlinkCopy = errors.New("copying of symlinks has been disabled")
 // Using a client directly allows more fine-grained control over how downloading
 // is done, as well as customizing the protocols supported.
 type Client struct {
+	// Ctx for cancellation
+	Ctx context.Context
+
 	// Decompressors is the map of decompressors supported by this client.
 	// If this is nil, then the default value is the Decompressors global.
 	Decompressors map[string]Decompressor

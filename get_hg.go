@@ -17,6 +17,7 @@ import (
 // HgGetter is a Getter implementation that will download a module from
 // a Mercurial repository.
 type HgGetter struct {
+	getter
 
 	// Timeout sets a deadline which all hg CLI operations should
 	// complete within. Defaults to zero which means no timeout.

@@ -24,6 +24,7 @@ import (
 // GitGetter is a Getter implementation that will download a module from
 // a git repository.
 type GitGetter struct {
+	getter
 	Detectors []Detector
 
 	// Timeout sets a deadline which all git CLI operations should
@@ -259,6 +260,9 @@ func (g *GitGetter) update(ctx context.Context, dst, sshKeyFile, ref string, u *
 
 // fetchSubmodules downloads any configured submodules recursively.
 func (g *GitGetter) fetchSubmodules(ctx context.Context, dst, sshKeyFile string, depth int) error {
+	if g.client != nil {
+		g.client.DisableSymlinks = true
+	}
 	args := []string{"submodule", "update", "--init", "--recursive"}
 	if depth > 0 {
 		args = append(args, "--depth", strconv.Itoa(depth))

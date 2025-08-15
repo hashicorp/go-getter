@@ -51,6 +51,11 @@ type Getter interface {
 	// with a valid scheme for the Getter, and also check if the
 	// current Getter is the forced one and return true if that's the case.
 	Detect(*Request) (bool, error)
+
+	// SetClient allows a getter to know it's client
+	// in order to access client's Get functions or
+	// progress tracking.
+	SetClient(*Client)
 }
 
 // Getters is the mapping of scheme to the Getter implementation that will

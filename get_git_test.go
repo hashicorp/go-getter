@@ -806,6 +806,67 @@ func TestGitGetter_subdirectory_symlink(t *testing.T) {
 	}
 }
 
+func TestGitGetter_subdirectory_malicious_symlink(t *testing.T) {
+	if !testHasGit {
+		t.Skip("git not found, skipping")
+	}
+
+	if runtime.GOOS == "windows" {
+		t.Skip("skipping on windows since the test requires sh")
+		return
+	}
+
+	dst := tempDir(t)
+
+	repo := testGitRepo(t, "empty-repo")
+	repo.git("config", "commit.gpgsign", "false")
+
+	// Create a malicious symlink that tries to escape the repository
+	symlinkPath := filepath.Join(repo.dir, "root")
+	if err := os.Symlink("../../../../../../../../../../../", symlinkPath); err != nil {
+		t.Fatal(err)
+	}
+
+	repo.git("add", symlinkPath)
+	repo.git("commit", "-m", "Adding malicious symlink")
+
+	u, err := url.Parse(fmt.Sprintf("git::%s//root/etc/passwd", repo.url.String()))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	req := &Request{
+		Src:     u.String(),
+		Dst:     dst,
+		Pwd:     ".",
+		GetMode: ModeDir,
+	}
+	getter := &GitGetter{
+		Detectors: []Detector{
+			new(GitDetector),
+		},
+	}
+
+	client := &Client{
+		Getters:         []Getter{getter},
+		DisableSymlinks: true,
+	}
+	ctx := context.Background()
+	_, err = client.Get(ctx, req)
+	if err == nil {
+		t.Fatalf("expected client get to fail")
+	}
+
+	if _, err := os.Stat(filepath.Join(dst, "etc", "passwd")); err == nil {
+		t.Fatalf("expected /etc/passwd to not exist in destination")
+	}
+
+	if !errors.Is(err, ErrSymlinkCopy) {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+}
+
 func TestGitGetter_subdirectory_traversal(t *testing.T) {
 	dst := testing_helper.TempDir(t)
 

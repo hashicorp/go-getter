@@ -12,16 +12,24 @@ import (
 //
 // If ignoreDot is set to true, then dot-prefixed files/folders are ignored.
 func copyDir(ctx context.Context, dst string, src string, ignoreDot bool, disableSymlinks bool, umask os.FileMode) error {
-	src, err := filepath.EvalSymlinks(src)
+	resolved, err := filepath.EvalSymlinks(src)
 	if err != nil {
 		return err
+	}
+
+	// Check if the resolved path tries to escape upward from the original
+	if disableSymlinks {
+		rel, err := filepath.Rel(filepath.Dir(src), resolved)
+		if err != nil || filepath.IsAbs(rel) || containsDotDot(rel) {
+			return ErrSymlinkCopy
+		}
 	}
 
 	walkFn := func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
-		if path == src {
+		if path == resolved {
 			return nil
 		}
 
@@ -42,12 +50,12 @@ func copyDir(ctx context.Context, dst string, src string, ignoreDot bool, disabl
 
 		// The "path" has the src prefixed to it. We need to join our
 		// destination with the path without the src on it.
-		dstPath := filepath.Join(dst, path[len(src):])
+		dstPath := filepath.Join(dst, path[len(resolved):])
 
 		// If we have a directory, make that subdirectory, then continue
 		// the walk.
 		if info.IsDir() {
-			if path == filepath.Join(src, dst) {
+			if path == filepath.Join(resolved, dst) {
 				// dst is in src; don't walk it.
 				return nil
 			}
@@ -64,5 +72,5 @@ func copyDir(ctx context.Context, dst string, src string, ignoreDot bool, disabl
 		return err
 	}
 
-	return filepath.Walk(src, walkFn)
+	return filepath.Walk(resolved, walkFn)
 }
