@@ -340,6 +340,8 @@ func (g *S3Getter) parseUrl(u *url.URL) (region, bucket, path, version string, c
 			u.Query().Get("aws_access_key_secret"),
 			u.Query().Get("aws_access_token"),
 		)
+	} else {
+		creds = credentials.AnonymousCredentials
 	}
 
 	return
