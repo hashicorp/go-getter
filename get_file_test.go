@@ -6,6 +6,7 @@ package getter
 import (
 	"os"
 	"path/filepath"
+	"runtime"
 	"testing"
 )
 
@@ -27,10 +28,8 @@ func TestFileGetter(t *testing.T) {
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
-	// log file info
-	t.Logf("Testingggg !")
-	t.Logf("file info: %v %v", fi.Mode(), os.ModeSymlink)
-	if fi.Mode()&os.ModeSymlink == 0 {
+
+	if runtime.GOOS != "windows" && fi.Mode()&os.ModeSymlink == 0 {
 		t.Fatal("destination is not a symlink")
 	}
 
