@@ -84,14 +84,12 @@ func init() {
 // src is a URL, whereas dst is always just a file path to a folder. This
 // folder doesn't need to exist. It will be created if it doesn't exist.
 func Get(dst, src string, opts ...ClientOption) error {
-	fmt.Println("reached here")
 	result := (&Client{
 		Src:     src,
 		Dst:     dst,
 		Dir:     true,
 		Options: opts,
 	}).Get()
-	fmt.Println("result in get.go is", result)
 	return result
 }
 

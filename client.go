@@ -104,7 +104,6 @@ func (c *Client) mode(mode os.FileMode) os.FileMode {
 
 // Get downloads the configured source to the destination.
 func (c *Client) Get() error {
-	fmt.Println("Configure")
 	if err := c.Configure(c.Options...); err != nil {
 		return err
 	}
@@ -119,21 +118,18 @@ func (c *Client) Get() error {
 		}
 	}
 
-	fmt.Println("Detect")
 	src, err := Detect(c.Src, c.Pwd, c.Detectors)
 	if err != nil {
 		return err
 	}
 
 	// Determine if we have a forced protocol, i.e. "git::http://..."
-	fmt.Println("getForcedGetter")
 	force, src := getForcedGetter(src)
 
 	// If there is a subdir component, then we download the root separately
 	// and then copy over the proper subdir.
 	var realDst string
 	dst := c.Dst
-	fmt.Println("sourceDirSubdir")
 	src, subDir := SourceDirSubdir(src)
 	if subDir != "" {
 		// Check if the subdirectory is attempting to traverse updwards, outside of
@@ -157,7 +153,6 @@ func (c *Client) Get() error {
 		dst = td
 	}
 
-	fmt.Println("urlhelper.parse")
 	u, err := urlhelper.Parse(src)
 	if err != nil {
 		return err
@@ -166,7 +161,6 @@ func (c *Client) Get() error {
 		force = u.Scheme
 	}
 
-	fmt.Println("getGetter")
 	g, ok := c.Getters[force]
 	if !ok {
 		return fmt.Errorf(
@@ -206,7 +200,6 @@ func (c *Client) Get() error {
 	// real path.
 	var decompressDst string
 	var decompressDir bool
-	fmt.Println("getDecompressor")
 	decompressor := c.Decompressors[archiveV]
 	if decompressor != nil {
 		// Create a temporary directory to store our archive. We delete
@@ -227,7 +220,6 @@ func (c *Client) Get() error {
 	}
 
 	// Determine checksum if we have one
-	fmt.Println("extractChecksum")
 	checksum, err := c.extractChecksum(u)
 	if err != nil {
 		return fmt.Errorf("invalid checksum: %s", err)
@@ -235,13 +227,10 @@ func (c *Client) Get() error {
 
 	// Delete the query parameter if we have it.
 	q.Del("checksum")
-	fmt.Println("delete checksum query parameter")
 	u.RawQuery = q.Encode()
-	fmt.Println("Raw Query Done")
 
 	if mode == ClientModeAny {
 		// Ask the getter which client mode to use
-		fmt.Println("getClientMode")
 		mode, err = g.ClientMode(u)
 		if err != nil {
 			return err
@@ -255,7 +244,6 @@ func (c *Client) Get() error {
 			// Determine if we have a custom file name
 			if v := q.Get("filename"); v != "" {
 				// Delete the query parameter if we have it.
-				fmt.Println("custom filename")
 				q.Del("filename")
 				u.RawQuery = q.Encode()
 
@@ -273,7 +261,6 @@ func (c *Client) Get() error {
 	// If we're not downloading a directory, then just download the file
 	// and return.
 	if mode == ClientModeFile {
-		fmt.Println("mode == ClientModeFile - 276")
 		getFile := true
 		if checksum != nil {
 			if err := checksum.checksum(dst); err == nil {
@@ -282,14 +269,12 @@ func (c *Client) Get() error {
 			}
 		}
 		if getFile {
-			fmt.Println("getFile")
 			err := g.GetFile(dst, u)
 			if err != nil {
 				return err
 			}
 
 			if checksum != nil {
-				fmt.Println("getChecksum - 289")
 				if err := checksum.checksum(dst); err != nil {
 					return err
 				}
@@ -299,7 +284,6 @@ func (c *Client) Get() error {
 		if decompressor != nil {
 			// We have a decompressor, so decompress the current destination
 			// into the final destination with the proper mode.
-			fmt.Println("decompressor.Decompress - 299")
 			err := decompressor.Decompress(decompressDst, dst, decompressDir, c.umask())
 			if err != nil {
 				return err
@@ -327,7 +311,6 @@ func (c *Client) Get() error {
 	// In the case we have a decompressor we don't Get because it was Get
 	// above.
 	if decompressor == nil {
-		fmt.Println("decompressor == nil - 330")
 		// If we're getting a directory, then this is an error. You cannot
 		// checksum a directory. TODO: test
 		if checksum != nil {
@@ -337,7 +320,6 @@ func (c *Client) Get() error {
 
 		// We're downloading a directory, which might require a bit more work
 		// if we're specifying a subdir.
-		fmt.Println("g.get - 336")
 		err := g.Get(dst, u)
 		if err != nil {
 			err = fmt.Errorf("error downloading '%s': %s", RedactURL(u), err)
@@ -346,31 +328,22 @@ func (c *Client) Get() error {
 	}
 
 	// If we have a subdir, copy that over
-	fmt.Println("sourceDirSubdir - 345")
 	if subDir != "" {
-		fmt.Println("sourceDirSubdir - 351")
 		if err := os.RemoveAll(realDst); err != nil {
-			fmt.Println("os.RemoveAll - 352", realDst)
 			return err
 		}
-		fmt.Println("Removal done", realDst)
 		if err := os.MkdirAll(realDst, c.mode(0755)); err != nil {
-			fmt.Println("os.MkdirAll - 356", realDst)
 			return err
 		}
-		fmt.Println("os.MkdirAll done", realDst)
 
 		// Process any globs
-		fmt.Println("sourceDirSubdir - 355")
 		subDir, err := SubdirGlob(dst, subDir)
 		if err != nil {
 			return err
 		}
 
-		fmt.Println("copyDir - 361")
 		return copyDir(c.Ctx, realDst, subDir, false, c.DisableSymlinks, c.umask())
 	}
 
-	fmt.Println("Returning nil")
 	return nil
 }

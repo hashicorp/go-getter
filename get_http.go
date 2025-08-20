@@ -172,13 +172,11 @@ func (g *HttpGetter) Get(dst string, u *url.URL) error {
 	ctx := g.Context()
 
 	// Log the start of the Get operation
-	fmt.Printf("[DEBUG] HttpGetter.Get: Starting download from %s to %s\n", u.String(), dst)
 
 	// Optionally disable any X-Terraform-Get redirects. This is reccomended for usage of
 	// this client outside of Terraform's. This feature is likely not required if the
 	// source server can provider normal HTTP redirects.
 	if g.XTerraformGetDisabled {
-		fmt.Printf("[DEBUG] HttpGetter.Get: X-Terraform-Get redirects disabled\n")
 		ctx = context.WithValue(ctx, xTerraformGetDisable, g.XTerraformGetDisabled)
 	}
 
@@ -186,7 +184,6 @@ func (g *HttpGetter) Get(dst string, u *url.URL) error {
 	// invocation of this function, because the value is not passed down to subsequent
 	// client Get function invocations.
 	if g.XTerraformGetLimit > 0 {
-		fmt.Printf("[DEBUG] HttpGetter.Get: X-Terraform-Get redirect limit set to %d\n", g.XTerraformGetLimit)
 		ctx = context.WithValue(ctx, xTerraformGetLimit, g.XTerraformGetLimit)
 	}
 
@@ -197,54 +194,40 @@ func (g *HttpGetter) Get(dst string, u *url.URL) error {
 	// Get function invocations.
 	if limit := xTerraformGetLimiConfiguredtFromContext(ctx); limit > 0 {
 		currentValue := xTerraformGetLimitCurrentValueFromContext(ctx)
-		fmt.Printf("[DEBUG] HttpGetter.Get: Current X-Terraform-Get redirect count: %d, limit: %d\n", currentValue, limit)
 
 		if currentValue > limit {
-			fmt.Printf("[ERROR] HttpGetter.Get: Too many X-Terraform-Get redirects: %d\n", currentValue)
 			return fmt.Errorf("too many X-Terraform-Get redirects: %d", currentValue)
 		}
 
 		currentValue++
-		fmt.Printf("[DEBUG] HttpGetter.Get: Incrementing X-Terraform-Get redirect count to %d\n", currentValue)
 
 		ctx = context.WithValue(ctx, xTerraformGetLimitCurrentValue, currentValue)
 	}
 
 	// Optionally enforce a maxiumum HTTP response body size.
 	if g.MaxBytes > 0 {
-		fmt.Printf("[DEBUG] HttpGetter.Get: Setting max response body size to %d bytes\n", g.MaxBytes)
 		ctx = context.WithValue(ctx, httpMaxBytesValue, g.MaxBytes)
 	}
 
 	// Copy the URL so we can modify it
 	newU := *u
 	u = &newU
-	fmt.Printf("[DEBUG] HttpGetter.Get: URL copied for modification\n")
 
 	if g.Netrc {
-		fmt.Printf("[DEBUG] HttpGetter.Get: Adding auth from netrc file\n")
 		// Add auth from netrc if we can
 		if err := addAuthFromNetrc(u); err != nil {
-			fmt.Printf("[ERROR] HttpGetter.Get: Failed to add auth from netrc: %v\n", err)
 			return err
 		}
-		fmt.Printf("[DEBUG] HttpGetter.Get: Successfully added auth from netrc\n")
 	}
-
-	fmt.Println("Part 1")
 
 	// If the HTTP client is nil, check if there is one available in the context,
 	// otherwise create one using cleanhttp's default transport.
 	if g.Client == nil {
-		fmt.Printf("[DEBUG] HttpGetter.Get: HTTP client is nil, checking context or creating new one\n")
 		if client := httpClientFromContext(ctx); client != nil {
-			fmt.Printf("[DEBUG] HttpGetter.Get: Using HTTP client from context\n")
 			g.Client = client
 		} else {
-			fmt.Printf("[DEBUG] HttpGetter.Get: Creating new HTTP client\n")
 			client := httpClient
 			if g.client != nil && g.client.Insecure {
-				fmt.Printf("[DEBUG] HttpGetter.Get: Configuring insecure transport (TLS verification disabled)\n")
 				insecureTransport := cleanhttp.DefaultTransport()
 				insecureTransport.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
 				client.Transport = insecureTransport
@@ -252,91 +235,69 @@ func (g *HttpGetter) Get(dst string, u *url.URL) error {
 			g.Client = client
 		}
 	} else {
-		fmt.Printf("[DEBUG] HttpGetter.Get: Using existing HTTP client\n")
 	}
 
 	// Pass along the configured HTTP client in the context for usage with the X-Terraform-Get feature.
 	ctx = context.WithValue(ctx, httpClientValue, g.Client)
-	fmt.Printf("[DEBUG] HttpGetter.Get: HTTP client stored in context\n")
 
 	// Add terraform-get to the parameter.
 	q := u.Query()
 	q.Add("terraform-get", "1")
 	u.RawQuery = q.Encode()
-	fmt.Printf("[DEBUG] HttpGetter.Get: Added terraform-get=1 parameter to URL: %s\n", u.String())
 
 	readCtx := ctx
 
 	if g.ReadTimeout > 0 {
-		fmt.Printf("[DEBUG] HttpGetter.Get: Setting read timeout to %v\n", g.ReadTimeout)
 		var cancel context.CancelFunc
 		readCtx, cancel = context.WithTimeout(ctx, g.ReadTimeout)
 		defer cancel()
 	}
 
-	fmt.Println("Part 2")
 	// Get the URL
-	fmt.Printf("[DEBUG] HttpGetter.Get: Creating HTTP GET request\n")
 	req, err := http.NewRequestWithContext(readCtx, "GET", u.String(), nil)
 	if err != nil {
-		fmt.Printf("[ERROR] HttpGetter.Get: Failed to create HTTP request: %v\n", err)
 		return err
 	}
 
 	if g.Header != nil {
-		fmt.Printf("[DEBUG] HttpGetter.Get: Cloning custom headers to request\n")
 		req.Header = g.Header.Clone()
 	}
 
-	fmt.Printf("[DEBUG] HttpGetter.Get: Executing HTTP request to %s\n", u.String())
 	resp, err := g.Client.Do(req)
 	if err != nil {
-		fmt.Printf("[ERROR] HttpGetter.Get: HTTP request failed: %v\n", err)
 		return err
 	}
 	defer func() {
-		fmt.Printf("[DEBUG] HttpGetter.Get: Closing response body\n")
 		_ = resp.Body.Close()
 	}()
-
-	fmt.Printf("[DEBUG] HttpGetter.Get: Received HTTP response with status code: %d\n", resp.StatusCode)
 
 	body := resp.Body
 
 	if maxBytes := httpMaxBytesFromContext(ctx); maxBytes > 0 {
-		fmt.Printf("[DEBUG] HttpGetter.Get: Wrapping response body with %d byte limit\n", maxBytes)
 		body = newLimitedWrappedReaderCloser(body, maxBytes)
 	}
 
-	fmt.Println("Part 3")
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		fmt.Printf("[ERROR] HttpGetter.Get: Bad response code: %d\n", resp.StatusCode)
 		return fmt.Errorf("bad response code: %d", resp.StatusCode)
 	}
 
 	if disabled := xTerraformGetDisabled(ctx); disabled {
-		fmt.Printf("[DEBUG] HttpGetter.Get: X-Terraform-Get is disabled, returning early\n")
 		return nil
 	}
 
 	// Extract the source URL,
 	var source string
 	if v := resp.Header.Get("X-Terraform-Get"); v != "" {
-		fmt.Printf("[DEBUG] HttpGetter.Get: Found X-Terraform-Get header: %s\n", v)
 		source = v
 	} else {
-		fmt.Printf("[DEBUG] HttpGetter.Get: No X-Terraform-Get header found, parsing meta tags\n")
 		source, err = g.parseMeta(readCtx, body)
 		if err != nil {
-			fmt.Printf("[ERROR] HttpGetter.Get: Failed to parse meta tags: %v\n", err)
 			return err
 		}
 		if source != "" {
-			fmt.Printf("[DEBUG] HttpGetter.Get: Found terraform-get meta tag: %s\n", source)
 		}
 	}
 	if source == "" {
-		fmt.Printf("[ERROR] HttpGetter.Get: No source URL found in headers or meta tags\n")
 		return fmt.Errorf("no source URL was returned")
 	}
 
@@ -344,55 +305,44 @@ func (g *HttpGetter) Get(dst string, u *url.URL) error {
 	// into a temporary directory, then copy over the proper subdir.
 	source, subDir := SourceDirSubdir(source)
 	if subDir != "" {
-		fmt.Printf("[DEBUG] HttpGetter.Get: Detected subdirectory: %s, main source: %s\n", subDir, source)
 	} else {
-		fmt.Printf("[DEBUG] HttpGetter.Get: No subdirectory detected, source: %s\n", source)
 	}
 
 	var opts []ClientOption
 
 	// Check if the protocol was switched to one which was not configured.
 	if g.client != nil && g.client.Getters != nil {
-		fmt.Printf("[DEBUG] HttpGetter.Get: Using client detectors to process source URL\n")
 		// We must first use the Detectors provided, because `X-Terraform-Get does
 		// not necessarily return a valid URL. We can replace the source string
 		// here, since the detectors would have been called immediately during the
 		// next Get anyway.
 		source, err = Detect(source, g.client.Pwd, g.client.Detectors)
 		if err != nil {
-			fmt.Printf("[ERROR] HttpGetter.Get: Failed to detect source protocol: %v\n", err)
 			return err
 		}
-		fmt.Printf("[DEBUG] HttpGetter.Get: Detected source after processing: %s\n", source)
 
 		protocol := ""
 		// X-Terraform-Get allows paths relative to the previous request too,
 		// which won't have a protocol.
 		if !relativeGet(source) {
 			protocol = strings.Split(source, ":")[0]
-			fmt.Printf("[DEBUG] HttpGetter.Get: Detected protocol: %s\n", protocol)
 		} else {
-			fmt.Printf("[DEBUG] HttpGetter.Get: Relative path detected, no protocol check needed\n")
 		}
 
 		// Otherwise, all default getters are allowed.
 		if protocol != "" {
 			_, allowed := g.client.Getters[protocol]
 			if !allowed {
-				fmt.Printf("[ERROR] HttpGetter.Get: Protocol %s not allowed by client configuration\n", protocol)
 				return fmt.Errorf("no getter available for X-Terraform-Get source protocol: %q", protocol)
 			}
-			fmt.Printf("[DEBUG] HttpGetter.Get: Protocol %s is allowed by client configuration\n", protocol)
 		}
 	}
 
 	// Add any getter client options.
 	if g.client != nil {
-		fmt.Printf("[DEBUG] HttpGetter.Get: Adding client options\n")
 		opts = g.client.Options
 	}
 
-	fmt.Println("Part 4")
 	// If the client is nil, we know we're using the HttpGetter directly. In
 	// this case, we don't know exactly which protocols are configured, but we
 	// can make a good guess.
@@ -401,46 +351,37 @@ func (g *HttpGetter) Get(dst string, u *url.URL) error {
 	// HttpGetter directly. To enable protocol switching, a client "wrapper" must
 	// be used.
 	if g.client == nil {
-		fmt.Printf("[DEBUG] HttpGetter.Get: Client is nil, configuring getters for direct usage\n")
 		switch {
 		case subDir != "":
 			// If there's a subdirectory, we will also need a file getter to
 			// unpack it.
-			fmt.Printf("[DEBUG] HttpGetter.Get: Subdirectory detected, adding file, http, and https getters\n")
 			opts = append(opts, WithGetters(map[string]Getter{
 				"file":  new(FileGetter),
 				"http":  g,
 				"https": g,
 			}))
 		default:
-			fmt.Printf("[DEBUG] HttpGetter.Get: No subdirectory, adding http and https getters only\n")
 			opts = append(opts, WithGetters(map[string]Getter{
 				"http":  g,
 				"https": g,
 			}))
 		}
 	} else {
-		fmt.Printf("[DEBUG] HttpGetter.Get: Using existing client configuration\n")
 	}
 
 	// Ensure we pass along the context we constructed in this function.
 	//
 	// This is especially important to enforce a limit on X-Terraform-Get redirects
 	// which could be setup, if configured, at the top of this function.
-	fmt.Printf("[DEBUG] HttpGetter.Get: Adding context to client options\n")
 	opts = append(opts, WithContext(ctx))
 
 	if subDir != "" {
 		// We have a subdir, time to jump some hoops
-		fmt.Printf("[DEBUG] HttpGetter.Get: Processing subdirectory download: %s\n", subDir)
 		return g.getSubdir(ctx, dst, source, subDir, opts...)
 	}
 
-	fmt.Printf("[DEBUG] HttpGetter.Get: Delegating to generic Get function with source: %s\n", source)
-
 	// Note: this allows the protocol to be switched to another configured getters.
 	result := Get(dst, source, opts...)
-	fmt.Println("result is", result)
 	return result
 }
 
@@ -593,35 +534,28 @@ func (g *HttpGetter) getSubdir(ctx context.Context, dst, source, subDir string, 
 	defer func() { _ = tdcloser.Close() }()
 
 	// Download that into the given directory
-	fmt.Println("Get in getSubDir")
 	if err := Get(td, source, opts...); err != nil {
-		fmt.Println("failing get in getSubDir")
 		return err
 	}
-	fmt.Println("Get in getSubDir done")
 
 	// Process any globbing
-	fmt.Println("sourceDirSubdir - 604")
 	sourcePath, err := SubdirGlob(td, subDir)
 	if err != nil {
 		return err
 	}
 
 	// Make sure the subdir path actually exists
-	fmt.Println("sourceDirSubdir - 611", sourcePath)
 	if _, err := os.Stat(sourcePath); err != nil {
 		return fmt.Errorf(
 			"Error downloading %s: %s", source, err)
 	}
 
 	// Copy the subdirectory into our actual destination.
-	fmt.Println("sourceDirSubdir - 618")
 	if err := os.RemoveAll(dst); err != nil {
 		return err
 	}
 
 	// Make the final destination
-	fmt.Println("sourceDirSubdir - 624", dst)
 	if err := os.MkdirAll(dst, g.client.mode(0755)); err != nil {
 		return err
 	}
@@ -632,7 +566,6 @@ func (g *HttpGetter) getSubdir(ctx context.Context, dst, source, subDir string, 
 		disableSymlinks = true
 	}
 
-	fmt.Println("sourceDirSubdir - 635")
 	return copyDir(ctx, dst, sourcePath, false, disableSymlinks, g.client.umask())
 }
 
