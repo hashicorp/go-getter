@@ -31,8 +31,8 @@ func safeEvalSymlinks(path string) (string, error) {
 		return "", err // fallback to original error
 	}
 
-	if fi.Mode()&os.ModeIrregular != 0 {
-		fmt.Println("Path is a junction:", path)
+	if fi.Mode()&os.ModeSymlink != 0 || fi.Mode()&os.ModeIrregular != 0 {
+		fmt.Println("Path is a junction or symlink:", path)
 		return path, nil
 	}
 
