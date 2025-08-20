@@ -158,6 +158,7 @@ func TestHttpGetter_metaSubdir(t *testing.T) {
 	u.Path = "/meta-subdir"
 
 	// Get it!
+	fmt.Println("wwww started the test")
 	if err := g.Get(dst, &u); err != nil {
 		t.Fatalf("err: %s", err)
 	}
