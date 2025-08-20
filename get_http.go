@@ -593,17 +593,22 @@ func (g *HttpGetter) getSubdir(ctx context.Context, dst, source, subDir string, 
 	defer func() { _ = tdcloser.Close() }()
 
 	// Download that into the given directory
+	fmt.Println("Get in getSubDir")
 	if err := Get(td, source, opts...); err != nil {
+		fmt.Println("failing get in getSubDir")
 		return err
 	}
+	fmt.Println("Get in getSubDir done")
 
 	// Process any globbing
+	fmt.Println("sourceDirSubdir - 604")
 	sourcePath, err := SubdirGlob(td, subDir)
 	if err != nil {
 		return err
 	}
 
 	// Make sure the subdir path actually exists
+	fmt.Println("sourceDirSubdir - 611", sourcePath)
 	if _, err := os.Stat(sourcePath); err != nil {
 		return fmt.Errorf(
 			"Error downloading %s: %s", source, err)
