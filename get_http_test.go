@@ -157,19 +157,6 @@ func TestHttpGetter_metaSubdir(t *testing.T) {
 	u.Path = "/meta-subdir"
 
 	// Get it!
-	// check if dst exists or not and if it exists, list all files in dst
-	if _, err := os.Stat(dst); err == nil {
-		files, err := os.ReadDir(dst)
-		if err != nil {
-			t.Fatalf("failed to read dir: %s", err)
-		}
-		var names []string
-		for _, f := range files {
-			names = append(names, f.Name())
-		}
-		t.Fatalf("dst should not exist, found files: %v", names)
-	}
-
 	if err := g.Get(dst, &u); err != nil {
 		t.Fatalf("err: %s", err)
 	}
