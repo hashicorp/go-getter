@@ -160,6 +160,8 @@ func TestHttpGetter_metaSubdir(t *testing.T) {
 	// Get it!
 	if err := g.Get(dst, &u); err != nil {
 		t.Logf("runtime stack %v", string(debug.Stack()))
+		t.Logf("error details %+v", err)
+		t.Logf("error type %T", err)
 		t.Fatalf("err: %s", err)
 	}
 
