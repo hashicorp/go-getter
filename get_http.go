@@ -615,11 +615,13 @@ func (g *HttpGetter) getSubdir(ctx context.Context, dst, source, subDir string, 
 	}
 
 	// Copy the subdirectory into our actual destination.
+	fmt.Println("sourceDirSubdir - 618")
 	if err := os.RemoveAll(dst); err != nil {
 		return err
 	}
 
 	// Make the final destination
+	fmt.Println("sourceDirSubdir - 624", dst)
 	if err := os.MkdirAll(dst, g.client.mode(0755)); err != nil {
 		return err
 	}
@@ -630,6 +632,7 @@ func (g *HttpGetter) getSubdir(ctx context.Context, dst, source, subDir string, 
 		disableSymlinks = true
 	}
 
+	fmt.Println("sourceDirSubdir - 635")
 	return copyDir(ctx, dst, sourcePath, false, disableSymlinks, g.client.umask())
 }
 
