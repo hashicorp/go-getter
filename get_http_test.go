@@ -157,6 +157,11 @@ func TestHttpGetter_metaSubdir(t *testing.T) {
 	u.Path = "/meta-subdir"
 
 	// Get it!
+	// check if dst exists or not
+	if _, err := os.Stat(dst); err == nil {
+		t.Fatalf("dst should not exist")
+	}
+
 	if err := g.Get(dst, &u); err != nil {
 		t.Fatalf("err: %s", err)
 	}
