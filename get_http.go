@@ -296,6 +296,7 @@ func (g *HttpGetter) Get(dst string, u *url.URL) error {
 
 	// If there is a subdir component, then we download the root separately
 	// into a temporary directory, then copy over the proper subdir.
+	fmt.Println("wwwww reached before SourceDirSubdir check")
 	source, subDir := SourceDirSubdir(source)
 
 	var opts []ClientOption
@@ -362,9 +363,10 @@ func (g *HttpGetter) Get(dst string, u *url.URL) error {
 	// This is especially important to enforce a limit on X-Terraform-Get redirects
 	// which could be setup, if configured, at the top of this function.
 	opts = append(opts, WithContext(ctx))
-
+	fmt.Println("wwwww reached before subdir check")
 	if subDir != "" {
 		// We have a subdir, time to jump some hoops
+		fmt.Println("wwwww reached in subdir")
 		return g.getSubdir(ctx, dst, source, subDir, opts...)
 	}
 
