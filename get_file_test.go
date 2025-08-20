@@ -29,8 +29,14 @@ func TestFileGetter(t *testing.T) {
 		t.Fatalf("err: %s", err)
 	}
 
-	if runtime.GOOS != "windows" && fi.Mode()&os.ModeSymlink == 0 {
-		t.Fatal("destination is not a symlink")
+	if runtime.GOOS == "windows" {
+		if fi.Mode()&os.ModeSymlink == 0 && fi.Mode()&os.ModeIrregular == 0 {
+			t.Fatal("destination is neither a symlink nor a junction (reparse point)")
+		}
+	} else {
+		if fi.Mode()&os.ModeSymlink == 0 {
+			t.Fatal("destination is not a symlink")
+		}
 	}
 
 	// Verify the main file exists

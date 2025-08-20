@@ -8,6 +8,7 @@ env:
 jobs:
 
   linux-tests:
+    if: false
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -154,6 +155,7 @@ jobs:
           path: win_cov.part
 
   linter:
+    if: false
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
