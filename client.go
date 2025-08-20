@@ -353,10 +353,12 @@ func (c *Client) Get() error {
 			fmt.Println("os.RemoveAll - 352", realDst)
 			return err
 		}
+		fmt.Println("Removal done", realDst)
 		if err := os.MkdirAll(realDst, c.mode(0755)); err != nil {
 			fmt.Println("os.MkdirAll - 356", realDst)
 			return err
 		}
+		fmt.Println("os.MkdirAll done", realDst)
 
 		// Process any globs
 		fmt.Println("sourceDirSubdir - 355")
