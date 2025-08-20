@@ -171,8 +171,6 @@ func newLimitedWrappedReaderCloser(r io.ReadCloser, limit int64) io.ReadCloser {
 func (g *HttpGetter) Get(dst string, u *url.URL) error {
 	ctx := g.Context()
 
-	// Log the start of the Get operation
-
 	// Optionally disable any X-Terraform-Get redirects. This is reccomended for usage of
 	// this client outside of Terraform's. This feature is likely not required if the
 	// source server can provider normal HTTP redirects.
@@ -320,7 +318,6 @@ func (g *HttpGetter) Get(dst string, u *url.URL) error {
 		// which won't have a protocol.
 		if !relativeGet(source) {
 			protocol = strings.Split(source, ":")[0]
-		} else {
 		}
 
 		// Otherwise, all default getters are allowed.
@@ -360,7 +357,6 @@ func (g *HttpGetter) Get(dst string, u *url.URL) error {
 				"https": g,
 			}))
 		}
-	} else {
 	}
 
 	// Ensure we pass along the context we constructed in this function.
@@ -375,8 +371,7 @@ func (g *HttpGetter) Get(dst string, u *url.URL) error {
 	}
 
 	// Note: this allows the protocol to be switched to another configured getters.
-	result := Get(dst, source, opts...)
-	return result
+	return Get(dst, source, opts...)
 }
 
 // GetFile fetches the file from src and stores it at dst.
