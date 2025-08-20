@@ -348,6 +348,7 @@ func (c *Client) Get() error {
 	// If we have a subdir, copy that over
 	fmt.Println("sourceDirSubdir - 345")
 	if subDir != "" {
+		fmt.Println("sourceDirSubdir - 351")
 		if err := os.RemoveAll(realDst); err != nil {
 			fmt.Println("os.RemoveAll - 352", realDst)
 			return err
