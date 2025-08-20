@@ -349,9 +349,11 @@ func (c *Client) Get() error {
 	fmt.Println("sourceDirSubdir - 345")
 	if subDir != "" {
 		if err := os.RemoveAll(realDst); err != nil {
+			fmt.Println("os.RemoveAll - 352", realDst)
 			return err
 		}
 		if err := os.MkdirAll(realDst, c.mode(0755)); err != nil {
+			fmt.Println("os.MkdirAll - 356", realDst)
 			return err
 		}
 

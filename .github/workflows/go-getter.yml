@@ -9,7 +9,6 @@ jobs:
 
   linux-tests:
     runs-on: ubuntu-latest
-    if: false
     strategy:
       matrix:
         go-version:
