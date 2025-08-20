@@ -235,7 +235,9 @@ func (c *Client) Get() error {
 
 	// Delete the query parameter if we have it.
 	q.Del("checksum")
+	fmt.Println("delete checksum query parameter")
 	u.RawQuery = q.Encode()
+	fmt.Println("Raw Query Done")
 
 	if mode == ClientModeAny {
 		// Ask the getter which client mode to use
