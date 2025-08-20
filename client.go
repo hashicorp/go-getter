@@ -273,6 +273,7 @@ func (c *Client) Get() error {
 	// If we're not downloading a directory, then just download the file
 	// and return.
 	if mode == ClientModeFile {
+		fmt.Println("mode == ClientModeFile - 276")
 		getFile := true
 		if checksum != nil {
 			if err := checksum.checksum(dst); err == nil {
@@ -326,6 +327,7 @@ func (c *Client) Get() error {
 	// In the case we have a decompressor we don't Get because it was Get
 	// above.
 	if decompressor == nil {
+		fmt.Println("decompressor == nil - 330")
 		// If we're getting a directory, then this is an error. You cannot
 		// checksum a directory. TODO: test
 		if checksum != nil {
