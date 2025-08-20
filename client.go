@@ -279,12 +279,14 @@ func (c *Client) Get() error {
 			}
 		}
 		if getFile {
+			fmt.Println("getFile")
 			err := g.GetFile(dst, u)
 			if err != nil {
 				return err
 			}
 
 			if checksum != nil {
+				fmt.Println("getChecksum - 289")
 				if err := checksum.checksum(dst); err != nil {
 					return err
 				}
@@ -294,6 +296,7 @@ func (c *Client) Get() error {
 		if decompressor != nil {
 			// We have a decompressor, so decompress the current destination
 			// into the final destination with the proper mode.
+			fmt.Println("decompressor.Decompress - 299")
 			err := decompressor.Decompress(decompressDst, dst, decompressDir, c.umask())
 			if err != nil {
 				return err
@@ -330,6 +333,7 @@ func (c *Client) Get() error {
 
 		// We're downloading a directory, which might require a bit more work
 		// if we're specifying a subdir.
+		fmt.Println("g.get - 336")
 		err := g.Get(dst, u)
 		if err != nil {
 			err = fmt.Errorf("error downloading '%s': %s", RedactURL(u), err)
@@ -338,6 +342,7 @@ func (c *Client) Get() error {
 	}
 
 	// If we have a subdir, copy that over
+	fmt.Println("sourceDirSubdir - 345")
 	if subDir != "" {
 		if err := os.RemoveAll(realDst); err != nil {
 			return err
@@ -347,11 +352,13 @@ func (c *Client) Get() error {
 		}
 
 		// Process any globs
+		fmt.Println("sourceDirSubdir - 355")
 		subDir, err := SubdirGlob(dst, subDir)
 		if err != nil {
 			return err
 		}
 
+		fmt.Println("copyDir - 361")
 		return copyDir(c.Ctx, realDst, subDir, false, c.DisableSymlinks, c.umask())
 	}
 
