@@ -20,24 +20,20 @@ func mode(mode, umask os.FileMode) os.FileMode {
 func safeEvalSymlinks(path string) (string, error) {
 	resolved, err := filepath.EvalSymlinks(path)
 	if err == nil || runtime.GOOS != "windows" {
-		fmt.Println("Resolved symlink:", resolved)
 		return resolved, err
 	}
 
 	// On Windows with Go 1.23+, EvalSymlinks may not resolve junctions
 	fi, statErr := os.Lstat(path)
 	if statErr != nil {
-		fmt.Println("Failed to stat path:", path, "Error:", statErr)
 		return "", err // fallback to original error
 	}
 
 	if fi.Mode()&os.ModeSymlink != 0 || fi.Mode()&os.ModeIrregular != 0 {
-		fmt.Println("Path is a junction or symlink:", path)
 		return path, nil
 	}
 
 	// It's a normal directory or file — return it as-is
-	fmt.Println("Path is not a symlink or junction:", path)
 	return path, nil
 }
 
