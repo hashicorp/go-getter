@@ -104,6 +104,7 @@ func (c *Client) mode(mode os.FileMode) os.FileMode {
 
 // Get downloads the configured source to the destination.
 func (c *Client) Get() error {
+	fmt.Println("Configure")
 	if err := c.Configure(c.Options...); err != nil {
 		return err
 	}
@@ -118,18 +119,21 @@ func (c *Client) Get() error {
 		}
 	}
 
+	fmt.Println("Detect")
 	src, err := Detect(c.Src, c.Pwd, c.Detectors)
 	if err != nil {
 		return err
 	}
 
 	// Determine if we have a forced protocol, i.e. "git::http://..."
+	fmt.Println("getForcedGetter")
 	force, src := getForcedGetter(src)
 
 	// If there is a subdir component, then we download the root separately
 	// and then copy over the proper subdir.
 	var realDst string
 	dst := c.Dst
+	fmt.Println("sourceDirSubdir")
 	src, subDir := SourceDirSubdir(src)
 	if subDir != "" {
 		// Check if the subdirectory is attempting to traverse updwards, outside of
@@ -153,6 +157,7 @@ func (c *Client) Get() error {
 		dst = td
 	}
 
+	fmt.Println("urlhelper.parse")
 	u, err := urlhelper.Parse(src)
 	if err != nil {
 		return err
@@ -161,6 +166,7 @@ func (c *Client) Get() error {
 		force = u.Scheme
 	}
 
+	fmt.Println("getGetter")
 	g, ok := c.Getters[force]
 	if !ok {
 		return fmt.Errorf(
@@ -200,6 +206,7 @@ func (c *Client) Get() error {
 	// real path.
 	var decompressDst string
 	var decompressDir bool
+	fmt.Println("getDecompressor")
 	decompressor := c.Decompressors[archiveV]
 	if decompressor != nil {
 		// Create a temporary directory to store our archive. We delete
@@ -220,6 +227,7 @@ func (c *Client) Get() error {
 	}
 
 	// Determine checksum if we have one
+	fmt.Println("extractChecksum")
 	checksum, err := c.extractChecksum(u)
 	if err != nil {
 		return fmt.Errorf("invalid checksum: %s", err)
@@ -231,6 +239,7 @@ func (c *Client) Get() error {
 
 	if mode == ClientModeAny {
 		// Ask the getter which client mode to use
+		fmt.Println("getClientMode")
 		mode, err = g.ClientMode(u)
 		if err != nil {
 			return err
@@ -244,6 +253,7 @@ func (c *Client) Get() error {
 			// Determine if we have a custom file name
 			if v := q.Get("filename"); v != "" {
 				// Delete the query parameter if we have it.
+				fmt.Println("custom filename")
 				q.Del("filename")
 				u.RawQuery = q.Encode()
 
