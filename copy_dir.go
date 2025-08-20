@@ -8,12 +8,33 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 )
 
 // mode returns the file mode masked by the umask
 func mode(mode, umask os.FileMode) os.FileMode {
 	return mode & ^umask
+}
+
+func safeEvalSymlinks(path string) (string, error) {
+	resolved, err := filepath.EvalSymlinks(path)
+	if err == nil || runtime.GOOS != "windows" {
+		return resolved, err
+	}
+
+	// On Windows with Go 1.23+, EvalSymlinks may not resolve junctions
+	fi, statErr := os.Lstat(path)
+	if statErr != nil {
+		return "", err // fallback to original error
+	}
+
+	if fi.Mode()&os.ModeSymlink != 0 || fi.Mode()&os.ModeIrregular != 0 {
+		return path, nil
+	}
+
+	// It's a normal directory or file — return it as-is
+	return path, nil
 }
 
 // copyDir copies the src directory contents into dst. Both directories
@@ -24,7 +45,7 @@ func copyDir(ctx context.Context, dst string, src string, ignoreDot bool, disabl
 	// We can safely evaluate the symlinks here, even if disabled, because they
 	// will be checked before actual use in walkFn and copyFile
 	var err error
-	resolved, err := filepath.EvalSymlinks(src)
+	resolved, err := safeEvalSymlinks(src)
 	if err != nil {
 		return err
 	}

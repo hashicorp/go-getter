@@ -264,7 +264,9 @@ func (g *HttpGetter) Get(dst string, u *url.URL) error {
 	if err != nil {
 		return err
 	}
-	defer func() { _ = resp.Body.Close() }()
+	defer func() {
+		_ = resp.Body.Close()
+	}()
 
 	body := resp.Body
 
