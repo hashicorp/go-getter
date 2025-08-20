@@ -218,6 +218,8 @@ func (g *HttpGetter) Get(dst string, u *url.URL) error {
 		}
 	}
 
+	fmt.Println("Part 1")
+
 	// If the HTTP client is nil, check if there is one available in the context,
 	// otherwise create one using cleanhttp's default transport.
 	if g.Client == nil {
@@ -250,6 +252,7 @@ func (g *HttpGetter) Get(dst string, u *url.URL) error {
 		defer cancel()
 	}
 
+	fmt.Println("Part 2")
 	// Get the URL
 	req, err := http.NewRequestWithContext(readCtx, "GET", u.String(), nil)
 	if err != nil {
@@ -272,6 +275,7 @@ func (g *HttpGetter) Get(dst string, u *url.URL) error {
 		body = newLimitedWrappedReaderCloser(body, maxBytes)
 	}
 
+	fmt.Println("Part 3")
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		return fmt.Errorf("bad response code: %d", resp.StatusCode)
 	}
@@ -332,6 +336,7 @@ func (g *HttpGetter) Get(dst string, u *url.URL) error {
 		opts = g.client.Options
 	}
 
+	fmt.Println("Part 4")
 	// If the client is nil, we know we're using the HttpGetter directly. In
 	// this case, we don't know exactly which protocols are configured, but we
 	// can make a good guess.

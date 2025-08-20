@@ -84,6 +84,7 @@ func init() {
 // src is a URL, whereas dst is always just a file path to a folder. This
 // folder doesn't need to exist. It will be created if it doesn't exist.
 func Get(dst, src string, opts ...ClientOption) error {
+	fmt.Println("reached here")
 	return (&Client{
 		Src:     src,
 		Dst:     dst,

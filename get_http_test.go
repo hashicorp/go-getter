@@ -156,6 +156,7 @@ func TestHttpGetter_metaSubdir(t *testing.T) {
 	u.Scheme = "http"
 	u.Host = ln.Addr().String()
 	u.Path = "/meta-subdir"
+	t.Logf("dst: %s", dst)
 
 	// Get it!
 	if err := g.Get(dst, &u); err != nil {
