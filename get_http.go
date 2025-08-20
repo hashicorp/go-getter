@@ -374,7 +374,9 @@ func (g *HttpGetter) Get(dst string, u *url.URL) error {
 	}
 
 	// Note: this allows the protocol to be switched to another configured getters.
-	return Get(dst, source, opts...)
+	result := Get(dst, source, opts...)
+	fmt.Println("result is", result)
+	return result
 }
 
 // GetFile fetches the file from src and stores it at dst.

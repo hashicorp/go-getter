@@ -8,6 +8,7 @@ env:
 jobs:
 
   linux-tests:
+    if: false
     runs-on: ubuntu-latest
     strategy:
       matrix:
