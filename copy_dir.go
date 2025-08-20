@@ -27,6 +27,7 @@ func copyDir(ctx context.Context, dst string, src string, ignoreDot bool, disabl
 	fmt.Println("copyDir - 27", src, dst)
 	resolved, err := filepath.EvalSymlinks(src)
 	if err != nil {
+		fmt.Println("copyDir - 30", err)
 		return err
 	}
 
