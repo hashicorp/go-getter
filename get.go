@@ -85,12 +85,14 @@ func init() {
 // folder doesn't need to exist. It will be created if it doesn't exist.
 func Get(dst, src string, opts ...ClientOption) error {
 	fmt.Println("reached here")
-	return (&Client{
+	result := (&Client{
 		Src:     src,
 		Dst:     dst,
 		Dir:     true,
 		Options: opts,
 	}).Get()
+	fmt.Println("result in get.go is", result)
+	return result
 }
 
 // GetAny downloads a URL into the given destination. Unlike Get or

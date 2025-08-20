@@ -371,5 +371,6 @@ func (c *Client) Get() error {
 		return copyDir(c.Ctx, realDst, subDir, false, c.DisableSymlinks, c.umask())
 	}
 
+	fmt.Println("Returning nil")
 	return nil
 }
