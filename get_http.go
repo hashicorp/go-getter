@@ -234,7 +234,6 @@ func (g *HttpGetter) Get(dst string, u *url.URL) error {
 			}
 			g.Client = client
 		}
-	} else {
 	}
 
 	// Pass along the configured HTTP client in the context for usage with the X-Terraform-Get feature.
@@ -294,8 +293,6 @@ func (g *HttpGetter) Get(dst string, u *url.URL) error {
 		if err != nil {
 			return err
 		}
-		if source != "" {
-		}
 	}
 	if source == "" {
 		return fmt.Errorf("no source URL was returned")
@@ -304,9 +301,6 @@ func (g *HttpGetter) Get(dst string, u *url.URL) error {
 	// If there is a subdir component, then we download the root separately
 	// into a temporary directory, then copy over the proper subdir.
 	source, subDir := SourceDirSubdir(source)
-	if subDir != "" {
-	} else {
-	}
 
 	var opts []ClientOption
 
