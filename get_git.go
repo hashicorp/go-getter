@@ -8,7 +8,6 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
-	"io/ioutil"
 	"net/url"
 	"os"
 	"os/exec"
@@ -101,7 +100,7 @@ func (g *GitGetter) Get(dst string, u *url.URL) error {
 		}
 
 		// Create a temp file for the key and ensure it is removed.
-		fh, err := ioutil.TempFile("", "go-getter")
+		fh, err := os.CreateTemp("", "go-getter")
 		if err != nil {
 			return err
 		}

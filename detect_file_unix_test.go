@@ -7,7 +7,6 @@
 package getter
 
 import (
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -16,7 +15,7 @@ import (
 // If a relative symlink is passed in as the pwd to Detect, the resulting URL
 // can have an invalid path.
 func TestFileDetector_relativeSymlink(t *testing.T) {
-	tmpDir, err := ioutil.TempDir("", "go-getter")
+	tmpDir, err := os.MkdirTemp("", "go-getter")
 	if err != nil {
 		t.Fatal(err)
 	}
