@@ -14,7 +14,7 @@ require (
 	github.com/mattn/go-colorable v0.0.9 // indirect
 	github.com/mattn/go-runewidth v0.0.4 // indirect
 	github.com/mitchellh/go-homedir v1.1.0
-	github.com/ulikunitz/xz v0.5.10
+	github.com/ulikunitz/xz v0.5.14
 	golang.org/x/net v0.34.0 // indirect
 	golang.org/x/oauth2 v0.7.0
 	google.golang.org/api v0.114.0
