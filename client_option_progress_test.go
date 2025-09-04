@@ -7,7 +7,6 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"path/filepath"
 	"sync"
 	"testing"
@@ -40,8 +39,7 @@ func TestGet_progress(t *testing.T) {
 	defer s.Close()
 
 	{ // dl without tracking
-		dst := tempTestFile(t)
-		defer func() { _ = os.RemoveAll(filepath.Dir(dst)) }()
+		dst := filepath.Join(t.TempDir(), "test-file")
 		if err := GetFile(dst, s.URL+"/file?thig=this&that"); err != nil {
 			t.Fatalf("download failed: %v", err)
 		}
@@ -49,8 +47,7 @@ func TestGet_progress(t *testing.T) {
 
 	{ // tracking
 		p := &MockProgressTracking{}
-		dst := tempTestFile(t)
-		defer func() { _ = os.RemoveAll(filepath.Dir(dst)) }()
+		dst := filepath.Join(t.TempDir(), "test-file")
 		if err := GetFile(dst, s.URL+"/file?thig=this&that", WithProgress(p)); err != nil {
 			t.Fatalf("download failed: %v", err)
 		}

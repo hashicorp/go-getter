@@ -31,7 +31,7 @@ func TestHttpGetter_header(t *testing.T) {
 	defer func() { _ = ln.Close() }()
 
 	g := new(HttpGetter)
-	dst := tempDir(t)
+	dst := filepath.Join(t.TempDir(), "target")
 	defer func() { _ = os.RemoveAll(dst) }()
 
 	var u url.URL
@@ -78,7 +78,7 @@ func TestHttpGetter_requestHeader(t *testing.T) {
 	g := new(HttpGetter)
 	g.Header = make(http.Header)
 	g.Header.Add("X-Foobar", "foobar")
-	dst := tempDir(t)
+	dst := filepath.Join(t.TempDir(), "target")
 	defer func() { _ = os.RemoveAll(dst) }()
 
 	var u url.URL
@@ -104,7 +104,7 @@ func TestHttpGetter_meta(t *testing.T) {
 	defer func() { _ = ln.Close() }()
 
 	g := new(HttpGetter)
-	dst := tempDir(t)
+	dst := filepath.Join(t.TempDir(), "target")
 	defer func() { _ = os.RemoveAll(dst) }()
 
 	var u url.URL
@@ -148,7 +148,7 @@ func TestHttpGetter_metaSubdir(t *testing.T) {
 	defer func() { _ = ln.Close() }()
 
 	g := new(HttpGetter)
-	dst := tempDir(t)
+	dst := filepath.Join(t.TempDir(), "target")
 	defer func() { _ = os.RemoveAll(dst) }()
 
 	var u url.URL
@@ -173,7 +173,7 @@ func TestHttpGetter_metaSubdirGlob(t *testing.T) {
 	defer func() { _ = ln.Close() }()
 
 	g := new(HttpGetter)
-	dst := tempDir(t)
+	dst := filepath.Join(t.TempDir(), "target")
 	defer func() { _ = os.RemoveAll(dst) }()
 
 	var u url.URL
@@ -198,7 +198,7 @@ func TestHttpGetter_none(t *testing.T) {
 	defer func() { _ = ln.Close() }()
 
 	g := new(HttpGetter)
-	dst := tempDir(t)
+	dst := filepath.Join(t.TempDir(), "target")
 	defer func() { _ = os.RemoveAll(dst) }()
 
 	var u url.URL
@@ -224,7 +224,7 @@ func TestHttpGetter_resume(t *testing.T) {
 	ln := testHttpServer(t)
 	defer func() { _ = ln.Close() }()
 
-	dst := tempDir(t)
+	dst := filepath.Join(t.TempDir(), "target")
 	defer func() { _ = os.RemoveAll(dst) }()
 
 	dst = filepath.Join(dst, "..", "range")
@@ -280,7 +280,7 @@ func TestHttpGetter_resumeNoRange(t *testing.T) {
 	ln := testHttpServer(t)
 	defer func() { _ = ln.Close() }()
 
-	dst := tempDir(t)
+	dst := filepath.Join(t.TempDir(), "target")
 	defer func() { _ = os.RemoveAll(dst) }()
 
 	dst = filepath.Join(dst, "..", "range")
@@ -323,8 +323,7 @@ func TestHttpGetter_file(t *testing.T) {
 	defer func() { _ = ln.Close() }()
 
 	g := new(HttpGetter)
-	dst := tempTestFile(t)
-	defer func() { _ = os.RemoveAll(filepath.Dir(dst)) }()
+	dst := filepath.Join(t.TempDir(), "test-file")
 
 	var u url.URL
 	u.Scheme = "http"
@@ -352,7 +351,7 @@ func TestHttpGetter_http2server(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	dst := tempTestFile(t)
+	dst := filepath.Join(t.TempDir(), "test-file")
 
 	err = g.GetFile(dst, src)
 	if err != nil {
@@ -365,7 +364,7 @@ func TestHttpGetter_auth(t *testing.T) {
 	defer func() { _ = ln.Close() }()
 
 	g := new(HttpGetter)
-	dst := tempDir(t)
+	dst := filepath.Join(t.TempDir(), "target")
 	defer func() { _ = os.RemoveAll(dst) }()
 
 	var u url.URL
@@ -404,7 +403,7 @@ func TestHttpGetter_authNetrc(t *testing.T) {
 	defer func() { _ = ln.Close() }()
 
 	g := new(HttpGetter)
-	dst := tempDir(t)
+	dst := filepath.Join(t.TempDir(), "target")
 	defer func() { _ = os.RemoveAll(dst) }()
 
 	var u url.URL
@@ -467,7 +466,7 @@ func TestHttpGetter_cleanhttp(t *testing.T) {
 	}()
 
 	g := new(HttpGetter)
-	dst := tempDir(t)
+	dst := filepath.Join(t.TempDir(), "target")
 	defer func() { _ = os.RemoveAll(dst) }()
 
 	var u url.URL
@@ -510,7 +509,7 @@ func TestHttpGetter__RespectsContextCanceled(t *testing.T) {
 	u.Scheme = "http"
 	u.Host = ln.Addr().String()
 	u.Path = "/file"
-	dst := tempDir(t)
+	dst := filepath.Join(t.TempDir(), "target")
 
 	rt := hookableHTTPRoundTripper{
 		before: func(req *http.Request) {
@@ -546,7 +545,7 @@ func TestHttpGetter__XTerraformGetLimit(t *testing.T) {
 	u.Scheme = "http"
 	u.Host = ln.Addr().String()
 	u.Path = "/loop"
-	dst := tempDir(t)
+	dst := filepath.Join(t.TempDir(), "target")
 
 	g := new(HttpGetter)
 	g.XTerraformGetLimit = 10
@@ -571,7 +570,7 @@ func TestHttpGetter__XTerraformGetDisabled(t *testing.T) {
 	u.Scheme = "http"
 	u.Host = ln.Addr().String()
 	u.Path = "/loop"
-	dst := tempDir(t)
+	dst := filepath.Join(t.TempDir(), "target")
 
 	g := new(HttpGetter)
 	g.XTerraformGetDisabled = true
@@ -606,7 +605,7 @@ func TestHttpGetter__XTerraformGetDetected(t *testing.T) {
 	u.Scheme = "http"
 	u.Host = ln.Addr().String()
 	u.Path = "/first"
-	dst := tempDir(t)
+	dst := filepath.Join(t.TempDir(), "target")
 
 	c := &Client{
 		Ctx:  ctx,
@@ -642,7 +641,7 @@ func TestHttpGetter__XTerraformGetProxyBypass(t *testing.T) {
 	u.Scheme = "http"
 	u.Host = ln.Addr().String()
 	u.Path = "/start"
-	dst := tempDir(t)
+	dst := filepath.Join(t.TempDir(), "target")
 
 	proxy, err := url.Parse(fmt.Sprintf("http://%s/", proxyLn.Addr().String()))
 	if err != nil {
@@ -684,7 +683,7 @@ func TestHttpGetter__XTerraformGetConfiguredGettersBypass(t *testing.T) {
 	u.Scheme = "http"
 	u.Host = ln.Addr().String()
 	u.Path = "/start"
-	dst := tempDir(t)
+	dst := filepath.Join(t.TempDir(), "target")
 
 	rt := hookableHTTPRoundTripper{
 		before: func(req *http.Request) {
@@ -730,7 +729,7 @@ func TestHttpGetter__endless_body(t *testing.T) {
 	u.Scheme = "http"
 	u.Host = ln.Addr().String()
 	u.Path = "/"
-	dst := tempDir(t)
+	dst := filepath.Join(t.TempDir(), "target")
 
 	httpGetter := new(HttpGetter)
 	httpGetter.MaxBytes = 10

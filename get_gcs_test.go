@@ -23,7 +23,7 @@ func TestGCSGetter(t *testing.T) {
 	}
 
 	g := new(GCSGetter)
-	dst := tempDir(t)
+	dst := t.TempDir()
 
 	// With a dir that doesn't exist
 	err := g.Get(
@@ -45,7 +45,7 @@ func TestGCSGetter_subdir(t *testing.T) {
 	}
 
 	g := new(GCSGetter)
-	dst := tempDir(t)
+	dst := t.TempDir()
 
 	// With a dir that doesn't exist
 	err := g.Get(
@@ -67,8 +67,7 @@ func TestGCSGetter_GetFile(t *testing.T) {
 	}
 
 	g := new(GCSGetter)
-	dst := tempTestFile(t)
-	defer func() { _ = os.RemoveAll(filepath.Dir(dst)) }()
+	dst := filepath.Join(t.TempDir(), "test-file")
 
 	// Download
 	err := g.GetFile(
@@ -90,8 +89,7 @@ func TestGCSGetter_GetGenerationFile(t *testing.T) {
 	}
 
 	g := new(GCSGetter)
-	dst := tempTestFile(t)
-	defer func() { _ = os.RemoveAll(filepath.Dir(dst)) }()
+	dst := filepath.Join(t.TempDir(), "test-file")
 
 	// Download Previous Version
 	err := g.GetFile(
@@ -133,8 +131,7 @@ func TestGCSGetter_GetFile_notfound(t *testing.T) {
 	}
 
 	g := new(GCSGetter)
-	dst := tempTestFile(t)
-	defer func() { _ = os.RemoveAll(filepath.Dir(dst)) }()
+	dst := filepath.Join(t.TempDir(), "test-file")
 
 	// Download
 	err := g.GetFile(
@@ -251,8 +248,7 @@ func TestGCSGetter_GetFile_OAuthAccessToken(t *testing.T) {
 		t.Skip("Skipping; set GOOGLE_OAUTH_ACCESS_TOKEN to run")
 	}
 	g := new(GCSGetter)
-	dst := tempTestFile(t)
-	defer func() { _ = os.RemoveAll(filepath.Dir(dst)) }()
+	dst := filepath.Join(t.TempDir(), "test-file")
 
 	// Download
 	err := g.GetFile(
