@@ -17,23 +17,6 @@ import (
 
 const fixtureDir = "./testdata"
 
-func tempDir(t *testing.T) string {
-	dir, err := os.MkdirTemp("", "tf")
-	if err != nil {
-		t.Fatalf("err: %s", err)
-	}
-	if err := os.RemoveAll(dir); err != nil {
-		t.Fatalf("err: %s", err)
-	}
-
-	return dir
-}
-
-func tempTestFile(t *testing.T) string {
-	dir := tempDir(t)
-	return filepath.Join(dir, "foo")
-}
-
 func testModule(n string) string {
 	p := filepath.Join(fixtureDir, n)
 	p, err := filepath.Abs(p)

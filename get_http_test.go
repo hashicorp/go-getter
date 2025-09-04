@@ -759,10 +759,7 @@ func TestHttpGetter_subdirLink(t *testing.T) {
 	defer func() { _ = ln.Close() }()
 
 	httpGetter := new(HttpGetter)
-	dst, err := os.MkdirTemp("", "tf")
-	if err != nil {
-		t.Fatalf("err: %s", err)
-	}
+	dst := t.TempDir()
 
 	t.Logf("dst: %q", dst)
 
@@ -782,7 +779,7 @@ func TestHttpGetter_subdirLink(t *testing.T) {
 		},
 	}
 
-	err = client.Get()
+	err := client.Get()
 	if err != nil {
 		t.Fatalf("get err: %v", err)
 	}
