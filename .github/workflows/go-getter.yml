@@ -38,9 +38,6 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-go-
 
-      - name: Download go modules
-        run: go mod download
-
       # Check go fmt output because it does not report non-zero when there are fmt changes
       - name: Run gofmt
         run: |
@@ -101,9 +98,6 @@ jobs:
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
           restore-keys: |
             ${{ runner.os }}-go-
-
-      - name: Download go modules
-        run: go mod download
 
       - name: Install gotestsum
         run: go install gotest.tools/gotestsum@v1.8.2
@@ -169,9 +163,6 @@ jobs:
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
           restore-keys: |
             ${{ runner.os }}-go-
-
-      - name: Download go modules
-        run: go mod download
 
       - name: Install gotestsum
         shell: bash
