@@ -22,6 +22,10 @@ func TestS3Getter_impl(t *testing.T) {
 }
 
 func TestS3Getter(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping test that requires AWS credentials in short mode")
+	}
+
 	g := new(S3Getter)
 	dst := tempDir(t)
 
@@ -40,6 +44,10 @@ func TestS3Getter(t *testing.T) {
 }
 
 func TestS3Getter_subdir(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping test that requires AWS credentials in short mode")
+	}
+
 	g := new(S3Getter)
 	dst := tempDir(t)
 
@@ -58,6 +66,10 @@ func TestS3Getter_subdir(t *testing.T) {
 }
 
 func TestS3Getter_GetFile(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping test that requires AWS credentials in short mode")
+	}
+
 	g := new(S3Getter)
 	dst := tempTestFile(t)
 	defer func() { _ = os.RemoveAll(filepath.Dir(dst)) }()
@@ -77,6 +89,10 @@ func TestS3Getter_GetFile(t *testing.T) {
 }
 
 func TestS3Getter_GetFile_badParams(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping test that requires AWS credentials in short mode")
+	}
+
 	g := new(S3Getter)
 	dst := tempTestFile(t)
 	defer func() { _ = os.RemoveAll(filepath.Dir(dst)) }()
@@ -96,6 +112,10 @@ func TestS3Getter_GetFile_badParams(t *testing.T) {
 }
 
 func TestS3Getter_GetFile_notfound(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping test that requires AWS credentials in short mode")
+	}
+
 	g := new(S3Getter)
 	dst := tempTestFile(t)
 	defer func() { _ = os.RemoveAll(filepath.Dir(dst)) }()
@@ -109,6 +129,10 @@ func TestS3Getter_GetFile_notfound(t *testing.T) {
 }
 
 func TestS3Getter_ClientMode_dir(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping test that requires AWS credentials in short mode")
+	}
+
 	g := new(S3Getter)
 
 	// Check client mode on a key prefix with only a single key.
@@ -123,6 +147,10 @@ func TestS3Getter_ClientMode_dir(t *testing.T) {
 }
 
 func TestS3Getter_ClientMode_file(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping test that requires AWS credentials in short mode")
+	}
+
 	g := new(S3Getter)
 
 	// Check client mode on a key prefix which contains sub-keys.
@@ -137,6 +165,10 @@ func TestS3Getter_ClientMode_file(t *testing.T) {
 }
 
 func TestS3Getter_ClientMode_notfound(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping test that requires AWS credentials in short mode")
+	}
+
 	g := new(S3Getter)
 
 	// Check the client mode when a non-existent key is looked up. This does not
@@ -155,6 +187,10 @@ func TestS3Getter_ClientMode_notfound(t *testing.T) {
 }
 
 func TestS3Getter_ClientMode_collision(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping test that requires AWS credentials in short mode")
+	}
+
 	g := new(S3Getter)
 
 	// Check that the client mode is "file" if there is both an object and a
