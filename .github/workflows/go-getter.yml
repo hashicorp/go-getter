@@ -130,7 +130,7 @@ jobs:
           PACKAGE_NAMES=$(go list ./...)
           echo "Running $(echo $PACKAGE_NAMES | wc -w) packages"
           echo $PACKAGE_NAMES
-          gotestsum --format=short-verbose --junitfile $TEST_RESULTS_PATH/go-getter/gotestsum-report.xml -- -tags=integration -p 2 -cover -coverprofile=linux_cov.part $PACKAGE_NAMES
+          gotestsum --format=short-verbose --junitfile $TEST_RESULTS_PATH/go-getter/gotestsum-report.xml -- -p 2 -cover -coverprofile=linux_cov.part $PACKAGE_NAMES
 
       # Save coverage report parts
       - name: Upload and save artifacts
@@ -201,7 +201,7 @@ jobs:
           PACKAGE_NAMES=$(go list ./...)
           echo "Running $(echo $PACKAGE_NAMES | wc -w) packages"
           echo $PACKAGE_NAMES
-          gotestsum --format=short-verbose --junitfile $TEST_RESULTS_PATH/go-getter/gotestsum-report.xml -- -tags=integration -p 2 -cover -race -coverprofile=win_cov.part $PACKAGE_NAMES
+          gotestsum --format=short-verbose --junitfile $TEST_RESULTS_PATH/go-getter/gotestsum-report.xml -- -p 2 -cover -race -coverprofile=win_cov.part $PACKAGE_NAMES
 
       # Save coverage report parts
       - name: Upload and save artifacts
