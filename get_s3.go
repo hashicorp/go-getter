@@ -230,12 +230,7 @@ func (g *S3Getter) getAWSConfig(region string, url *url.URL, staticCreds *creden
 	if creds != nil {
 		loadOptions = append(loadOptions,
 			config.WithEC2IMDSClientEnableState(imds.ClientEnabled),
-			config.WithCredentialsProvider(creds),
-			config.WithEndpointResolverWithOptions(aws.EndpointResolverWithOptionsFunc(
-				func(service, region string, options ...interface{}) (aws.Endpoint, error) {
-					return aws.Endpoint{URL: url.Host}, nil
-				},
-			)))
+			config.WithCredentialsProvider(creds))
 	}
 
 	conf.Credentials = creds
@@ -364,7 +359,22 @@ func (g *S3Getter) newS3Client(
 		return nil, err
 	}
 
-	return s3.NewFromConfig(cfg, func(opts *s3.Options) {
+	// Check if this is a custom S3-compatible endpoint (not AWS)
+	var isAWSDomain bool
+	for _, partition := range endpoints.DefaultPartitions() {
+		if strings.HasSuffix(url.Host, partition.DNSSuffix()) {
+			isAWSDomain = true
+			break
+		}
+	}
+
+	clientOptions := func(opts *s3.Options) {
 		opts.UsePathStyle = true
-	}), nil
+		// If it's not an AWS domain, set the custom endpoint
+		if !isAWSDomain {
+			opts.BaseEndpoint = aws.String("https://" + url.Host)
+		}
+	}
+
+	return s3.NewFromConfig(cfg, clientOptions), nil
 }
