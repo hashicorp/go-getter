@@ -110,9 +110,10 @@ func TestHgGetter_HgArgumentsNotAllowed(t *testing.T) {
 
 	g := new(HgGetter)
 
-	// If arguments are allowed in the destination, this Get call will fail
-	dst := "--config=alias.clone=!false"
-	defer func() { _ = os.RemoveAll(dst) }()
+	// Test that destination paths that look like hg arguments are treated as literal paths
+	// Create the problematic directory name inside a temp directory for cleanup
+	tempBase := t.TempDir()
+	dst := filepath.Join(tempBase, "--config=alias.clone=!false")
 	err := g.Get(dst, testModuleURL("basic-hg"))
 	if err != nil {
 		t.Fatalf("Expected no err, got: %s", err)
