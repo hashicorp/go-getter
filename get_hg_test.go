@@ -31,7 +31,7 @@ func TestHgGetter(t *testing.T) {
 	}
 
 	g := new(HgGetter)
-	dst := t.TempDir()
+	dst := filepath.Join(t.TempDir(), "dst")
 
 	// With a dir that doesn't exist
 	if err := g.Get(dst, testModuleURL("basic-hg")); err != nil {
@@ -52,7 +52,7 @@ func TestHgGetter_branch(t *testing.T) {
 	}
 
 	g := new(HgGetter)
-	dst := t.TempDir()
+	dst := filepath.Join(t.TempDir(), "dst")
 
 	url := testModuleURL("basic-hg")
 	q := url.Query()
@@ -118,7 +118,7 @@ func TestHgGetter_HgArgumentsNotAllowed(t *testing.T) {
 		t.Fatalf("Expected no err, got: %s", err)
 	}
 
-	dst = t.TempDir()
+	dst = filepath.Join(t.TempDir(), "dst")
 	// Test arguments passed into the `rev` parameter
 	// This clone call will fail regardless, but an exit code of 1 indicates
 	// that the `false` command executed
@@ -130,7 +130,7 @@ func TestHgGetter_HgArgumentsNotAllowed(t *testing.T) {
 		}
 	}
 
-	dst = t.TempDir()
+	dst = filepath.Join(t.TempDir(), "dst")
 	// Test arguments passed in the repository URL
 	// This Get call will fail regardless, but it should fail
 	// because the repository can't be found.
