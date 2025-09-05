@@ -14,7 +14,7 @@ func TestFolderStorage_impl(t *testing.T) {
 }
 
 func TestFolderStorage(t *testing.T) {
-	s := &FolderStorage{StorageDir: tempDir(t)}
+	s := &FolderStorage{StorageDir: t.TempDir()}
 
 	module := testModule("basic")
 

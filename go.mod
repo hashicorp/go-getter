@@ -57,4 +57,4 @@ require (
 	gopkg.in/cheggaaa/pb.v1 v1.0.27 // indirect
 )
 
-go 1.23.6
+go 1.24

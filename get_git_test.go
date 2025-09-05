@@ -9,7 +9,6 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"net/url"
 	"os"
 	"os/exec"
@@ -39,7 +38,7 @@ func TestGitGetter(t *testing.T) {
 	}
 
 	g := new(GitGetter)
-	dst := tempDir(t)
+	dst := filepath.Join(t.TempDir(), "target")
 
 	repo := testGitRepo(t, "basic")
 	repo.commitFile("foo.txt", "hello")
@@ -62,7 +61,7 @@ func TestGitGetter_branch(t *testing.T) {
 	}
 
 	g := new(GitGetter)
-	dst := tempDir(t)
+	dst := filepath.Join(t.TempDir(), "target")
 
 	repo := testGitRepo(t, "branch")
 	repo.git("checkout", "-b", "test-branch")
@@ -100,7 +99,7 @@ func TestGitGetter_commitID(t *testing.T) {
 	}
 
 	g := new(GitGetter)
-	dst := tempDir(t)
+	dst := filepath.Join(t.TempDir(), "target")
 
 	// We're going to create different content on the main branch vs.
 	// another branch here, so that below we can recognize if we
@@ -153,7 +152,7 @@ func TestGitGetter_remoteWithoutMaster(t *testing.T) {
 	}
 
 	g := new(GitGetter)
-	dst := tempDir(t)
+	dst := filepath.Join(t.TempDir(), "target")
 
 	repo := testGitRepo(t, "branch")
 	repo.git("checkout", "-b", "test-branch")
@@ -172,7 +171,7 @@ func TestGitGetter_remoteWithoutMaster(t *testing.T) {
 		t.Fatalf("err: %s", err)
 	}
 
-	dst2 := tempDir(t)
+	dst2 := filepath.Join(t.TempDir(), "target2")
 	// Get again should work
 	if err := g.Get(dst2, repo.url); err != nil {
 		t.Fatalf("err: %s", err)
@@ -192,7 +191,7 @@ func TestGitGetter_shallowClone(t *testing.T) {
 	}
 
 	g := new(GitGetter)
-	dst := tempDir(t)
+	dst := filepath.Join(t.TempDir(), "target")
 
 	repo := testGitRepo(t, "upstream")
 	repo.commitFile("upstream.txt", "0")
@@ -228,7 +227,7 @@ func TestGitGetter_shallowCloneWithTag(t *testing.T) {
 	}
 
 	g := new(GitGetter)
-	dst := tempDir(t)
+	dst := filepath.Join(t.TempDir(), "target")
 
 	repo := testGitRepo(t, "upstream")
 	repo.commitFile("v1.0.txt", "0")
@@ -278,7 +277,7 @@ func TestGitGetter_shallowCloneWithCommitID(t *testing.T) {
 	}
 
 	g := new(GitGetter)
-	dst := tempDir(t)
+	dst := filepath.Join(t.TempDir(), "target")
 
 	repo := testGitRepo(t, "upstream")
 	repo.commitFile("v1.0.txt", "0")
@@ -315,7 +314,7 @@ func TestGitGetter_branchUpdate(t *testing.T) {
 	}
 
 	g := new(GitGetter)
-	dst := tempDir(t)
+	dst := filepath.Join(t.TempDir(), "target")
 
 	// First setup the state with a fresh branch
 	repo := testGitRepo(t, "branch-update")
@@ -357,7 +356,7 @@ func TestGitGetter_tag(t *testing.T) {
 	}
 
 	g := new(GitGetter)
-	dst := tempDir(t)
+	dst := filepath.Join(t.TempDir(), "target")
 
 	repo := testGitRepo(t, "tag")
 	repo.commitFile("tag.txt", "tag")
@@ -395,8 +394,7 @@ func TestGitGetter_GetFile(t *testing.T) {
 	}
 
 	g := new(GitGetter)
-	dst := tempTestFile(t)
-	defer func() { _ = os.RemoveAll(filepath.Dir(dst)) }()
+	dst := filepath.Join(t.TempDir(), "test-file")
 
 	repo := testGitRepo(t, "file")
 	repo.commitFile("file.txt", "hello")
@@ -421,14 +419,10 @@ func TestGitGetter_gitVersion(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("skipping on windows since the test requires sh")
 	}
-	dir, err := ioutil.TempDir("", "go-getter")
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer func() { _ = os.RemoveAll(dir) }()
+	dir := t.TempDir()
 
 	script := filepath.Join(dir, "git")
-	err = ioutil.WriteFile(
+	err := os.WriteFile(
 		script,
 		[]byte("#!/bin/sh\necho \"git version 2.0 (Some Metadata Here)\n\""),
 		0700)
@@ -459,7 +453,7 @@ func TestGitGetter_sshKey(t *testing.T) {
 	}
 
 	g := new(GitGetter)
-	dst := tempDir(t)
+	dst := filepath.Join(t.TempDir(), "target")
 
 	encodedKey := base64.StdEncoding.EncodeToString([]byte(testGitToken))
 
@@ -489,7 +483,7 @@ func TestGitGetter_sshSCPStyle(t *testing.T) {
 	}
 
 	g := new(GitGetter)
-	dst := tempDir(t)
+	dst := filepath.Join(t.TempDir(), "target")
 
 	encodedKey := base64.StdEncoding.EncodeToString([]byte(testGitToken))
 
@@ -530,7 +524,7 @@ func TestGitGetter_sshExplicitPort(t *testing.T) {
 	}
 
 	g := new(GitGetter)
-	dst := tempDir(t)
+	dst := filepath.Join(t.TempDir(), "target")
 
 	encodedKey := base64.StdEncoding.EncodeToString([]byte(testGitToken))
 
@@ -571,7 +565,7 @@ func TestGitGetter_sshSCPStyleInvalidScheme(t *testing.T) {
 	}
 
 	g := new(GitGetter)
-	dst := tempDir(t)
+	dst := filepath.Join(t.TempDir(), "target")
 
 	encodedKey := base64.StdEncoding.EncodeToString([]byte(testGitToken))
 
@@ -614,7 +608,7 @@ func TestGitGetter_submodule(t *testing.T) {
 	}
 
 	g := new(GitGetter)
-	dst := tempDir(t)
+	dst := filepath.Join(t.TempDir(), "target")
 
 	relpath := func(basepath, targpath string) string {
 		relpath, err := filepath.Rel(basepath, targpath)
@@ -732,9 +726,9 @@ func TestGitGetter_subdirectory_symlink(t *testing.T) {
 	}
 
 	g := new(GitGetter)
-	dst := tempDir(t)
+	dst := filepath.Join(t.TempDir(), "target")
 
-	target, err := ioutil.TempFile("", "link-target")
+	target, err := os.CreateTemp("", "link-target")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -813,7 +807,7 @@ func TestGitGetter_subdirectory_malicious_symlink(t *testing.T) {
 	}
 
 	g := new(GitGetter)
-	dst := tempDir(t)
+	dst := filepath.Join(t.TempDir(), "target")
 
 	repo := testGitRepo(t, "empty-repo")
 	repo.git("config", "commit.gpgsign", "false")
@@ -868,7 +862,7 @@ func TestGitGetter_subdirectory(t *testing.T) {
 	}
 
 	g := new(GitGetter)
-	dst := tempDir(t)
+	dst := filepath.Join(t.TempDir(), "target")
 
 	repo := testGitRepo(t, "empty-repo")
 	u, err := url.Parse(fmt.Sprintf("git::%s//../../../../../../etc/passwd", repo.url.String()))
@@ -908,7 +902,7 @@ func TestGitGetter_BadRemoteUrl(t *testing.T) {
 	}
 
 	g := new(GitGetter)
-	dst := tempDir(t)
+	dst := filepath.Join(t.TempDir(), "target")
 
 	// try an option that exists
 	badUrl := "--no-refs"
@@ -938,7 +932,7 @@ func TestGitGetter_BadGitConfig(t *testing.T) {
 
 	ctx := context.Background()
 	g := new(GitGetter)
-	dst := tempDir(t)
+	dst := filepath.Join(t.TempDir(), "target")
 
 	url, err := url.Parse("https://github.com/hashicorp/go-getter")
 	if err != nil {
@@ -994,7 +988,7 @@ func TestGitGetter_BadGitDirName(t *testing.T) {
 
 	ctx := context.Background()
 	g := new(GitGetter)
-	dst := tempDir(t)
+	dst := filepath.Join(t.TempDir(), "target")
 
 	url, err := url.Parse("https://github.com/hashicorp/go-getter")
 	if err != nil {
@@ -1055,7 +1049,7 @@ func TestGitGetter_BadRef(t *testing.T) {
 
 	ctx := context.Background()
 	g := new(GitGetter)
-	dst := tempDir(t)
+	dst := filepath.Join(t.TempDir(), "target")
 
 	url, err := url.Parse("https://github.com/hashicorp/go-getter")
 	if err != nil {
@@ -1088,10 +1082,7 @@ type gitRepo struct {
 
 // testGitRepo creates a new test git repository.
 func testGitRepo(t *testing.T, name string) *gitRepo {
-	dir, err := ioutil.TempDir("", "go-getter")
-	if err != nil {
-		t.Fatal(err)
-	}
+	dir := t.TempDir()
 	dir = filepath.Join(dir, name)
 	if err := os.Mkdir(dir, 0700); err != nil {
 		t.Fatal(err)
@@ -1130,7 +1121,7 @@ func (r *gitRepo) git(args ...string) {
 // commitFile writes and commits a text file to the repo.
 func (r *gitRepo) commitFile(file, content string) {
 	path := filepath.Join(r.dir, file)
-	if err := ioutil.WriteFile(path, []byte(content), 0600); err != nil {
+	if err := os.WriteFile(path, []byte(content), 0600); err != nil {
 		r.t.Fatal(err)
 	}
 	r.git("add", file)

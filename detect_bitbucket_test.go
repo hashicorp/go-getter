@@ -38,7 +38,7 @@ func TestBitBucketDetector(t *testing.T) {
 	f := new(BitBucketDetector)
 	for i, tc := range cases {
 		var err error
-		for i := 0; i < 3; i++ {
+		for i := range 3 {
 			var output string
 			var ok bool
 			output, ok, err = f.Detect(tc.Input, pwd)
