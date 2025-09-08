@@ -9,13 +9,13 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"net"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strconv"
 	"strings"
 	"testing"
@@ -141,44 +141,6 @@ func TestHttpGetter_meta(t *testing.T) {
 	}
 }
 
-func tempDir(t *testing.T) string {
-	dir, err := ioutil.TempDir("", "tf")
-	if err != nil {
-		t.Fatalf("err: %s", err)
-	}
-	if err := os.RemoveAll(dir); err != nil {
-		t.Fatalf("err: %s", err)
-	}
-
-	return dir
-}
-
-func TestHttpGetter_metaSubdir(t *testing.T) {
-	ln := testHttpServer(t)
-	defer func() { _ = ln.Close() }()
-
-	g := new(HttpGetter)
-	dst := tempDir(t)
-	defer func() { _ = os.RemoveAll(dst) }()
-
-	var u url.URL
-	u.Scheme = "http"
-	u.Host = ln.Addr().String()
-	u.Path = "/meta-subdir"
-
-	// Get it!
-	if err := g.Get(dst, &u); err != nil {
-		t.Fatalf("err: %s", err)
-	}
-
-	// Verify the main file exists
-	mainPath := filepath.Join(dst, "sub.tf")
-	if _, err := os.Stat(mainPath); err != nil {
-		t.Fatalf("err: %s", err)
-	}
-}
-
-/*
 func TestHttpGetter_metaSubdir(t *testing.T) {
 	// Skip this test on Windows due to file:// URL subdirectory resolution issues
 	if runtime.GOOS == "windows" {
@@ -189,8 +151,6 @@ func TestHttpGetter_metaSubdir(t *testing.T) {
 	defer func() { _ = ln.Close() }()
 
 	g := new(HttpGetter)
-	// Use a subdirectory within t.TempDir() that doesn't exist yet
-	// This mimics the old tempDir behavior but is safer
 	dst := filepath.Join(t.TempDir(), "nonexistent", "target")
 
 	var u url.URL
@@ -220,8 +180,6 @@ func TestHttpGetter_metaSubdirGlob(t *testing.T) {
 	defer func() { _ = ln.Close() }()
 
 	g := new(HttpGetter)
-	// Use a subdirectory within t.TempDir() that doesn't exist yet
-	// This mimics the old tempDir behavior but is safer
 	dst := filepath.Join(t.TempDir(), "nonexistent", "target")
 
 	var u url.URL
@@ -239,7 +197,7 @@ func TestHttpGetter_metaSubdirGlob(t *testing.T) {
 	if _, err := os.Stat(mainPath); err != nil {
 		t.Fatalf("err: %s", err)
 	}
-}*/
+}
 
 func TestHttpGetter_none(t *testing.T) {
 	ln := testHttpServer(t)
