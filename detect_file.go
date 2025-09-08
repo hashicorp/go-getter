@@ -34,7 +34,7 @@ func (d *FileDetector) Detect(src, pwd string) (string, bool, error) {
 			if err != nil {
 				return "", true, err
 			}
-			if fi.Mode()&os.ModeSymlink != 0 {
+			if isSymlinkOrReparsePoint(fi.Mode()) {
 				pwd, err = filepath.EvalSymlinks(pwd)
 				if err != nil {
 					return "", true, err

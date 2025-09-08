@@ -1,6 +1,7 @@
 // Copyright (c) HashiCorp, Inc.
 // SPDX-License-Identifier: MPL-2.0
 
+//go:build !windows
 // +build !windows
 
 package getter
@@ -33,7 +34,7 @@ func (g *FileGetter) Get(dst string, u *url.URL) error {
 	// If the destination already exists, it must be a symlink
 	if err == nil {
 		mode := fi.Mode()
-		if mode&os.ModeSymlink == 0 {
+		if !isSymlinkOrReparsePoint(mode) {
 			return fmt.Errorf("destination exists and is not a symlink")
 		}
 

@@ -47,7 +47,7 @@ func copyDir(ctx context.Context, dst string, src string, ignoreDot bool, disabl
 			if err != nil {
 				return fmt.Errorf("failed to check copy file source for symlinks: %w", err)
 			}
-			if fileInfo.Mode()&os.ModeSymlink == os.ModeSymlink {
+			if isSymlinkOrReparsePoint(fileInfo.Mode()) {
 				return ErrSymlinkCopy
 			}
 		}
