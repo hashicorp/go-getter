@@ -117,8 +117,7 @@ func resolveSymlinks(src string) (string, error) {
 		return src, nil
 	}
 
-	// If junction detection failed or it's not a junction, but the path exists,
-	// fall back to using the original path on Windows for compatibility
-	// This maintains the original behavior of falling back when EvalSymlinks fails
-	return src, nil
+	// If junction detection failed or it's not a junction, return the original error
+	// This ensures real errors (permissions, network, etc.) are reported properly
+	return "", err
 }
