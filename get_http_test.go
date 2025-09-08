@@ -139,7 +139,7 @@ func TestHttpGetter_metaSubdir(t *testing.T) {
 	defer func() { _ = ln.Close() }()
 
 	g := new(HttpGetter)
-	dst := filepath.Join(t.TempDir(), "nonexistent", "target")
+	dst := filepath.Join(t.TempDir(), "target")
 
 	var u url.URL
 	u.Scheme = "http"
@@ -163,7 +163,7 @@ func TestHttpGetter_metaSubdirGlob(t *testing.T) {
 	defer func() { _ = ln.Close() }()
 
 	g := new(HttpGetter)
-	dst := filepath.Join(t.TempDir(), "nonexistent", "target")
+	dst := filepath.Join(t.TempDir(), "target")
 
 	var u url.URL
 	u.Scheme = "http"
