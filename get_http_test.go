@@ -145,7 +145,9 @@ func TestHttpGetter_metaSubdir(t *testing.T) {
 	defer func() { _ = ln.Close() }()
 
 	g := new(HttpGetter)
-	dst := filepath.Join(t.TempDir(), "target")
+	// Use a subdirectory within t.TempDir() that doesn't exist yet
+	// This mimics the old tempDir behavior but is safer
+	dst := filepath.Join(t.TempDir(), "nonexistent", "target")
 
 	var u url.URL
 	u.Scheme = "http"
@@ -169,7 +171,9 @@ func TestHttpGetter_metaSubdirGlob(t *testing.T) {
 	defer func() { _ = ln.Close() }()
 
 	g := new(HttpGetter)
-	dst := filepath.Join(t.TempDir(), "target")
+	// Use a subdirectory within t.TempDir() that doesn't exist yet
+	// This mimics the old tempDir behavior but is safer
+	dst := filepath.Join(t.TempDir(), "nonexistent", "target")
 
 	var u url.URL
 	u.Scheme = "http"
