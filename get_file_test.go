@@ -36,8 +36,7 @@ func TestFileGetter(t *testing.T) {
 	}
 
 	if runtime.GOOS == "windows" {
-		// Use the robust junction detection from copy_dir.go
-		isJunction, junctionErr := isWindowsJunctionPoint(dst)
+		isJunction, junctionErr := isWindowsJunctionPointWinAPI(dst)
 		if junctionErr != nil {
 			t.Fatalf("failed to check if destination is a junction point: %s", junctionErr)
 		}

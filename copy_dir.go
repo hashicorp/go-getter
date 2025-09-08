@@ -112,28 +112,10 @@ func resolveSymlinks(src string) (string, error) {
 
 	// Path exists but EvalSymlinks failed - likely a junction point or similar
 	// Check if this is a junction point
-	if isJunction, junctionErr := isWindowsJunctionPoint(src); junctionErr == nil && isJunction {
+	if isJunction, junctionErr := isWindowsJunctionPointWinAPI(src); junctionErr == nil && isJunction {
 		// Confirmed junction point - use original path
 		return src, nil
 	}
 
-	// Path exists but EvalSymlinks failed and it's not a detectable junction
-	// This could be due to:
-	// 1. Newer Go version handling of Windows symlinks/junctions
-	// 2. Permission issues that don't prevent Stat but prevent EvalSymlinks
-	// 3. Other Windows-specific path resolution issues
-	//
-	// Since the path exists and we're on Windows, fall back to the original path
-	// This maintains compatibility similar to the original behavior
-	return src, nil
-}
-
-// isWindowsJunctionPoint detects Windows junction points using Windows API for reliable detection.
-func isWindowsJunctionPoint(path string) (bool, error) {
-	if runtime.GOOS != "windows" {
-		return false, nil
-	}
-
-	// Use the robust Windows API approach for definitive detection
-	return isWindowsJunctionPointWinAPI(path)
+	return "", err
 }
