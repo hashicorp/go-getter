@@ -1,6 +1,7 @@
 // Copyright (c) HashiCorp, Inc.
 // SPDX-License-Identifier: MPL-2.0
 
+//go:build windows
 // +build windows
 
 package getter
@@ -55,9 +56,20 @@ func (g *FileGetter) Get(dst string, u *url.URL) error {
 	sourcePath := toBackslash(path)
 
 	// Use mklink to create a junction point
+	fmt.Printf("[DEBUG] FileGetter.Get: About to run mklink /J %q %q\n", dst, sourcePath)
 	output, err := exec.CommandContext(ctx, "cmd", "/c", "mklink", "/J", dst, sourcePath).CombinedOutput()
 	if err != nil {
+		fmt.Printf("[DEBUG] FileGetter.Get: mklink failed: %v, output: %q\n", err, output)
 		return fmt.Errorf("failed to run mklink %v %v: %v %q", dst, sourcePath, err, output)
+	}
+	fmt.Printf("[DEBUG] FileGetter.Get: mklink succeeded, output: %q\n", output)
+
+	// Verify what was created for debugging
+	if fi, err := os.Lstat(dst); err != nil {
+		fmt.Printf("[DEBUG] FileGetter.Get: os.Lstat failed after mklink: %v\n", err)
+	} else {
+		fmt.Printf("[DEBUG] FileGetter.Get: Created link mode: %v, ModeSymlink=%v, ModeDir=%v\n",
+			fi.Mode(), fi.Mode()&os.ModeSymlink != 0, fi.Mode()&os.ModeDir != 0)
 	}
 
 	return nil

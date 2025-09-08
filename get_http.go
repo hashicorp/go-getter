@@ -169,8 +169,6 @@ func newLimitedWrappedReaderCloser(r io.ReadCloser, limit int64) io.ReadCloser {
 }
 
 func (g *HttpGetter) Get(dst string, u *url.URL) error {
-	fmt.Printf("[DEBUG] HttpGetter.Get: dst=%q, url=%q\n", dst, u.String())
-
 	ctx := g.Context()
 
 	// Optionally disable any X-Terraform-Get redirects. This is reccomended for usage of
