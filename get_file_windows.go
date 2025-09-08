@@ -1,6 +1,7 @@
 // Copyright (c) HashiCorp, Inc.
 // SPDX-License-Identifier: MPL-2.0
 
+//go:build windows
 // +build windows
 
 package getter
@@ -21,6 +22,8 @@ func (g *FileGetter) Get(dst string, u *url.URL) error {
 	if u.RawPath != "" {
 		path = u.RawPath
 	}
+
+	path = filepath.Clean(path)
 
 	// The source path must exist and be a directory to be usable.
 	if fi, err := os.Stat(path); err != nil {
@@ -69,6 +72,8 @@ func (g *FileGetter) GetFile(dst string, u *url.URL) error {
 	if u.RawPath != "" {
 		path = u.RawPath
 	}
+
+	path = filepath.Clean(path)
 
 	// The source path must exist and be a directory to be usable.
 	if fi, err := os.Stat(path); err != nil {
