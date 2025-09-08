@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 )
 
@@ -26,10 +27,22 @@ func copyDir(ctx context.Context, dst string, src string, ignoreDot bool, disabl
 	var err error
 	resolved, err := filepath.EvalSymlinks(src)
 	if err != nil {
-		// On Windows with Go 1.24+, EvalSymlinks may fail due to enhanced symlink handling.
-		// Fall back to using the original src path if symlink evaluation fails.
-		// This maintains compatibility while avoiding the godebug override.
-		resolved = src
+		// On Windows with Go 1.24+, EvalSymlinks may fail specifically for junction points
+		// due to enhanced symlink handling. Check if this is a junction point before falling back.
+		if runtime.GOOS == "windows" {
+			if isJunction, junctionErr := isWindowsJunctionPoint(src); junctionErr == nil && isJunction {
+				// This is a junction point that EvalSymlinks can't handle in Go 1.24+
+				// Use the original path since junctions are safe directory links
+				resolved = src
+			} else {
+				// Not a junction point or detection failed - propagate the original error
+				// This ensures real errors (permissions, network, etc.) are reported properly
+				return err
+			}
+		} else {
+			// On non-Windows platforms, EvalSymlinks should work properly
+			return err
+		}
 	}
 
 	// Check if the resolved path tries to escape upward from the original
@@ -92,4 +105,25 @@ func copyDir(ctx context.Context, dst string, src string, ignoreDot bool, disabl
 	}
 
 	return filepath.Walk(resolved, walkFn)
+}
+
+// isWindowsJunctionPoint detects Windows junction points for cross-platform compatibility.
+// This is a simplified version that works across different Go versions.
+func isWindowsJunctionPoint(path string) (bool, error) {
+	if runtime.GOOS != "windows" {
+		return false, nil
+	}
+
+	// Check if it's a directory with irregular mode bits (Go 1.24+ detection)
+	fi, err := os.Lstat(path)
+	if err != nil {
+		return false, err
+	}
+
+	// In Go 1.24+, junction points report as ModeIrregular
+	if fi.Mode()&os.ModeIrregular != 0 && fi.IsDir() {
+		return true, nil
+	}
+
+	return false, nil
 }
