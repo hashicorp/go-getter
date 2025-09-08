@@ -14,6 +14,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"runtime"
 	"strings"
 	"time"
 
@@ -543,17 +544,33 @@ func (g *HttpGetter) getSubdir(ctx context.Context, dst, source, subDir string, 
 	}
 
 	// Make the final destination
-	if err := os.MkdirAll(dst, g.client.mode(0755)); err != nil {
+	var mode os.FileMode = 0755
+	if g.client != nil {
+		mode = g.client.mode(0755)
+	} else if runtime.GOOS == "windows" {
+		// On Windows, when client is nil, ensure we use a safe default mode
+		// to avoid "The system cannot find the path specified" errors
+		mode = 0755
+	}
+	if err := os.MkdirAll(dst, mode); err != nil {
 		return err
 	}
 
 	var disableSymlinks bool
+	var umask os.FileMode
 
-	if g.client != nil && g.client.DisableSymlinks {
-		disableSymlinks = true
+	if g.client != nil {
+		if g.client.DisableSymlinks {
+			disableSymlinks = true
+		}
+		umask = g.client.umask()
+	}
+	// On Windows with nil client, umask defaults to 0 which is fine
+	if runtime.GOOS == "windows" && g.client == nil {
+		umask = 0
 	}
 
-	return copyDir(ctx, dst, sourcePath, false, disableSymlinks, g.client.umask())
+	return copyDir(ctx, dst, sourcePath, false, disableSymlinks, umask)
 }
 
 // parseMeta looks for the first meta tag in the given reader that
