@@ -17,6 +17,7 @@ require (
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/ulikunitz/xz v0.5.15
 	golang.org/x/oauth2 v0.27.0
+	golang.org/x/sys v0.35.0
 	google.golang.org/api v0.114.0
 )
 
@@ -46,7 +47,6 @@ require (
 	github.com/mattn/go-runewidth v0.0.4 // indirect
 	go.opencensus.io v0.24.0 // indirect
 	golang.org/x/net v0.43.0 // indirect
-	golang.org/x/sys v0.35.0 // indirect
 	golang.org/x/text v0.28.0 // indirect
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2 // indirect
 	google.golang.org/appengine v1.6.7 // indirect

@@ -128,44 +128,12 @@ func resolveSymlinks(src string) (string, error) {
 	return src, nil
 }
 
-// isWindowsJunctionPoint detects Windows junction points across different Go versions.
-// This handles the changes in Go 1.23+ where junction points may be detected differently.
+// isWindowsJunctionPoint detects Windows junction points using Windows API for reliable detection.
 func isWindowsJunctionPoint(path string) (bool, error) {
 	if runtime.GOOS != "windows" {
 		return false, nil
 	}
 
-	// Use Lstat to get the raw file info without following links
-	fi, err := os.Lstat(path)
-	if err != nil {
-		return false, err
-	}
-
-	// Must be a directory
-	if !fi.IsDir() {
-		return false, nil
-	}
-
-	// In Go 1.23+, junction points may report as ModeIrregular
-	if fi.Mode()&os.ModeIrregular != 0 {
-		return true, nil
-	}
-
-	// Additional check: junction points may also be detected by comparing
-	// Lstat vs Stat results in some Go versions
-	statInfo, statErr := os.Stat(path)
-	if statErr != nil {
-		// If Stat fails but Lstat succeeded, this might indicate a broken link
-		// For junctions, this shouldn't happen, so probably not a junction
-		return false, nil
-	}
-
-	// If Lstat and Stat return different results for a directory,
-	// it might be a junction or symlink. Since we already checked it's a directory,
-	// and we're on Windows, it's likely a junction if the modes differ
-	if fi.Mode() != statInfo.Mode() {
-		return true, nil
-	}
-
-	return false, nil
+	// Use the robust Windows API approach for definitive detection
+	return isWindowsJunctionPointWinAPI(path)
 }
