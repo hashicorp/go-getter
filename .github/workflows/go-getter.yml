@@ -106,6 +106,7 @@ jobs:
         run: |
           # go test -short -v ./...
           go test -run=TestHttpGetter_meta -v
+          go test -run=TestFileGetter -v
 
   # 32-bit architecture compatibility test to catch overflow issues
   architecture-compatibility:
