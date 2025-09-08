@@ -394,11 +394,25 @@ func (g *HttpGetter) GetFile(dst string, src *url.URL) error {
 		}
 	}
 	// Create all the parent directories if needed
-	if err := os.MkdirAll(filepath.Dir(dst), g.client.mode(0755)); err != nil {
+	var dirMode os.FileMode = 0755
+	if g.client != nil {
+		dirMode = g.client.mode(0755)
+	} else if runtime.GOOS == "windows" {
+		// On Windows, when client is nil, ensure we use a safe default mode
+		dirMode = 0755
+	}
+	if err := os.MkdirAll(filepath.Dir(dst), dirMode); err != nil {
 		return err
 	}
 
-	f, err := os.OpenFile(dst, os.O_RDWR|os.O_CREATE, g.client.mode(0666))
+	var fileMode os.FileMode = 0666
+	if g.client != nil {
+		fileMode = g.client.mode(0666)
+	} else if runtime.GOOS == "windows" {
+		// On Windows, when client is nil, ensure we use a safe default mode
+		fileMode = 0666
+	}
+	f, err := os.OpenFile(dst, os.O_RDWR|os.O_CREATE, fileMode)
 	if err != nil {
 		return err
 	}
