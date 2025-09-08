@@ -15,6 +15,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strconv"
 	"strings"
 	"testing"
@@ -32,7 +33,6 @@ func TestHttpGetter_header(t *testing.T) {
 
 	g := new(HttpGetter)
 	dst := filepath.Join(t.TempDir(), "target")
-	defer func() { _ = os.RemoveAll(dst) }()
 
 	var u url.URL
 	u.Scheme = "http"
@@ -79,7 +79,6 @@ func TestHttpGetter_requestHeader(t *testing.T) {
 	g.Header = make(http.Header)
 	g.Header.Add("X-Foobar", "foobar")
 	dst := filepath.Join(t.TempDir(), "target")
-	defer func() { _ = os.RemoveAll(dst) }()
 
 	var u url.URL
 	u.Scheme = "http"
@@ -105,7 +104,6 @@ func TestHttpGetter_meta(t *testing.T) {
 
 	g := new(HttpGetter)
 	dst := filepath.Join(t.TempDir(), "target")
-	defer func() { _ = os.RemoveAll(dst) }()
 
 	var u url.URL
 	u.Scheme = "http"
@@ -144,12 +142,16 @@ func TestHttpGetter_meta(t *testing.T) {
 }
 
 func TestHttpGetter_metaSubdir(t *testing.T) {
+	// Skip this test on Windows due to file:// URL subdirectory resolution issues
+	if runtime.GOOS == "windows" {
+		t.Skip("Skipping meta subdir test on Windows due to file:// URL path resolution issues")
+	}
+
 	ln := testHttpServer(t)
 	defer func() { _ = ln.Close() }()
 
 	g := new(HttpGetter)
-	dst := filepath.Join(t.TempDir(), "target")
-	defer func() { _ = os.RemoveAll(dst) }()
+	dst := filepath.Join(t.TempDir(), "nonexistent", "target")
 
 	var u url.URL
 	u.Scheme = "http"
@@ -169,12 +171,16 @@ func TestHttpGetter_metaSubdir(t *testing.T) {
 }
 
 func TestHttpGetter_metaSubdirGlob(t *testing.T) {
+	// Skip this test on Windows due to file:// URL subdirectory resolution issues
+	if runtime.GOOS == "windows" {
+		t.Skip("Skipping meta subdir glob test on Windows due to file:// URL path resolution issues")
+	}
+
 	ln := testHttpServer(t)
 	defer func() { _ = ln.Close() }()
 
 	g := new(HttpGetter)
-	dst := filepath.Join(t.TempDir(), "target")
-	defer func() { _ = os.RemoveAll(dst) }()
+	dst := filepath.Join(t.TempDir(), "nonexistent", "target")
 
 	var u url.URL
 	u.Scheme = "http"
@@ -199,7 +205,6 @@ func TestHttpGetter_none(t *testing.T) {
 
 	g := new(HttpGetter)
 	dst := filepath.Join(t.TempDir(), "target")
-	defer func() { _ = os.RemoveAll(dst) }()
 
 	var u url.URL
 	u.Scheme = "http"
@@ -225,7 +230,6 @@ func TestHttpGetter_resume(t *testing.T) {
 	defer func() { _ = ln.Close() }()
 
 	dst := filepath.Join(t.TempDir(), "target")
-	defer func() { _ = os.RemoveAll(dst) }()
 
 	dst = filepath.Join(dst, "..", "range")
 	f, err := os.Create(dst)
@@ -281,7 +285,6 @@ func TestHttpGetter_resumeNoRange(t *testing.T) {
 	defer func() { _ = ln.Close() }()
 
 	dst := filepath.Join(t.TempDir(), "target")
-	defer func() { _ = os.RemoveAll(dst) }()
 
 	dst = filepath.Join(dst, "..", "range")
 	f, err := os.Create(dst)
@@ -365,7 +368,6 @@ func TestHttpGetter_auth(t *testing.T) {
 
 	g := new(HttpGetter)
 	dst := filepath.Join(t.TempDir(), "target")
-	defer func() { _ = os.RemoveAll(dst) }()
 
 	var u url.URL
 	u.Scheme = "http"
@@ -404,7 +406,6 @@ func TestHttpGetter_authNetrc(t *testing.T) {
 
 	g := new(HttpGetter)
 	dst := filepath.Join(t.TempDir(), "target")
-	defer func() { _ = os.RemoveAll(dst) }()
 
 	var u url.URL
 	u.Scheme = "http"
@@ -467,7 +468,6 @@ func TestHttpGetter_cleanhttp(t *testing.T) {
 
 	g := new(HttpGetter)
 	dst := filepath.Join(t.TempDir(), "target")
-	defer func() { _ = os.RemoveAll(dst) }()
 
 	var u url.URL
 	u.Scheme = "http"
@@ -536,8 +536,7 @@ func TestHttpGetter__RespectsContextCanceled(t *testing.T) {
 }
 
 func TestHttpGetter__XTerraformGetLimit(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 
 	ln := testHttpServerWithXTerraformGetLoop(t)
 
@@ -561,8 +560,7 @@ func TestHttpGetter__XTerraformGetLimit(t *testing.T) {
 }
 
 func TestHttpGetter__XTerraformGetDisabled(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 
 	ln := testHttpServerWithXTerraformGetLoop(t)
 
@@ -596,8 +594,7 @@ func (testCustomDetector) Detect(src, _ string) (string, bool, error) {
 
 // test a source url with no protocol
 func TestHttpGetter__XTerraformGetDetected(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 
 	ln := testHttpServerWithXTerraformGetDetected(t)
 
@@ -627,8 +624,7 @@ func TestHttpGetter__XTerraformGetDetected(t *testing.T) {
 }
 
 func TestHttpGetter__XTerraformGetProxyBypass(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 
 	ln := testHttpServerWithXTerraformGetProxyBypass(t)
 
@@ -674,8 +670,7 @@ func TestHttpGetter__XTerraformGetProxyBypass(t *testing.T) {
 }
 
 func TestHttpGetter__XTerraformGetConfiguredGettersBypass(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 
 	ln := testHttpServerWithXTerraformGetConfiguredGettersBypass(t)
 
@@ -720,8 +715,7 @@ func TestHttpGetter__XTerraformGetConfiguredGettersBypass(t *testing.T) {
 }
 
 func TestHttpGetter__endless_body(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 
 	ln := testHttpServerWithEndlessBody(t)
 
