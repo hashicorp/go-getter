@@ -15,7 +15,7 @@ require (
 	github.com/hashicorp/go-version v1.6.0
 	github.com/klauspost/compress v1.15.11
 	github.com/mitchellh/go-homedir v1.1.0
-	github.com/ulikunitz/xz v0.5.14
+	github.com/ulikunitz/xz v0.5.15
 	golang.org/x/oauth2 v0.27.0
 	google.golang.org/api v0.114.0
 )
