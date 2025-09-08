@@ -36,9 +36,13 @@ func TestFileGetter(t *testing.T) {
 	}
 
 	if runtime.GOOS == "windows" {
-		// On Windows with Go 1.24+, junctions report as ModeIrregular
-		if fi.Mode()&os.ModeIrregular == 0 {
-			t.Fatal("destination is not a junction point (ModeIrregular not set)")
+		// Use the robust junction detection from copy_dir.go
+		isJunction, junctionErr := isWindowsJunctionPoint(dst)
+		if junctionErr != nil {
+			t.Fatalf("failed to check if destination is a junction point: %s", junctionErr)
+		}
+		if !isJunction {
+			t.Fatal("destination is not a junction point")
 		}
 		// Additional verification: should be accessible as a directory
 		if dirInfo, err := os.Stat(dst); err != nil || !dirInfo.IsDir() {
