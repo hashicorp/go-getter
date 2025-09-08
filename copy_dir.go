@@ -91,8 +91,8 @@ func copyDir(ctx context.Context, dst string, src string, ignoreDot bool, disabl
 	return filepath.Walk(resolved, walkFn)
 }
 
-// resolveSymlinks resolves symlinks with special handling for Windows junction points in Go 1.24+.
-// This function implements the exact same logic as the original inline code but with early returns.
+// resolveSymlinks resolves symlinks with special handling for Windows junction points in Go 1.23+.
+// This function provides a more robust fallback for Windows path resolution issues.
 func resolveSymlinks(src string) (string, error) {
 	resolved, err := filepath.EvalSymlinks(src)
 	if err == nil {
@@ -104,34 +104,66 @@ func resolveSymlinks(src string) (string, error) {
 		return "", err
 	}
 
-	// On Windows with Go 1.24+, EvalSymlinks may fail specifically for junction points
-	// due to enhanced symlink handling. Check if this is a junction point before falling back.
-	isJunction, junctionErr := isWindowsJunctionPoint(src)
-	if junctionErr == nil && isJunction {
-		// This is a junction point that EvalSymlinks can't handle in Go 1.24+
-		// Use the original path since junctions are safe directory links
+	// On Windows, first check if the path actually exists
+	if _, statErr := os.Stat(src); statErr != nil {
+		// Path doesn't exist, return the original EvalSymlinks error
+		return "", err
+	}
+
+	// Path exists but EvalSymlinks failed - likely a junction point or similar
+	// Check if this is a junction point
+	if isJunction, junctionErr := isWindowsJunctionPoint(src); junctionErr == nil && isJunction {
+		// Confirmed junction point - use original path
 		return src, nil
 	}
-	// Not a junction point or detection failed - propagate the original error
-	// This ensures real errors (permissions, network, etc.) are reported properly
-	return "", err
+
+	// Path exists but EvalSymlinks failed and it's not a detectable junction
+	// This could be due to:
+	// 1. Newer Go version handling of Windows symlinks/junctions
+	// 2. Permission issues that don't prevent Stat but prevent EvalSymlinks
+	// 3. Other Windows-specific path resolution issues
+	//
+	// Since the path exists and we're on Windows, fall back to the original path
+	// This maintains compatibility similar to the original behavior
+	return src, nil
 }
 
-// isWindowsJunctionPoint detects Windows junction points for cross-platform compatibility.
-// This is a simplified version that works across different Go versions.
+// isWindowsJunctionPoint detects Windows junction points across different Go versions.
+// This handles the changes in Go 1.23+ where junction points may be detected differently.
 func isWindowsJunctionPoint(path string) (bool, error) {
 	if runtime.GOOS != "windows" {
 		return false, nil
 	}
 
-	// Check if it's a directory with irregular mode bits (Go 1.24+ detection)
+	// Use Lstat to get the raw file info without following links
 	fi, err := os.Lstat(path)
 	if err != nil {
 		return false, err
 	}
 
-	// In Go 1.24+, junction points report as ModeIrregular
-	if fi.Mode()&os.ModeIrregular != 0 && fi.IsDir() {
+	// Must be a directory
+	if !fi.IsDir() {
+		return false, nil
+	}
+
+	// In Go 1.23+, junction points may report as ModeIrregular
+	if fi.Mode()&os.ModeIrregular != 0 {
+		return true, nil
+	}
+
+	// Additional check: junction points may also be detected by comparing
+	// Lstat vs Stat results in some Go versions
+	statInfo, statErr := os.Stat(path)
+	if statErr != nil {
+		// If Stat fails but Lstat succeeded, this might indicate a broken link
+		// For junctions, this shouldn't happen, so probably not a junction
+		return false, nil
+	}
+
+	// If Lstat and Stat return different results for a directory,
+	// it might be a junction or symlink. Since we already checked it's a directory,
+	// and we're on Windows, it's likely a junction if the modes differ
+	if fi.Mode() != statInfo.Mode() {
 		return true, nil
 	}
 
