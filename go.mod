@@ -1,6 +1,6 @@
 module github.com/hashicorp/go-getter
 
-godebug winsymlink=0
+//godebug winsymlink=0
 
 require (
 	cloud.google.com/go/storage v1.29.0
