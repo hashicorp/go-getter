@@ -68,8 +68,15 @@ func (g *FileGetter) Get(dst string, u *url.URL) error {
 	if fi, err := os.Lstat(dst); err != nil {
 		fmt.Printf("[DEBUG] FileGetter.Get: os.Lstat failed after mklink: %v\n", err)
 	} else {
-		fmt.Printf("[DEBUG] FileGetter.Get: Created link mode: %v, ModeSymlink=%v, ModeDir=%v\n",
-			fi.Mode(), fi.Mode()&os.ModeSymlink != 0, fi.Mode()&os.ModeDir != 0)
+		fmt.Printf("[DEBUG] FileGetter.Get: Created link mode: %v, ModeSymlink=%v, ModeDir=%v, ModeIrregular=%v\n",
+			fi.Mode(), fi.Mode()&os.ModeSymlink != 0, fi.Mode()&os.ModeDir != 0, fi.Mode()&os.ModeIrregular != 0)
+	}
+
+	// Test our junction point detection
+	if isJunction, err := isJunctionPoint(dst); err != nil {
+		fmt.Printf("[DEBUG] FileGetter.Get: isJunctionPoint failed: %v\n", err)
+	} else {
+		fmt.Printf("[DEBUG] FileGetter.Get: isJunctionPoint result: %v\n", isJunction)
 	}
 
 	return nil
@@ -142,4 +149,46 @@ func (g *FileGetter) GetFile(dst string, u *url.URL) error {
 // replaced by multiple backslashes.
 func toBackslash(path string) string {
 	return strings.Replace(path, "/", "\\", -1)
+}
+
+// isJunctionPoint checks if the given path is a Windows junction point.
+// Junction points are directory symbolic links on Windows, but they are not
+// detected as os.ModeSymlink by Go's os.Lstat(). This function provides
+// Windows-specific detection for junction points.
+func isJunctionPoint(path string) (bool, error) {
+	// First try the simple approach using Go 1.24+ ModeIrregular detection
+	fi, err := os.Lstat(path)
+	if err != nil {
+		return false, err
+	}
+
+	// In Go 1.24+, junctions report as ModeIrregular
+	if fi.Mode()&os.ModeIrregular != 0 {
+		// Additional check: junctions should also appear as directories when stat'd
+		if dirInfo, err := os.Stat(path); err == nil && dirInfo.IsDir() {
+			return true, nil
+		}
+	}
+
+	// Fallback to Windows API for more precise detection
+	// Use GetFileAttributes Windows API to check for reparse point
+	pathPtr, err := syscall.UTF16PtrFromString(path)
+	if err != nil {
+		return false, err
+	}
+	attrs, err := syscall.GetFileAttributes(pathPtr)
+	if err != nil {
+		return false, err
+	}
+
+	// Check if FILE_ATTRIBUTE_REPARSE_POINT is set
+	// Junction points are reparse points with specific characteristics
+	const FILE_ATTRIBUTE_REPARSE_POINT = 0x400
+	const FILE_ATTRIBUTE_DIRECTORY = 0x10
+
+	isReparsePoint := (attrs & FILE_ATTRIBUTE_REPARSE_POINT) != 0
+	isDirectory := (attrs & FILE_ATTRIBUTE_DIRECTORY) != 0
+
+	// Junction points are reparse points that are also directories
+	return isReparsePoint && isDirectory, nil
 }
