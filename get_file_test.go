@@ -6,6 +6,7 @@ package getter
 import (
 	"os"
 	"path/filepath"
+	"runtime"
 	"testing"
 )
 
@@ -32,9 +33,16 @@ func TestFileGetter(t *testing.T) {
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
+
+	// https://github.com/golang/go/issues/73827
+	if runtime.GOOS == "windows" {
+		if fi.Mode()&os.ModeIrregular == 0 {
+			t.Fatal("destination is not a junction point")
+		}
+	}
+
 	if fi.Mode()&os.ModeSymlink == 0 {
-		t.Fatalf("destination is not a symlink: %#o", fi.Mode())
-		// t.Fatal("destination is not a symlink")
+		t.Fatal("destination is not a symlink")
 	}
 
 }
