@@ -146,8 +146,27 @@ func TestHttpGetter_metaSubdir(t *testing.T) {
 	u.Host = ln.Addr().String()
 	u.Path = "/meta-subdir"
 
-	// Get it!
-	if err := g.Get(dst, &u); err != nil {
+	// Get it, which should error because it uses the file protocol.
+	err := g.Get(dst, &u)
+
+	if !strings.Contains(err.Error(), "download not supported for scheme 'file'") {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// But, using a wrapper client with a file getter will work.
+	c := &Client{
+		Getters: map[string]Getter{
+			"http": g,
+			"file": new(FileGetter),
+		},
+		Src:  u.String(),
+		Dst:  dst,
+		Mode: ClientModeDir,
+	}
+
+	err = c.Get()
+
+	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
@@ -170,8 +189,27 @@ func TestHttpGetter_metaSubdirGlob(t *testing.T) {
 	u.Host = ln.Addr().String()
 	u.Path = "/meta-subdir-glob"
 
-	// Get it!
-	if err := g.Get(dst, &u); err != nil {
+	// Get it, which should error because it uses the file protocol.
+	err := g.Get(dst, &u)
+
+	if !strings.Contains(err.Error(), "download not supported for scheme 'file'") {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// But, using a wrapper client with a file getter will work.
+	c := &Client{
+		Getters: map[string]Getter{
+			"http": g,
+			"file": new(FileGetter),
+		},
+		Src:  u.String(),
+		Dst:  dst,
+		Mode: ClientModeDir,
+	}
+
+	err = c.Get()
+
+	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
