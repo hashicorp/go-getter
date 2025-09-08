@@ -29,16 +29,27 @@ func TestFileGetter(t *testing.T) {
 		t.Fatalf("err: %s", err)
 	}
 
-	// On Unix, verify it's a symlink; on Windows, just verify it works
-	//if runtime.GOOS != "windows" {
+	// Verify it's a symlink on Unix or junction point on Windows
 	fi, err := os.Lstat(dst)
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
-	if fi.Mode()&os.ModeSymlink == 0 {
-		t.Fatal("destination is not a symlink")
+
+	if runtime.GOOS == "windows" {
+		// On Windows with Go 1.24+, junctions report as ModeIrregular
+		if fi.Mode()&os.ModeIrregular == 0 {
+			t.Fatal("destination is not a junction point (ModeIrregular not set)")
+		}
+		// Additional verification: should be accessible as a directory
+		if dirInfo, err := os.Stat(dst); err != nil || !dirInfo.IsDir() {
+			t.Fatal("destination junction point is not accessible as a directory")
+		}
+	} else {
+		// On Unix, verify it's a traditional symlink
+		if fi.Mode()&os.ModeSymlink == 0 {
+			t.Fatal("destination is not a symlink")
+		}
 	}
-	//}
 }
 
 func TestFileGetter_sourceFile(t *testing.T) {
