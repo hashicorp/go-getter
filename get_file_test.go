@@ -30,15 +30,15 @@ func TestFileGetter(t *testing.T) {
 	}
 
 	// On Unix, verify it's a symlink; on Windows, just verify it works
-	if runtime.GOOS != "windows" {
-		fi, err := os.Lstat(dst)
-		if err != nil {
-			t.Fatalf("err: %s", err)
-		}
-		if fi.Mode()&os.ModeSymlink == 0 {
-			t.Fatal("destination is not a symlink")
-		}
+	//if runtime.GOOS != "windows" {
+	fi, err := os.Lstat(dst)
+	if err != nil {
+		t.Fatalf("err: %s", err)
 	}
+	if fi.Mode()&os.ModeSymlink == 0 {
+		t.Fatal("destination is not a symlink")
+	}
+	//}
 }
 
 func TestFileGetter_sourceFile(t *testing.T) {
