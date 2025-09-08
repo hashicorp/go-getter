@@ -107,15 +107,14 @@ func resolveSymlinks(src string) (string, error) {
 	// On Windows with Go 1.24+, EvalSymlinks may fail specifically for junction points
 	// due to enhanced symlink handling. Check if this is a junction point before falling back.
 	isJunction, junctionErr := isWindowsJunctionPoint(src)
-	if junctionErr != nil || !isJunction {
-		// Not a junction point or detection failed - propagate the original error
-		// This ensures real errors (permissions, network, etc.) are reported properly
-		return "", err
+	if junctionErr == nil && isJunction {
+		// This is a junction point that EvalSymlinks can't handle in Go 1.24+
+		// Use the original path since junctions are safe directory links
+		return src, nil
 	}
-
-	// This is a junction point that EvalSymlinks can't handle in Go 1.24+
-	// Use the original path since junctions are safe directory links
-	return src, nil
+	// Not a junction point or detection failed - propagate the original error
+	// This ensures real errors (permissions, network, etc.) are reported properly
+	return "", err
 }
 
 // isWindowsJunctionPoint detects Windows junction points for cross-platform compatibility.
