@@ -32,7 +32,6 @@ func TestHttpGetter_header(t *testing.T) {
 
 	g := new(HttpGetter)
 	dst := filepath.Join(t.TempDir(), "target")
-	defer func() { _ = os.RemoveAll(dst) }()
 
 	var u url.URL
 	u.Scheme = "http"
@@ -79,7 +78,6 @@ func TestHttpGetter_requestHeader(t *testing.T) {
 	g.Header = make(http.Header)
 	g.Header.Add("X-Foobar", "foobar")
 	dst := filepath.Join(t.TempDir(), "target")
-	defer func() { _ = os.RemoveAll(dst) }()
 
 	var u url.URL
 	u.Scheme = "http"
@@ -105,7 +103,6 @@ func TestHttpGetter_meta(t *testing.T) {
 
 	g := new(HttpGetter)
 	dst := filepath.Join(t.TempDir(), "target")
-	defer func() { _ = os.RemoveAll(dst) }()
 
 	var u url.URL
 	u.Scheme = "http"
@@ -149,7 +146,6 @@ func TestHttpGetter_metaSubdir(t *testing.T) {
 
 	g := new(HttpGetter)
 	dst := filepath.Join(t.TempDir(), "target")
-	defer func() { _ = os.RemoveAll(dst) }()
 
 	var u url.URL
 	u.Scheme = "http"
@@ -174,7 +170,6 @@ func TestHttpGetter_metaSubdirGlob(t *testing.T) {
 
 	g := new(HttpGetter)
 	dst := filepath.Join(t.TempDir(), "target")
-	defer func() { _ = os.RemoveAll(dst) }()
 
 	var u url.URL
 	u.Scheme = "http"
@@ -199,7 +194,6 @@ func TestHttpGetter_none(t *testing.T) {
 
 	g := new(HttpGetter)
 	dst := filepath.Join(t.TempDir(), "target")
-	defer func() { _ = os.RemoveAll(dst) }()
 
 	var u url.URL
 	u.Scheme = "http"
@@ -225,7 +219,6 @@ func TestHttpGetter_resume(t *testing.T) {
 	defer func() { _ = ln.Close() }()
 
 	dst := filepath.Join(t.TempDir(), "target")
-	defer func() { _ = os.RemoveAll(dst) }()
 
 	dst = filepath.Join(dst, "..", "range")
 	f, err := os.Create(dst)
@@ -281,7 +274,6 @@ func TestHttpGetter_resumeNoRange(t *testing.T) {
 	defer func() { _ = ln.Close() }()
 
 	dst := filepath.Join(t.TempDir(), "target")
-	defer func() { _ = os.RemoveAll(dst) }()
 
 	dst = filepath.Join(dst, "..", "range")
 	f, err := os.Create(dst)
@@ -365,7 +357,6 @@ func TestHttpGetter_auth(t *testing.T) {
 
 	g := new(HttpGetter)
 	dst := filepath.Join(t.TempDir(), "target")
-	defer func() { _ = os.RemoveAll(dst) }()
 
 	var u url.URL
 	u.Scheme = "http"
@@ -404,7 +395,6 @@ func TestHttpGetter_authNetrc(t *testing.T) {
 
 	g := new(HttpGetter)
 	dst := filepath.Join(t.TempDir(), "target")
-	defer func() { _ = os.RemoveAll(dst) }()
 
 	var u url.URL
 	u.Scheme = "http"
@@ -467,7 +457,6 @@ func TestHttpGetter_cleanhttp(t *testing.T) {
 
 	g := new(HttpGetter)
 	dst := filepath.Join(t.TempDir(), "target")
-	defer func() { _ = os.RemoveAll(dst) }()
 
 	var u url.URL
 	u.Scheme = "http"
