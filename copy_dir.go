@@ -147,8 +147,12 @@ func isWindowsJunctionPoint(path string) (bool, error) {
 	}
 
 	// In Go 1.24+, junction points report as ModeIrregular
-	if fi.Mode()&os.ModeIrregular != 0 && fi.IsDir() {
-		return true, nil
+	if fi.Mode()&os.ModeIrregular != 0 {
+		// Additional check: junctions should also appear as directories when stat'd
+		// Use os.Stat (not Lstat) to follow the junction and check if target is a directory
+		if dirInfo, err := os.Stat(path); err == nil && dirInfo.IsDir() {
+			return true, nil
+		}
 	}
 
 	return false, nil
