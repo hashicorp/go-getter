@@ -536,8 +536,7 @@ func TestHttpGetter__RespectsContextCanceled(t *testing.T) {
 }
 
 func TestHttpGetter__XTerraformGetLimit(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 
 	ln := testHttpServerWithXTerraformGetLoop(t)
 
@@ -561,8 +560,7 @@ func TestHttpGetter__XTerraformGetLimit(t *testing.T) {
 }
 
 func TestHttpGetter__XTerraformGetDisabled(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 
 	ln := testHttpServerWithXTerraformGetLoop(t)
 
@@ -596,8 +594,7 @@ func (testCustomDetector) Detect(src, _ string) (string, bool, error) {
 
 // test a source url with no protocol
 func TestHttpGetter__XTerraformGetDetected(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 
 	ln := testHttpServerWithXTerraformGetDetected(t)
 
@@ -627,8 +624,7 @@ func TestHttpGetter__XTerraformGetDetected(t *testing.T) {
 }
 
 func TestHttpGetter__XTerraformGetProxyBypass(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 
 	ln := testHttpServerWithXTerraformGetProxyBypass(t)
 
@@ -674,8 +670,7 @@ func TestHttpGetter__XTerraformGetProxyBypass(t *testing.T) {
 }
 
 func TestHttpGetter__XTerraformGetConfiguredGettersBypass(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 
 	ln := testHttpServerWithXTerraformGetConfiguredGettersBypass(t)
 
@@ -720,8 +715,7 @@ func TestHttpGetter__XTerraformGetConfiguredGettersBypass(t *testing.T) {
 }
 
 func TestHttpGetter__endless_body(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 
 	ln := testHttpServerWithEndlessBody(t)
 
