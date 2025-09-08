@@ -147,11 +147,6 @@ func TestHttpGetter_metaSubdir(t *testing.T) {
 	g := new(HttpGetter)
 	dst := filepath.Join(t.TempDir(), "nonexistent", "target")
 
-	// Ensure parent directory exists
-	if err := os.MkdirAll(filepath.Dir(dst), 0755); err != nil {
-		t.Fatalf("failed to create parent directory: %s", err)
-	}
-
 	var u url.URL
 	u.Scheme = "http"
 	u.Host = ln.Addr().String()
@@ -175,11 +170,6 @@ func TestHttpGetter_metaSubdirGlob(t *testing.T) {
 
 	g := new(HttpGetter)
 	dst := filepath.Join(t.TempDir(), "nonexistent", "target")
-
-	// Ensure parent directory exists
-	if err := os.MkdirAll(filepath.Dir(dst), 0755); err != nil {
-		t.Fatalf("failed to create parent directory: %s", err)
-	}
 
 	var u url.URL
 	u.Scheme = "http"
