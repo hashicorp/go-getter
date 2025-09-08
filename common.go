@@ -12,6 +12,7 @@ import (
 // os.ModeSymlink as there are other types of reparse points that can link to
 // directories, and os.ModeSymlink was only catching symlinks and mount points.
 // By testing for both os.ModeSymlink and os.ModeIrregular, we can catch all cases.
+// Ref: https://github.com/golang/go/issues/73827
 func isSymlinkOrReparsePoint(mode os.FileMode) bool {
 	return mode&os.ModeSymlink != 0 || mode&os.ModeIrregular != 0
 }
