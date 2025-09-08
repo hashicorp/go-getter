@@ -169,6 +169,8 @@ func newLimitedWrappedReaderCloser(r io.ReadCloser, limit int64) io.ReadCloser {
 }
 
 func (g *HttpGetter) Get(dst string, u *url.URL) error {
+	fmt.Printf("[DEBUG] HttpGetter.Get: dst=%q, url=%q\n", dst, u.String())
+
 	ctx := g.Context()
 
 	// Optionally disable any X-Terraform-Get redirects. This is reccomended for usage of
@@ -512,40 +514,58 @@ func (g *HttpGetter) GetFile(dst string, src *url.URL) error {
 // getSubdir downloads the source into the destination, but with
 // the proper subdir.
 func (g *HttpGetter) getSubdir(ctx context.Context, dst, source, subDir string, opts ...ClientOption) error {
+	fmt.Printf("[DEBUG] HttpGetter.getSubdir: dst=%q, source=%q, subDir=%q\n", dst, source, subDir)
+
 	// Create a temporary directory to store the full source. This has to be
 	// a non-existent directory.
 	td, tdcloser, err := safetemp.Dir("", "getter")
 	if err != nil {
+		fmt.Printf("[DEBUG] HttpGetter.getSubdir: Failed to create temp dir: %v\n", err)
 		return err
 	}
 	defer func() { _ = tdcloser.Close() }()
 
+	fmt.Printf("[DEBUG] HttpGetter.getSubdir: Created temp dir: %q\n", td)
+
 	// Download that into the given directory
+	fmt.Printf("[DEBUG] HttpGetter.getSubdir: About to call Get(%q, %q, ...)\n", td, source)
 	if err := Get(td, source, opts...); err != nil {
+		fmt.Printf("[DEBUG] HttpGetter.getSubdir: Get failed: %v\n", err)
 		return err
 	}
+	fmt.Printf("[DEBUG] HttpGetter.getSubdir: Get succeeded\n")
 
 	// Process any globbing
 	sourcePath, err := SubdirGlob(td, subDir)
 	if err != nil {
+		fmt.Printf("[DEBUG] HttpGetter.getSubdir: SubdirGlob failed: %v\n", err)
 		return err
 	}
+	fmt.Printf("[DEBUG] HttpGetter.getSubdir: SubdirGlob result: %q\n", sourcePath)
 
 	// Make sure the subdir path actually exists
 	if _, err := os.Stat(sourcePath); err != nil {
+		fmt.Printf("[DEBUG] HttpGetter.getSubdir: sourcePath stat failed: %v\n", err)
 		return fmt.Errorf(
 			"Error downloading %s: %s", source, err)
 	}
+	fmt.Printf("[DEBUG] HttpGetter.getSubdir: sourcePath exists\n")
 
 	// Copy the subdirectory into our actual destination.
+	fmt.Printf("[DEBUG] HttpGetter.getSubdir: About to RemoveAll(%q)\n", dst)
 	if err := os.RemoveAll(dst); err != nil {
+		fmt.Printf("[DEBUG] HttpGetter.getSubdir: RemoveAll failed: %v\n", err)
 		return err
 	}
+	fmt.Printf("[DEBUG] HttpGetter.getSubdir: RemoveAll succeeded\n")
 
 	// Make the final destination
+	fmt.Printf("[DEBUG] HttpGetter.getSubdir: About to MkdirAll(%q, 0755)\n", dst)
 	if err := os.MkdirAll(dst, g.client.mode(0755)); err != nil {
+		fmt.Printf("[DEBUG] HttpGetter.getSubdir: MkdirAll failed: %v\n", err)
 		return err
 	}
+	fmt.Printf("[DEBUG] HttpGetter.getSubdir: MkdirAll succeeded\n")
 
 	var disableSymlinks bool
 
@@ -553,7 +573,14 @@ func (g *HttpGetter) getSubdir(ctx context.Context, dst, source, subDir string, 
 		disableSymlinks = true
 	}
 
-	return copyDir(ctx, dst, sourcePath, false, disableSymlinks, g.client.umask())
+	fmt.Printf("[DEBUG] HttpGetter.getSubdir: About to copyDir(%q, %q, ...)\n", dst, sourcePath)
+	err = copyDir(ctx, dst, sourcePath, false, disableSymlinks, g.client.umask())
+	if err != nil {
+		fmt.Printf("[DEBUG] HttpGetter.getSubdir: copyDir failed: %v\n", err)
+	} else {
+		fmt.Printf("[DEBUG] HttpGetter.getSubdir: copyDir succeeded\n")
+	}
+	return err
 }
 
 // parseMeta looks for the first meta tag in the given reader that
