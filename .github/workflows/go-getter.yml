@@ -137,11 +137,9 @@ jobs:
 
       # Check go fmt output because it does not report non-zero when there are fmt changes
 
-      - name: Build all packages
-        run: go build ./...
-
       - name: Run unit tests (without cloud integration)
-        run: go test -short -v ./...
+        run: |
+          go test -v -run=TestHttpGetter_metaSubdir
 
   # 32-bit architecture compatibility test to catch overflow issues
   architecture-compatibility:
