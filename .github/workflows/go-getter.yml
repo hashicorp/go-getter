@@ -63,7 +63,7 @@ jobs:
       matrix:
         go-version:
           - "1.24"
-          #- "1.25"
+          - "1.25"
     steps:
       - name: Run git config # Windows-only
         run: git config --global core.autocrlf false
@@ -103,10 +103,7 @@ jobs:
         run: go build ./...
 
       - name: Run unit tests (without cloud integration)
-        run: |
-          # go test -short -v ./...
-          go test -run=TestHttpGetter_meta -v
-          go test -run=TestFileGetter -v
+        run: go test -short -v ./...
 
   # 32-bit architecture compatibility test to catch overflow issues
   architecture-compatibility:

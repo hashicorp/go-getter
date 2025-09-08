@@ -22,35 +22,13 @@ func mode(mode, umask os.FileMode) os.FileMode {
 //
 // If ignoreDot is set to true, then dot-prefixed files/folders are ignored.
 func copyDir(ctx context.Context, dst string, src string, ignoreDot bool, disableSymlinks bool, umask os.FileMode) error {
-	// We can safely evaluate the symlinks here, even if disabled, because they
-	// will be checked before actual use in walkFn and copyFile
-	var err error
-	resolved, err := filepath.EvalSymlinks(src)
+	resolved, err := resolveSourcePath(src)
 	if err != nil {
-		// On Windows with Go 1.24+, EvalSymlinks may fail specifically for junction points
-		// due to enhanced symlink handling. Check if this is a junction point before falling back.
-		if runtime.GOOS == "windows" {
-			if isJunction, junctionErr := isWindowsJunctionPoint(src); junctionErr == nil && isJunction {
-				// This is a junction point that EvalSymlinks can't handle in Go 1.24+
-				// Use the original path since junctions are safe directory links
-				resolved = src
-			} else {
-				// Not a junction point or detection failed - propagate the original error
-				// This ensures real errors (permissions, network, etc.) are reported properly
-				return err
-			}
-		} else {
-			// On non-Windows platforms, EvalSymlinks should work properly
-			return err
-		}
+		return err
 	}
 
-	// Check if the resolved path tries to escape upward from the original
-	if disableSymlinks {
-		rel, err := filepath.Rel(filepath.Dir(src), resolved)
-		if err != nil || filepath.IsAbs(rel) || containsDotDot(rel) {
-			return ErrSymlinkCopy
-		}
+	if err := validateSymlinkSafety(src, resolved, disableSymlinks); err != nil {
+		return err
 	}
 
 	walkFn := func(path string, info os.FileInfo, err error) error {
@@ -105,6 +83,54 @@ func copyDir(ctx context.Context, dst string, src string, ignoreDot bool, disabl
 	}
 
 	return filepath.Walk(resolved, walkFn)
+}
+
+// resolveSourcePath resolves symlinks in the source path, with special handling
+// for Windows junction points in Go 1.24+.
+func resolveSourcePath(src string) (string, error) {
+	// We can safely evaluate the symlinks here, even if disabled, because they
+	// will be checked before actual use in walkFn and copyFile
+	resolved, err := filepath.EvalSymlinks(src)
+	if err != nil {
+		return handleEvalSymlinksError(src, err)
+	}
+	return resolved, nil
+}
+
+// handleEvalSymlinksError handles EvalSymlinks failures, with special logic
+// for Windows junction points in Go 1.24+.
+func handleEvalSymlinksError(src string, originalErr error) (string, error) {
+	// On Windows with Go 1.24+, EvalSymlinks may fail specifically for junction points
+	// due to enhanced symlink handling. Check if this is a junction point before falling back.
+	if runtime.GOOS != "windows" {
+		// On non-Windows platforms, EvalSymlinks should work properly
+		return "", originalErr
+	}
+
+	isJunction, junctionErr := isWindowsJunctionPoint(src)
+	if junctionErr != nil || !isJunction {
+		// Not a junction point or detection failed - propagate the original error
+		// This ensures real errors (permissions, network, etc.) are reported properly
+		return "", originalErr
+	}
+
+	// This is a junction point that EvalSymlinks can't handle in Go 1.24+
+	// Use the original path since junctions are safe directory links
+	return src, nil
+}
+
+// validateSymlinkSafety checks if the resolved path tries to escape upward
+// from the original when symlinks are disabled.
+func validateSymlinkSafety(src, resolved string, disableSymlinks bool) error {
+	if !disableSymlinks {
+		return nil
+	}
+
+	rel, err := filepath.Rel(filepath.Dir(src), resolved)
+	if err != nil || filepath.IsAbs(rel) || containsDotDot(rel) {
+		return ErrSymlinkCopy
+	}
+	return nil
 }
 
 // isWindowsJunctionPoint detects Windows junction points for cross-platform compatibility.
