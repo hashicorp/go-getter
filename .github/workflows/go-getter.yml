@@ -105,6 +105,55 @@ jobs:
       - name: Run unit tests (without cloud integration)
         run: go test -short -v ./...
 
+  # 32-bit architecture compatibility test to catch overflow issues
+  architecture-compatibility:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        go-version:
+          - "1.24"
+          - "1.25"
+        arch:
+          - "386"      # 32-bit x86
+          - "arm"      # 32-bit ARM
+    steps:
+      - name: Setup go
+        uses: actions/setup-go@d35c59abb061a4a6fb18e82ac0862c26744d6ab5 # v5.5.0
+        with:
+          go-version: ${{ matrix.go-version }}
+
+      - name: Checkout code
+        uses: actions/checkout@ff7abcd0c3c05ccf6adc123a8cd1fd4fb30fb493 # v4.0.0
+
+      - name: Setup cache for go modules
+        uses: actions/cache@0400d5f644dc74513175e3cd8d07132dd4860809 # v4.2.4
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-go${{ matrix.go-version }}-${{ matrix.arch }}-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go${{ matrix.go-version }}-${{ matrix.arch }}-
+            ${{ runner.os }}-go${{ matrix.go-version }}-
+            ${{ runner.os }}-go-
+
+      - name: Build for ${{ matrix.arch }}
+        env:
+          GOOS: linux
+          GOARCH: ${{ matrix.arch }}
+        run: go build ./...
+
+      - name: Test for ${{ matrix.arch }} (build only - no execution)
+        env:
+          GOOS: linux
+          GOARCH: ${{ matrix.arch }}
+        run: |
+          # Test compile each package individually to avoid binary naming conflicts
+          for pkg in $(go list ./...); do
+            echo "Testing compilation for $pkg on ${{ matrix.arch }}"
+            go test -c "$pkg"
+          done
+
   # Linter runs on both PRs and pushes (safe operation)
   linter:
     runs-on: ubuntu-latest
