@@ -30,9 +30,14 @@ func copyDir(ctx context.Context, dst string, src string, ignoreDot bool, disabl
 	resolved, err := filepath.EvalSymlinks(src)
 	if err != nil {
 		fmt.Printf("[DEBUG] copyDir: filepath.EvalSymlinks failed: %v\n", err)
-		return err
+		// On Windows with Go 1.24+, EvalSymlinks may fail due to enhanced symlink handling.
+		// Fall back to using the original src path if symlink evaluation fails.
+		// This maintains compatibility while avoiding the godebug override.
+		fmt.Printf("[DEBUG] copyDir: Using original src path as fallback: %q\n", src)
+		resolved = src
+	} else {
+		fmt.Printf("[DEBUG] copyDir: filepath.EvalSymlinks succeeded: resolved=%q\n", resolved)
 	}
-	fmt.Printf("[DEBUG] copyDir: filepath.EvalSymlinks succeeded: resolved=%q\n", resolved)
 
 	// Check if the resolved path tries to escape upward from the original
 	if disableSymlinks {
