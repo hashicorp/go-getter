@@ -23,8 +23,6 @@ func (g *FileGetter) Get(dst string, u *url.URL) error {
 		path = u.RawPath
 	}
 
-	path = filepath.Clean(path)
-
 	// The source path must exist and be a directory to be usable.
 	if fi, err := os.Stat(path); err != nil {
 		return fmt.Errorf("source path error: %s", err)
@@ -72,8 +70,6 @@ func (g *FileGetter) GetFile(dst string, u *url.URL) error {
 	if u.RawPath != "" {
 		path = u.RawPath
 	}
-
-	path = filepath.Clean(path)
 
 	// The source path must exist and be a directory to be usable.
 	if fi, err := os.Stat(path); err != nil {

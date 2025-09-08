@@ -154,8 +154,7 @@ func TestHttpGetter_metaSubdir(t *testing.T) {
 	// Verify the main file exists
 	mainPath := filepath.Join(dst, "sub.tf")
 	if _, err := os.Stat(mainPath); err != nil {
-		t.Fatalf("err: %s, dst: %s, u: %s", err, dst, u.String())
-		// t.Fatalf("err: %s", err)
+		t.Fatalf("err: %s", err)
 	}
 }
 
@@ -173,9 +172,7 @@ func TestHttpGetter_metaSubdirGlob(t *testing.T) {
 
 	// Get it!
 	if err := g.Get(dst, &u); err != nil {
-		// Show more context in the error message
-		t.Fatalf("err: %s, dst: %s, u: %s", err, dst, u.String())
-		// t.Fatalf("err: %s", err)
+		t.Fatalf("err: %s", err)
 	}
 
 	// Verify the main file exists
