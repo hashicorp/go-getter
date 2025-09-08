@@ -33,7 +33,8 @@ func TestFileGetter(t *testing.T) {
 		t.Fatalf("err: %s", err)
 	}
 	if fi.Mode()&os.ModeSymlink == 0 {
-		t.Fatal("destination is not a symlink")
+		t.Fatalf("destination is not a symlink: %#o", fi.Mode())
+		// t.Fatal("destination is not a symlink")
 	}
 
 }

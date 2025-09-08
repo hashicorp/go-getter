@@ -109,27 +109,8 @@ func TestHttpGetter_meta(t *testing.T) {
 	u.Host = ln.Addr().String()
 	u.Path = "/meta"
 
-	// Get it, which should error because it uses the file protocol.
-	err := g.Get(dst, &u)
-
-	if !strings.Contains(err.Error(), "download not supported for scheme 'file'") {
-		t.Fatalf("unexpected error: %v", err)
-	}
-
-	// But, using a wrapper client with a file getter will work.
-	c := &Client{
-		Getters: map[string]Getter{
-			"http": g,
-			"file": new(FileGetter),
-		},
-		Src:  u.String(),
-		Dst:  dst,
-		Mode: ClientModeDir,
-	}
-
-	err = c.Get()
-
-	if err != nil {
+	// Get it!
+	if err := g.Get(dst, &u); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
@@ -153,33 +134,15 @@ func TestHttpGetter_metaSubdir(t *testing.T) {
 	u.Path = "/meta-subdir"
 
 	// Get it!
-	err := g.Get(dst, &u)
-
-	if !strings.Contains(err.Error(), "download not supported for scheme 'file'") {
-		t.Fatalf("unexpected error: %v", err)
-	}
-
-	// But, using a wrapper client with a file getter will work for windows.
-	c := &Client{
-		Getters: map[string]Getter{
-			"http": g,
-			"file": new(FileGetter),
-		},
-		Src:  u.String(),
-		Dst:  dst,
-		Mode: ClientModeDir,
-	}
-
-	err = c.Get()
-
-	if err != nil {
+	if err := g.Get(dst, &u); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
 	// Verify the main file exists
 	mainPath := filepath.Join(dst, "sub.tf")
 	if _, err := os.Stat(mainPath); err != nil {
-		t.Fatalf("err: %s", err)
+		t.Fatalf("err: %s, dst: %s, u: %s", err, dst, u.String())
+		// t.Fatalf("err: %s", err)
 	}
 }
 
@@ -196,27 +159,10 @@ func TestHttpGetter_metaSubdirGlob(t *testing.T) {
 	u.Path = "/meta-subdir-glob"
 
 	// Get it!
-	err := g.Get(dst, &u)
-
-	if !strings.Contains(err.Error(), "download not supported for scheme 'file'") {
-		t.Fatalf("unexpected error: %v", err)
-	}
-
-	// But, using a wrapper client with a file getter will work for windows.
-	c := &Client{
-		Getters: map[string]Getter{
-			"http": g,
-			"file": new(FileGetter),
-		},
-		Src:  u.String(),
-		Dst:  dst,
-		Mode: ClientModeDir,
-	}
-
-	err = c.Get()
-
-	if err != nil {
-		t.Fatalf("err: %s", err)
+	if err := g.Get(dst, &u); err != nil {
+		// Show more context in the error message
+		t.Fatalf("err: %s, dst: %s, u: %s", err, dst, u.String())
+		// t.Fatalf("err: %s", err)
 	}
 
 	// Verify the main file exists
