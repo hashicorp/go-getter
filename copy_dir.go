@@ -5,6 +5,7 @@ package getter
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -24,6 +25,8 @@ func copyDir(ctx context.Context, dst string, src string, ignoreDot bool, disabl
 	// We can safely evaluate the symlinks here, even if disabled, because they
 	// will be checked before actual use in walkFn and copyFile
 	var err error
+	fmt.Println("copyDir - 27", src, dst)
+	return errors.New("copyDir is not implemented in this context")
 	resolved, err := filepath.EvalSymlinks(src)
 	if err != nil {
 		return err
