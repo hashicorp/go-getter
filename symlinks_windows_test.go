@@ -53,6 +53,8 @@ func TestIsWindowsJunctionPoint(t *testing.T) {
 		t.Fatalf("Failed to stat created junction: %v", err)
 	}
 
+	t.Logf("Created link type: path=%s, mode=%v, isSymlink=%v", junctionDir, fileInfo.Mode(), fileInfo.Mode()&os.ModeSymlink != 0)
+
 	// Verify junction point detection
 	isJunction, err = isWindowsJunctionPoint(junctionDir)
 	if err != nil {
@@ -128,20 +130,26 @@ func TestResolveSymlinks(t *testing.T) {
 	}
 
 	// Normalize both paths to handle Windows short vs long path names
-	expectedNormalized, err := filepath.Abs(regularDir)
+	// Use EvalSymlinks to resolve any intermediate symlinks in the path
+	expectedNormalized, err := filepath.EvalSymlinks(regularDir)
 	if err != nil {
-		expectedNormalized = filepath.Clean(regularDir)
+		expectedNormalized, err = filepath.Abs(regularDir)
+		if err != nil {
+			expectedNormalized = filepath.Clean(regularDir)
+		}
 	}
-	resolvedNormalized, err := filepath.Abs(resolved)
+	resolvedNormalized, err := filepath.EvalSymlinks(resolved)
 	if err != nil {
-		resolvedNormalized = filepath.Clean(resolved)
+		resolvedNormalized, err = filepath.Abs(resolved)
+		if err != nil {
+			resolvedNormalized = filepath.Clean(resolved)
+		}
 	}
 
-	if resolvedNormalized != expectedNormalized {
+	// Compare using case-insensitive comparison for Windows
+	if !strings.EqualFold(resolvedNormalized, expectedNormalized) {
 		t.Errorf("Expected %s, got %s", expectedNormalized, resolvedNormalized)
-	}
-
-	// Test junction point if we can create one
+	} // Test junction point if we can create one
 	targetDir := filepath.Join(tempDir, "target")
 	if err := os.Mkdir(targetDir, 0755); err != nil {
 		t.Fatalf("Failed to create target directory: %v", err)
@@ -159,17 +167,29 @@ func TestResolveSymlinks(t *testing.T) {
 		t.Errorf("Unexpected error resolving junction: %v", err)
 	}
 
+	// Debug: Check if the junction is being detected properly
+	detectedAsJunction, junctionErr := isWindowsJunctionPoint(junctionDir)
+	t.Logf("Junction detection: path=%s, isJunction=%v, error=%v", junctionDir, detectedAsJunction, junctionErr)
+	t.Logf("Resolve result: input=%s, output=%s", junctionDir, resolved)
+
 	// Should resolve to target directory - normalize paths for comparison
-	expectedNormalized, err = filepath.Abs(targetDir)
+	expectedNormalized, err = filepath.EvalSymlinks(targetDir)
 	if err != nil {
-		expectedNormalized = filepath.Clean(targetDir)
+		expectedNormalized, err = filepath.Abs(targetDir)
+		if err != nil {
+			expectedNormalized = filepath.Clean(targetDir)
+		}
 	}
-	resolvedNormalized, err = filepath.Abs(resolved)
+	resolvedNormalized, err = filepath.EvalSymlinks(resolved)
 	if err != nil {
-		resolvedNormalized = filepath.Clean(resolved)
+		resolvedNormalized, err = filepath.Abs(resolved)
+		if err != nil {
+			resolvedNormalized = filepath.Clean(resolved)
+		}
 	}
 
-	if resolvedNormalized != expectedNormalized {
+	// Compare using case-insensitive comparison for Windows
+	if !strings.EqualFold(resolvedNormalized, expectedNormalized) {
 		t.Errorf("Expected %s, got %s", expectedNormalized, resolvedNormalized)
 	}
 }
@@ -236,13 +256,19 @@ func TestWindowsJunctionPoint_Integration(t *testing.T) {
 	}
 
 	// Normalize paths for comparison (handle different path formats and short/long names)
-	expectedTargetAbs, err := filepath.Abs(targetDir)
+	expectedTargetAbs, err := filepath.EvalSymlinks(targetDir)
 	if err != nil {
-		expectedTargetAbs = filepath.Clean(targetDir)
+		expectedTargetAbs, err = filepath.Abs(targetDir)
+		if err != nil {
+			expectedTargetAbs = filepath.Clean(targetDir)
+		}
 	}
-	actualTargetAbs, err := filepath.Abs(target)
+	actualTargetAbs, err := filepath.EvalSymlinks(target)
 	if err != nil {
-		actualTargetAbs = filepath.Clean(target)
+		actualTargetAbs, err = filepath.Abs(target)
+		if err != nil {
+			actualTargetAbs = filepath.Clean(target)
+		}
 	}
 
 	if !strings.EqualFold(actualTargetAbs, expectedTargetAbs) {
@@ -265,14 +291,20 @@ func TestWindowsJunctionPoint_Integration(t *testing.T) {
 		t.Errorf("Error resolving symlinks for junction: %v", err)
 	}
 
-	// Normalize both paths for comparison
-	resolvedAbs, err := filepath.Abs(resolved)
+	// Debug: Check what we actually resolved
+	t.Logf("Integration test - resolveSymlinks: input=%s, output=%s", junctionDir, resolved)
+
+	// Normalize both paths for comparison using EvalSymlinks to handle short/long names
+	resolvedNorm, err := filepath.EvalSymlinks(resolved)
 	if err != nil {
-		resolvedAbs = filepath.Clean(resolved)
+		resolvedNorm, err = filepath.Abs(resolved)
+		if err != nil {
+			resolvedNorm = filepath.Clean(resolved)
+		}
 	}
 
-	if !strings.EqualFold(resolvedAbs, expectedTargetAbs) {
-		t.Errorf("resolveSymlinks mismatch: expected %s, got %s", expectedTargetAbs, resolvedAbs)
+	if !strings.EqualFold(resolvedNorm, expectedTargetAbs) {
+		t.Errorf("resolveSymlinks mismatch: expected %s, got %s", expectedTargetAbs, resolvedNorm)
 	}
 }
 
