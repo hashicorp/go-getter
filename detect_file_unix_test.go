@@ -1,12 +1,12 @@
 // Copyright (c) HashiCorp, Inc.
 // SPDX-License-Identifier: MPL-2.0
 
+//go:build test || unix
 // +build test unix
 
 package getter
 
 import (
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -15,16 +15,11 @@ import (
 // If a relative symlink is passed in as the pwd to Detect, the resulting URL
 // can have an invalid path.
 func TestFileDetector_relativeSymlink(t *testing.T) {
-	tmpDir, err := ioutil.TempDir("", "go-getter")
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	defer os.RemoveAll(tmpDir)
+	tmpDir := t.TempDir()
 
 	// We may have a symlinked tmp dir,
 	// e.g. OSX uses /var -> /private/var
-	tmpDir, err = filepath.EvalSymlinks(tmpDir)
+	tmpDir, err := filepath.EvalSymlinks(tmpDir)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -44,7 +39,7 @@ func TestFileDetector_relativeSymlink(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer os.Chdir(prevDir)
+	defer func() { _ = os.Chdir(prevDir) }()
 
 	err = os.Chdir(subdir)
 	if err != nil {

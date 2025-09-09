@@ -5,12 +5,13 @@ package getter
 
 import (
 	"context"
+	"errors"
 	"net/url"
 	"os"
 	"path/filepath"
 	"testing"
 
-	"github.com/aws/aws-sdk-go/aws/awserr"
+	awshttp "github.com/aws/aws-sdk-go-v2/aws/transport/http"
 )
 
 // Note for external contributors: In order to run the S3 test suite, you will only be able to be run
@@ -21,8 +22,12 @@ func TestS3Getter_impl(t *testing.T) {
 }
 
 func TestS3Getter(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping test that requires AWS credentials in short mode")
+	}
+
 	g := new(S3Getter)
-	dst := tempDir(t)
+	dst := t.TempDir()
 
 	// With a dir that doesn't exist
 	err := g.Get(
@@ -40,8 +45,12 @@ func TestS3Getter(t *testing.T) {
 }
 
 func TestS3Getter_subdir(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping test that requires AWS credentials in short mode")
+	}
+
 	g := new(S3Getter)
-	dst := tempDir(t)
+	dst := t.TempDir()
 
 	// With a dir that doesn't exist
 	err := g.Get(
@@ -59,9 +68,12 @@ func TestS3Getter_subdir(t *testing.T) {
 }
 
 func TestS3Getter_GetFile(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping test that requires AWS credentials in short mode")
+	}
+
 	g := new(S3Getter)
-	dst := tempTestFile(t)
-	defer os.RemoveAll(filepath.Dir(dst))
+	dst := filepath.Join(t.TempDir(), "test-file")
 
 	// Download
 	err := g.GetFile(
@@ -79,9 +91,12 @@ func TestS3Getter_GetFile(t *testing.T) {
 }
 
 func TestS3Getter_GetFile_badParams(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping test that requires AWS credentials in short mode")
+	}
+
 	g := new(S3Getter)
-	dst := tempTestFile(t)
-	defer os.RemoveAll(filepath.Dir(dst))
+	dst := filepath.Join(t.TempDir(), "test-file")
 
 	// Download
 	err := g.GetFile(
@@ -92,15 +107,19 @@ func TestS3Getter_GetFile_badParams(t *testing.T) {
 		t.Fatalf("expected error, got none")
 	}
 
-	if reqerr, ok := err.(awserr.RequestFailure); !ok || reqerr.StatusCode() != 403 {
+	var respErr *awshttp.ResponseError
+	if errors.As(err, &respErr) && respErr.HTTPStatusCode() != 403 {
 		t.Fatalf("expected InvalidAccessKeyId error")
 	}
 }
 
 func TestS3Getter_GetFile_notfound(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping test that requires AWS credentials in short mode")
+	}
+
 	g := new(S3Getter)
-	dst := tempTestFile(t)
-	defer os.RemoveAll(filepath.Dir(dst))
+	dst := filepath.Join(t.TempDir(), "test-file")
 
 	// Download
 	err := g.GetFile(
@@ -113,6 +132,10 @@ func TestS3Getter_GetFile_notfound(t *testing.T) {
 }
 
 func TestS3Getter_ClientMode_dir(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping test that requires AWS credentials in short mode")
+	}
+
 	g := new(S3Getter)
 
 	// Check client mode on a key prefix with only a single key.
@@ -128,6 +151,10 @@ func TestS3Getter_ClientMode_dir(t *testing.T) {
 }
 
 func TestS3Getter_ClientMode_file(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping test that requires AWS credentials in short mode")
+	}
+
 	g := new(S3Getter)
 
 	// Check client mode on a key prefix which contains sub-keys.
@@ -143,6 +170,10 @@ func TestS3Getter_ClientMode_file(t *testing.T) {
 }
 
 func TestS3Getter_ClientMode_notfound(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping test that requires AWS credentials in short mode")
+	}
+
 	g := new(S3Getter)
 
 	// Check the client mode when a non-existent key is looked up. This does not
@@ -162,6 +193,10 @@ func TestS3Getter_ClientMode_notfound(t *testing.T) {
 }
 
 func TestS3Getter_ClientMode_collision(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping test that requires AWS credentials in short mode")
+	}
+
 	g := new(S3Getter)
 
 	// Check that the client mode is "file" if there is both an object and a
@@ -185,6 +220,8 @@ func TestS3Getter_Url(t *testing.T) {
 		bucket      string
 		path        string
 		version     string
+		accessKey   string
+		secretKey   string
 		expectedErr string
 	}{
 		{
@@ -212,28 +249,34 @@ func TestS3Getter_Url(t *testing.T) {
 			version: "1234",
 		},
 		{
-			name:    "localhost-1",
-			url:     "s3::http://127.0.0.1:9000/test-bucket/hello.txt?aws_access_key_id=TESTID&aws_access_key_secret=TestSecret&region=us-east-2&version=1",
-			region:  "us-east-2",
-			bucket:  "test-bucket",
-			path:    "hello.txt",
-			version: "1",
+			name:      "localhost-1",
+			url:       "s3::http://127.0.0.1:9000/test-bucket/hello.txt?aws_access_key_id=TESTID&aws_access_key_secret=TestSecret&region=us-east-2&version=1",
+			region:    "us-east-2",
+			bucket:    "test-bucket",
+			path:      "hello.txt",
+			version:   "1",
+			accessKey: "TESTID",
+			secretKey: "TestSecret",
 		},
 		{
-			name:    "localhost-2",
-			url:     "s3::http://127.0.0.1:9000/test-bucket/hello.txt?aws_access_key_id=TESTID&aws_access_key_secret=TestSecret&version=1",
-			region:  "us-east-1",
-			bucket:  "test-bucket",
-			path:    "hello.txt",
-			version: "1",
+			name:      "localhost-2",
+			url:       "s3::http://127.0.0.1:9000/test-bucket/hello.txt?aws_access_key_id=TESTID&aws_access_key_secret=TestSecret&version=1",
+			region:    "us-east-1",
+			bucket:    "test-bucket",
+			path:      "hello.txt",
+			version:   "1",
+			accessKey: "TESTID",
+			secretKey: "TestSecret",
 		},
 		{
-			name:    "localhost-3",
-			url:     "s3::http://127.0.0.1:9000/test-bucket/hello.txt?aws_access_key_id=TESTID&aws_access_key_secret=TestSecret",
-			region:  "us-east-1",
-			bucket:  "test-bucket",
-			path:    "hello.txt",
-			version: "",
+			name:      "localhost-3",
+			url:       "s3::http://127.0.0.1:9000/test-bucket/hello.txt?aws_access_key_id=TESTID&aws_access_key_secret=TestSecret",
+			region:    "us-east-1",
+			bucket:    "test-bucket",
+			path:      "hello.txt",
+			version:   "",
+			accessKey: "TESTID",
+			secretKey: "TestSecret",
 		},
 		{
 			name:        "malformed s3 url",
@@ -280,8 +323,25 @@ func TestS3Getter_Url(t *testing.T) {
 			if version != pt.version {
 				t.Fatalf("expected %s, got %s", pt.version, version)
 			}
-			if &creds == nil {
-				t.Fatalf("expected to not be nil")
+
+			if creds == nil {
+				if pt.accessKey != "" || pt.secretKey != "" {
+					t.Fatal("expected credentials, got nil")
+				}
+				return
+			}
+
+			credV, err := creds.Retrieve(context.Background())
+			if err != nil {
+				t.Fatalf("failed to get credentials: %s", err)
+			}
+
+			if credV.AccessKeyID != pt.accessKey {
+				t.Fatalf("expected %s, got %s", pt.accessKey, credV.AccessKeyID)
+			}
+
+			if credV.SecretAccessKey != pt.secretKey {
+				t.Fatalf("expected %s, got %s", pt.secretKey, credV.SecretAccessKey)
 			}
 		})
 	}

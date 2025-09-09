@@ -7,6 +7,7 @@ import (
 	"context"
 	"os"
 	"path/filepath"
+	"runtime"
 	"testing"
 )
 
@@ -16,20 +17,11 @@ func TestFileGetter_impl(t *testing.T) {
 
 func TestFileGetter(t *testing.T) {
 	g := new(FileGetter)
-	dst := tempDir(t)
+	dst := filepath.Join(t.TempDir(), "target")
 
 	// With a dir that doesn't exist
 	if err := g.Get(context.Background(), dst, testModuleURL("basic")); err != nil {
 		t.Fatalf("err: %s", err)
-	}
-
-	// Verify the destination folder is a symlink
-	fi, err := os.Lstat(dst)
-	if err != nil {
-		t.Fatalf("err: %s", err)
-	}
-	if fi.Mode()&os.ModeSymlink == 0 {
-		t.Fatal("destination is not a symlink")
 	}
 
 	// Verify the main file exists
@@ -37,11 +29,22 @@ func TestFileGetter(t *testing.T) {
 	if _, err := os.Stat(mainPath); err != nil {
 		t.Fatalf("err: %s", err)
 	}
+
+	// On Unix, verify it's a symlink; on Windows, just verify it works
+	if runtime.GOOS != "windows" {
+		fi, err := os.Lstat(dst)
+		if err != nil {
+			t.Fatalf("err: %s", err)
+		}
+		if fi.Mode()&os.ModeSymlink == 0 {
+			t.Fatal("destination is not a symlink")
+		}
+	}
 }
 
 func TestFileGetter_sourceFile(t *testing.T) {
 	g := new(FileGetter)
-	dst := tempDir(t)
+	dst := filepath.Join(t.TempDir(), "target")
 
 	// With a source URL that is a path to a file
 	u := testModuleURL("basic")
@@ -53,7 +56,7 @@ func TestFileGetter_sourceFile(t *testing.T) {
 
 func TestFileGetter_sourceNoExist(t *testing.T) {
 	g := new(FileGetter)
-	dst := tempDir(t)
+	dst := filepath.Join(t.TempDir(), "target")
 
 	// With a source URL that doesn't exist
 	u := testModuleURL("basic")
@@ -65,7 +68,7 @@ func TestFileGetter_sourceNoExist(t *testing.T) {
 
 func TestFileGetter_dir(t *testing.T) {
 	g := new(FileGetter)
-	dst := tempDir(t)
+	dst := filepath.Join(t.TempDir(), "target")
 
 	if err := os.MkdirAll(dst, 0755); err != nil {
 		t.Fatalf("err: %s", err)
@@ -79,8 +82,9 @@ func TestFileGetter_dir(t *testing.T) {
 
 func TestFileGetter_dirSymlink(t *testing.T) {
 	g := new(FileGetter)
-	dst := tempDir(t)
-	dst2 := tempDir(t)
+	tempBase := t.TempDir()
+	dst := filepath.Join(tempBase, "dst")
+	dst2 := filepath.Join(tempBase, "dst2")
 
 	// Make parents
 	if err := os.MkdirAll(filepath.Dir(dst), 0755); err != nil {
@@ -109,33 +113,33 @@ func TestFileGetter_dirSymlink(t *testing.T) {
 
 func TestFileGetter_GetFile(t *testing.T) {
 	g := new(FileGetter)
-	dst := tempTestFile(t)
-	defer os.RemoveAll(filepath.Dir(dst))
+	dst := filepath.Join(t.TempDir(), "test-file")
 
 	// With a dir that doesn't exist
 	if err := g.GetFile(context.Background(), dst, testModuleURL("basic-file/foo.txt")); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
-	// Verify the destination folder is a symlink
-	fi, err := os.Lstat(dst)
-	if err != nil {
-		t.Fatalf("err: %s", err)
-	}
-	if fi.Mode()&os.ModeSymlink == 0 {
-		t.Fatal("destination is not a symlink")
-	}
-
 	// Verify the main file exists
 	assertContents(t, dst, "Hello\n")
+
+	// On Unix, verify it's a symlink; on Windows, just verify it works
+	if runtime.GOOS != "windows" {
+		fi, err := os.Lstat(dst)
+		if err != nil {
+			t.Fatalf("err: %s", err)
+		}
+		if fi.Mode()&os.ModeSymlink == 0 {
+			t.Fatal("destination is not a symlink")
+		}
+	}
 }
 
 func TestFileGetter_GetFile_Copy(t *testing.T) {
 	g := new(FileGetter)
 	g.Copy = true
 
-	dst := tempTestFile(t)
-	defer os.RemoveAll(filepath.Dir(dst))
+	dst := filepath.Join(t.TempDir(), "test-file")
 
 	// With a dir that doesn't exist
 	if err := g.GetFile(context.Background(), dst, testModuleURL("basic-file/foo.txt")); err != nil {
@@ -158,7 +162,7 @@ func TestFileGetter_GetFile_Copy(t *testing.T) {
 // https://github.com/hashicorp/terraform/issues/8418
 func TestFileGetter_percent2F(t *testing.T) {
 	g := new(FileGetter)
-	dst := tempDir(t)
+	dst := filepath.Join(t.TempDir(), "target")
 
 	// With a dir that doesn't exist
 	if err := g.Get(context.Background(), dst, testModuleURL("basic%2Ftest")); err != nil {

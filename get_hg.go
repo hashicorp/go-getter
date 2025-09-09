@@ -77,7 +77,7 @@ func (g *HgGetter) GetFile(ctx context.Context, dst string, u *url.URL) error {
 	if err != nil {
 		return err
 	}
-	defer tdcloser.Close()
+	defer func() { _ = tdcloser.Close() }()
 
 	// Get the filename, and strip the filename from the URL so we can
 	// just get the repository directly.

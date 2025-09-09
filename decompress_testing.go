@@ -7,7 +7,6 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"io"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -36,7 +35,7 @@ func TestDecompressor(t testing.TB, d Decompressor, cases []TestDecompressCase) 
 		t.Logf("Testing: %s", tc.Input)
 
 		// Temporary dir to store stuff
-		td, err := ioutil.TempDir("", "getter")
+		td, err := os.MkdirTemp("", "getter")
 		if err != nil {
 			t.Fatalf("err: %s", err)
 		}
@@ -46,7 +45,7 @@ func TestDecompressor(t testing.TB, d Decompressor, cases []TestDecompressCase) 
 
 		// We use a function so defers work
 		func() {
-			defer os.RemoveAll(td)
+			defer func() { _ = os.RemoveAll(td) }()
 
 			// Decompress
 			err := d.Decompress(dst, tc.Input, tc.Dir, 0022)
@@ -93,7 +92,7 @@ func TestDecompressor(t testing.TB, d Decompressor, cases []TestDecompressCase) 
 			expected := tc.DirList
 			if runtime.GOOS == "windows" {
 				for i, v := range expected {
-					expected[i] = strings.Replace(v, "/", "\\", -1)
+					expected[i] = strings.ReplaceAll(v, "/", "\\")
 				}
 			}
 
@@ -160,7 +159,7 @@ func testMD5(t testing.TB, path string) string {
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	h := md5.New()
 	_, err = io.Copy(h, f)

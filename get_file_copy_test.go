@@ -16,7 +16,7 @@ import (
 type OneDoneContext bool
 
 func (*OneDoneContext) Deadline() (deadline time.Time, ok bool) { return }
-func (*OneDoneContext) Value(key interface{}) interface{}       { return nil }
+func (*OneDoneContext) Value(key any) any                       { return nil }
 
 func (o *OneDoneContext) Err() error {
 	if *o == false {
