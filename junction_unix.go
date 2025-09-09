@@ -6,7 +6,7 @@
 
 package getter
 
-// isWindowsJunctionPointWinAPI is a no-op on non-Windows platforms
-func isWindowsJunctionPointWinAPI(path string) (bool, error) {
+// isWindowsJunctionPoint is a no-op on non-Windows platforms
+func isWindowsJunctionPoint(path string) (bool, error) {
 	return false, nil
 }

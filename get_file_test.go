@@ -36,7 +36,7 @@ func TestFileGetter(t *testing.T) {
 	}
 
 	if runtime.GOOS == "windows" {
-		isJunction, junctionErr := isWindowsJunctionPointWinAPI(dst)
+		isJunction, junctionErr := isWindowsJunctionPoint(dst)
 		if junctionErr != nil {
 			t.Fatalf("failed to check if destination is a junction point: %s", junctionErr)
 		}

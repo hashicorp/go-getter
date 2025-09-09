@@ -121,7 +121,9 @@ func resolveSymlinks(src string) (string, error) {
 	// Check what type of path this is
 
 	// Case 1: Check if this is a junction point
-	if isJunction, junctionErr := isWindowsJunctionPointWinAPI(src); junctionErr == nil && isJunction {
+	var isJunction bool
+	var junctionErr error
+	if isJunction, junctionErr = isWindowsJunctionPoint(src); junctionErr == nil && isJunction {
 		// Confirmed junction point - return cleaned path
 		return filepath.Clean(src), nil
 	}
@@ -131,17 +133,18 @@ func resolveSymlinks(src string) (string, error) {
 		lstatInfo.Mode()&os.ModeIrregular == 0 &&
 		lstatInfo.Mode()&os.ModeSymlink == 0
 
-	isRegularFile := !lstatInfo.IsDir() && !statInfo.IsDir() &&
-		lstatInfo.Mode()&os.ModeIrregular == 0 &&
-		lstatInfo.Mode()&os.ModeSymlink == 0
-
-	if isRegularDir || isRegularFile {
-		// This is just a regular directory or file that EvalSymlinks couldn't handle on Windows
-		// Do what EvalSymlinks would normally do: return the cleaned path
+	if isRegularDir {
+		// I'm just a dir, yes I'm only a dir,
+		// EvalSymlinks tried but it stopped right here,
+		// So do what EvalSymlinks would normally do:
+		// Return the cleaned path, plain and true.
 		return filepath.Clean(src), nil
 	}
 
 	// If we get here, it's some other type of special file/link that we don't understand
 	// Return the original EvalSymlinks error
-	return "", err
+	if junctionErr != nil {
+		return "", fmt.Errorf("failed to resolve symlinks (checking whether junction point: %s): %w", junctionErr, err)
+	}
+	return "", fmt.Errorf("failed to resolve symlinks: %w", err)
 }

@@ -14,9 +14,9 @@ import (
 	"golang.org/x/sys/windows"
 )
 
-// isWindowsJunctionPointWinAPI uses Windows API to reliably detect junction points
+// isWindowsJunctionPoint uses Windows API to reliably detect junction points
 // by checking the reparse point tag specifically.
-func isWindowsJunctionPointWinAPI(path string) (bool, error) {
+func isWindowsJunctionPoint(path string) (bool, error) {
 	// DEBUG: Comprehensive debugging output
 	fmt.Printf("=== JUNCTION DEBUG START ===\n")
 	fmt.Printf("DEBUG: Checking path: %s\n", path)
