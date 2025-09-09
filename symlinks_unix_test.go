@@ -297,7 +297,9 @@ func TestUnixSymlinks_PermissionEdgeCases(t *testing.T) {
 
 	// Restore permissions at test end
 	defer func() {
-		os.Chmod(targetDir, 0755)
+		if err := os.Chmod(targetDir, 0755); err != nil {
+			t.Logf("Failed to restore permissions on %s: %v", targetDir, err)
+		}
 	}()
 
 	// Junction detection should still work
