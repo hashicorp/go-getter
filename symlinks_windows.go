@@ -18,26 +18,13 @@ import (
 // resolveSymlinks resolves symlinks with special handling for Windows junction points in Go 1.23+.
 // This function provides a more robust fallback for Windows path resolution issues.
 func resolveSymlinks(src string) (string, error) {
-	resolved, err := filepath.EvalSymlinks(src)
-	if err == nil {
-		return resolved, nil
-	}
-
-	// On Windows, first check if the path actually exists and what type it is
+	// On Windows, check for junction points FIRST since filepath.EvalSymlinks
+	// does not properly resolve junction points - it only normalizes the path
 	lstatInfo, lstatErr := os.Lstat(src)
 	if lstatErr != nil {
-		// Path doesn't exist or can't be accessed, return the original EvalSymlinks error
-		return "", err
+		// Path doesn't exist or can't be accessed
+		return "", lstatErr
 	}
-
-	statInfo, statErr := os.Stat(src)
-	if statErr != nil {
-		// Path can't be followed, return the original EvalSymlinks error
-		return "", err
-	}
-
-	// Path exists but EvalSymlinks failed on Windows
-	// Check what type of path this is
 
 	// Case 1: Check if this is a junction point
 	var isJunction bool
@@ -51,7 +38,19 @@ func resolveSymlinks(src string) (string, error) {
 		return filepath.Clean(target), nil
 	}
 
-	// Case 2: Check if this is a regular directory or file
+	// Case 2: Not a junction point, try standard symlink resolution
+	resolved, err := filepath.EvalSymlinks(src)
+	if err == nil {
+		return resolved, nil
+	}
+
+	statInfo, statErr := os.Stat(src)
+	if statErr != nil {
+		// Path can't be followed, return the original EvalSymlinks error
+		return "", err
+	}
+
+	// Case 3: Check if this is a regular directory or file
 	isRegularDir := lstatInfo.IsDir() && statInfo.IsDir() &&
 		lstatInfo.Mode()&os.ModeIrregular == 0 &&
 		lstatInfo.Mode()&os.ModeSymlink == 0
