@@ -43,8 +43,12 @@ func resolveSymlinks(src string) (string, error) {
 	var isJunction bool
 	var junctionErr error
 	if isJunction, junctionErr = isWindowsJunctionPoint(src); junctionErr == nil && isJunction {
-		// Confirmed junction point - return cleaned path
-		return filepath.Clean(src), nil
+		// Confirmed junction point - resolve to actual target path
+		target, resolveErr := resolveJunctionTarget(src)
+		if resolveErr != nil {
+			return "", fmt.Errorf("failed to resolve junction point target for %s: %w", src, resolveErr)
+		}
+		return filepath.Clean(target), nil
 	}
 
 	// Case 2: Check if this is a regular directory or file
@@ -144,4 +148,106 @@ func isWindowsJunctionPoint(path string) (bool, error) {
 
 	isJunction := reparseTag == IO_REPARSE_TAG_MOUNT_POINT
 	return isJunction, nil
+}
+
+// resolveJunctionTarget reads the actual target path from a Windows junction point
+func resolveJunctionTarget(path string) (string, error) {
+	// Convert path to UTF16 for Windows API
+	pathPtr, err := windows.UTF16PtrFromString(path)
+	if err != nil {
+		return "", err
+	}
+
+	// Open the file to get reparse point information
+	handle, err := windows.CreateFile(
+		pathPtr,
+		0, // No access needed, just query reparse data
+		windows.FILE_SHARE_READ|windows.FILE_SHARE_WRITE|windows.FILE_SHARE_DELETE,
+		nil,
+		windows.OPEN_EXISTING,
+		windows.FILE_FLAG_BACKUP_SEMANTICS|windows.FILE_FLAG_OPEN_REPARSE_POINT,
+		0,
+	)
+	if err != nil {
+		return "", err
+	}
+	defer windows.CloseHandle(handle)
+
+	// Query the reparse point data
+	const FSCTL_GET_REPARSE_POINT = 0x900a8
+	const MAXIMUM_REPARSE_DATA_BUFFER_SIZE = 16 * 1024
+
+	buffer := make([]byte, MAXIMUM_REPARSE_DATA_BUFFER_SIZE)
+	var bytesReturned uint32
+
+	err = windows.DeviceIoControl(
+		handle,
+		FSCTL_GET_REPARSE_POINT,
+		nil,
+		0,
+		&buffer[0],
+		uint32(len(buffer)),
+		&bytesReturned,
+		nil,
+	)
+	if err != nil {
+		return "", err
+	}
+
+	// Parse the reparse point data to extract target path
+	// The structure is:
+	// DWORD ReparseTag
+	// WORD ReparseDataLength
+	// WORD Reserved
+	// WORD SubstituteNameOffset
+	// WORD SubstituteNameLength
+	// WORD PrintNameOffset
+	// WORD PrintNameLength
+	// WCHAR PathBuffer[1] (variable length)
+
+	if bytesReturned < 16 {
+		return "", fmt.Errorf("reparse data too short: %d bytes", bytesReturned)
+	}
+
+	// Skip the header (8 bytes: ReparseTag + ReparseDataLength + Reserved)
+	dataStart := 8
+
+	// Read the path offsets and lengths
+	substituteNameOffset := *(*uint16)(unsafe.Pointer(&buffer[dataStart]))
+	substituteNameLength := *(*uint16)(unsafe.Pointer(&buffer[dataStart+2]))
+	// printNameOffset := *(*uint16)(unsafe.Pointer(&buffer[dataStart+4]))  // Not used, substitute name is preferred
+	// printNameLength := *(*uint16)(unsafe.Pointer(&buffer[dataStart+6]))  // Not used, substitute name is preferred
+
+	// Path buffer starts after the offset/length fields (8 more bytes)
+	pathBufferStart := dataStart + 8
+
+	// Use the substitute name (which contains the actual target path)
+	targetStart := pathBufferStart + int(substituteNameOffset)
+	targetEnd := targetStart + int(substituteNameLength)
+
+	if targetEnd > int(bytesReturned) {
+		return "", fmt.Errorf("invalid reparse data: target path extends beyond buffer")
+	}
+
+	// Convert UTF-16 bytes to string
+	targetBytes := buffer[targetStart:targetEnd]
+	if len(targetBytes)%2 != 0 {
+		return "", fmt.Errorf("invalid UTF-16 data: odd number of bytes")
+	}
+
+	// Convert bytes to uint16 slice for UTF-16 decoding
+	utf16Data := make([]uint16, len(targetBytes)/2)
+	for i := 0; i < len(utf16Data); i++ {
+		utf16Data[i] = *(*uint16)(unsafe.Pointer(&targetBytes[i*2]))
+	}
+
+	// Convert UTF-16 to string
+	target := windows.UTF16ToString(utf16Data)
+
+	// Remove Windows NT namespace prefixes if present
+	if len(target) >= 4 && target[:4] == `\??\` {
+		target = target[4:]
+	}
+
+	return target, nil
 }
