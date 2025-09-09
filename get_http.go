@@ -533,8 +533,7 @@ func (g *HttpGetter) getSubdir(ctx context.Context, dst, source, subDir string, 
 
 	// Make sure the subdir path actually exists
 	if _, err := os.Stat(sourcePath); err != nil {
-		return fmt.Errorf(
-			"Error downloading %s: %s", source, err)
+		return fmt.Errorf("downloading %s: %s", source, err)
 	}
 
 	// Copy the subdirectory into our actual destination.

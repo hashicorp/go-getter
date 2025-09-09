@@ -23,8 +23,7 @@ func mode(mode, umask os.FileMode) os.FileMode {
 func copyDir(ctx context.Context, dst string, src string, ignoreDot bool, disableSymlinks bool, umask os.FileMode) error {
 	// We can safely evaluate the symlinks here, even if disabled, because they
 	// will be checked before actual use in walkFn and copyFile
-	var err error
-	resolved, err := filepath.EvalSymlinks(src)
+	resolved, err := resolveSymlinks(src)
 	if err != nil {
 		return err
 	}
