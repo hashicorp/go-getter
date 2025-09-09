@@ -104,20 +104,44 @@ func resolveSymlinks(src string) (string, error) {
 		return "", err
 	}
 
-	// On Windows, first check if the path actually exists
-	if _, statErr := os.Stat(src); statErr != nil {
-		// Path doesn't exist, return the original EvalSymlinks error
+	// On Windows, first check if the path actually exists and what type it is
+	lstatInfo, lstatErr := os.Lstat(src)
+	if lstatErr != nil {
+		// Path doesn't exist or can't be accessed, return the original EvalSymlinks error
 		return "", err
 	}
 
-	// Path exists but EvalSymlinks failed - likely a junction point or similar
-	// Check if this is a junction point
-	if isJunction, junctionErr := isWindowsJunctionPointWinAPI(src); junctionErr == nil && isJunction {
-		// Confirmed junction point - use original path
-		return src, nil
+	statInfo, statErr := os.Stat(src)
+	if statErr != nil {
+		// Path can't be followed, return the original EvalSymlinks error
+		return "", err
 	}
 
-	// If junction detection failed or it's not a junction, return the original error
-	// This ensures real errors (permissions, network, etc.) are reported properly
+	// Path exists but EvalSymlinks failed on Windows
+	// Check what type of path this is
+
+	// Case 1: Check if this is a junction point
+	if isJunction, junctionErr := isWindowsJunctionPointWinAPI(src); junctionErr == nil && isJunction {
+		// Confirmed junction point - return cleaned path
+		return filepath.Clean(src), nil
+	}
+
+	// Case 2: Check if this is a regular directory or file
+	isRegularDir := lstatInfo.IsDir() && statInfo.IsDir() &&
+		lstatInfo.Mode()&os.ModeIrregular == 0 &&
+		lstatInfo.Mode()&os.ModeSymlink == 0
+
+	isRegularFile := !lstatInfo.IsDir() && !statInfo.IsDir() &&
+		lstatInfo.Mode()&os.ModeIrregular == 0 &&
+		lstatInfo.Mode()&os.ModeSymlink == 0
+
+	if isRegularDir || isRegularFile {
+		// This is just a regular directory or file that EvalSymlinks couldn't handle on Windows
+		// Do what EvalSymlinks would normally do: return the cleaned path
+		return filepath.Clean(src), nil
+	}
+
+	// If we get here, it's some other type of special file/link that we don't understand
+	// Return the original EvalSymlinks error
 	return "", err
 }
