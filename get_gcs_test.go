@@ -5,7 +5,6 @@ package getter
 
 import (
 	"context"
-	"io/ioutil"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -20,8 +19,12 @@ func TestGCSGetter_impl(t *testing.T) {
 }
 
 func TestGCSGetter(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping test that requires GCS credentials in short mode")
+	}
+
 	g := new(GCSGetter)
-	dst := tempDir(t)
+	dst := t.TempDir()
 
 	// With a dir that doesn't exist
 	err := g.Get(
@@ -39,8 +42,12 @@ func TestGCSGetter(t *testing.T) {
 }
 
 func TestGCSGetter_subdir(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping test that requires GCS credentials in short mode")
+	}
+
 	g := new(GCSGetter)
-	dst := tempDir(t)
+	dst := t.TempDir()
 
 	// With a dir that doesn't exist
 	err := g.Get(
@@ -58,9 +65,12 @@ func TestGCSGetter_subdir(t *testing.T) {
 }
 
 func TestGCSGetter_GetFile(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping test that requires GCS credentials in short mode")
+	}
+
 	g := new(GCSGetter)
-	dst := tempTestFile(t)
-	defer os.RemoveAll(filepath.Dir(dst))
+	dst := filepath.Join(t.TempDir(), "test-file")
 
 	// Download
 	err := g.GetFile(
@@ -78,9 +88,12 @@ func TestGCSGetter_GetFile(t *testing.T) {
 }
 
 func TestGCSGetter_GetGenerationFile(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping test that requires GCS credentials in short mode")
+	}
+
 	g := new(GCSGetter)
-	dst := tempTestFile(t)
-	defer os.RemoveAll(filepath.Dir(dst))
+	dst := filepath.Join(t.TempDir(), "test-file")
 
 	// Download Previous Version
 	err := g.GetFile(
@@ -91,7 +104,7 @@ func TestGCSGetter_GetGenerationFile(t *testing.T) {
 	}
 
 	// Verify contents are valid for this generation
-	content, err := ioutil.ReadFile(dst)
+	content, err := os.ReadFile(dst)
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
@@ -108,7 +121,7 @@ func TestGCSGetter_GetGenerationFile(t *testing.T) {
 	}
 
 	// Verify contents are valid for this generation
-	content, err = ioutil.ReadFile(dst)
+	content, err = os.ReadFile(dst)
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
@@ -119,9 +132,12 @@ func TestGCSGetter_GetGenerationFile(t *testing.T) {
 }
 
 func TestGCSGetter_GetFile_notfound(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping test that requires GCS credentials in short mode")
+	}
+
 	g := new(GCSGetter)
-	dst := tempTestFile(t)
-	defer os.RemoveAll(filepath.Dir(dst))
+	dst := filepath.Join(t.TempDir(), "test-file")
 
 	// Download
 	err := g.GetFile(
@@ -133,6 +149,10 @@ func TestGCSGetter_GetFile_notfound(t *testing.T) {
 }
 
 func TestGCSGetter_ClientMode_dir(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping test that requires GCS credentials in short mode")
+	}
+
 	g := new(GCSGetter)
 
 	// Check client mode on a key prefix with only a single key.
@@ -148,6 +168,10 @@ func TestGCSGetter_ClientMode_dir(t *testing.T) {
 }
 
 func TestGCSGetter_ClientMode_file(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping test that requires GCS credentials in short mode")
+	}
+
 	g := new(GCSGetter)
 
 	// Check client mode on a key prefix which contains sub-keys.
@@ -163,6 +187,10 @@ func TestGCSGetter_ClientMode_file(t *testing.T) {
 }
 
 func TestGCSGetter_ClientMode_notfound(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping test that requires GCS credentials in short mode")
+	}
+
 	g := new(GCSGetter)
 
 	// Check the client mode when a non-existent key is looked up. This does not
@@ -223,12 +251,14 @@ func TestGCSGetter_Url(t *testing.T) {
 }
 
 func TestGCSGetter_GetFile_OAuthAccessToken(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping test that requires GCS credentials in short mode")
+	}
 	if os.Getenv("GOOGLE_OAUTH_ACCESS_TOKEN") == "" {
 		t.Skip("Skipping; set GOOGLE_OAUTH_ACCESS_TOKEN to run")
 	}
 	g := new(GCSGetter)
-	dst := tempTestFile(t)
-	defer os.RemoveAll(filepath.Dir(dst))
+	dst := filepath.Join(t.TempDir(), "test-file")
 
 	// Download
 	err := g.GetFile(

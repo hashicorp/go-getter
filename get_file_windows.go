@@ -1,11 +1,13 @@
 // Copyright (c) HashiCorp, Inc.
 // SPDX-License-Identifier: MPL-2.0
 
+//go:build windows
 // +build windows
 
 package getter
 
 import (
+	"context"
 	"fmt"
 	"net/url"
 	"os"
@@ -15,8 +17,7 @@ import (
 	"syscall"
 )
 
-func (g *FileGetter) Get(dst string, u *url.URL) error {
-	ctx := g.Context()
+func (g *FileGetter) Get(ctx context.Context, dst string, u *url.URL) error {
 	path := u.Path
 	if u.RawPath != "" {
 		path = u.RawPath
@@ -63,8 +64,7 @@ func (g *FileGetter) Get(dst string, u *url.URL) error {
 	return nil
 }
 
-func (g *FileGetter) GetFile(dst string, u *url.URL) error {
-	ctx := g.Context()
+func (g *FileGetter) GetFile(ctx context.Context, dst string, u *url.URL) error {
 	path := u.Path
 	if u.RawPath != "" {
 		path = u.RawPath

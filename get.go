@@ -133,7 +133,7 @@ func getRunCommand(cmd *exec.Cmd) error {
 		return fmt.Errorf(
 			"%s exited with %s: %s",
 			cmd.Path,
-			exiterr.ProcessState.String(),
+			exiterr.String(),
 			buf.String())
 	}
 

@@ -43,7 +43,7 @@ func (d *TarXzDecompressor) Decompress(dst, src string, dir bool, umask os.FileM
 	if err != nil {
 		return err
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	// xz compression is second
 	txzR, err := xz.NewReader(bufio.NewReader(f))
