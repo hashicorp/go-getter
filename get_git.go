@@ -226,7 +226,6 @@ func (g *GitGetter) clone(ctx context.Context, dst, sshKeyFile string, u *url.UR
 	}
 
 	if subdir != "" {
-		fmt.Println("setting sparse checkout for subdir: ", subdir)
 		cmd = exec.CommandContext(ctx, "git", "sparse-checkout", "set", subdir)
 		cmd.Dir = dst
 		err = getRunCommand(cmd)
