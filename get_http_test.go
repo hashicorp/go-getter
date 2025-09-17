@@ -15,7 +15,6 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
-	"runtime"
 	"strconv"
 	"strings"
 	"testing"
@@ -142,11 +141,6 @@ func TestHttpGetter_meta(t *testing.T) {
 }
 
 func TestHttpGetter_metaSubdir(t *testing.T) {
-	// Skip this test on Windows due to file:// URL subdirectory resolution issues
-	if runtime.GOOS == "windows" {
-		t.Skip("Skipping meta subdir test on Windows due to file:// URL path resolution issues")
-	}
-
 	ln := testHttpServer(t)
 	defer func() { _ = ln.Close() }()
 
@@ -171,11 +165,6 @@ func TestHttpGetter_metaSubdir(t *testing.T) {
 }
 
 func TestHttpGetter_metaSubdirGlob(t *testing.T) {
-	// Skip this test on Windows due to file:// URL subdirectory resolution issues
-	if runtime.GOOS == "windows" {
-		t.Skip("Skipping meta subdir glob test on Windows due to file:// URL path resolution issues")
-	}
-
 	ln := testHttpServer(t)
 	defer func() { _ = ln.Close() }()
 
