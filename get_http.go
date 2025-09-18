@@ -443,7 +443,7 @@ func (g *HttpGetter) GetFile(dst string, src *url.URL) error {
 			if headResp.StatusCode == 200 {
 				// If the HEAD request succeeded, then attempt to set the range
 				// query if we can.
-				if headResp.Header.Get("Accept-Ranges") == "bytes" && headResp.ContentLength >= 0 {
+				if headResp.Header.Get("Accept-Ranges") == "bytes" && headResp.ContentLength > 0 {
 					if fi, err := f.Stat(); err == nil {
 						if _, err = f.Seek(0, io.SeekEnd); err == nil {
 							currentFileSize = fi.Size()
