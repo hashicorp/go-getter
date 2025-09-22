@@ -13,7 +13,6 @@ import (
 	"strings"
 
 	urlhelper "github.com/hashicorp/go-getter/helper/url"
-	safetemp "github.com/hashicorp/go-safetemp"
 )
 
 // ErrSymlinkCopy means that a copy of a symlink was encountered on a request with DisableSymlinks enabled.
@@ -143,7 +142,7 @@ func (c *Client) Get() error {
 			subDir = subDir[1:]
 		}
 
-		td, tdcloser, err := safetemp.Dir("", "getter")
+		td, tdcloser, err := mkdirTemp("", "getter")
 		if err != nil {
 			return err
 		}
