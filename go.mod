@@ -11,7 +11,6 @@ require (
 	github.com/cheggaaa/pb v1.0.27
 	github.com/hashicorp/aws-sdk-go-base/v2 v2.0.0-beta.65
 	github.com/hashicorp/go-cleanhttp v0.5.2
-	github.com/hashicorp/go-safetemp v1.0.0
 	github.com/hashicorp/go-version v1.6.0
 	github.com/klauspost/compress v1.15.11
 	github.com/mitchellh/go-homedir v1.1.0

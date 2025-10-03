@@ -18,7 +18,6 @@ import (
 	"time"
 
 	"github.com/hashicorp/go-cleanhttp"
-	safetemp "github.com/hashicorp/go-safetemp"
 )
 
 // HttpGetter is a Getter implementation that will download from an HTTP
@@ -514,7 +513,7 @@ func (g *HttpGetter) GetFile(dst string, src *url.URL) error {
 func (g *HttpGetter) getSubdir(ctx context.Context, dst, source, subDir string, opts ...ClientOption) error {
 	// Create a temporary directory to store the full source. This has to be
 	// a non-existent directory.
-	td, tdcloser, err := safetemp.Dir("", "getter")
+	td, tdcloser, err := mkdirTemp("", "getter")
 	if err != nil {
 		return err
 	}

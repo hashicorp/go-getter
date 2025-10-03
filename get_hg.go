@@ -14,7 +14,6 @@ import (
 	"time"
 
 	urlhelper "github.com/hashicorp/go-getter/helper/url"
-	safetemp "github.com/hashicorp/go-safetemp"
 )
 
 // HgGetter is a Getter implementation that will download a module from
@@ -85,7 +84,7 @@ func (g *HgGetter) Get(dst string, u *url.URL) error {
 func (g *HgGetter) GetFile(dst string, u *url.URL) error {
 	// Create a temporary directory to store the full source. This has to be
 	// a non-existent directory.
-	td, tdcloser, err := safetemp.Dir("", "getter")
+	td, tdcloser, err := mkdirTemp("", "getter")
 	if err != nil {
 		return err
 	}

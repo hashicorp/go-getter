@@ -894,6 +894,53 @@ func TestGitGetter_subdirectory(t *testing.T) {
 	}
 }
 
+func TestGitGetter_subdirectory_ok(t *testing.T) {
+	if !testHasGit {
+		t.Skip("git not found, skipping")
+	}
+
+	g := new(GitGetter)
+	dst := filepath.Join(t.TempDir(), "target")
+
+	repo := testGitRepo(t, "basic")
+	err := os.Mkdir(filepath.Join(repo.dir, "nested"), os.ModePerm)
+	if err != nil {
+		t.Fatal(err)
+	}
+	repo.commitFile("nested/foo.txt", "hello")
+
+	u, err := url.Parse(fmt.Sprintf("git::%s//nested", repo.url.String()))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	client := &Client{
+		Src: u.String(),
+		Dst: dst,
+		Pwd: ".",
+
+		Mode: ClientModeDir,
+
+		Detectors: []Detector{
+			new(GitDetector),
+		},
+		Getters: map[string]Getter{
+			"git": g,
+		},
+	}
+
+	err = client.Get()
+	if err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	// Verify the main file exists
+	mainPath := filepath.Join(dst, "foo.txt")
+	if _, err := os.Stat(mainPath); err != nil {
+		t.Fatalf("err: %s", err)
+	}
+}
+
 func TestGitGetter_BadRemoteUrl(t *testing.T) {
 
 	if !testHasGit {

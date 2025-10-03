@@ -19,7 +19,6 @@ import (
 	"time"
 
 	urlhelper "github.com/hashicorp/go-getter/helper/url"
-	safetemp "github.com/hashicorp/go-safetemp"
 	version "github.com/hashicorp/go-version"
 )
 
@@ -148,7 +147,7 @@ func (g *GitGetter) Get(dst string, u *url.URL) error {
 // GetFile for Git doesn't support updating at this time. It will download
 // the file every time.
 func (g *GitGetter) GetFile(dst string, u *url.URL) error {
-	td, tdcloser, err := safetemp.Dir("", "getter")
+	td, tdcloser, err := mkdirTemp("", "getter")
 	if err != nil {
 		return err
 	}
