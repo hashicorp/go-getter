@@ -47,7 +47,8 @@ func copyReader(dst string, src io.Reader, fmode, umask os.FileMode, fileSizeLim
 
 	_, err = io.Copy(dstF, src)
 	if err != nil {
-		// Remove the file in case of partial write
+		// Close & remove the file in case of partial write
+		_ = dstF.Close()
 		_ = os.Remove(dst)
 		return err
 	}
@@ -84,7 +85,8 @@ func copyFile(ctx context.Context, dst, src string, disableSymlinks bool, fmode,
 
 	count, err := Copy(ctx, dstF, srcF)
 	if err != nil {
-		// Remove the file in case of partial write
+		// Close & remove the file in case of partial write
+		_ = dstF.Close()
 		_ = os.Remove(dst)
 		return 0, err
 	}
