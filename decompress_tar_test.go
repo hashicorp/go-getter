@@ -6,6 +6,7 @@ package getter
 import (
 	"archive/tar"
 	"bytes"
+	"errors"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -183,4 +184,30 @@ func TestDecompressTarPermissions(t *testing.T) {
 
 	expected["directory/setuid"] = masked
 	testDecompressorPermissions(t, d, input, expected, os.FileMode(060000000))
+}
+
+func TestDecompressTarPermissionsFailed(t *testing.T) {
+	d := new(TarDecompressor)
+	input := "./test-fixtures/decompress-tar/bad.tar"
+
+	td := t.TempDir()
+
+	// Destination is always joining result so that we have a new path
+	dst := filepath.Join(td, "subdir", "result")
+
+	err := d.Decompress(dst, input, true, os.FileMode(0))
+	if err == nil {
+		t.Fatalf("expected error when decompressing bad tar file but got none")
+	}
+
+	expectedDst := filepath.Join(dst, "directory/setuid2")
+	// Attempt to get file information
+	_, err = os.Stat(expectedDst)
+
+	if !errors.Is(err, os.ErrNotExist) {
+		if err != nil {
+			t.Fatalf("unexpected error when checking for file '%s': %s", expectedDst, err)
+		}
+		t.Fatalf("expected file '%s' to not exist", expectedDst)
+	}
 }
