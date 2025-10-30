@@ -35,7 +35,7 @@ func Copy(ctx context.Context, dst io.Writer, src io.Reader) (int64, error) {
 
 // copyReader copies from an io.Reader into a file, using umask to create the dst file
 func copyReader(dst string, src io.Reader, fmode, umask os.FileMode, fileSizeLimit int64) error {
-	dstF, err := os.OpenFile(dst, os.O_RDWR|os.O_CREATE|os.O_TRUNC, fmode)
+	dstF, err := os.OpenFile(dst, os.O_RDWR|os.O_CREATE|os.O_TRUNC, mode(fmode, umask))
 	if err != nil {
 		return err
 	}
@@ -47,6 +47,9 @@ func copyReader(dst string, src io.Reader, fmode, umask os.FileMode, fileSizeLim
 
 	_, err = io.Copy(dstF, src)
 	if err != nil {
+		// Close & remove the file in case of partial write
+		_ = dstF.Close()
+		_ = os.Remove(dst)
 		return err
 	}
 
@@ -74,7 +77,7 @@ func copyFile(ctx context.Context, dst, src string, disableSymlinks bool, fmode,
 	}
 	defer func() { _ = srcF.Close() }()
 
-	dstF, err := os.OpenFile(dst, os.O_RDWR|os.O_CREATE|os.O_TRUNC, fmode)
+	dstF, err := os.OpenFile(dst, os.O_RDWR|os.O_CREATE|os.O_TRUNC, mode(fmode, umask))
 	if err != nil {
 		return 0, err
 	}
@@ -82,6 +85,9 @@ func copyFile(ctx context.Context, dst, src string, disableSymlinks bool, fmode,
 
 	count, err := Copy(ctx, dstF, srcF)
 	if err != nil {
+		// Close & remove the file in case of partial write
+		_ = dstF.Close()
+		_ = os.Remove(dst)
 		return 0, err
 	}
 
