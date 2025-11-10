@@ -1,5 +1,4 @@
 //go:build windows
-// +build windows
 
 // Copyright (c) HashiCorp, Inc.
 // SPDX-License-Identifier: MPL-2.0
