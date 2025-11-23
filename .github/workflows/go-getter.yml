@@ -21,12 +21,12 @@ jobs:
           - "1.25"
     steps:
       - name: Setup go
-        uses: actions/setup-go@44694675825211faa026b3c33043df3e48a5fa00 # v6.0.0
+        uses: actions/setup-go@4dc6199c7b1a012772edbd06daecab0f50c9053c # v6.1.0
         with:
           go-version: ${{ matrix.go-version }}
 
       - name: Checkout code
-        uses: actions/checkout@71cf2267d89c5cb81562390fa70a37fa40b1305e # v4.0.0
+        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v4.0.0
 
       - name: Setup cache for go modules
         uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
@@ -69,12 +69,12 @@ jobs:
         run: git config --global core.autocrlf false
 
       - name: Setup go
-        uses: actions/setup-go@44694675825211faa026b3c33043df3e48a5fa00 # v6.0.0
+        uses: actions/setup-go@4dc6199c7b1a012772edbd06daecab0f50c9053c # v6.1.0
         with:
           go-version: ${{ matrix.go-version }}
 
       - name: Checkout code
-        uses: actions/checkout@71cf2267d89c5cb81562390fa70a37fa40b1305e # v4.0.0
+        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v4.0.0
 
       - name: Setup cache for go modules
         uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
@@ -118,12 +118,12 @@ jobs:
           - "arm"      # 32-bit ARM
     steps:
       - name: Setup go
-        uses: actions/setup-go@44694675825211faa026b3c33043df3e48a5fa00 # v6.0.0
+        uses: actions/setup-go@4dc6199c7b1a012772edbd06daecab0f50c9053c # v6.1.0
         with:
           go-version: ${{ matrix.go-version }}
 
       - name: Checkout code
-        uses: actions/checkout@71cf2267d89c5cb81562390fa70a37fa40b1305e # v4.0.0
+        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v4.0.0
 
       - name: Setup cache for go modules
         uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
@@ -159,10 +159,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@71cf2267d89c5cb81562390fa70a37fa40b1305e # v4.0.0
+        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v4.0.0
       
       - name: Setup go
-        uses: actions/setup-go@44694675825211faa026b3c33043df3e48a5fa00 # v6.0.0
+        uses: actions/setup-go@4dc6199c7b1a012772edbd06daecab0f50c9053c # v6.1.0
         with:
           go-version: "1.25" # Use latest for linting
       
@@ -178,7 +178,7 @@ jobs:
             ${{ runner.os }}-lint-
       
       - name: Lint code
-        uses: golangci/golangci-lint-action@0a35821d5c230e903fcfe077583637dea1b27b47 # v9.0.0
+        uses: golangci/golangci-lint-action@e7fa5ac41e1cf5b7d48e45e42232ce7ada589601 # v9.1.0
 
       - name: Check for modern Go patterns
         run: go run golang.org/x/tools/gopls/internal/analysis/modernize/cmd/modernize@latest -test ./...
@@ -197,12 +197,12 @@ jobs:
       contents: read
     steps:
       - name: Setup go
-        uses: actions/setup-go@44694675825211faa026b3c33043df3e48a5fa00 # v6.0.0
+        uses: actions/setup-go@4dc6199c7b1a012772edbd06daecab0f50c9053c # v6.1.0
         with:
           go-version: ${{ matrix.go-version }}
 
       - name: Checkout code
-        uses: actions/checkout@71cf2267d89c5cb81562390fa70a37fa40b1305e # v4.0.0
+        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v4.0.0
 
       - name: Create test directory
         run: |
@@ -267,12 +267,12 @@ jobs:
         run: git config --global core.autocrlf false
 
       - name: Setup Go
-        uses: actions/setup-go@44694675825211faa026b3c33043df3e48a5fa00 # v6.0.0
+        uses: actions/setup-go@4dc6199c7b1a012772edbd06daecab0f50c9053c # v6.1.0
         with:
           go-version: ${{ matrix.go-version }}
 
       - name: Checkout code
-        uses: actions/checkout@71cf2267d89c5cb81562390fa70a37fa40b1305e # v4.0.0
+        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v4.0.0
 
       - name: Setup cache for go modules
         uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
