@@ -372,7 +372,11 @@ func (g *S3Getter) newS3Client(
 		opts.UsePathStyle = true
 		// If it's not an AWS domain, set the custom endpoint
 		if !isAWSDomain {
-			opts.BaseEndpoint = aws.String("https://" + url.Host)
+			scheme := url.Scheme
+			if scheme == "" {
+				scheme = "https"
+			}
+			opts.BaseEndpoint = aws.String(scheme + "://" + url.Host)
 		}
 	}
 
