@@ -21,15 +21,15 @@ jobs:
           - "1.25"
     steps:
       - name: Setup go
-        uses: actions/setup-go@44694675825211faa026b3c33043df3e48a5fa00 # v6.0.0
+        uses: actions/setup-go@4dc6199c7b1a012772edbd06daecab0f50c9053c # v6.1.0
         with:
           go-version: ${{ matrix.go-version }}
 
       - name: Checkout code
-        uses: actions/checkout@71cf2267d89c5cb81562390fa70a37fa40b1305e # v4.0.0
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v4.0.0
 
       - name: Setup cache for go modules
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        uses: actions/cache@9255dc7a253b0ccc959486e2bca901246202afeb # v5.0.1
         with:
           path: |
             ~/.cache/go-build
@@ -69,15 +69,15 @@ jobs:
         run: git config --global core.autocrlf false
 
       - name: Setup go
-        uses: actions/setup-go@44694675825211faa026b3c33043df3e48a5fa00 # v6.0.0
+        uses: actions/setup-go@4dc6199c7b1a012772edbd06daecab0f50c9053c # v6.1.0
         with:
           go-version: ${{ matrix.go-version }}
 
       - name: Checkout code
-        uses: actions/checkout@71cf2267d89c5cb81562390fa70a37fa40b1305e # v4.0.0
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v4.0.0
 
       - name: Setup cache for go modules
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        uses: actions/cache@9255dc7a253b0ccc959486e2bca901246202afeb # v5.0.1
         with:
           path: |
             ~\AppData\Local\go-build
@@ -118,15 +118,15 @@ jobs:
           - "arm"      # 32-bit ARM
     steps:
       - name: Setup go
-        uses: actions/setup-go@44694675825211faa026b3c33043df3e48a5fa00 # v6.0.0
+        uses: actions/setup-go@4dc6199c7b1a012772edbd06daecab0f50c9053c # v6.1.0
         with:
           go-version: ${{ matrix.go-version }}
 
       - name: Checkout code
-        uses: actions/checkout@71cf2267d89c5cb81562390fa70a37fa40b1305e # v4.0.0
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v4.0.0
 
       - name: Setup cache for go modules
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        uses: actions/cache@9255dc7a253b0ccc959486e2bca901246202afeb # v5.0.1
         with:
           path: |
             ~/.cache/go-build
@@ -159,15 +159,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@71cf2267d89c5cb81562390fa70a37fa40b1305e # v4.0.0
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v4.0.0
       
       - name: Setup go
-        uses: actions/setup-go@44694675825211faa026b3c33043df3e48a5fa00 # v6.0.0
+        uses: actions/setup-go@4dc6199c7b1a012772edbd06daecab0f50c9053c # v6.1.0
         with:
           go-version: "1.25" # Use latest for linting
       
       - name: Setup cache for go modules
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        uses: actions/cache@9255dc7a253b0ccc959486e2bca901246202afeb # v5.0.1
         with:
           path: |
             ~/.cache/go-build
@@ -178,7 +178,7 @@ jobs:
             ${{ runner.os }}-lint-
       
       - name: Lint code
-        uses: golangci/golangci-lint-action@0a35821d5c230e903fcfe077583637dea1b27b47 # v9.0.0
+        uses: golangci/golangci-lint-action@1e7e51e771db61008b38414a730f564565cf7c20 # v9.2.0
 
       - name: Check for modern Go patterns
         run: go run golang.org/x/tools/gopls/internal/analysis/modernize/cmd/modernize@latest -test ./...
@@ -197,19 +197,19 @@ jobs:
       contents: read
     steps:
       - name: Setup go
-        uses: actions/setup-go@44694675825211faa026b3c33043df3e48a5fa00 # v6.0.0
+        uses: actions/setup-go@4dc6199c7b1a012772edbd06daecab0f50c9053c # v6.1.0
         with:
           go-version: ${{ matrix.go-version }}
 
       - name: Checkout code
-        uses: actions/checkout@71cf2267d89c5cb81562390fa70a37fa40b1305e # v4.0.0
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v4.0.0
 
       - name: Create test directory
         run: |
           mkdir -p ${{ env.TEST_RESULTS_PATH }}
 
       - name: Setup cache for go modules
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        uses: actions/cache@9255dc7a253b0ccc959486e2bca901246202afeb # v5.0.1
         with:
           path: |
             ~/.cache/go-build
@@ -223,7 +223,7 @@ jobs:
         run: go install gotest.tools/gotestsum@v1.8.2
 
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@00943011d9042930efac3dcd3a170e4273319bc8 # v5.1.0
+        uses: aws-actions/configure-aws-credentials@61815dcd50bd041e203e49132bacad1fd04d2708 # v5.1.1
         with:
           aws-region: us-east-1
           role-to-assume: arn:aws:iam::388664967494:role/hc-go-getter-test
@@ -246,7 +246,7 @@ jobs:
 
       # Save coverage report parts
       - name: Upload and save artifacts
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
         with:
           name: linux-test-results-${{ matrix.go-version }}
           path: linux_cov.part
@@ -267,15 +267,15 @@ jobs:
         run: git config --global core.autocrlf false
 
       - name: Setup Go
-        uses: actions/setup-go@44694675825211faa026b3c33043df3e48a5fa00 # v6.0.0
+        uses: actions/setup-go@4dc6199c7b1a012772edbd06daecab0f50c9053c # v6.1.0
         with:
           go-version: ${{ matrix.go-version }}
 
       - name: Checkout code
-        uses: actions/checkout@71cf2267d89c5cb81562390fa70a37fa40b1305e # v4.0.0
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v4.0.0
 
       - name: Setup cache for go modules
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        uses: actions/cache@9255dc7a253b0ccc959486e2bca901246202afeb # v5.0.1
         with:
           path: |
             ~\AppData\Local\go-build
@@ -290,7 +290,7 @@ jobs:
         run: go install gotest.tools/gotestsum@v1.8.2
 
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@00943011d9042930efac3dcd3a170e4273319bc8 # v5.1.0
+        uses: aws-actions/configure-aws-credentials@61815dcd50bd041e203e49132bacad1fd04d2708 # v5.1.1
         with:
           aws-region: us-east-1
           role-to-assume: arn:aws:iam::388664967494:role/hc-go-getter-test
@@ -314,7 +314,7 @@ jobs:
 
       # Save coverage report parts
       - name: Upload and save artifacts
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
         with:
           name: windows-test-results-${{ matrix.go-version }}
           path: win_cov.part
