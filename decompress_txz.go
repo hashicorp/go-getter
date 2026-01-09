@@ -48,7 +48,7 @@ func (d *TarXzDecompressor) Decompress(dst, src string, dir bool, umask os.FileM
 	// xz compression is second
 	txzR, err := xz.NewReader(bufio.NewReader(f))
 	if err != nil {
-		return fmt.Errorf("Error opening an xz reader for %s: %s", src, err)
+		return fmt.Errorf("Error opening an xz reader for %s: %w", src, err)
 	}
 
 	return untar(txzR, dst, src, dir, umask, d.FileSizeLimit, d.FilesLimit)

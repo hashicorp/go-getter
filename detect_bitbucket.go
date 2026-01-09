@@ -30,7 +30,7 @@ func (d *BitBucketDetector) Detect(src, _ string) (string, bool, error) {
 func (d *BitBucketDetector) detectHTTP(src string) (string, bool, error) {
 	u, err := url.Parse("https://" + src)
 	if err != nil {
-		return "", true, fmt.Errorf("error parsing BitBucket URL: %s", err)
+		return "", true, fmt.Errorf("error parsing BitBucket URL: %w", err)
 	}
 
 	// We need to get info on this BitBucket repository to determine whether
@@ -41,7 +41,7 @@ func (d *BitBucketDetector) detectHTTP(src string) (string, bool, error) {
 	infoUrl := "https://api.bitbucket.org/2.0/repositories" + u.Path
 	resp, err := http.Get(infoUrl)
 	if err != nil {
-		return "", true, fmt.Errorf("error looking up BitBucket URL: %s", err)
+		return "", true, fmt.Errorf("error looking up BitBucket URL: %w", err)
 	}
 	if resp.StatusCode == 403 {
 		// A private repo
@@ -51,7 +51,7 @@ func (d *BitBucketDetector) detectHTTP(src string) (string, bool, error) {
 	}
 	dec := json.NewDecoder(resp.Body)
 	if err := dec.Decode(&info); err != nil {
-		return "", true, fmt.Errorf("error looking up BitBucket URL: %s", err)
+		return "", true, fmt.Errorf("error looking up BitBucket URL: %w", err)
 	}
 
 	switch info.SCM {

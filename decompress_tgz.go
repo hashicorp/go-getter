@@ -46,7 +46,7 @@ func (d *TarGzipDecompressor) Decompress(dst, src string, dir bool, umask os.Fil
 	// Gzip compression is second
 	gzipR, err := gzip.NewReader(f)
 	if err != nil {
-		return fmt.Errorf("Error opening a gzip reader for %s: %s", src, err)
+		return fmt.Errorf("Error opening a gzip reader for %s: %w", src, err)
 	}
 	defer func() { _ = gzipR.Close() }()
 
