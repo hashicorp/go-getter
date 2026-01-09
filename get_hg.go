@@ -1,3 +1,6 @@
+// Copyright IBM Corp. 2015, 2025
+// SPDX-License-Identifier: MPL-2.0
+
 package getter
 
 import (
@@ -11,7 +14,6 @@ import (
 	"time"
 
 	urlhelper "github.com/hashicorp/go-getter/helper/url"
-	safetemp "github.com/hashicorp/go-safetemp"
 )
 
 // HgGetter is a Getter implementation that will download a module from
@@ -82,11 +84,11 @@ func (g *HgGetter) Get(dst string, u *url.URL) error {
 func (g *HgGetter) GetFile(dst string, u *url.URL) error {
 	// Create a temporary directory to store the full source. This has to be
 	// a non-existent directory.
-	td, tdcloser, err := safetemp.Dir("", "getter")
+	td, tdcloser, err := mkdirTemp("", "getter")
 	if err != nil {
 		return err
 	}
-	defer tdcloser.Close()
+	defer func() { _ = tdcloser.Close() }()
 
 	// Get the filename, and strip the filename from the URL so we can
 	// just get the repository directly.

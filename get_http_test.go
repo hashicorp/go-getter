@@ -1,3 +1,6 @@
+// Copyright IBM Corp. 2015, 2025
+// SPDX-License-Identifier: MPL-2.0
+
 package getter
 
 import (
@@ -6,7 +9,6 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"net"
 	"net/http"
 	"net/http/httputil"
@@ -26,11 +28,10 @@ func TestHttpGetter_impl(t *testing.T) {
 
 func TestHttpGetter_header(t *testing.T) {
 	ln := testHttpServer(t)
-	defer ln.Close()
+	defer func() { _ = ln.Close() }()
 
 	g := new(HttpGetter)
-	dst := tempDir(t)
-	defer os.RemoveAll(dst)
+	dst := filepath.Join(t.TempDir(), "target")
 
 	var u url.URL
 	u.Scheme = "http"
@@ -71,13 +72,12 @@ func TestHttpGetter_header(t *testing.T) {
 
 func TestHttpGetter_requestHeader(t *testing.T) {
 	ln := testHttpServer(t)
-	defer ln.Close()
+	defer func() { _ = ln.Close() }()
 
 	g := new(HttpGetter)
 	g.Header = make(http.Header)
 	g.Header.Add("X-Foobar", "foobar")
-	dst := tempDir(t)
-	defer os.RemoveAll(dst)
+	dst := filepath.Join(t.TempDir(), "target")
 
 	var u url.URL
 	u.Scheme = "http"
@@ -99,11 +99,10 @@ func TestHttpGetter_requestHeader(t *testing.T) {
 
 func TestHttpGetter_meta(t *testing.T) {
 	ln := testHttpServer(t)
-	defer ln.Close()
+	defer func() { _ = ln.Close() }()
 
 	g := new(HttpGetter)
-	dst := tempDir(t)
-	defer os.RemoveAll(dst)
+	dst := filepath.Join(t.TempDir(), "target")
 
 	var u url.URL
 	u.Scheme = "http"
@@ -143,11 +142,10 @@ func TestHttpGetter_meta(t *testing.T) {
 
 func TestHttpGetter_metaSubdir(t *testing.T) {
 	ln := testHttpServer(t)
-	defer ln.Close()
+	defer func() { _ = ln.Close() }()
 
 	g := new(HttpGetter)
-	dst := tempDir(t)
-	defer os.RemoveAll(dst)
+	dst := filepath.Join(t.TempDir(), "nonexistent", "target")
 
 	var u url.URL
 	u.Scheme = "http"
@@ -168,11 +166,10 @@ func TestHttpGetter_metaSubdir(t *testing.T) {
 
 func TestHttpGetter_metaSubdirGlob(t *testing.T) {
 	ln := testHttpServer(t)
-	defer ln.Close()
+	defer func() { _ = ln.Close() }()
 
 	g := new(HttpGetter)
-	dst := tempDir(t)
-	defer os.RemoveAll(dst)
+	dst := filepath.Join(t.TempDir(), "nonexistent", "target")
 
 	var u url.URL
 	u.Scheme = "http"
@@ -193,11 +190,10 @@ func TestHttpGetter_metaSubdirGlob(t *testing.T) {
 
 func TestHttpGetter_none(t *testing.T) {
 	ln := testHttpServer(t)
-	defer ln.Close()
+	defer func() { _ = ln.Close() }()
 
 	g := new(HttpGetter)
-	dst := tempDir(t)
-	defer os.RemoveAll(dst)
+	dst := filepath.Join(t.TempDir(), "target")
 
 	var u url.URL
 	u.Scheme = "http"
@@ -220,10 +216,9 @@ func TestHttpGetter_resume(t *testing.T) {
 	downloadFrom := len(load) / 2
 
 	ln := testHttpServer(t)
-	defer ln.Close()
+	defer func() { _ = ln.Close() }()
 
-	dst := tempDir(t)
-	defer os.RemoveAll(dst)
+	dst := filepath.Join(t.TempDir(), "target")
 
 	dst = filepath.Join(dst, "..", "range")
 	f, err := os.Create(dst)
@@ -250,7 +245,7 @@ func TestHttpGetter_resume(t *testing.T) {
 		t.Fatalf("finishing download should not error: %v", err)
 	}
 
-	b, err := ioutil.ReadFile(dst)
+	b, err := os.ReadFile(dst)
 	if err != nil {
 		t.Fatalf("readfile failed: %v", err)
 	}
@@ -276,10 +271,9 @@ func TestHttpGetter_resumeNoRange(t *testing.T) {
 	downloadFrom := len(load) / 2
 
 	ln := testHttpServer(t)
-	defer ln.Close()
+	defer func() { _ = ln.Close() }()
 
-	dst := tempDir(t)
-	defer os.RemoveAll(dst)
+	dst := filepath.Join(t.TempDir(), "target")
 
 	dst = filepath.Join(dst, "..", "range")
 	f, err := os.Create(dst)
@@ -306,7 +300,7 @@ func TestHttpGetter_resumeNoRange(t *testing.T) {
 		t.Fatalf("finishing download should not error: %v", err)
 	}
 
-	b, err := ioutil.ReadFile(dst)
+	b, err := os.ReadFile(dst)
 	if err != nil {
 		t.Fatalf("readfile failed: %v", err)
 	}
@@ -318,11 +312,10 @@ func TestHttpGetter_resumeNoRange(t *testing.T) {
 
 func TestHttpGetter_file(t *testing.T) {
 	ln := testHttpServer(t)
-	defer ln.Close()
+	defer func() { _ = ln.Close() }()
 
 	g := new(HttpGetter)
-	dst := tempTestFile(t)
-	defer os.RemoveAll(filepath.Dir(dst))
+	dst := filepath.Join(t.TempDir(), "test-file")
 
 	var u url.URL
 	u.Scheme = "http"
@@ -350,7 +343,7 @@ func TestHttpGetter_http2server(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	dst := tempTestFile(t)
+	dst := filepath.Join(t.TempDir(), "test-file")
 
 	err = g.GetFile(dst, src)
 	if err != nil {
@@ -360,11 +353,10 @@ func TestHttpGetter_http2server(t *testing.T) {
 
 func TestHttpGetter_auth(t *testing.T) {
 	ln := testHttpServer(t)
-	defer ln.Close()
+	defer func() { _ = ln.Close() }()
 
 	g := new(HttpGetter)
-	dst := tempDir(t)
-	defer os.RemoveAll(dst)
+	dst := filepath.Join(t.TempDir(), "target")
 
 	var u url.URL
 	u.Scheme = "http"
@@ -399,11 +391,10 @@ func TestHttpGetter_auth(t *testing.T) {
 
 func TestHttpGetter_authNetrc(t *testing.T) {
 	ln := testHttpServer(t)
-	defer ln.Close()
+	defer func() { _ = ln.Close() }()
 
 	g := new(HttpGetter)
-	dst := tempDir(t)
-	defer os.RemoveAll(dst)
+	dst := filepath.Join(t.TempDir(), "target")
 
 	var u url.URL
 	u.Scheme = "http"
@@ -456,7 +447,7 @@ func (errRoundTripper) RoundTrip(r *http.Request) (*http.Response, error) {
 // verify that the default httpClient no longer comes from http.DefaultClient
 func TestHttpGetter_cleanhttp(t *testing.T) {
 	ln := testHttpServer(t)
-	defer ln.Close()
+	defer func() { _ = ln.Close() }()
 
 	// break the default http client
 	http.DefaultClient.Transport = errRoundTripper{}
@@ -465,8 +456,7 @@ func TestHttpGetter_cleanhttp(t *testing.T) {
 	}()
 
 	g := new(HttpGetter)
-	dst := tempDir(t)
-	defer os.RemoveAll(dst)
+	dst := filepath.Join(t.TempDir(), "target")
 
 	var u url.URL
 	u.Scheme = "http"
@@ -508,7 +498,7 @@ func TestHttpGetter__RespectsContextCanceled(t *testing.T) {
 	u.Scheme = "http"
 	u.Host = ln.Addr().String()
 	u.Path = "/file"
-	dst := tempDir(t)
+	dst := filepath.Join(t.TempDir(), "target")
 
 	rt := hookableHTTPRoundTripper{
 		before: func(req *http.Request) {
@@ -535,8 +525,7 @@ func TestHttpGetter__RespectsContextCanceled(t *testing.T) {
 }
 
 func TestHttpGetter__XTerraformGetLimit(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 
 	ln := testHttpServerWithXTerraformGetLoop(t)
 
@@ -544,7 +533,7 @@ func TestHttpGetter__XTerraformGetLimit(t *testing.T) {
 	u.Scheme = "http"
 	u.Host = ln.Addr().String()
 	u.Path = "/loop"
-	dst := tempDir(t)
+	dst := filepath.Join(t.TempDir(), "target")
 
 	g := new(HttpGetter)
 	g.XTerraformGetLimit = 10
@@ -560,8 +549,7 @@ func TestHttpGetter__XTerraformGetLimit(t *testing.T) {
 }
 
 func TestHttpGetter__XTerraformGetDisabled(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 
 	ln := testHttpServerWithXTerraformGetLoop(t)
 
@@ -569,7 +557,7 @@ func TestHttpGetter__XTerraformGetDisabled(t *testing.T) {
 	u.Scheme = "http"
 	u.Host = ln.Addr().String()
 	u.Path = "/loop"
-	dst := tempDir(t)
+	dst := filepath.Join(t.TempDir(), "target")
 
 	g := new(HttpGetter)
 	g.XTerraformGetDisabled = true
@@ -595,8 +583,7 @@ func (testCustomDetector) Detect(src, _ string) (string, bool, error) {
 
 // test a source url with no protocol
 func TestHttpGetter__XTerraformGetDetected(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 
 	ln := testHttpServerWithXTerraformGetDetected(t)
 
@@ -604,7 +591,7 @@ func TestHttpGetter__XTerraformGetDetected(t *testing.T) {
 	u.Scheme = "http"
 	u.Host = ln.Addr().String()
 	u.Path = "/first"
-	dst := tempDir(t)
+	dst := filepath.Join(t.TempDir(), "target")
 
 	c := &Client{
 		Ctx:  ctx,
@@ -626,8 +613,7 @@ func TestHttpGetter__XTerraformGetDetected(t *testing.T) {
 }
 
 func TestHttpGetter__XTerraformGetProxyBypass(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 
 	ln := testHttpServerWithXTerraformGetProxyBypass(t)
 
@@ -640,7 +626,7 @@ func TestHttpGetter__XTerraformGetProxyBypass(t *testing.T) {
 	u.Scheme = "http"
 	u.Host = ln.Addr().String()
 	u.Path = "/start"
-	dst := tempDir(t)
+	dst := filepath.Join(t.TempDir(), "target")
 
 	proxy, err := url.Parse(fmt.Sprintf("http://%s/", proxyLn.Addr().String()))
 	if err != nil {
@@ -673,8 +659,7 @@ func TestHttpGetter__XTerraformGetProxyBypass(t *testing.T) {
 }
 
 func TestHttpGetter__XTerraformGetConfiguredGettersBypass(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 
 	ln := testHttpServerWithXTerraformGetConfiguredGettersBypass(t)
 
@@ -682,7 +667,7 @@ func TestHttpGetter__XTerraformGetConfiguredGettersBypass(t *testing.T) {
 	u.Scheme = "http"
 	u.Host = ln.Addr().String()
 	u.Path = "/start"
-	dst := tempDir(t)
+	dst := filepath.Join(t.TempDir(), "target")
 
 	rt := hookableHTTPRoundTripper{
 		before: func(req *http.Request) {
@@ -719,8 +704,7 @@ func TestHttpGetter__XTerraformGetConfiguredGettersBypass(t *testing.T) {
 }
 
 func TestHttpGetter__endless_body(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 
 	ln := testHttpServerWithEndlessBody(t)
 
@@ -728,7 +712,7 @@ func TestHttpGetter__endless_body(t *testing.T) {
 	u.Scheme = "http"
 	u.Host = ln.Addr().String()
 	u.Path = "/"
-	dst := tempDir(t)
+	dst := filepath.Join(t.TempDir(), "target")
 
 	httpGetter := new(HttpGetter)
 	httpGetter.MaxBytes = 10
@@ -755,13 +739,10 @@ func TestHttpGetter__endless_body(t *testing.T) {
 
 func TestHttpGetter_subdirLink(t *testing.T) {
 	ln := testHttpServerSubDir(t)
-	defer ln.Close()
+	defer func() { _ = ln.Close() }()
 
 	httpGetter := new(HttpGetter)
-	dst, err := ioutil.TempDir("", "tf")
-	if err != nil {
-		t.Fatalf("err: %s", err)
-	}
+	dst := t.TempDir()
 
 	t.Logf("dst: %q", dst)
 
@@ -781,7 +762,7 @@ func TestHttpGetter_subdirLink(t *testing.T) {
 		},
 	}
 
-	err = client.Get()
+	err := client.Get()
 	if err != nil {
 		t.Fatalf("get err: %v", err)
 	}
@@ -805,7 +786,7 @@ func testHttpServerWithXTerraformGetLoop(t *testing.T) net.Listener {
 
 	var server http.Server
 	server.Handler = mux
-	go server.Serve(ln)
+	go func() { _ = server.Serve(ln) }()
 
 	return ln
 }
@@ -826,16 +807,16 @@ func testHttpServerWithXTerraformGetDetected(t *testing.T) net.Listener {
 		w.Header().Set("X-Terraform-Get", first)
 	})
 	mux.HandleFunc("/archive.tar.gz", func(w http.ResponseWriter, r *http.Request) {
-		f, err := ioutil.ReadFile("testdata/archive.tar.gz")
+		f, err := os.ReadFile("testdata/archive.tar.gz")
 		if err != nil {
 			t.Fatal(err)
 		}
-		w.Write(f)
+		_, _ = w.Write(f)
 	})
 
 	var server http.Server
 	server.Handler = mux
-	go server.Serve(ln)
+	go func() { _ = server.Serve(ln) }()
 
 	return ln
 }
@@ -867,7 +848,7 @@ func testHttpServerWithXTerraformGetProxyBypass(t *testing.T) net.Listener {
 
 	var server http.Server
 	server.Handler = mux
-	go server.Serve(ln)
+	go func() { _ = server.Serve(ln) }()
 
 	return ln
 }
@@ -894,7 +875,7 @@ func testHttpServerWithXTerraformGetConfiguredGettersBypass(t *testing.T) net.Li
 
 	var server http.Server
 	server.Handler = mux
-	go server.Serve(ln)
+	go func() { _ = server.Serve(ln) }()
 
 	return ln
 }
@@ -919,7 +900,7 @@ func testHttpServerProxy(t *testing.T, upstreamHost string) net.Listener {
 
 	var server http.Server
 	server.Handler = mux
-	go server.Serve(ln)
+	go func() { _ = server.Serve(ln) }()
 
 	return ln
 }
@@ -943,7 +924,7 @@ func testHttpServer(t *testing.T) net.Listener {
 
 	var server http.Server
 	server.Handler = mux
-	go server.Serve(ln)
+	go func() { _ = server.Serve(ln) }()
 
 	return ln
 }
@@ -951,7 +932,7 @@ func testHttpServer(t *testing.T) net.Listener {
 func testHttpHandlerExpectHeader(w http.ResponseWriter, r *http.Request) {
 	if expected, ok := r.URL.Query()["expected"]; ok {
 		if r.Header.Get(expected[0]) != "" {
-			w.Write([]byte("Hello\n"))
+			_, _ = w.Write([]byte("Hello\n"))
 			return
 		}
 	}
@@ -960,7 +941,7 @@ func testHttpHandlerExpectHeader(w http.ResponseWriter, r *http.Request) {
 }
 
 func testHttpHandlerFile(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("Hello\n"))
+	_, _ = w.Write([]byte("Hello\n"))
 }
 
 func testHttpHandlerHeader(w http.ResponseWriter, r *http.Request) {
@@ -969,7 +950,7 @@ func testHttpHandlerHeader(w http.ResponseWriter, r *http.Request) {
 }
 
 func testHttpHandlerMeta(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte(fmt.Sprintf(testHttpMetaStr, testModuleURL("basic").String())))
+	_, _ = fmt.Fprintf(w, testHttpMetaStr, testModuleURL("basic").String())
 }
 
 func testHttpHandlerMetaAuth(w http.ResponseWriter, r *http.Request) {
@@ -984,7 +965,7 @@ func testHttpHandlerMetaAuth(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Write([]byte(fmt.Sprintf(testHttpMetaStr, testModuleURL("basic").String())))
+	_, _ = fmt.Fprintf(w, testHttpMetaStr, testModuleURL("basic").String())
 }
 
 func testHttpServerWithEndlessBody(t *testing.T) net.Listener {
@@ -999,27 +980,23 @@ func testHttpServerWithEndlessBody(t *testing.T) net.Listener {
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		for {
-			w.Write([]byte(".\n"))
+			_, _ = w.Write([]byte(".\n"))
 		}
 	})
 
 	var server http.Server
 	server.Handler = mux
-	go server.Serve(ln)
+	go func() { _ = server.Serve(ln) }()
 
 	return ln
 }
 
 func testHttpHandlerMetaSubdir(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte(fmt.Sprintf(testHttpMetaStr, testModuleURL("basic//subdir").String())))
+	_, _ = fmt.Fprintf(w, testHttpMetaStr, testModuleURL("basic//subdir").String())
 }
 
 func testHttpHandlerMetaSubdirGlob(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte(fmt.Sprintf(testHttpMetaStr, testModuleURL("basic//sub*").String())))
-}
-
-func testHttpHandlerNone(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte(testHttpNoneStr))
+	_, _ = fmt.Fprintf(w, testHttpMetaStr, testModuleURL("basic//sub*").String())
 }
 
 func testHttpHandlerRange(w http.ResponseWriter, r *http.Request) {
@@ -1036,7 +1013,7 @@ func testHttpHandlerRange(w http.ResponseWriter, r *http.Request) {
 		if rng < 1 || rng > len(load) {
 			http.Error(w, "", http.StatusBadRequest)
 		}
-		w.Write(load[rng:])
+		_, _ = w.Write(load[rng:])
 	}
 }
 
@@ -1050,7 +1027,7 @@ func testHttpHandlerNoRange(w http.ResponseWriter, r *http.Request) {
 		if r.Header.Get("Range") != "" {
 			http.Error(w, "range not supported", http.StatusBadRequest)
 		}
-		w.Write(load)
+		_, _ = w.Write(load)
 	}
 }
 
@@ -1072,7 +1049,7 @@ func testHttpServerSubDir(t *testing.T) net.Listener {
 
 	var server http.Server
 	server.Handler = mux
-	go server.Serve(ln)
+	go func() { _ = server.Serve(ln) }()
 
 	return ln
 }
@@ -1081,13 +1058,6 @@ const testHttpMetaStr = `
 <html>
 <head>
 <meta name="terraform-get" content="%s">
-</head>
-</html>
-`
-
-const testHttpNoneStr = `
-<html>
-<head>
 </head>
 </html>
 `

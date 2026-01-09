@@ -1,3 +1,6 @@
+// Copyright IBM Corp. 2015, 2025
+// SPDX-License-Identifier: MPL-2.0
+
 package getter
 
 import (
@@ -28,7 +31,7 @@ func TestHgGetter(t *testing.T) {
 	}
 
 	g := new(HgGetter)
-	dst := tempDir(t)
+	dst := filepath.Join(t.TempDir(), "dst")
 
 	// With a dir that doesn't exist
 	if err := g.Get(dst, testModuleURL("basic-hg")); err != nil {
@@ -49,7 +52,7 @@ func TestHgGetter_branch(t *testing.T) {
 	}
 
 	g := new(HgGetter)
-	dst := tempDir(t)
+	dst := filepath.Join(t.TempDir(), "dst")
 
 	url := testModuleURL("basic-hg")
 	q := url.Query()
@@ -85,8 +88,7 @@ func TestHgGetter_GetFile(t *testing.T) {
 	}
 
 	g := new(HgGetter)
-	dst := tempTestFile(t)
-	defer os.RemoveAll(filepath.Dir(dst))
+	dst := filepath.Join(t.TempDir(), "test-file")
 
 	// Download
 	if err := g.GetFile(dst, testModuleURL("basic-hg/foo.txt")); err != nil {
@@ -108,15 +110,16 @@ func TestHgGetter_HgArgumentsNotAllowed(t *testing.T) {
 
 	g := new(HgGetter)
 
-	// If arguments are allowed in the destination, this Get call will fail
-	dst := "--config=alias.clone=!false"
-	defer os.RemoveAll(dst)
+	// Test that destination paths that look like hg arguments are treated as literal paths
+	// Create the problematic directory name inside a temp directory for cleanup
+	tempBase := t.TempDir()
+	dst := filepath.Join(tempBase, "--config=alias.clone=!false")
 	err := g.Get(dst, testModuleURL("basic-hg"))
 	if err != nil {
 		t.Fatalf("Expected no err, got: %s", err)
 	}
 
-	dst = tempDir(t)
+	dst = filepath.Join(t.TempDir(), "dst")
 	// Test arguments passed into the `rev` parameter
 	// This clone call will fail regardless, but an exit code of 1 indicates
 	// that the `false` command executed
@@ -128,7 +131,7 @@ func TestHgGetter_HgArgumentsNotAllowed(t *testing.T) {
 		}
 	}
 
-	dst = tempDir(t)
+	dst = filepath.Join(t.TempDir(), "dst")
 	// Test arguments passed in the repository URL
 	// This Get call will fail regardless, but it should fail
 	// because the repository can't be found.

@@ -1,17 +1,18 @@
+// Copyright IBM Corp. 2015, 2025
+// SPDX-License-Identifier: MPL-2.0
+
 package getter
 
 import (
 	"context"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
 
 	urlhelper "github.com/hashicorp/go-getter/helper/url"
-	safetemp "github.com/hashicorp/go-safetemp"
 )
 
 // ErrSymlinkCopy means that a copy of a symlink was encountered on a request with DisableSymlinks enabled.
@@ -132,7 +133,7 @@ func (c *Client) Get() error {
 	if subDir != "" {
 		// Check if the subdirectory is attempting to traverse updwards, outside of
 		// the cloned repository path.
-		subDir := filepath.Clean(subDir)
+		subDir = filepath.Clean(subDir)
 		if containsDotDot(subDir) {
 			return fmt.Errorf("subdirectory component contain path traversal out of the repository")
 		}
@@ -141,11 +142,11 @@ func (c *Client) Get() error {
 			subDir = subDir[1:]
 		}
 
-		td, tdcloser, err := safetemp.Dir("", "getter")
+		td, tdcloser, err := mkdirTemp("", "getter")
 		if err != nil {
 			return err
 		}
-		defer tdcloser.Close()
+		defer func() { _ = tdcloser.Close() }()
 
 		realDst = dst
 		dst = td
@@ -202,12 +203,12 @@ func (c *Client) Get() error {
 	if decompressor != nil {
 		// Create a temporary directory to store our archive. We delete
 		// this at the end of everything.
-		td, err := ioutil.TempDir("", "getter")
+		td, err := os.MkdirTemp("", "getter")
 		if err != nil {
 			return fmt.Errorf(
 				"Error creating temporary directory for archive: %w", err)
 		}
-		defer os.RemoveAll(td)
+		defer func() { _ = os.RemoveAll(td) }()
 
 		// Swap the download directory to be our temporary path and
 		// store the old values.

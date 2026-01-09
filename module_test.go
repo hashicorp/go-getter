@@ -1,7 +1,9 @@
+// Copyright IBM Corp. 2015, 2025
+// SPDX-License-Identifier: MPL-2.0
+
 package getter
 
 import (
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -14,23 +16,6 @@ import (
 )
 
 const fixtureDir = "./testdata"
-
-func tempDir(t *testing.T) string {
-	dir, err := ioutil.TempDir("", "tf")
-	if err != nil {
-		t.Fatalf("err: %s", err)
-	}
-	if err := os.RemoveAll(dir); err != nil {
-		t.Fatalf("err: %s", err)
-	}
-
-	return dir
-}
-
-func tempTestFile(t *testing.T) string {
-	dir := tempDir(t)
-	return filepath.Join(dir, "foo")
-}
 
 func testModule(n string) string {
 	p := filepath.Join(fixtureDir, n)
@@ -73,12 +58,8 @@ func testURL(s string) *url.URL {
 	return u
 }
 
-func testStorage(t *testing.T) Storage {
-	return &FolderStorage{StorageDir: tempDir(t)}
-}
-
 func assertContents(t *testing.T, path string, contents string) {
-	data, err := ioutil.ReadFile(path)
+	data, err := os.ReadFile(path)
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}

@@ -1,3 +1,6 @@
+// Copyright IBM Corp. 2015, 2025
+// SPDX-License-Identifier: MPL-2.0
+
 package getter
 
 import "net/url"
@@ -6,7 +9,8 @@ import "net/url"
 // which is like url.String but replaces any password with "redacted".
 // Only the password in u.URL is redacted. This allows the library
 // to maintain compatibility with go1.14.
-// This port was also extended to redact SSH key from URL query parameter.
+// This port was also extended to redact all "sshkey" from URL query parameter
+// and replace them with "redacted".
 func RedactURL(u *url.URL) string {
 	if u == nil {
 		return ""
@@ -17,8 +21,11 @@ func RedactURL(u *url.URL) string {
 		ru.User = url.UserPassword(ru.User.Username(), "redacted")
 	}
 	q := ru.Query()
-	if q.Get("sshkey") != "" {
-		q.Set("sshkey", "redacted")
+	if q.Has("sshkey") {
+		values := q["sshkey"]
+		for i := range values {
+			values[i] = "redacted"
+		}
 		ru.RawQuery = q.Encode()
 	}
 	return ru.String()

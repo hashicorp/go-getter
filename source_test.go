@@ -1,7 +1,9 @@
+// Copyright IBM Corp. 2015, 2025
+// SPDX-License-Identifier: MPL-2.0
+
 package getter
 
 import (
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -54,11 +56,7 @@ func TestSourceDirSubdir(t *testing.T) {
 }
 
 func TestSourceSubdirGlob(t *testing.T) {
-	td, err := ioutil.TempDir("", "subdir-glob")
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer os.RemoveAll(td)
+	td := t.TempDir()
 
 	if err := os.Mkdir(filepath.Join(td, "subdir"), 0755); err != nil {
 		t.Fatal(err)

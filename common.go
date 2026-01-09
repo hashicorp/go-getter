@@ -1,14 +1,17 @@
+// Copyright IBM Corp. 2015, 2025
+// SPDX-License-Identifier: MPL-2.0
+
 package getter
 
 import (
-	"io/ioutil"
+	"os"
 )
 
 func tmpFile(dir, pattern string) (string, error) {
-	f, err := ioutil.TempFile(dir, pattern)
+	f, err := os.CreateTemp(dir, pattern)
 	if err != nil {
 		return "", err
 	}
-	f.Close()
+	_ = f.Close()
 	return f.Name(), nil
 }

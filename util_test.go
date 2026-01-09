@@ -1,8 +1,10 @@
+// Copyright IBM Corp. 2015, 2025
+// SPDX-License-Identifier: MPL-2.0
+
 package getter
 
 import (
 	"io"
-	"io/ioutil"
 	"os"
 	"strings"
 	"testing"
@@ -29,7 +31,7 @@ func tempEnv(t *testing.T, k, v string) func() {
 // tempFileContents writes a temporary file and returns the path and a function
 // to clean it up.
 func tempFileContents(t *testing.T, contents string) (string, func()) {
-	tf, err := ioutil.TempFile("", "getter")
+	tf, err := os.CreateTemp("", "getter")
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
@@ -38,7 +40,7 @@ func tempFileContents(t *testing.T, contents string) (string, func()) {
 		t.Fatalf("err: %s", err)
 	}
 
-	tf.Close()
+	_ = tf.Close()
 
 	path := tf.Name()
 	return path, func() {

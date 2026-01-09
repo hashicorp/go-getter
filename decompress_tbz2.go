@@ -1,3 +1,6 @@
+// Copyright IBM Corp. 2015, 2025
+// SPDX-License-Identifier: MPL-2.0
+
 package getter
 
 import (
@@ -37,7 +40,7 @@ func (d *TarBzip2Decompressor) Decompress(dst, src string, dir bool, umask os.Fi
 	if err != nil {
 		return err
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	// Bzip2 compression is second
 	bzipR := bzip2.NewReader(f)

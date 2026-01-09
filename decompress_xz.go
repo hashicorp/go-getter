@@ -1,6 +1,10 @@
+// Copyright IBM Corp. 2015, 2025
+// SPDX-License-Identifier: MPL-2.0
+
 package getter
 
 import (
+	"bufio"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -33,10 +37,10 @@ func (d *XzDecompressor) Decompress(dst, src string, dir bool, umask os.FileMode
 	if err != nil {
 		return err
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	// xz compression is second
-	xzR, err := xz.NewReader(f)
+	xzR, err := xz.NewReader(bufio.NewReader(f))
 	if err != nil {
 		return err
 	}

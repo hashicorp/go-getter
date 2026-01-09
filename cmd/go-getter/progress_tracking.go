@@ -1,3 +1,6 @@
+// Copyright IBM Corp. 2015, 2025
+// SPDX-License-Identifier: MPL-2.0
+
 package main
 
 import (
@@ -46,7 +49,7 @@ func (cpb *ProgressBar) TrackProgress(src string, currentSize, totalSize int64, 
 	ProgressBarConfig(newPb, filepath.Base(src))
 	if cpb.pool == nil {
 		cpb.pool = pb.NewPool()
-		cpb.pool.Start()
+		_ = cpb.pool.Start()
 	}
 	cpb.pool.Add(newPb)
 	reader := newPb.NewProxyReader(stream)
@@ -61,7 +64,7 @@ func (cpb *ProgressBar) TrackProgress(src string, currentSize, totalSize int64, 
 			newPb.Finish()
 			cpb.pbs--
 			if cpb.pbs <= 0 {
-				cpb.pool.Stop()
+				_ = cpb.pool.Stop()
 				cpb.pool = nil
 			}
 			return nil

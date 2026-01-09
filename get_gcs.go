@@ -1,3 +1,6 @@
+// Copyright IBM Corp. 2015, 2025
+// SPDX-License-Identifier: MPL-2.0
+
 package getter
 
 import (
@@ -167,7 +170,8 @@ func (g *GCSGetter) getObject(ctx context.Context, client *storage.Client, dst, 
 	var rc *storage.Reader
 	var err error
 	if fragment != "" {
-		generation, err := strconv.ParseInt(fragment, 10, 64)
+		var generation int64
+		generation, err = strconv.ParseInt(fragment, 10, 64)
 		if err != nil {
 			return err
 		}
@@ -178,7 +182,7 @@ func (g *GCSGetter) getObject(ctx context.Context, client *storage.Client, dst, 
 	if err != nil {
 		return err
 	}
-	defer rc.Close()
+	defer func() { _ = rc.Close() }()
 
 	// Create all the parent directories
 	if err := os.MkdirAll(filepath.Dir(dst), g.client.mode(0755)); err != nil {
@@ -190,7 +194,7 @@ func (g *GCSGetter) getObject(ctx context.Context, client *storage.Client, dst, 
 }
 
 func (g *GCSGetter) parseURL(u *url.URL) (bucket, path, fragment string, err error) {
-	if strings.Contains(u.Host, "googleapis.com") {
+	if strings.HasSuffix(u.Host, ".googleapis.com") {
 		hostParts := strings.Split(u.Host, ".")
 		if len(hostParts) != 3 {
 			err = fmt.Errorf("URL is not a valid GCS URL")
@@ -205,6 +209,8 @@ func (g *GCSGetter) parseURL(u *url.URL) (bucket, path, fragment string, err err
 		bucket = pathParts[3]
 		path = pathParts[4]
 		fragment = u.Fragment
+	} else {
+		err = fmt.Errorf("URL is not a valid GCS URL")
 	}
 	return
 }

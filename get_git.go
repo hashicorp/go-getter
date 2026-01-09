@@ -1,3 +1,6 @@
+// Copyright IBM Corp. 2015, 2025
+// SPDX-License-Identifier: MPL-2.0
+
 package getter
 
 import (
@@ -5,7 +8,6 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
-	"io/ioutil"
 	"net/url"
 	"os"
 	"os/exec"
@@ -17,7 +19,6 @@ import (
 	"time"
 
 	urlhelper "github.com/hashicorp/go-getter/helper/url"
-	safetemp "github.com/hashicorp/go-safetemp"
 	version "github.com/hashicorp/go-version"
 )
 
@@ -31,7 +32,6 @@ type GitGetter struct {
 	Timeout time.Duration
 }
 
-var defaultBranchRegexp = regexp.MustCompile(`\s->\sorigin/(.*)`)
 var lsRemoteSymRefRegexp = regexp.MustCompile(`ref: refs/heads/([^\s]+).*`)
 
 func (g *GitGetter) ClientMode(_ *url.URL) (ClientMode, error) {
@@ -80,7 +80,7 @@ func (g *GitGetter) Get(dst string, u *url.URL) error {
 		q.Del("depth")
 
 		// Copy the URL
-		var newU url.URL = *u
+		newU := *u
 		u = &newU
 		u.RawQuery = q.Encode()
 	}
@@ -99,12 +99,12 @@ func (g *GitGetter) Get(dst string, u *url.URL) error {
 		}
 
 		// Create a temp file for the key and ensure it is removed.
-		fh, err := ioutil.TempFile("", "go-getter")
+		fh, err := os.CreateTemp("", "go-getter")
 		if err != nil {
 			return err
 		}
 		sshKeyFile = fh.Name()
-		defer os.Remove(sshKeyFile)
+		defer func() { _ = os.Remove(sshKeyFile) }()
 
 		// Set the permissions prior to writing the key material.
 		if err := os.Chmod(sshKeyFile, 0600); err != nil {
@@ -113,7 +113,7 @@ func (g *GitGetter) Get(dst string, u *url.URL) error {
 
 		// Write the raw key into the temp file.
 		_, err = fh.Write(raw)
-		fh.Close()
+		_ = fh.Close()
 		if err != nil {
 			return err
 		}
@@ -125,7 +125,7 @@ func (g *GitGetter) Get(dst string, u *url.URL) error {
 		return err
 	}
 	if err == nil {
-		err = g.update(ctx, dst, sshKeyFile, ref, depth)
+		err = g.update(ctx, dst, sshKeyFile, u, ref, depth)
 	} else {
 		err = g.clone(ctx, dst, sshKeyFile, u, ref, depth)
 	}
@@ -147,11 +147,11 @@ func (g *GitGetter) Get(dst string, u *url.URL) error {
 // GetFile for Git doesn't support updating at this time. It will download
 // the file every time.
 func (g *GitGetter) GetFile(dst string, u *url.URL) error {
-	td, tdcloser, err := safetemp.Dir("", "getter")
+	td, tdcloser, err := mkdirTemp("", "getter")
 	if err != nil {
 		return err
 	}
-	defer tdcloser.Close()
+	defer func() { _ = tdcloser.Close() }()
 
 	// Get the filename, and strip the filename from the URL so we can
 	// just get the repository directly.
@@ -200,7 +200,7 @@ func (g *GitGetter) clone(ctx context.Context, dst, sshKeyFile string, u *url.UR
 		args = append(args, "--depth", strconv.Itoa(depth))
 		args = append(args, "--branch", ref)
 	}
-	args = append(args, u.String(), dst)
+	args = append(args, "--", u.String(), dst)
 
 	cmd := exec.CommandContext(ctx, "git", args...)
 	setupGitEnv(cmd, sshKeyFile)
@@ -223,33 +223,74 @@ func (g *GitGetter) clone(ctx context.Context, dst, sshKeyFile string, u *url.UR
 		// If we didn't add --depth and --branch above then we will now be
 		// on the remote repository's default branch, rather than the selected
 		// ref, so we'll need to fix that before we return.
-		return g.checkout(ctx, dst, originalRef)
+		err := g.checkout(ctx, dst, originalRef)
+		if err != nil {
+			// Clean up git repository on disk
+			_ = os.RemoveAll(dst)
+			return err
+		}
 	}
 	return nil
 }
 
-func (g *GitGetter) update(ctx context.Context, dst, sshKeyFile, ref string, depth int) error {
-	// Determine if we're a branch. If we're NOT a branch, then we just
-	// switch to master prior to checking out
-	cmd := exec.CommandContext(ctx, "git", "show-ref", "-q", "--verify", "refs/heads/"+ref)
-	cmd.Dir = dst
-
-	if getRunCommand(cmd) != nil {
-		// Not a branch, switch to default branch. This will also catch
-		// non-existent branches, in which case we want to switch to default
-		// and then checkout the proper branch later.
-		ref = findDefaultBranch(ctx, dst)
-	}
-
-	// We have to be on a branch to pull
-	if err := g.checkout(ctx, dst, ref); err != nil {
+func (g *GitGetter) update(ctx context.Context, dst, sshKeyFile string, u *url.URL, ref string, depth int) error {
+	// Remove all variations of .git directories
+	err := removeCaseInsensitiveGitDirectory(dst)
+	if err != nil {
 		return err
 	}
 
+	// Initialize the git repository
+	cmd := exec.CommandContext(ctx, "git", "init")
+	cmd.Dir = dst
+	err = getRunCommand(cmd)
+	if err != nil {
+		return err
+	}
+
+	// Add the git remote
+	cmd = exec.CommandContext(ctx, "git", "remote", "add", "origin", "--", u.String())
+	cmd.Dir = dst
+	err = getRunCommand(cmd)
+	if err != nil {
+		return err
+	}
+
+	// Fetch the remote ref
+	cmd = exec.CommandContext(ctx, "git", "fetch", "--tags")
+	cmd.Dir = dst
+	err = getRunCommand(cmd)
+	if err != nil {
+		return err
+	}
+
+	// Fetch the remote ref
+	cmd = exec.CommandContext(ctx, "git", "fetch", "origin", "--", ref)
+	cmd.Dir = dst
+	err = getRunCommand(cmd)
+	if err != nil {
+		return err
+	}
+
+	// Reset the branch to the fetched ref
+	cmd = exec.CommandContext(ctx, "git", "reset", "--hard", "FETCH_HEAD")
+	cmd.Dir = dst
+	err = getRunCommand(cmd)
+	if err != nil {
+		return err
+	}
+
+	// Checkout ref branch
+	err = g.checkout(ctx, dst, ref)
+	if err != nil {
+		return err
+	}
+
+	// Pull the latest changes from the ref branch
 	if depth > 0 {
-		cmd = exec.CommandContext(ctx, "git", "pull", "--depth", strconv.Itoa(depth), "--ff-only")
+		cmd = exec.CommandContext(ctx, "git", "pull", "origin", "--depth", strconv.Itoa(depth), "--ff-only", "--", ref)
 	} else {
-		cmd = exec.CommandContext(ctx, "git", "pull", "--ff-only")
+		cmd = exec.CommandContext(ctx, "git", "pull", "origin", "--ff-only", "--", ref)
 	}
 
 	cmd.Dir = dst
@@ -259,6 +300,9 @@ func (g *GitGetter) update(ctx context.Context, dst, sshKeyFile, ref string, dep
 
 // fetchSubmodules downloads any configured submodules recursively.
 func (g *GitGetter) fetchSubmodules(ctx context.Context, dst, sshKeyFile string, depth int) error {
+	if g.client != nil {
+		g.client.DisableSymlinks = true
+	}
 	args := []string{"submodule", "update", "--init", "--recursive"}
 	if depth > 0 {
 		args = append(args, "--depth", strconv.Itoa(depth))
@@ -269,27 +313,11 @@ func (g *GitGetter) fetchSubmodules(ctx context.Context, dst, sshKeyFile string,
 	return getRunCommand(cmd)
 }
 
-// findDefaultBranch checks the repo's origin remote for its default branch
-// (generally "master"). "master" is returned if an origin default branch
-// can't be determined.
-func findDefaultBranch(ctx context.Context, dst string) string {
-	var stdoutbuf bytes.Buffer
-	cmd := exec.CommandContext(ctx, "git", "branch", "-r", "--points-at", "refs/remotes/origin/HEAD")
-	cmd.Dir = dst
-	cmd.Stdout = &stdoutbuf
-	err := cmd.Run()
-	matches := defaultBranchRegexp.FindStringSubmatch(stdoutbuf.String())
-	if err != nil || matches == nil {
-		return "master"
-	}
-	return matches[len(matches)-1]
-}
-
 // findRemoteDefaultBranch checks the remote repo's HEAD symref to return the remote repo's
 // default branch. "master" is returned if no HEAD symref exists.
 func findRemoteDefaultBranch(ctx context.Context, u *url.URL) string {
 	var stdoutbuf bytes.Buffer
-	cmd := exec.CommandContext(ctx, "git", "ls-remote", "--symref", u.String(), "HEAD")
+	cmd := exec.CommandContext(ctx, "git", "ls-remote", "--symref", "--", u.String(), "HEAD")
 	cmd.Stdout = &stdoutbuf
 	err := cmd.Run()
 	matches := lsRemoteSymRefRegexp.FindStringSubmatch(stdoutbuf.String())
@@ -330,7 +358,7 @@ func setupGitEnv(cmd *exec.Cmd, sshKeyFile string) {
 
 	// We have an SSH key temp file configured, tell ssh about this.
 	if runtime.GOOS == "windows" {
-		sshKeyFile = strings.Replace(sshKeyFile, `\`, `/`, -1)
+		sshKeyFile = strings.ReplaceAll(sshKeyFile, `\`, `/`)
 	}
 	sshCmd = append(sshCmd, "-i", sshKeyFile)
 	env = append(env, strings.Join(sshCmd, " "))
@@ -354,7 +382,7 @@ func checkGitVersion(ctx context.Context, min string) error {
 
 	fields := strings.Fields(string(out))
 	if len(fields) < 3 {
-		return fmt.Errorf("Unexpected 'git version' output: %q", string(out))
+		return fmt.Errorf("unexpected 'git version' output: %q", string(out))
 	}
 	v := fields[2]
 	if runtime.GOOS == "windows" && strings.Contains(v, ".windows.") {
@@ -372,8 +400,25 @@ func checkGitVersion(ctx context.Context, min string) error {
 	}
 
 	if have.LessThan(want) {
-		return fmt.Errorf("Required git version = %s, have %s", want, have)
+		return fmt.Errorf("required git version = %s, have %s", want, have)
 	}
 
+	return nil
+}
+
+// removeCaseInsensitiveGitDirectory removes all .git directory variations
+func removeCaseInsensitiveGitDirectory(dst string) error {
+	files, err := os.ReadDir(dst)
+	if err != nil {
+		return fmt.Errorf("failed to read the destination directory %s during git update", dst)
+	}
+	for _, f := range files {
+		if strings.EqualFold(f.Name(), ".git") && f.IsDir() {
+			err := os.RemoveAll(filepath.Join(dst, f.Name()))
+			if err != nil {
+				return fmt.Errorf("failed to remove the .git directory in the destination directory %s during git update", dst)
+			}
+		}
+	}
 	return nil
 }

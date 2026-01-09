@@ -1,7 +1,11 @@
+// Copyright IBM Corp. 2015, 2025
+// SPDX-License-Identifier: MPL-2.0
+
 package getter
 
 import (
 	"os"
+	"slices"
 	"strings"
 )
 
@@ -69,12 +73,7 @@ func containsDotDot(v string) bool {
 	if !strings.Contains(v, "..") {
 		return false
 	}
-	for _, ent := range strings.FieldsFunc(v, isSlashRune) {
-		if ent == ".." {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(strings.FieldsFunc(v, isSlashRune), "..")
 }
 
 func isSlashRune(r rune) bool { return r == '/' || r == '\\' }

@@ -1,3 +1,6 @@
+// Copyright IBM Corp. 2015, 2025
+// SPDX-License-Identifier: MPL-2.0
+
 package getter
 
 import (
@@ -13,7 +16,7 @@ import (
 type OneDoneContext bool
 
 func (*OneDoneContext) Deadline() (deadline time.Time, ok bool) { return }
-func (*OneDoneContext) Value(key interface{}) interface{}       { return nil }
+func (*OneDoneContext) Value(key any) any                       { return nil }
 
 func (o *OneDoneContext) Err() error {
 	if *o == false {

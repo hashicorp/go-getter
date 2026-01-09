@@ -1,19 +1,20 @@
+// Copyright IBM Corp. 2015, 2025
+// SPDX-License-Identifier: MPL-2.0
+
 package getter
 
 import (
 	"crypto/md5"
 	"encoding/hex"
 	"io"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"reflect"
 	"runtime"
 	"sort"
 	"strings"
+	"testing"
 	"time"
-
-	"github.com/mitchellh/go-testing-interface"
 )
 
 // TestDecompressCase is a single test case for testing decompressors
@@ -27,14 +28,14 @@ type TestDecompressCase struct {
 }
 
 // TestDecompressor is a helper function for testing generic decompressors.
-func TestDecompressor(t testing.T, d Decompressor, cases []TestDecompressCase) {
+func TestDecompressor(t testing.TB, d Decompressor, cases []TestDecompressCase) {
 	t.Helper()
 
 	for _, tc := range cases {
 		t.Logf("Testing: %s", tc.Input)
 
 		// Temporary dir to store stuff
-		td, err := ioutil.TempDir("", "getter")
+		td, err := os.MkdirTemp("", "getter")
 		if err != nil {
 			t.Fatalf("err: %s", err)
 		}
@@ -44,7 +45,7 @@ func TestDecompressor(t testing.T, d Decompressor, cases []TestDecompressCase) {
 
 		// We use a function so defers work
 		func() {
-			defer os.RemoveAll(td)
+			defer func() { _ = os.RemoveAll(td) }()
 
 			// Decompress
 			err := d.Decompress(dst, tc.Input, tc.Dir, 0022)
@@ -80,7 +81,7 @@ func TestDecompressor(t testing.T, d Decompressor, cases []TestDecompressCase) {
 							t.Fatalf("err %s: expected mtime '%s' for %s, got '%s'", tc.Input, expected.String(), dst, actual.String())
 						}
 					} else if actual.Unix() <= 0 {
-						t.Fatalf("err %s: expected mtime to be > 0, got '%s'", actual.String())
+						t.Fatalf("err %s: expected mtime to be > 0, got '%s'", tc.Input, actual.String())
 					}
 				}
 
@@ -91,7 +92,7 @@ func TestDecompressor(t testing.T, d Decompressor, cases []TestDecompressCase) {
 			expected := tc.DirList
 			if runtime.GOOS == "windows" {
 				for i, v := range expected {
-					expected[i] = strings.Replace(v, "/", "\\", -1)
+					expected[i] = strings.ReplaceAll(v, "/", "\\")
 				}
 			}
 
@@ -115,7 +116,7 @@ func TestDecompressor(t testing.T, d Decompressor, cases []TestDecompressCase) {
 							t.Fatalf("err %s: expected mtime '%s' for %s, got '%s'", tc.Input, expected.String(), path, actual.String())
 						}
 					} else if actual.Unix() < 0 {
-						t.Fatalf("err %s: expected mtime to be > 0, got '%s'", actual.String())
+						t.Fatalf("err %s: expected mtime to be > 0, got '%s'", tc.Input, actual.String())
 					}
 
 				}
@@ -124,7 +125,7 @@ func TestDecompressor(t testing.T, d Decompressor, cases []TestDecompressCase) {
 	}
 }
 
-func testListDir(t testing.T, path string) []string {
+func testListDir(t testing.TB, path string) []string {
 	var result []string
 	err := filepath.Walk(path, func(sub string, info os.FileInfo, err error) error {
 		if err != nil {
@@ -153,12 +154,12 @@ func testListDir(t testing.T, path string) []string {
 	return result
 }
 
-func testMD5(t testing.T, path string) string {
+func testMD5(t testing.TB, path string) string {
 	f, err := os.Open(path)
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	h := md5.New()
 	_, err = io.Copy(h, f)

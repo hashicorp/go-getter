@@ -1,3 +1,6 @@
+// Copyright IBM Corp. 2015, 2025
+// SPDX-License-Identifier: MPL-2.0
+
 package getter
 
 import (
@@ -38,14 +41,14 @@ func (d *TarGzipDecompressor) Decompress(dst, src string, dir bool, umask os.Fil
 	if err != nil {
 		return err
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	// Gzip compression is second
 	gzipR, err := gzip.NewReader(f)
 	if err != nil {
 		return fmt.Errorf("Error opening a gzip reader for %s: %w", src, err)
 	}
-	defer gzipR.Close()
+	defer func() { _ = gzipR.Close() }()
 
 	return untar(gzipR, dst, src, dir, umask, d.FileSizeLimit, d.FilesLimit)
 }
