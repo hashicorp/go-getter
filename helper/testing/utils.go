@@ -2,7 +2,6 @@ package testing
 
 import (
 	"io"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -11,7 +10,7 @@ import (
 )
 
 func TempDir(t *testing.T) string {
-	dir, err := ioutil.TempDir("", "tf")
+	dir, err := os.MkdirTemp("", "tf")
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
@@ -28,7 +27,7 @@ func TempTestFile(t *testing.T) string {
 }
 
 func AssertContents(t *testing.T, path string, contents string) {
-	data, err := ioutil.ReadFile(path)
+	data, err := os.ReadFile(path)
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
@@ -41,7 +40,7 @@ func AssertContents(t *testing.T, path string, contents string) {
 // TempFileWithContent writes a temporary file and returns the path and a function
 // to clean it up.
 func TempFileWithContent(t *testing.T, contents string) (string, func()) {
-	tf, err := ioutil.TempFile("", "getter")
+	tf, err := os.CreateTemp("", "getter")
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
