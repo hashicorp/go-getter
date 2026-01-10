@@ -31,6 +31,7 @@ func init() {
 		new(BitBucketDetector),
 		new(S3Detector),
 		new(GCSDetector),
+		new(OSSDetector),
 		new(FileDetector),
 	}
 }
