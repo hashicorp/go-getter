@@ -56,13 +56,13 @@ func (cerr *ChecksumError) Error() string {
 func (c *FileChecksum) checksum(source string) error {
 	f, err := os.Open(source)
 	if err != nil {
-		return fmt.Errorf("Failed to open file for checksum: %w", err)
+		return fmt.Errorf("failed to open file for checksum: %w", err)
 	}
 	defer func() { _ = f.Close() }()
 
 	c.Hash.Reset()
 	if _, err := io.Copy(c.Hash, f); err != nil {
-		return fmt.Errorf("Failed to hash: %w", err)
+		return fmt.Errorf("failed to hash: %w", err)
 	}
 
 	if actual := c.Hash.Sum(nil); !bytes.Equal(actual, c.Value) {
