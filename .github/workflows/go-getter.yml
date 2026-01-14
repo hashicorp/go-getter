@@ -107,7 +107,7 @@ jobs:
       - name: Upload and save artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: linux test results
+          name: linux-test-results-go${{ matrix.go-version }}-${{ matrix.directory == '.' && 'root' || matrix.directory }}
           path: ${{ env.TEST_RESULTS_PATH }}
 
   windows-tests:
@@ -187,7 +187,7 @@ jobs:
       - name: Upload and save artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: windows test results
+          name: windows-test-results-go${{ matrix.go-version }}-${{ matrix.directory == '.' && 'root' || matrix.directory }}
           path: ${{ env.TEST_RESULTS_PATH }}
 
   go-smb-tests:
