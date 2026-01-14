@@ -75,7 +75,7 @@ jobs:
         run: go install gotest.tools/gotestsum@v1.8.2
 
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v1
+        uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-region: us-east-1
           role-to-assume: arn:aws:iam::388664967494:role/hc-go-getter-test
@@ -105,9 +105,9 @@ jobs:
 
       # Save coverage report parts
       - name: Upload and save artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
-          name: linux test results
+          name: linux-test-results-go${{ matrix.go-version }}-${{ matrix.directory == '.' && 'root' || matrix.directory }}
           path: ${{ env.TEST_RESULTS_PATH }}
 
   windows-tests:
@@ -154,7 +154,7 @@ jobs:
         run: go install gotest.tools/gotestsum@v1.8.2
 
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v1
+        uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-region: us-east-1
           role-to-assume: arn:aws:iam::388664967494:role/hc-go-getter-test
@@ -185,9 +185,9 @@ jobs:
 
       # Save coverage report parts
       - name: Upload and save artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
-          name: windows test results
+          name: windows-test-results-go${{ matrix.go-version }}-${{ matrix.directory == '.' && 'root' || matrix.directory }}
           path: ${{ env.TEST_RESULTS_PATH }}
 
   go-smb-tests:
@@ -218,8 +218,8 @@ jobs:
 
       - name: Build and start SMB server and gogetter containers
         run: |
-          docker-compose build
-          docker-compose up -d
+          docker compose build
+          docker compose up -d
 
       - name: Run SMB getter tests
         run: docker exec -i gogetter bash -c "env ACC_SMB_TEST=1 go test -v ./... -run=TestSmb_"
