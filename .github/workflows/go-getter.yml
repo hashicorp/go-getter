@@ -218,8 +218,8 @@ jobs:
 
       - name: Build and start SMB server and gogetter containers
         run: |
-          docker-compose build
-          docker-compose up -d
+          docker compose build
+          docker compose up -d
 
       - name: Run SMB getter tests
         run: docker exec -i gogetter bash -c "env ACC_SMB_TEST=1 go test -v ./... -run=TestSmb_"
