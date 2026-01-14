@@ -105,7 +105,7 @@ jobs:
 
       # Save coverage report parts
       - name: Upload and save artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: linux test results
           path: ${{ env.TEST_RESULTS_PATH }}
@@ -185,7 +185,7 @@ jobs:
 
       # Save coverage report parts
       - name: Upload and save artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: windows test results
           path: ${{ env.TEST_RESULTS_PATH }}
