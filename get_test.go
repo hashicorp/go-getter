@@ -570,10 +570,15 @@ func TestGetFile_checksum_from_file(t *testing.T) {
 			true,
 			false,
 		},
-
 		// sha512
 		{
 			"?checksum=file:" + checksums + "/CHECKSUM_sha256_gpg",
+			true,
+			false,
+		},
+		{
+			// checksum file does not have EOL, ends line with EOF
+			"?checksum=file:" + httpChecksums.URL + "/sha512-p-EOF.sum",
 			true,
 			false,
 		},
