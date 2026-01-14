@@ -314,7 +314,7 @@ func TestGitGetter_branchAmbiguous(t *testing.T) {
 	}
 
 	g := new(GitGetter)
-	dst := tempDir(t)
+	dst := t.TempDir()
 
 	repo := testGitRepo(t, "branch")
 	repo.commitFileInDir("file.txt", "ambiguous", "branch-and-file-with-same-name")
@@ -1228,7 +1228,7 @@ func (r *gitRepo) commitFileInDir(file, dir, content string) {
 
 	rel_file_path := filepath.Join(dir, file)
 	file_path := filepath.Join(dir_path, file)
-	if err := ioutil.WriteFile(file_path, []byte(content), 0600); err != nil {
+	if err := os.WriteFile(file_path, []byte(content), 0600); err != nil {
 		r.t.Fatal(err)
 	}
 	r.git("add", rel_file_path)
