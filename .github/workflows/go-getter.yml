@@ -75,7 +75,7 @@ jobs:
         run: go install gotest.tools/gotestsum@v1.8.2
 
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v1
+        uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-region: us-east-1
           role-to-assume: arn:aws:iam::388664967494:role/hc-go-getter-test
@@ -154,7 +154,7 @@ jobs:
         run: go install gotest.tools/gotestsum@v1.8.2
 
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v1
+        uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-region: us-east-1
           role-to-assume: arn:aws:iam::388664967494:role/hc-go-getter-test
