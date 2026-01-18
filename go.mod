@@ -1,7 +1,7 @@
 module github.com/hashicorp/go-getter
 
 require (
-	cloud.google.com/go/storage v1.59.0
+	cloud.google.com/go/storage v1.59.1
 	github.com/aws/aws-sdk-go-v2 v1.41.1
 	github.com/aws/aws-sdk-go-v2/config v1.32.7
 	github.com/aws/aws-sdk-go-v2/credentials v1.19.7
@@ -12,12 +12,12 @@ require (
 	github.com/hashicorp/aws-sdk-go-base/v2 v2.0.0-beta.70
 	github.com/hashicorp/go-cleanhttp v0.5.2
 	github.com/hashicorp/go-version v1.8.0
-	github.com/klauspost/compress v1.18.2
+	github.com/klauspost/compress v1.18.3
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/ulikunitz/xz v0.5.15
 	golang.org/x/oauth2 v0.34.0
 	golang.org/x/sys v0.40.0
-	google.golang.org/api v0.259.0
+	google.golang.org/api v0.260.0
 )
 
 require (
@@ -55,7 +55,7 @@ require (
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/google/s2a-go v0.1.9 // indirect
 	github.com/google/uuid v1.6.0 // indirect
-	github.com/googleapis/enterprise-certificate-proxy v0.3.7 // indirect
+	github.com/googleapis/enterprise-certificate-proxy v0.3.9 // indirect
 	github.com/googleapis/gax-go/v2 v2.16.0 // indirect
 	github.com/mattn/go-runewidth v0.0.4 // indirect
 	github.com/planetscale/vtprotobuf v0.6.1-0.20240319094008-0393e58bdf10 // indirect
