@@ -431,6 +431,13 @@ func TestGetFile_checksum_from_file(t *testing.T) {
 			true,
 			false,
 		},
+
+		// assert arbitrary files will not be read
+		{
+			"?checksum=file:" + checksums + "/multifile-sha1.sum",
+			true,
+			false,
+		},
 	}
 
 	for _, tc := range cases {
