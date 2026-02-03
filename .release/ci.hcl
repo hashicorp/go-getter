@@ -1,4 +1,4 @@
-schema = "1"
+schema = "2"
 
 project "go-getter" {
   team = "team-ip-compliance"
@@ -61,15 +61,6 @@ event "promote-staging" {
   notification {
     on = "always"
   }
-
-  promotion-events {
-
-    pre-promotion {
-      organization = "hashicorp"
-      repository   = "go-getter"
-      workflow     = "enos-run"
-    }
-  }
 }
 event "trigger-production" {
 }
@@ -89,8 +80,4 @@ event "promote-production" {
     on = "always"
   }
 
-  promotion-events {
-    bump-version-patch = true
-    update-ironbank    = true
-  }
 }
