@@ -1,10 +1,3 @@
-container {
-	dependencies = true
-	osv          = true
-	secrets      = true
-
-}
-
 binary {
 	secrets      = true
 	go_modules   = true

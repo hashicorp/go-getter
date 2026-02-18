@@ -215,3 +215,4 @@ jobs:
           instructions: |
             cp LICENSE "$TARGET_DIR/LICENSE.txt"
             go build -o "$BIN_PATH" -trimpath -buildvcs=false
+            
