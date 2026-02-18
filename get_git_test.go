@@ -946,7 +946,7 @@ func TestGitGetter_BadGitConfig(t *testing.T) {
 	if err == nil {
 		// Update the repository containing the bad git config.
 		// This should remove the bad git config file and initialize a new one.
-		err = g.update(ctx, dst, testGitToken, url, "main", 1)
+		err = g.update(ctx, dst, testGitToken, url, "main", 1, "")
 	} else {
 		// Clone a repository with a git config file
 		err = g.clone(ctx, dst, testGitToken, url, "main", 1, "")
@@ -963,7 +963,7 @@ func TestGitGetter_BadGitConfig(t *testing.T) {
 
 		// Update the repository containing the bad git config.
 		// This should remove the bad git config file and initialize a new one.
-		err = g.update(ctx, dst, testGitToken, url, "main", 1)
+		err = g.update(ctx, dst, testGitToken, url, "main", 1, "")
 	}
 	if err != nil {
 		t.Fatal(err.Error())
@@ -1064,7 +1064,7 @@ func TestGitGetter_BadRef(t *testing.T) {
 	// Clone a repository with non-existent ref
 	err = g.clone(ctx, dst, "", url, "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", 0, "")
 	if err == nil {
-		t.Fatal(err.Error())
+		t.Fatal("expected clone to fail with bad ref")
 	}
 
 	// Expect that the dst was cleaned up after failed ref checkout
@@ -1181,6 +1181,72 @@ func TestGitGetter_sparseCheckoutWithShortCommitID(t *testing.T) {
 	mainPath = filepath.Join(dst, "subdir2/file2.txt")
 	if _, err := os.Stat(mainPath); err == nil {
 		t.Fatalf("expected subdir2 file to not exist")
+	}
+}
+
+func TestGitGetter_updateSparseCheckout(t *testing.T) {
+	if !testHasGit {
+		t.Skip("git not found, skipping")
+	}
+
+	g := new(GitGetter)
+	dst := filepath.Join(t.TempDir(), "target")
+
+	repo := testGitRepo(t, "update-sparse")
+	repo.git("checkout", "-b", "main")
+	repo.commitFile("subdir1/file1.txt", "hello")
+	repo.commitFile("subdir2/file2.txt", "world")
+
+	q := repo.url.Query()
+	q.Add("ref", "main")
+	q.Add("subdir", "subdir1")
+	repo.url.RawQuery = q.Encode()
+
+	// First Get: triggers clone() path with sparse checkout
+	if err := g.Get(context.Background(), dst, repo.url); err != nil {
+		t.Fatalf("first get (clone) err: %s", err)
+	}
+
+	// Verify sparse checkout worked on clone
+	if _, err := os.Stat(filepath.Join(dst, "subdir1/file1.txt")); err != nil {
+		t.Fatalf("subdir1/file1.txt should exist after clone: %s", err)
+	}
+	if _, err := os.Stat(filepath.Join(dst, "subdir2/file2.txt")); err == nil {
+		t.Fatalf("subdir2/file2.txt should not exist after clone")
+	}
+
+	// Add a new file in the tracked subdir
+	repo.commitFile("subdir1/file1-update.txt", "updated")
+	// Also add a file in the untracked subdir
+	repo.commitFile("subdir2/file2-update.txt", "also updated")
+
+	// Second Get: dst exists, triggers update() path
+	if err := g.Get(context.Background(), dst, repo.url); err != nil {
+		t.Fatalf("second get (update) err: %s", err)
+	}
+
+	// Verify the updated file in subdir1 exists
+	if _, err := os.Stat(filepath.Join(dst, "subdir1/file1-update.txt")); err != nil {
+		t.Fatalf("subdir1/file1-update.txt should exist after update: %s", err)
+	}
+
+	// Verify files in subdir2 still do not exist (sparse checkout in update)
+	if _, err := os.Stat(filepath.Join(dst, "subdir2/file2.txt")); err == nil {
+		t.Fatalf("subdir2/file2.txt should not exist after update")
+	}
+	if _, err := os.Stat(filepath.Join(dst, "subdir2/file2-update.txt")); err == nil {
+		t.Fatalf("subdir2/file2-update.txt should not exist after update")
+	}
+
+	// Verify the repo is shallow (depth=1 is set automatically when subdir is specified)
+	cmd := exec.Command("git", "rev-list", "HEAD", "--count")
+	cmd.Dir = dst
+	b, err := cmd.Output()
+	if err != nil {
+		t.Fatalf("rev-list err: %s", err)
+	}
+	if count := strings.TrimSpace(string(b)); count != "1" {
+		t.Fatalf("expected shallow clone with 1 commit after update, got %s", count)
 	}
 }
 
