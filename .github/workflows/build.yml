@@ -106,7 +106,7 @@ jobs:
           reproducible: report
           instructions: |-
             cp LICENSE "$TARGET_DIR/LICENSE.txt"
-            go build -o "$BIN_PATH" -trimpath -buildvcs=false
+            go build -o "$BIN_PATH" -trimpath -buildvcs=false ./cmd/go-getter/
 
   build-linux:
     needs:
@@ -139,7 +139,7 @@ jobs:
           reproducible: report
           instructions: |
             cp LICENSE "$TARGET_DIR/LICENSE.txt"
-            go build -o "$BIN_PATH" -trimpath -buildvcs=false
+            go build -o "$BIN_PATH" -trimpath -buildvcs=false ./cmd/go-getter/
       - name: Copy license file to config_dir
         if: ${{ matrix.goos == 'linux' }}
         env:
@@ -214,5 +214,4 @@ jobs:
           reproducible: report
           instructions: |
             cp LICENSE "$TARGET_DIR/LICENSE.txt"
-            go build -o "$BIN_PATH" -trimpath -buildvcs=false
-            
+            go build -o "$BIN_PATH" -trimpath -buildvcs=false ./cmd/go-getter/
