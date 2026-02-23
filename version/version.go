@@ -5,7 +5,7 @@ package version
 
 var (
 	Version           = "1.8.5"
-	VersionPrerelease = "dev"
+	VersionPrerelease = ""
 	VersionMetadata   = ""
 	// PluginVersion removed to avoid import cycle
 )
