@@ -42,14 +42,3 @@
 - test that arbitrary files cannot be checksummed
 - use %w to wrap error
 
-## How to Generate Changelog Entries
-
-To view and copy changes since the last release (v1.8.4), run:
-
-```bash
-git log v1.8.4..HEAD --pretty=format:"- %s" | sort | uniq
-```
-
-Then paste the output into the `## Unreleased` section above.
-
-**Full Changelog:** [v1.8.4...HEAD](https://github.com/hashicorp/go-getter/compare/v1.8.4...HEAD)
