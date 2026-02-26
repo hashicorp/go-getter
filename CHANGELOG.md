@@ -41,4 +41,3 @@
 - Prep for v1.8.5 release
 - test that arbitrary files cannot be checksummed
 - use %w to wrap error
-
