@@ -50,7 +50,7 @@ event "promote-staging" {
 
   action "promote-staging" {
     organization = "hashicorp"
-    repository   = "go-getter"
+    repository   = "crt-workflows-common"
     workflow     = "promote-staging"
     depends      = null
     config       = "oss-release-metadata.hcl"

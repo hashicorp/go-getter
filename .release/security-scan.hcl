@@ -4,4 +4,5 @@ binary {
 	osv          = true
 	oss_index    = false
 	nvd          = false
+	go_stdlib    = true
 }
