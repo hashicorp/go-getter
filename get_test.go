@@ -273,8 +273,8 @@ func TestGetFile_archiveNoUnarchive(t *testing.T) {
 	}
 
 	// Verify the main file exists
-	actual := testMD5(t, dst)
-	expected := "fbd90037dacc4b1ab40811d610dde2f0"
+	actual := testSHA256(t, dst)
+	expected := "00f9922e0129afd630870014701f6cc72d0b03ab6d120e827b77cc4e9e58785b"
 	if actual != expected {
 		t.Fatalf("bad: %s", actual)
 	}
@@ -545,3 +545,4 @@ func TestGetFile_checksumSkip(t *testing.T) {
 		t.Fatalf("get should not have been called")
 	}
 }
+

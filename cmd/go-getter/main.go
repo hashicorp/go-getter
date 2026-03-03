@@ -58,12 +58,20 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	// Build the client
 	client := &getter.Client{
-		Ctx:     ctx,
-		Src:     args[0],
-		Dst:     args[1],
-		Pwd:     pwd,
-		Mode:    mode,
-		Options: opts,
+		Ctx:  ctx,
+		Src:  args[0],
+		Dst:  args[1],
+		Pwd:  pwd,
+		Mode: mode,
+
+		// Restrict allowed protocols
+		Getters: map[string]getter.Getter{
+			"https": &getter.HttpGetter{},
+			"git":   &getter.GitGetter{},
+		},
+
+		// Disable symlink following
+		DisableSymlinks: true,
 	}
 
 	wg := sync.WaitGroup{}
