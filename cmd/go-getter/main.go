@@ -18,6 +18,9 @@ func main() {
 	modeRaw := flag.String("mode", "any", "get mode (any, file, dir)")
 	progress := flag.Bool("progress", false, "display terminal progress")
 	insecure := flag.Bool("insecure", false, "do not verify server's certificate chain (not recommended)")
+	allowLocal := flag.Bool("allow-local", false, "allow local file:// access (WARNING: enables local file inclusion attacks if input is untrusted)")
+	useNetrc := flag.Bool("use-netrc", false, "use .netrc for HTTP authentication (WARNING: .netrc contains credentials in plain text)")
+	maxSizeMB := flag.Int64("max-download-size-mb", 10240, "maximum download size in MB (0 = unlimited, default 10GB)")
 	flag.Parse()
 	args := flag.Args()
 	if len(args) < 2 {
@@ -56,6 +59,38 @@ func main() {
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
+
+	// Calculate max download size from flag, converting MB to bytes
+	var maxDownloadSize int64
+	if *maxSizeMB > 0 {
+		maxDownloadSize = *maxSizeMB * 1024 * 1024
+	}
+	// Zero means unlimited
+
+	// Build getters map with security-conscious defaults
+	getters := map[string]getter.Getter{
+		"git": new(getter.GitGetter),
+		"http": &getter.HttpGetter{
+			Netrc:    *useNetrc,
+			MaxBytes: maxDownloadSize, // Limit HTTP response body size (0 = unlimited)
+		},
+		"https": &getter.HttpGetter{
+			Netrc:    *useNetrc,
+			MaxBytes: maxDownloadSize, // Limit HTTP response body size (0 = unlimited)
+		},
+		"s3": new(getter.S3Getter),
+	}
+
+	// Only enable local file access if explicitly requested
+	if *allowLocal {
+		getters["file"] = new(getter.FileGetter)
+	}
+
+	// Warn if netrc is enabled
+	if *useNetrc {
+		log.Println("WARNING: Using .netrc for HTTP authentication (credentials stored in plain text)")
+	}
+
 	// Build the client with explicitly configured getters for security
 	client := &getter.Client{
 		Ctx:             ctx,
@@ -65,13 +100,7 @@ func main() {
 		Mode:            mode,
 		Options:         opts,
 		DisableSymlinks: true, // Prevent symlink traversal attacks
-		Getters: map[string]getter.Getter{
-			"file":  new(getter.FileGetter),
-			"git":   new(getter.GitGetter),
-			"http":  &getter.HttpGetter{Netrc: true},
-			"https": &getter.HttpGetter{Netrc: true},
-			"s3":    new(getter.S3Getter),
-		},
+		Getters:         getters,
 	}
 
 	wg := sync.WaitGroup{}
