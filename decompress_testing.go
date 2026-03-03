@@ -5,6 +5,7 @@ package getter
 
 import (
 	// MD5 is used for test verification only, not for cryptographic security
+	// secsync:ignore CWE-327
 	"crypto/md5" // #nosec G501 -- nolint:gosec -- lgtm[go/weak-cryptography] -- nosemgrep: go.lang.security.audit.crypto.md5.use-of-insecure-md5-hash
 	"encoding/hex"
 	"io"

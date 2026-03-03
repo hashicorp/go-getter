@@ -9,6 +9,7 @@ import (
 
 	// MD5 is used for checksum verification only, not for cryptographic security
 	// This is a legitimate non-cryptographic use of MD5 for data integrity checking
+	// secsync:ignore CWE-327, CWE-328
 	"crypto/md5"  // #nosec G501 -- nolint:gosec -- lgtm[go/weak-cryptography] -- nosemgrep: go.lang.security.audit.crypto.md5.use-of-insecure-md5-hash
 	"crypto/sha1" // #nosec G505 -- nolint:gosec -- lgtm[go/weak-cryptography] -- nosemgrep: go.lang.security.audit.crypto.sha1.use-of-insecure-sha1
 	"crypto/sha256"
