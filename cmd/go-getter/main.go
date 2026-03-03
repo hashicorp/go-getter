@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/signal"
 	"sync"
+	"time"
 
 	getter "github.com/hashicorp/go-getter"
 )
@@ -19,8 +20,11 @@ func main() {
 	progress := flag.Bool("progress", false, "display terminal progress")
 	insecure := flag.Bool("insecure", false, "do not verify server's certificate chain (not recommended)")
 	allowLocal := flag.Bool("allow-local", false, "allow local file:// access (WARNING: enables local file inclusion attacks if input is untrusted)")
+	allowRepo := flag.Bool("allow-repo", false, "allow git:// access (WARNING: enables arbitrary git repository directory reads)")
 	useNetrc := flag.Bool("use-netrc", false, "use .netrc for HTTP authentication (WARNING: .netrc contains credentials in plain text)")
 	maxSizeMB := flag.Int64("max-download-size-mb", 10240, "maximum download size in MB (0 = unlimited, default 10GB)")
+	headTimeoutSec := flag.Int64("head-timeout-sec", 30, "timeout for HEAD requests in seconds (0 = no timeout)")
+	readTimeoutSec := flag.Int64("read-timeout-sec", 300, "timeout for reading HTTP body in seconds (0 = no timeout)")
 	flag.Parse()
 	args := flag.Args()
 	if len(args) < 2 {
@@ -67,18 +71,35 @@ func main() {
 	}
 	// Zero means unlimited
 
+	// Convert timeout flags to time.Duration
+	var headFirstTimeout, readTimeout time.Duration
+	if *headTimeoutSec > 0 {
+		headFirstTimeout = time.Duration(*headTimeoutSec) * time.Second
+	}
+	if *readTimeoutSec > 0 {
+		readTimeout = time.Duration(*readTimeoutSec) * time.Second
+	}
+
 	// Build getters map with security-conscious defaults
 	getters := map[string]getter.Getter{
-		"git": new(getter.GitGetter),
 		"http": &getter.HttpGetter{
-			Netrc:    *useNetrc,
-			MaxBytes: maxDownloadSize, // Limit HTTP response body size (0 = unlimited)
+			Netrc:            *useNetrc,
+			MaxBytes:         maxDownloadSize,  // Limit HTTP response body size
+			HeadFirstTimeout: headFirstTimeout, // Timeout for HEAD requests
+			ReadTimeout:      readTimeout,      // Timeout for reading body
 		},
 		"https": &getter.HttpGetter{
-			Netrc:    *useNetrc,
-			MaxBytes: maxDownloadSize, // Limit HTTP response body size (0 = unlimited)
+			Netrc:            *useNetrc,
+			MaxBytes:         maxDownloadSize,  // Limit HTTP response body size
+			HeadFirstTimeout: headFirstTimeout, // Timeout for HEAD requests
+			ReadTimeout:      readTimeout,      // Timeout for reading body
 		},
 		"s3": new(getter.S3Getter),
+	}
+
+	// Only enable git repository access if explicitly requested
+	if *allowRepo {
+		getters["git"] = new(getter.GitGetter)
 	}
 
 	// Only enable local file access if explicitly requested
@@ -86,9 +107,15 @@ func main() {
 		getters["file"] = new(getter.FileGetter)
 	}
 
-	// Warn if netrc is enabled
+	// Warn if potentially risky features are enabled
 	if *useNetrc {
 		log.Println("WARNING: Using .netrc for HTTP authentication (credentials stored in plain text)")
+	}
+	if *allowRepo {
+		log.Println("WARNING: Enabling git:// access (enables arbitrary git repository directory reads)")
+	}
+	if *allowLocal {
+		log.Println("WARNING: Enabling file:// access (enables local file inclusion attacks if input is untrusted)")
 	}
 
 	// Build the client with explicitly configured getters for security
