@@ -6,12 +6,8 @@ package getter
 import (
 	"bufio"
 	"bytes"
-
-	// MD5 is used for checksum verification only, not for cryptographic security
-	// This is a legitimate non-cryptographic use of MD5 for data integrity checking
-	// secsync:ignore CWE-327, CWE-328
-	"crypto/md5"  // #nosec G501 -- nolint:gosec -- lgtm[go/weak-cryptography] -- nosemgrep: go.lang.security.audit.crypto.md5.use-of-insecure-md5-hash
-	"crypto/sha1" // #nosec G505 -- nolint:gosec -- lgtm[go/weak-cryptography] -- nosemgrep: go.lang.security.audit.crypto.sha1.use-of-insecure-sha1
+	"crypto/md5"
+	"crypto/sha1"
 	"crypto/sha256"
 	"crypto/sha512"
 	"encoding/hex"
@@ -153,11 +149,9 @@ func newChecksumFromType(checksumType, checksumValue, filename string) (*FileChe
 	c.Type = strings.ToLower(checksumType)
 	switch c.Type {
 	case "md5":
-		// nolint:gosec -- lgtm[go/weak-cryptography]
-		c.Hash = md5.New() // #nosec G401 -- nosemgrep: go.lang.security.audit.crypto.md5.use-of-insecure-md5-hash
+		c.Hash = md5.New()
 	case "sha1":
-		// nolint:gosec -- lgtm[go/weak-cryptography]
-		c.Hash = sha1.New() // #nosec G505 -- nosemgrep: go.lang.security.audit.crypto.sha1.use-of-insecure-sha1
+		c.Hash = sha1.New()
 	case "sha256":
 		c.Hash = sha256.New()
 	case "sha512":
@@ -178,12 +172,10 @@ func newChecksumFromValue(checksumValue, filename string) (*FileChecksum, error)
 
 	switch len(c.Value) {
 	case md5.Size:
-		// nolint:gosec -- lgtm[go/weak-cryptography]
-		c.Hash = md5.New() // #nosec G401 -- nosemgrep: go.lang.security.audit.crypto.md5.use-of-insecure-md5-hash
+		c.Hash = md5.New()
 		c.Type = "md5"
 	case sha1.Size:
-		// nolint:gosec -- lgtm[go/weak-cryptography]
-		c.Hash = sha1.New() // #nosec G505 -- nosemgrep: go.lang.security.audit.crypto.sha1.use-of-insecure-sha1
+		c.Hash = sha1.New()
 		c.Type = "sha1"
 	case sha256.Size:
 		c.Hash = sha256.New()

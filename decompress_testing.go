@@ -4,9 +4,7 @@
 package getter
 
 import (
-	// MD5 is used for test verification only, not for cryptographic security
-	// secsync:ignore CWE-327
-	"crypto/md5" // #nosec G501 -- nolint:gosec -- lgtm[go/weak-cryptography] -- nosemgrep: go.lang.security.audit.crypto.md5.use-of-insecure-md5-hash
+	"crypto/md5"
 	"encoding/hex"
 	"io"
 	"os"
@@ -163,8 +161,7 @@ func testMD5(t testing.TB, path string) string {
 	}
 	defer func() { _ = f.Close() }()
 
-	// nolint:gosec -- lgtm[go/weak-cryptography]
-	h := md5.New() // #nosec G401 -- nosemgrep: go.lang.security.audit.crypto.md5.use-of-insecure-md5-hash
+	h := md5.New()
 	_, err = io.Copy(h, f)
 	if err != nil {
 		t.Fatalf("err: %s", err)

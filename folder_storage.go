@@ -4,9 +4,7 @@
 package getter
 
 import (
-	// MD5 is used for directory naming/mapping only, not for cryptographic security
-	// secsync:ignore CWE-327
-	"crypto/md5" // #nosec G501 -- nolint:gosec -- lgtm[go/weak-cryptography] -- nosemgrep: go.lang.security.audit.crypto.md5.use-of-insecure-md5-hash
+	"crypto/md5"
 	"encoding/hex"
 	"fmt"
 	"os"
@@ -65,7 +63,6 @@ func (s *FolderStorage) Get(key string, source string, update bool) error {
 // dir returns the directory name internally that we'll use to map to
 // internally.
 func (s *FolderStorage) dir(key string) string {
-	// nolint:gosec -- lgtm[go/weak-cryptography]
-	sum := md5.Sum([]byte(key)) // #nosec G401 -- nosemgrep: go.lang.security.audit.crypto.md5.use-of-insecure-md5-hash
+	sum := md5.Sum([]byte(key))
 	return filepath.Join(s.StorageDir, hex.EncodeToString(sum[:]))
 }
