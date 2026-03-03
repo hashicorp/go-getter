@@ -4,7 +4,7 @@
 package getter
 
 import (
-	"crypto/md5"
+	"crypto/md5" // #nosec G501 - MD5 used for directory naming, not cryptographic security
 	"encoding/hex"
 	"fmt"
 	"os"
@@ -63,6 +63,6 @@ func (s *FolderStorage) Get(key string, source string, update bool) error {
 // dir returns the directory name internally that we'll use to map to
 // internally.
 func (s *FolderStorage) dir(key string) string {
-	sum := md5.Sum([]byte(key))
+	sum := md5.Sum([]byte(key)) // #nosec G401 - MD5 used for directory naming, not cryptographic security
 	return filepath.Join(s.StorageDir, hex.EncodeToString(sum[:]))
 }

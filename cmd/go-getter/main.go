@@ -56,14 +56,22 @@ func main() {
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
-	// Build the client
+	// Build the client with explicitly configured getters for security
 	client := &getter.Client{
-		Ctx:     ctx,
-		Src:     args[0],
-		Dst:     args[1],
-		Pwd:     pwd,
-		Mode:    mode,
-		Options: opts,
+		Ctx:             ctx,
+		Src:             args[0],
+		Dst:             args[1],
+		Pwd:             pwd,
+		Mode:            mode,
+		Options:         opts,
+		DisableSymlinks: true, // Prevent symlink traversal attacks
+		Getters: map[string]getter.Getter{
+			"file":  new(getter.FileGetter),
+			"git":   new(getter.GitGetter),
+			"http":  &getter.HttpGetter{Netrc: true},
+			"https": &getter.HttpGetter{Netrc: true},
+			"s3":    new(getter.S3Getter),
+		},
 	}
 
 	wg := sync.WaitGroup{}

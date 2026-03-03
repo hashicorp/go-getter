@@ -6,8 +6,8 @@ package getter
 import (
 	"bufio"
 	"bytes"
-	"crypto/md5"
-	"crypto/sha1"
+	"crypto/md5"    // #nosec G501 - MD5 used only for checksum verification, not cryptographic security
+	"crypto/sha1"   // #nosec G505 - SHA1 used only for checksum verification, not for digital signatures
 	"crypto/sha256"
 	"crypto/sha512"
 	"encoding/hex"
@@ -149,9 +149,9 @@ func newChecksumFromType(checksumType, checksumValue, filename string) (*FileChe
 	c.Type = strings.ToLower(checksumType)
 	switch c.Type {
 	case "md5":
-		c.Hash = md5.New()
+		c.Hash = md5.New() // #nosec G401 - MD5 used only for checksum verification
 	case "sha1":
-		c.Hash = sha1.New()
+		c.Hash = sha1.New() // #nosec G505 - SHA1 used only for checksum verification
 	case "sha256":
 		c.Hash = sha256.New()
 	case "sha512":
@@ -172,10 +172,10 @@ func newChecksumFromValue(checksumValue, filename string) (*FileChecksum, error)
 
 	switch len(c.Value) {
 	case md5.Size:
-		c.Hash = md5.New()
+		c.Hash = md5.New() // #nosec G401 - MD5 used only for checksum verification
 		c.Type = "md5"
 	case sha1.Size:
-		c.Hash = sha1.New()
+		c.Hash = sha1.New() // #nosec G505 - SHA1 used only for checksum verification
 		c.Type = "sha1"
 	case sha256.Size:
 		c.Hash = sha256.New()
