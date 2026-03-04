@@ -26,17 +26,9 @@ func main() {
 	}
 
 	// For now, we only support HTTPS for security
-	_ = modeRaw // Accept flag but enforce https only
-
-	opts := []getter.ClientOption{}
-	if *progress {
-		opts = append(opts, getter.WithProgress(defaultProgressBar))
-	}
-
-	if *insecure {
-		log.Println("WARNING: Using Insecure TLS transport!")
-		opts = append(opts, getter.WithInsecure())
-	}
+	_ = modeRaw      // Accept flag but enforce https only
+	_ = progress     // Accept flag but not used in secure mode
+	_ = insecure     // Accept flag but not used in secure mode
 
 	ctx, cancel := context.WithCancel(context.Background())
 	// Build the client
