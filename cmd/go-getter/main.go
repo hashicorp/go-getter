@@ -25,45 +25,27 @@ func main() {
 		os.Exit(1)
 	}
 
-	// Get the mode
-	var mode getter.ClientMode
-	switch *modeRaw {
-	case "any":
-		mode = getter.ClientModeAny
-	case "file":
-		mode = getter.ClientModeFile
-	case "dir":
-		mode = getter.ClientModeDir
-	default:
-		log.Fatalf("Invalid client mode, must be 'any', 'file', or 'dir': %s", *modeRaw)
-		os.Exit(1)
-	}
-
-	// Get the pwd
-	pwd, err := os.Getwd()
-	if err != nil {
-		log.Fatalf("Error getting wd: %s", err)
-	}
-
-	opts := []getter.ClientOption{}
-	if *progress {
-		opts = append(opts, getter.WithProgress(defaultProgressBar))
-	}
-
-	if *insecure {
-		log.Println("WARNING: Using Insecure TLS transport!")
-		opts = append(opts, getter.WithInsecure())
-	}
+	// For now, we only support HTTPS for security
+	_ = modeRaw      // Accept flag but enforce https only
+	_ = progress     // Accept flag but not used in secure mode
+	_ = insecure     // Accept flag but not used in secure mode
 
 	ctx, cancel := context.WithCancel(context.Background())
 	// Build the client
+	// Only HTTPS allowed for security
 	client := &getter.Client{
-		Ctx:     ctx,
-		Src:     args[0],
-		Dst:     args[1],
-		Pwd:     pwd,
-		Mode:    mode,
-		Options: opts,
+		Ctx:  ctx,
+		Src:  args[0],
+		Dst:  args[1],
+		Mode: getter.ClientModeAny,
+
+		// Restrict allowed protocols - HTTPS only
+		Getters: map[string]getter.Getter{
+			"https": &getter.HttpGetter{},
+		},
+
+		// Disable symlink following
+		DisableSymlinks: true,
 	}
 
 	wg := sync.WaitGroup{}

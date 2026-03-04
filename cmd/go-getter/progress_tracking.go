@@ -9,12 +9,12 @@ import (
 	"sync"
 
 	"github.com/cheggaaa/pb"
-	getter "github.com/hashicorp/go-getter"
 )
 
 // defaultProgressBar is the default instance of a cheggaaa
 // progress bar.
-var defaultProgressBar getter.ProgressTracker = &ProgressBar{}
+// Note: Not used in current secure HTTPS-only implementation
+// var defaultProgressBar ProgressTracker = &ProgressBar{}
 
 // ProgressBar wraps a github.com/cheggaaa/pb.Pool
 // in order to display download progress for one or multiple
