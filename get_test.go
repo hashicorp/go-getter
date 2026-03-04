@@ -253,7 +253,7 @@ func TestGetFile_archive(t *testing.T) {
 func TestGetFile_archiveChecksum(t *testing.T) {
 	dst := filepath.Join(t.TempDir(), "test-file")
 	u := testModule(
-		"basic-file-archive/archive.tar.gz?checksum=md5:fbd90037dacc4b1ab40811d610dde2f0")
+		"basic-file-archive/archive.tar.gz?checksum=sha256:00f9922e0129afd630870014701f6cc72d0b03ab6d120e827b77cc4e9e58785b")
 
 	if err := GetFile(dst, u); err != nil {
 		t.Fatalf("err: %s", err)
@@ -545,4 +545,3 @@ func TestGetFile_checksumSkip(t *testing.T) {
 		t.Fatalf("get should not have been called")
 	}
 }
-

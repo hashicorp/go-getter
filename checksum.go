@@ -6,8 +6,6 @@ package getter
 import (
 	"bufio"
 	"bytes"
-	"crypto/md5"
-	"crypto/sha1"
 	"crypto/sha256"
 	"crypto/sha512"
 	"encoding/hex"
@@ -91,8 +89,8 @@ func (c *FileChecksum) checksum(source string) error {
 //
 // BSD-style checksum:
 //
-//	MD5 (file1) = <checksum>
-//	MD5 (file2) = <checksum>
+//	SHA256 (file1) = <checksum>
+//	SHA256 (file2) = <checksum>
 //
 // GNU-style:
 //
@@ -149,9 +147,13 @@ func newChecksumFromType(checksumType, checksumValue, filename string) (*FileChe
 	c.Type = strings.ToLower(checksumType)
 	switch c.Type {
 	case "md5":
-		c.Hash = md5.New()
+		return nil, fmt.Errorf(
+			"MD5 checksums are no longer supported due to cryptographic weakness. " +
+				"Please use SHA256 instead. To compute: shasum -a 256 <file>")
 	case "sha1":
-		c.Hash = sha1.New()
+		return nil, fmt.Errorf(
+			"SHA1 checksums are no longer supported due to cryptographic weakness. " +
+				"Please use SHA256 instead. To compute: shasum -a 256 <file>")
 	case "sha256":
 		c.Hash = sha256.New()
 	case "sha512":
@@ -171,12 +173,6 @@ func newChecksumFromValue(checksumValue, filename string) (*FileChecksum, error)
 	}
 
 	switch len(c.Value) {
-	case md5.Size:
-		c.Hash = md5.New()
-		c.Type = "md5"
-	case sha1.Size:
-		c.Hash = sha1.New()
-		c.Type = "sha1"
 	case sha256.Size:
 		c.Hash = sha256.New()
 		c.Type = "sha256"
