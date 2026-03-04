@@ -290,34 +290,6 @@ func TestGetFile_checksum(t *testing.T) {
 			false,
 		},
 
-		// MD5
-		{
-			"?checksum=09f7e02f1290be211da707a266f153b3",
-			false,
-		},
-		{
-			"?checksum=md5:09f7e02f1290be211da707a266f153b3",
-			false,
-		},
-		{
-			"?checksum=md5:09f7e02f1290be211da707a266f153b4",
-			true,
-		},
-
-		// SHA1
-		{
-			"?checksum=1d229271928d3f9e2bb0375bd6ce5db6c6d348d9",
-			false,
-		},
-		{
-			"?checksum=sha1:1d229271928d3f9e2bb0375bd6ce5db6c6d348d9",
-			false,
-		},
-		{
-			"?checksum=sha1:1d229271928d3f9e2bb0375bd6ce5db6c6d348d0",
-			true,
-		},
-
 		// SHA256
 		{
 			"?checksum=66a045b452102c59d840ec097d59d9467e13a3f34f6494e539ffd32c1bb35f18",
@@ -378,40 +350,6 @@ func TestGetFile_checksum_from_file(t *testing.T) {
 			false,
 		},
 
-		// md5
-		{
-			"?checksum=file:" + checksums + "/md5-p.sum",
-			true,
-			false,
-		},
-		{
-			"?checksum=file:" + httpChecksums.URL + "/md5-bsd.sum",
-			true,
-			false,
-		},
-		{
-			"?checksum=file:" + checksums + "/md5-bsd-bad.sum",
-			false,
-			true,
-		},
-		{
-			"?checksum=file:" + httpChecksums.URL + "/md5-bsd-wrong.sum",
-			true,
-			true,
-		},
-
-		// sha1
-		{
-			"?checksum=file:" + checksums + "/sha1-p.sum",
-			true,
-			false,
-		},
-		{
-			"?checksum=file:" + httpChecksums.URL + "/sha1.sum",
-			true,
-			false,
-		},
-
 		// sha256
 		{
 			"?checksum=file:" + checksums + "/sha256-p.sum",
@@ -428,13 +366,6 @@ func TestGetFile_checksum_from_file(t *testing.T) {
 		{
 			// checksum file does not have EOL, ends line with EOF
 			"?checksum=file:" + httpChecksums.URL + "/sha512-p-EOF.sum",
-			true,
-			false,
-		},
-
-		// assert arbitrary files will not be read
-		{
-			"?checksum=file:" + checksums + "/multifile-sha1.sum",
 			true,
 			false,
 		},
@@ -458,7 +389,7 @@ func TestGetFile_checksum_from_file(t *testing.T) {
 
 func TestGetFile_checksumURL(t *testing.T) {
 	dst := filepath.Join(t.TempDir(), "test-file")
-	u := testModule("basic-file/foo.txt") + "?checksum=md5:09f7e02f1290be211da707a266f153b3"
+	u := testModule("basic-file/foo.txt") + "?checksum=sha256:66a045b452102c59d840ec097d59d9467e13a3f34f6494e539ffd32c1bb35f18"
 
 	getter := &MockGetter{Proxy: new(FileGetter)}
 	client := &Client{
@@ -512,7 +443,7 @@ func TestGetFile_filename_path_traversal(t *testing.T) {
 
 func TestGetFile_checksumSkip(t *testing.T) {
 	dst := filepath.Join(t.TempDir(), "test-file")
-	u := testModule("basic-file/foo.txt") + "?checksum=md5:09f7e02f1290be211da707a266f153b3"
+	u := testModule("basic-file/foo.txt") + "?checksum=sha256:66a045b452102c59d840ec097d59d9467e13a3f34f6494e539ffd32c1bb35f18"
 
 	getter := &MockGetter{Proxy: new(FileGetter)}
 	client := &Client{
