@@ -7,6 +7,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"net/url"
 	"os"
@@ -126,6 +127,16 @@ func (g *GitGetter) Get(ctx context.Context, dst string, u *url.URL) error {
 		err = g.clone(ctx, dst, sshKeyFile, u, ref, depth, subdir)
 	}
 	if err != nil {
+		// If git operations failed for a commit ID, try downloading via
+		// the hosting platform's HTTP archive endpoint. This handles
+		// orphaned commits that are unreachable via the git protocol.
+		if gitCommitIDRegex.MatchString(ref) {
+			if archiveErr := fetchArchive(ctx, dst, u, ref, subdir); archiveErr == nil {
+				return nil
+			} else {
+				return errors.Join(err, archiveErr)
+			}
+		}
 		return err
 	}
 
