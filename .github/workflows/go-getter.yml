@@ -17,8 +17,8 @@ jobs:
     strategy:
       matrix:
         go-version:
-          - "1.24"
           - "1.25"
+          - "1.26"
     steps:
       - name: Setup go
         uses: actions/setup-go@4b73464bb391d4059bd26b0524d20df3927bd417 # v6.3.0
@@ -62,8 +62,8 @@ jobs:
     strategy:
       matrix:
         go-version:
-          - "1.24"
           - "1.25"
+          - "1.26"
     steps:
       - name: Run git config # Windows-only
         run: git config --global core.autocrlf false
@@ -111,8 +111,8 @@ jobs:
     strategy:
       matrix:
         go-version:
-          - "1.24"
           - "1.25"
+          - "1.26"
         arch:
           - "386"      # 32-bit x86
           - "arm"      # 32-bit ARM
@@ -190,8 +190,8 @@ jobs:
     strategy:
       matrix:
         go-version:
-          - "1.24"
           - "1.25"
+          - "1.26"
     permissions:
       id-token: write
       contents: read
@@ -257,8 +257,8 @@ jobs:
     strategy:
       matrix:
         go-version:
-          - "1.24"
           - "1.25"
+          - "1.26"
     permissions:
       id-token: write
       contents: read
