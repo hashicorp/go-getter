@@ -129,6 +129,56 @@ func TestRedactURL(t *testing.T) {
 			},
 			want: "ssh://git@github.com/hashicorp/go-getter-test-private.git?sshkey=redacted&sshkey=redacted",
 		},
+		{
+			name: "S3 URL with aws_access_key_id",
+			url: &url.URL{
+				Scheme:   "s3",
+				Host:     "bucket.s3.amazonaws.com",
+				Path:     "/key",
+				RawQuery: "aws_access_key_id=AKIAIOSFODNN7EXAMPLE",
+			},
+			want: "s3://bucket.s3.amazonaws.com/key?aws_access_key_id=redacted",
+		},
+		{
+			name: "S3 URL with aws_access_key_secret",
+			url: &url.URL{
+				Scheme:   "s3",
+				Host:     "bucket.s3.amazonaws.com",
+				Path:     "/key",
+				RawQuery: "aws_access_key_secret=wJalrXUtnFEMI%2FK7MDENG%2FbPxRfiCYEXAMPLEKEY",
+			},
+			want: "s3://bucket.s3.amazonaws.com/key?aws_access_key_secret=redacted",
+		},
+		{
+			name: "S3 URL with aws_access_token",
+			url: &url.URL{
+				Scheme:   "s3",
+				Host:     "bucket.s3.amazonaws.com",
+				Path:     "/key",
+				RawQuery: "aws_access_token=AQoXnyc4lcK4w",
+			},
+			want: "s3://bucket.s3.amazonaws.com/key?aws_access_token=redacted",
+		},
+		{
+			name: "S3 URL with all three AWS credential params",
+			url: &url.URL{
+				Scheme:   "s3",
+				Host:     "bucket.s3.amazonaws.com",
+				Path:     "/key",
+				RawQuery: "aws_access_key_id=AKID&aws_access_key_secret=SECRET&aws_access_token=TOKEN",
+			},
+			want: "s3://bucket.s3.amazonaws.com/key?aws_access_key_id=redacted&aws_access_key_secret=redacted&aws_access_token=redacted",
+		},
+		{
+			name: "S3 URL with AWS credentials and non-sensitive params preserved",
+			url: &url.URL{
+				Scheme:   "s3",
+				Host:     "bucket.s3.amazonaws.com",
+				Path:     "/key",
+				RawQuery: "aws_access_key_id=AKID&aws_access_key_secret=SECRET&region=us-east-1",
+			},
+			want: "s3://bucket.s3.amazonaws.com/key?aws_access_key_id=redacted&aws_access_key_secret=redacted&region=us-east-1",
+		},
 	}
 
 	for _, tt := range cases {
