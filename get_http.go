@@ -296,6 +296,20 @@ func (g *HttpGetter) Get(dst string, u *url.URL) error {
 	// If there is a subdir component, then we download the root separately
 	// into a temporary directory, then copy over the proper subdir.
 	source, subDir := SourceDirSubdir(source)
+	if subDir != "" {
+		// Check if the subdirectory is attempting to traverse upwards, outside
+		// of the downloaded repository path.
+		subDir = filepath.Clean(subDir)
+		if containsDotDot(subDir) {
+			return fmt.Errorf("subdirectory component contain path traversal out of the repository")
+		}
+
+		// Prevent absolute paths, remove a leading path separator from the
+		// subdirectory.
+		if subDir[0] == os.PathSeparator {
+			subDir = subDir[1:]
+		}
+	}
 
 	var opts []ClientOption
 

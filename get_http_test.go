@@ -188,6 +188,28 @@ func TestHttpGetter_metaSubdirGlob(t *testing.T) {
 	}
 }
 
+func TestHttpGetter_headerSubdirPathTraversal(t *testing.T) {
+	ln := testHttpServer(t)
+	defer func() { _ = ln.Close() }()
+
+	g := new(HttpGetter)
+	dst := filepath.Join(t.TempDir(), "target")
+
+	var u url.URL
+	u.Scheme = "http"
+	u.Host = ln.Addr().String()
+	u.Path = "/header-subdir-traversal"
+
+	err := g.Get(dst, &u)
+	if err == nil {
+		t.Fatal("should error")
+	}
+
+	if !strings.Contains(err.Error(), "subdirectory component contain path traversal out of the repository") {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
 func TestHttpGetter_none(t *testing.T) {
 	ln := testHttpServer(t)
 	defer func() { _ = ln.Close() }()
@@ -915,6 +937,7 @@ func testHttpServer(t *testing.T) net.Listener {
 	mux.HandleFunc("/expect-header", testHttpHandlerExpectHeader)
 	mux.HandleFunc("/file", testHttpHandlerFile)
 	mux.HandleFunc("/header", testHttpHandlerHeader)
+	mux.HandleFunc("/header-subdir-traversal", testHttpHandlerHeaderSubdirPathTraversal)
 	mux.HandleFunc("/meta", testHttpHandlerMeta)
 	mux.HandleFunc("/meta-auth", testHttpHandlerMetaAuth)
 	mux.HandleFunc("/meta-subdir", testHttpHandlerMetaSubdir)
@@ -946,6 +969,11 @@ func testHttpHandlerFile(w http.ResponseWriter, r *http.Request) {
 
 func testHttpHandlerHeader(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add("X-Terraform-Get", testModuleURL("basic").String())
+	w.WriteHeader(200)
+}
+
+func testHttpHandlerHeaderSubdirPathTraversal(w http.ResponseWriter, r *http.Request) {
+	w.Header().Add("X-Terraform-Get", testModuleURL("basic//../../..").String())
 	w.WriteHeader(200)
 }
 
