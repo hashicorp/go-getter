@@ -4,7 +4,7 @@ project "go-getter" {
   team = "team-ip-compliance"
 
   slack {
-    notification_channel = "C09KTF77K6X" // ensure this is a PUBLIC slack channel. If it's private, the promotion workflows will fail.
+    notification_channel = "C09KU972BDH" // ensure this is a PUBLIC slack channel. If it's private, the promotion workflows will fail.
   }
 
   github {
