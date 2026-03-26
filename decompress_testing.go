@@ -4,7 +4,7 @@
 package getter
 
 import (
-	"crypto/md5"
+	"crypto/sha256"
 	"encoding/hex"
 	"io"
 	"os"
@@ -19,12 +19,12 @@ import (
 
 // TestDecompressCase is a single test case for testing decompressors
 type TestDecompressCase struct {
-	Input   string     // Input is the complete path to the input file
-	Dir     bool       // Dir is whether or not we're testing directory mode
-	Err     bool       // Err is whether we expect an error or not
-	DirList []string   // DirList is the list of files for Dir mode
-	FileMD5 string     // FileMD5 is the expected MD5 for a single file
-	Mtime   *time.Time // Mtime is the optionally expected mtime for a single file (or all files if in Dir mode)
+	Input    string     // Input is the complete path to the input file
+	Dir      bool       // Dir is whether or not we're testing directory mode
+	Err      bool       // Err is whether we expect an error or not
+	DirList  []string   // DirList is the list of files for Dir mode
+	FileHash string     // FileHash is the expected SHA256 hash for a single file
+	Mtime    *time.Time // Mtime is the optionally expected mtime for a single file (or all files if in Dir mode)
 }
 
 // TestDecompressor is a helper function for testing generic decompressors.
@@ -65,11 +65,11 @@ func TestDecompressor(t testing.TB, d Decompressor, cases []TestDecompressCase) 
 				if fi.IsDir() {
 					t.Fatalf("err %s: expected file, got directory", tc.Input)
 				}
-				if tc.FileMD5 != "" {
-					actual := testMD5(t, dst)
-					expected := tc.FileMD5
+				if tc.FileHash != "" {
+					actual := testSHA256(t, dst)
+					expected := tc.FileHash
 					if actual != expected {
-						t.Fatalf("err %s: expected MD5 %s, got %s", tc.Input, expected, actual)
+						t.Fatalf("err %s: expected hash %s, got %s", tc.Input, expected, actual)
 					}
 				}
 
@@ -154,14 +154,14 @@ func testListDir(t testing.TB, path string) []string {
 	return result
 }
 
-func testMD5(t testing.TB, path string) string {
+func testSHA256(t testing.TB, path string) string {
 	f, err := os.Open(path)
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
 	defer func() { _ = f.Close() }()
 
-	h := md5.New()
+	h := sha256.New()
 	_, err = io.Copy(h, f)
 	if err != nil {
 		t.Fatalf("err: %s", err)

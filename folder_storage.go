@@ -4,7 +4,7 @@
 package getter
 
 import (
-	"crypto/md5"
+	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
 	"os"
@@ -63,6 +63,6 @@ func (s *FolderStorage) Get(key string, source string, update bool) error {
 // dir returns the directory name internally that we'll use to map to
 // internally.
 func (s *FolderStorage) dir(key string) string {
-	sum := md5.Sum([]byte(key))
+	sum := sha256.Sum256([]byte(key))
 	return filepath.Join(s.StorageDir, hex.EncodeToString(sum[:]))
 }
