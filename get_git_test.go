@@ -1164,6 +1164,33 @@ func TestGitGetter_BadRef(t *testing.T) {
 	}
 }
 
+// Test checkout ref option injection to verify that if a user tries to inject a git option
+func TestGitGetter_checkoutRefOptionInjectionDoesNotLeakFileContents(t *testing.T) {
+	if !testHasGit {
+		t.Skip("git not found, skipping")
+	}
+
+	g := new(GitGetter)
+	repo := testGitRepo(t, "empty-repo")
+	repo.git("config", "commit.gpgsign", "false")
+	repo.commitFile("safe.txt", "safe")
+
+	secretPath := filepath.Join(t.TempDir(), "secret.txt")
+	secretLine := "THIS_IS_A_SECRET"
+	if err := os.WriteFile(secretPath, []byte(secretLine+"\n"), 0600); err != nil {
+		t.Fatal(err)
+	}
+
+	err := g.checkout(context.Background(), repo.dir, "--pathspec-from-file="+secretPath)
+	if err == nil {
+		t.Fatal("checkout succeeded; want error")
+	}
+
+	if strings.Contains(err.Error(), secretLine) {
+		t.Fatalf("secret leaked in error message:\n%s", err.Error())
+	}
+}
+
 // gitRepo is a helper struct which controls a single temp git repo.
 type gitRepo struct {
 	t   *testing.T
