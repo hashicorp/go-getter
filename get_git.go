@@ -174,6 +174,12 @@ func (g *GitGetter) GetFile(dst string, u *url.URL) error {
 }
 
 func (g *GitGetter) checkout(ctx context.Context, dst string, ref string) error {
+	fetchCmd := exec.CommandContext(ctx, "git", "fetch", "--all", "--tags")
+	fetchCmd.Dir = dst
+	if err := getRunCommand(fetchCmd); err != nil {
+		return err
+	}
+
 	cmd := exec.CommandContext(ctx, "git", "checkout", "--", ref)
 	cmd.Dir = dst
 	return getRunCommand(cmd)
