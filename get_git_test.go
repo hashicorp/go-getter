@@ -460,6 +460,39 @@ func TestGitGetter_checkoutRefOptionInjectionRejected(t *testing.T) {
 	}
 }
 
+func TestGitGetter_checkoutRefShellMetacharactersRejected(t *testing.T) {
+	if !testHasGit {
+		t.Skip("git not found, skipping")
+	}
+
+	g := new(GitGetter)
+	repo := testGitRepo(t, "shell-meta-repo")
+	repo.git("config", "commit.gpgsign", "false")
+	repo.commitFile("safe.txt", "safe")
+
+	tmpDir := t.TempDir()
+	markerPath := filepath.Join(tmpDir, "created-by-shell")
+	secretPath := filepath.Join(tmpDir, "secret.txt")
+	secretLine := "THIS_IS_A_SECRET"
+	if err := os.WriteFile(secretPath, []byte(secretLine+"\n"), 0600); err != nil {
+		t.Fatal(err)
+	}
+
+	err := g.checkout(context.Background(), repo.dir, "main | touch "+markerPath)
+	if err == nil {
+		t.Fatal("checkout succeeded; want error")
+	}
+	if !strings.Contains(err.Error(), "invalid ref") {
+		t.Fatalf("expected invalid ref error, got: %s", err)
+	}
+	if strings.Contains(err.Error(), secretLine) {
+		t.Fatalf("secret leaked in error message:\n%s", err.Error())
+	}
+	if _, err := os.Stat(markerPath); !os.IsNotExist(err) {
+		t.Fatalf("shell metacharacters created a file unexpectedly: %v", err)
+	}
+}
+
 func TestGitGetter_GetFile(t *testing.T) {
 	if !testHasGit {
 		t.Skip("git not found, skipping")
