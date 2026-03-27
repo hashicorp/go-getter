@@ -174,10 +174,6 @@ func (g *GitGetter) GetFile(dst string, u *url.URL) error {
 }
 
 func (g *GitGetter) checkout(ctx context.Context, dst string, ref string) error {
-	if strings.HasPrefix(ref, "-") {
-		return fmt.Errorf("invalid ref: %q", ref)
-	}
-
 	cmd := exec.CommandContext(ctx, "git", "checkout", ref, "--")
 	cmd.Dir = dst
 	return getRunCommand(cmd)

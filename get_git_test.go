@@ -1248,45 +1248,6 @@ func (r *gitRepo) latestCommit() (string, error) {
 	return string(rawOut), nil
 }
 
-// Test checkout ref option injection to verify that if a user tries to inject a git option
-func TestGitGetter_checkoutRefOptionInjectionRejected(t *testing.T) {
-	if !testHasGit {
-		t.Skip("git not found, skipping")
-	}
-
-	g := new(GitGetter)
-	repo := testGitRepo(t, "empty-repo")
-	repo.git("config", "commit.gpgsign", "false")
-	repo.commitFile("safe.txt", "safe")
-
-	// Create a fake "secret" file to simulate sensitive data
-	secretPath := filepath.Join(t.TempDir(), "secret.txt")
-	secretLine := "THIS_IS_A_SECRET"
-	if err := os.WriteFile(secretPath, []byte(secretLine+"\n"), 0600); err != nil {
-		t.Fatal(err)
-	}
-
-	// Attempt to inject a git option
-	ref := "--pathspec-from-file=" + secretPath
-
-	err := g.checkout(context.Background(), repo.dir, ref)
-
-	// Expect error due to validation (not git execution)
-	if err == nil {
-		t.Fatal("expected error for invalid ref, got nil")
-	}
-
-	// Ensure it's our validation error, not git output
-	if !strings.Contains(err.Error(), "invalid ref") {
-		t.Fatalf("expected validation error, got: %v", err)
-	}
-
-	// Ensure secret is NOT leaked
-	if strings.Contains(err.Error(), secretLine) {
-		t.Fatalf("secret leaked in error message:\n%s", err.Error())
-	}
-}
-
 // This is a read-only deploy key for an empty test repository.
 // Note: This is split over multiple lines to avoid being disabled by key
 // scanners automatically.
