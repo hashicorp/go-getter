@@ -460,6 +460,65 @@ func TestGitGetter_checkoutRefOptionInjectionRejected(t *testing.T) {
 	}
 }
 
+func TestGitGetter_checkoutRefLocalBranchResolved(t *testing.T) {
+	if !testHasGit {
+		t.Skip("git not found, skipping")
+	}
+
+	g := new(GitGetter)
+	repo := testGitRepo(t, "local-branch-repo")
+	repo.git("config", "commit.gpgsign", "false")
+	repo.commitFile("base.txt", "base")
+	repo.git("checkout", "-b", "test-branch")
+	repo.commitFile("branch.txt", "branch")
+	wantCommit, err := repo.latestCommit()
+	if err != nil {
+		t.Fatal(err)
+	}
+	repo.git("checkout", "HEAD~1")
+
+	err = g.checkout(context.Background(), repo.dir, "test-branch")
+	if err != nil {
+		t.Fatalf("checkout failed: %s", err)
+	}
+
+	gotCommit, err := repo.latestCommit()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if gotCommit != wantCommit {
+		t.Fatalf("wrong commit checked out: got %s want %s", gotCommit, wantCommit)
+	}
+}
+
+func TestGitGetter_checkoutRefHEADResolved(t *testing.T) {
+	if !testHasGit {
+		t.Skip("git not found, skipping")
+	}
+
+	g := new(GitGetter)
+	repo := testGitRepo(t, "head-repo")
+	repo.git("config", "commit.gpgsign", "false")
+	repo.commitFile("head.txt", "head")
+	wantCommit, err := repo.latestCommit()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = g.checkout(context.Background(), repo.dir, "HEAD")
+	if err != nil {
+		t.Fatalf("checkout failed: %s", err)
+	}
+
+	gotCommit, err := repo.latestCommit()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if gotCommit != wantCommit {
+		t.Fatalf("wrong commit checked out: got %s want %s", gotCommit, wantCommit)
+	}
+}
+
 func TestGitGetter_checkoutRefShellMetacharactersRejected(t *testing.T) {
 	if !testHasGit {
 		t.Skip("git not found, skipping")
