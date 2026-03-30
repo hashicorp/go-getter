@@ -174,9 +174,34 @@ func (g *GitGetter) GetFile(dst string, u *url.URL) error {
 }
 
 func (g *GitGetter) checkout(ctx context.Context, dst string, ref string) error {
-	cmd := exec.CommandContext(ctx, "git", "checkout", ref, "--")
+	resolvedRef, err := resolveCheckoutRef(ctx, dst, ref)
+	if err != nil {
+		return err
+	}
+
+	cmd := exec.CommandContext(ctx, "git", "checkout", resolvedRef)
 	cmd.Dir = dst
 	return getRunCommand(cmd)
+}
+
+func resolveCheckoutRef(ctx context.Context, dst, ref string) (string, error) {
+	candidates := []string{
+		ref,
+		"refs/remotes/origin/" + ref,
+		"refs/tags/" + ref,
+	}
+
+	for _, candidate := range candidates {
+		cmd := exec.CommandContext(ctx, "git", "rev-parse", "--verify", "--quiet", "--end-of-options", candidate+"^{commit}")
+		cmd.Dir = dst
+
+		resolvedRef, err := cmd.Output()
+		if err == nil {
+			return strings.TrimSpace(string(resolvedRef)), nil
+		}
+	}
+
+	return "", fmt.Errorf("invalid ref: %q", ref)
 }
 
 // gitCommitIDRegex is a pattern intended to match strings that seem
