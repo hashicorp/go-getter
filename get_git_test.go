@@ -432,6 +432,126 @@ func TestGitGetter_tag(t *testing.T) {
 	}
 }
 
+func TestGitGetter_checkoutRefOptionInjectionRejected(t *testing.T) {
+	if !testHasGit {
+		t.Skip("git not found, skipping")
+	}
+
+	g := new(GitGetter)
+	repo := testGitRepo(t, "empty-repo")
+	repo.git("config", "commit.gpgsign", "false")
+	repo.commitFile("safe.txt", "safe")
+
+	secretPath := filepath.Join(t.TempDir(), "secret.txt")
+	secretLine := "THIS_IS_A_SECRET"
+	if err := os.WriteFile(secretPath, []byte(secretLine+"\n"), 0600); err != nil {
+		t.Fatal(err)
+	}
+
+	err := g.checkout(context.Background(), repo.dir, "--pathspec-from-file="+secretPath)
+	if err == nil {
+		t.Fatal("checkout succeeded; want error")
+	}
+	if !strings.Contains(err.Error(), "invalid ref") {
+		t.Fatalf("expected invalid ref error, got: %s", err)
+	}
+	if strings.Contains(err.Error(), secretLine) {
+		t.Fatalf("secret leaked in error message:\n%s", err.Error())
+	}
+}
+
+func TestGitGetter_checkoutRefLocalBranchResolved(t *testing.T) {
+	if !testHasGit {
+		t.Skip("git not found, skipping")
+	}
+
+	g := new(GitGetter)
+	repo := testGitRepo(t, "local-branch-repo")
+	repo.git("config", "commit.gpgsign", "false")
+	repo.commitFile("base.txt", "base")
+	repo.git("checkout", "-b", "test-branch")
+	repo.commitFile("branch.txt", "branch")
+	wantCommit, err := repo.latestCommit()
+	if err != nil {
+		t.Fatal(err)
+	}
+	repo.git("checkout", "HEAD~1")
+
+	err = g.checkout(context.Background(), repo.dir, "test-branch")
+	if err != nil {
+		t.Fatalf("checkout failed: %s", err)
+	}
+
+	gotCommit, err := repo.latestCommit()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if gotCommit != wantCommit {
+		t.Fatalf("wrong commit checked out: got %s want %s", gotCommit, wantCommit)
+	}
+}
+
+func TestGitGetter_checkoutRefHEADResolved(t *testing.T) {
+	if !testHasGit {
+		t.Skip("git not found, skipping")
+	}
+
+	g := new(GitGetter)
+	repo := testGitRepo(t, "head-repo")
+	repo.git("config", "commit.gpgsign", "false")
+	repo.commitFile("head.txt", "head")
+	wantCommit, err := repo.latestCommit()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = g.checkout(context.Background(), repo.dir, "HEAD")
+	if err != nil {
+		t.Fatalf("checkout failed: %s", err)
+	}
+
+	gotCommit, err := repo.latestCommit()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if gotCommit != wantCommit {
+		t.Fatalf("wrong commit checked out: got %s want %s", gotCommit, wantCommit)
+	}
+}
+
+func TestGitGetter_checkoutRefShellMetacharactersRejected(t *testing.T) {
+	if !testHasGit {
+		t.Skip("git not found, skipping")
+	}
+
+	g := new(GitGetter)
+	repo := testGitRepo(t, "shell-meta-repo")
+	repo.git("config", "commit.gpgsign", "false")
+	repo.commitFile("safe.txt", "safe")
+
+	tmpDir := t.TempDir()
+	markerPath := filepath.Join(tmpDir, "created-by-shell")
+	secretPath := filepath.Join(tmpDir, "secret.txt")
+	secretLine := "THIS_IS_A_SECRET"
+	if err := os.WriteFile(secretPath, []byte(secretLine+"\n"), 0600); err != nil {
+		t.Fatal(err)
+	}
+
+	err := g.checkout(context.Background(), repo.dir, "main | touch "+markerPath)
+	if err == nil {
+		t.Fatal("checkout succeeded; want error")
+	}
+	if !strings.Contains(err.Error(), "invalid ref") {
+		t.Fatalf("expected invalid ref error, got: %s", err)
+	}
+	if strings.Contains(err.Error(), secretLine) {
+		t.Fatalf("secret leaked in error message:\n%s", err.Error())
+	}
+	if _, err := os.Stat(markerPath); !os.IsNotExist(err) {
+		t.Fatalf("shell metacharacters created a file unexpectedly: %v", err)
+	}
+}
+
 func TestGitGetter_GetFile(t *testing.T) {
 	if !testHasGit {
 		t.Skip("git not found, skipping")
