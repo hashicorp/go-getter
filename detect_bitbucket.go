@@ -43,6 +43,7 @@ func (d *BitBucketDetector) detectHTTP(src string) (string, bool, error) {
 	if err != nil {
 		return "", true, fmt.Errorf("error looking up BitBucket URL: %w", err)
 	}
+	defer resp.Body.Close()
 	if resp.StatusCode == 403 {
 		// A private repo
 		return "", true, fmt.Errorf(
