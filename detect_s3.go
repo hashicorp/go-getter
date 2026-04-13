@@ -66,7 +66,7 @@ func (d *S3Detector) detectVhostStyle(region, bucket string, parts []string) (st
 }
 
 func (d *S3Detector) detectNewVhostStyle(region, bucket string, parts []string) (string, bool, error) {
-	urlStr := fmt.Sprintf("https://s3.%s.amazonaws.com/%s/%s", region, bucket, strings.Join(parts, "/"))
+	urlStr := fmt.Sprintf("https://%s.s3.%s.amazonaws.com/%s", bucket, region, strings.Join(parts, "/"))
 	url, err := url.Parse(urlStr)
 	if err != nil {
 		return "", false, fmt.Errorf("error parsing S3 URL: %w", err)
