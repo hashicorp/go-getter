@@ -1,3 +1,5 @@
+# Copyright IBM Corp. 2015, 2026
+
 binary {
 	secrets      = true
 	go_modules   = true
