@@ -1,3 +1,5 @@
+# Copyright IBM Corp. 2015, 2026
+
 schema = "2"
 
 project "go-getter" {
