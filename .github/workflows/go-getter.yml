@@ -17,8 +17,8 @@ jobs:
     strategy:
       matrix:
         go-version:
-          - "1.25.8"
-          - "1.26.1"
+          - oldstable
+          - stable
     steps:
       - name: Setup go
         uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6.4.0
@@ -62,8 +62,8 @@ jobs:
     strategy:
       matrix:
         go-version:
-          - "1.25.8"
-          - "1.26.1"
+          - oldstable
+          - stable
     steps:
       - name: Run git config # Windows-only
         run: git config --global core.autocrlf false
@@ -111,8 +111,8 @@ jobs:
     strategy:
       matrix:
         go-version:
-          - "1.25.8"
-          - "1.26.1"
+          - oldstable
+          - stable
         arch:
           - "386"      # 32-bit x86
           - "arm"      # 32-bit ARM
@@ -164,7 +164,7 @@ jobs:
       - name: Setup go
         uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6.4.0
         with:
-          go-version: "1.25.8" # Use latest for linting
+          go-version: oldstable
       
       - name: Setup cache for go modules
         uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
@@ -189,8 +189,8 @@ jobs:
     strategy:
       matrix:
         go-version:
-          - "1.25.8"
-          - "1.26.1"
+          - oldstable
+          - stable
     permissions:
       id-token: write
       contents: read
@@ -256,8 +256,8 @@ jobs:
     strategy:
       matrix:
         go-version:
-          - "1.25.8"
-          - "1.26.1"
+          - oldstable
+          - stable
     permissions:
       id-token: write
       contents: read
