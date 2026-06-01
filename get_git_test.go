@@ -1252,6 +1252,89 @@ func TestGitGetter_BadGitDirName(t *testing.T) {
 	}
 }
 
+func TestRemoveCaseInsensitiveGitDirectory(t *testing.T) {
+	cases := []struct {
+		name  string
+		entry string
+		setup func(t *testing.T, path string)
+	}{
+		{
+			name:  "lowercase git directory",
+			entry: ".git",
+			setup: func(t *testing.T, path string) {
+				if err := os.Mkdir(path, 0755); err != nil {
+					t.Fatal(err)
+				}
+			},
+		},
+		{
+			name:  "uppercase git directory",
+			entry: ".GIT",
+			setup: func(t *testing.T, path string) {
+				if err := os.Mkdir(path, 0755); err != nil {
+					t.Fatal(err)
+				}
+			},
+		},
+		{
+			name:  "git regular file",
+			entry: ".git",
+			setup: func(t *testing.T, path string) {
+				if err := os.WriteFile(path, []byte("gitdir: /tmp/elsewhere\n"), 0644); err != nil {
+					t.Fatal(err)
+				}
+			},
+		},
+		{
+			name:  "mixed case git regular file",
+			entry: ".Git",
+			setup: func(t *testing.T, path string) {
+				if err := os.WriteFile(path, []byte("gitdir: /tmp/elsewhere\n"), 0644); err != nil {
+					t.Fatal(err)
+				}
+			},
+		},
+		{
+			name:  "git symlink",
+			entry: ".git",
+			setup: func(t *testing.T, path string) {
+				if runtime.GOOS == "windows" {
+					t.Skip("skipping symlink test on windows")
+				}
+				if err := os.Symlink(t.TempDir(), path); err != nil {
+					t.Fatal(err)
+				}
+			},
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			dst := t.TempDir()
+			entryPath := filepath.Join(dst, tc.entry)
+			tc.setup(t, entryPath)
+
+			// A regular file that should be left untouched.
+			keep := filepath.Join(dst, "keep.txt")
+			if err := os.WriteFile(keep, []byte("keep me"), 0644); err != nil {
+				t.Fatal(err)
+			}
+
+			if err := removeCaseInsensitiveGitDirectory(dst); err != nil {
+				t.Fatalf("removeCaseInsensitiveGitDirectory returned error: %s", err)
+			}
+
+			if _, err := os.Lstat(entryPath); !os.IsNotExist(err) {
+				t.Fatalf("%s entry still exists after removal", tc.entry)
+			}
+
+			if _, err := os.Stat(keep); err != nil {
+				t.Fatalf("unrelated file was removed: %s", err)
+			}
+		})
+	}
+}
+
 func TestGitGetter_BadRef(t *testing.T) {
 	if !testHasGit {
 		t.Log("git not found, skipping")
