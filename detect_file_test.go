@@ -5,6 +5,7 @@ package getter
 
 import (
 	"fmt"
+	"net/url"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -114,5 +115,38 @@ func TestFileDetector_noPwd(t *testing.T) {
 		if out != tc.out {
 			t.Fatalf("%d: bad: %#v", i, out)
 		}
+	}
+}
+
+func TestFileDetector_percentInPath(t *testing.T) {
+	// A literal '%' in a filesystem path (e.g. Jinja2/Copier template
+	// directories like "{% if foo %}bar") must not break detection: the
+	// resulting file:// URL has to parse and round-trip back to the
+	// original path instead of failing with "invalid URL escape".
+	// Regression test for #607.
+	if runtime.GOOS == "windows" {
+		t.Skip("test uses unix-style absolute paths")
+	}
+
+	f := new(FileDetector)
+	pwd := "/pwd"
+	in := "{% if foo %}bar{% endif %}"
+
+	out, ok, err := f.Detect(in, pwd)
+	if err != nil {
+		t.Fatalf("Detect error: %s", err)
+	}
+	if !ok {
+		t.Fatal("Detect did not handle the path")
+	}
+
+	u, err := url.Parse(out)
+	if err != nil {
+		t.Fatalf("parsing detected URL %q failed: %s", out, err)
+	}
+
+	want := filepath.Join(pwd, in)
+	if u.Path != want {
+		t.Fatalf("round-tripped path = %q, want %q (detected url = %q)", u.Path, want, out)
 	}
 }

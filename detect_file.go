@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"strings"
 )
 
 // FileDetector implements Detector to detect file paths.
@@ -59,12 +60,40 @@ func fmtFileURL(path string) string {
 	if runtime.GOOS == "windows" {
 		// Make sure we're using "/" on Windows. URLs are "/"-based.
 		path = filepath.ToSlash(path)
-		return fmt.Sprintf("file://%s", path)
+		return fmt.Sprintf("file://%s", escapeBarePercent(path))
 	}
 
 	// Make sure that we don't start with "/" since we add that below.
 	if path[0] == '/' {
 		path = path[1:]
 	}
-	return fmt.Sprintf("file:///%s", path)
+	return fmt.Sprintf("file:///%s", escapeBarePercent(path))
+}
+
+// escapeBarePercent escapes any '%' in a filesystem path that is not already
+// the start of a valid percent-encoding (%XX). Such a '%' (e.g. in a path
+// like "{% if foo %}bar") is a literal filesystem character, but once the
+// path is embedded in a file:// URL it would be parsed as an invalid escape
+// and url.Parse would fail with "invalid URL escape". Escaping it to "%25"
+// lets the URL round-trip back to the original path. Valid existing escapes
+// and other URL metacharacters (such as a "?" query suffix that go-getter
+// supports) are left untouched.
+func escapeBarePercent(path string) string {
+	if !strings.Contains(path, "%") {
+		return path
+	}
+	var b strings.Builder
+	b.Grow(len(path))
+	for i := 0; i < len(path); i++ {
+		if path[i] == '%' && !(i+2 < len(path) && isHex(path[i+1]) && isHex(path[i+2])) {
+			b.WriteString("%25")
+			continue
+		}
+		b.WriteByte(path[i])
+	}
+	return b.String()
+}
+
+func isHex(c byte) bool {
+	return ('0' <= c && c <= '9') || ('a' <= c && c <= 'f') || ('A' <= c && c <= 'F')
 }
