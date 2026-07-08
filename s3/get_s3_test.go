@@ -2,13 +2,14 @@ package s3
 
 import (
 	"context"
+	"errors"
 	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 
-	"github.com/aws/aws-sdk-go/aws/awserr"
+	awshttp "github.com/aws/aws-sdk-go-v2/aws/transport/http"
 	"github.com/hashicorp/go-getter/v2"
 
 	testing_helper "github.com/hashicorp/go-getter/v2/helper/testing"
@@ -130,8 +131,9 @@ func TestGetter_GetFile_badParams(t *testing.T) {
 		t.Fatalf("expected error, got none")
 	}
 
-	if reqerr, ok := err.(awserr.RequestFailure); !ok || reqerr.StatusCode() != 403 {
-		t.Fatalf("expected InvalidAccessKeyId error, %v", err)
+	var respErr *awshttp.ResponseError
+	if errors.As(err, &respErr) && respErr.HTTPStatusCode() != 403 {
+		t.Fatalf("expected 403 error, got %v", err)
 	}
 }
 
