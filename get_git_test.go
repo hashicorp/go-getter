@@ -432,6 +432,54 @@ func TestGitGetter_tag(t *testing.T) {
 	}
 }
 
+// TestGitGetter_updateRemovesDeletedFiles is a regression test: when an already
+// populated destination is updated to a ref in which a file has been deleted,
+// that file must not linger in the working tree. update() reinitializes the
+// repo (removing .git) and resets to the fetched ref, which leaves files that
+// were deleted in the new ref behind as untracked unless they are cleaned.
+func TestGitGetter_updateRemovesDeletedFiles(t *testing.T) {
+	if !testHasGit {
+		t.Skip("git not found, skipping")
+	}
+
+	g := new(GitGetter)
+	dst := filepath.Join(t.TempDir(), "target")
+
+	repo := testGitRepo(t, "update-removes-deleted")
+	repo.commitFile("stays.txt", "stays")
+	repo.commitFile("goes.txt", "goes")
+	repo.git("tag", "v1")
+
+	// v2 deletes goes.txt.
+	repo.git("rm", "goes.txt")
+	repo.git("commit", "-m", "remove goes.txt")
+	repo.git("tag", "v2")
+
+	get := func(ref string) {
+		q := repo.url.Query()
+		q.Set("ref", ref)
+		repo.url.RawQuery = q.Encode()
+		if err := g.Get(dst, repo.url); err != nil {
+			t.Fatalf("get ref %s: %s", ref, err)
+		}
+	}
+
+	// First fetch v1: both files present.
+	get("v1")
+	if _, err := os.Stat(filepath.Join(dst, "goes.txt")); err != nil {
+		t.Fatalf("goes.txt should exist after fetching v1: %s", err)
+	}
+
+	// Update the same destination to v2: goes.txt must be gone.
+	get("v2")
+	if _, err := os.Stat(filepath.Join(dst, "stays.txt")); err != nil {
+		t.Fatalf("stays.txt should still exist after update to v2: %s", err)
+	}
+	if _, err := os.Stat(filepath.Join(dst, "goes.txt")); !os.IsNotExist(err) {
+		t.Fatalf("goes.txt was deleted in v2 but still present after update (err=%v)", err)
+	}
+}
+
 func TestGitGetter_checkoutRefOptionInjectionRejected(t *testing.T) {
 	if !testHasGit {
 		t.Skip("git not found, skipping")
