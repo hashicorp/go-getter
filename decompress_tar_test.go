@@ -126,6 +126,18 @@ func TestTarLimits(t *testing.T) {
 			t.Fatalf("unexpected error: %q", err.Error())
 		}
 	})
+
+	t.Run("files limit exact", func(t *testing.T) {
+		d := new(TarDecompressor)
+
+		d.FilesLimit = len(files)
+
+		dst := filepath.Join(td, "subdir", "files-limit-exact-result")
+
+		if err := d.Decompress(dst, tarFilePath, true, 0022); err != nil {
+			t.Fatalf("an archive with exactly FilesLimit files should decompress, got: %q", err.Error())
+		}
+	})
 }
 
 // testDecompressPermissions decompresses a directory and checks the permissions of the expanded files
