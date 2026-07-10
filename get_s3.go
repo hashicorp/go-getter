@@ -121,11 +121,10 @@ func (g *S3Getter) Get(ctx context.Context, dst string, u *url.URL) error {
 			}
 
 			// Get the object destination path
-			objDst, err := filepath.Rel(path, objPath)
+			objDst, err := objectDestination(dst, path, objPath)
 			if err != nil {
 				return err
 			}
-			objDst = filepath.Join(dst, objDst)
 
 			if err := g.getObject(ctx, client, objDst, bucket, objPath, ""); err != nil {
 				return err

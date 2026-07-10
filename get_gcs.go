@@ -110,11 +110,10 @@ func (g *GCSGetter) Get(ctx context.Context, dst string, u *url.URL) error {
 
 		if !strings.HasSuffix(obj.Name, "/") {
 			// Get the object destination path
-			objDst, err := filepath.Rel(object, obj.Name)
+			objDst, err := objectDestination(dst, object, obj.Name)
 			if err != nil {
 				return err
 			}
-			objDst = filepath.Join(dst, objDst)
 			// Download the matching object.
 			err = g.getObject(ctx, client, objDst, bucket, obj.Name, "")
 			if err != nil {
