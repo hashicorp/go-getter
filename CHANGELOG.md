@@ -1,5 +1,10 @@
 ## UNRELEASED
 
+IMPROVEMENTS:
+
+* http: Return a typed `*HTTPStatusError` for non-2xx response codes [[GH-660](https://github.com/hashicorp/go-getter/pull/660)]
+
+
 ## 1.8.10 (October 6, 2026)
 
 BUG FIXES:
