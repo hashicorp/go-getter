@@ -305,6 +305,14 @@ func (g *GitGetter) update(ctx context.Context, dst, sshKeyFile string, u *url.U
 		return err
 	}
 
+	// Clean
+	cmd = exec.CommandContext(ctx, "git", "clean", "-ffdx")
+	cmd.Dir = dst
+	err = getRunCommand(cmd)
+	if err != nil {
+		return err
+	}
+
 	// Checkout ref branch
 	err = g.checkout(ctx, dst, ref)
 	if err != nil {
