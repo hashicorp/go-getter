@@ -191,17 +191,46 @@ func resolveCheckoutRef(ctx context.Context, dst, ref string) (string, error) {
 		"refs/tags/" + ref,
 	}
 
+	var gitErrs []string
 	for _, candidate := range candidates {
 		cmd := exec.CommandContext(ctx, "git", "rev-parse", "--verify", "--quiet", "--end-of-options", candidate+"^{commit}")
 		cmd.Dir = dst
+
+		// Capture stderr so callers see the real git failure (for example
+		// dubious ownership) instead of only a generic invalid-ref message.
+		var stderr bytes.Buffer
+		cmd.Stderr = &stderr
 
 		resolvedRef, err := cmd.Output()
 		if err == nil {
 			return strings.TrimSpace(string(resolvedRef)), nil
 		}
+
+		msg := strings.TrimSpace(stderr.String())
+		if msg == "" {
+			msg = err.Error()
+		}
+		if msg != "" {
+			gitErrs = append(gitErrs, msg)
+		}
 	}
 
-	return "", fmt.Errorf("invalid ref: %q", ref)
+	if len(gitErrs) == 0 {
+		return "", fmt.Errorf("invalid ref: %q", ref)
+	}
+
+	// Deduplicate identical messages across candidates.
+	seen := make(map[string]struct{}, len(gitErrs))
+	uniq := make([]string, 0, len(gitErrs))
+	for _, msg := range gitErrs {
+		if _, ok := seen[msg]; ok {
+			continue
+		}
+		seen[msg] = struct{}{}
+		uniq = append(uniq, msg)
+	}
+
+	return "", fmt.Errorf("invalid ref: %q: %s", ref, strings.Join(uniq, "; "))
 }
 
 // gitCommitIDRegex is a pattern intended to match strings that seem

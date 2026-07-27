@@ -552,6 +552,28 @@ func TestGitGetter_checkoutRefShellMetacharactersRejected(t *testing.T) {
 	}
 }
 
+func TestGitGetter_resolveCheckoutRefIncludesGitError(t *testing.T) {
+	if !testHasGit {
+		t.Skip("git not found, skipping")
+	}
+
+	// A non-repository directory makes rev-parse fail with a real git stderr
+	// message that should be surfaced to the caller.
+	dir := t.TempDir()
+	_, err := resolveCheckoutRef(context.Background(), dir, "HEAD")
+	if err == nil {
+		t.Fatal("expected error")
+	}
+	errMsg := err.Error()
+	if !strings.Contains(errMsg, "invalid ref") {
+		t.Fatalf("expected invalid ref prefix, got: %s", errMsg)
+	}
+	lower := strings.ToLower(errMsg)
+	if !strings.Contains(lower, "not a git repository") && !strings.Contains(lower, "fatal:") {
+		t.Fatalf("expected underlying git error details, got: %s", errMsg)
+	}
+}
+
 func TestGitGetter_GetFile(t *testing.T) {
 	if !testHasGit {
 		t.Skip("git not found, skipping")
