@@ -31,6 +31,12 @@ jobs:
           - s3
           - gcs
           - .
+        exclude:
+          # s3 requires Go 1.21+ (aws-sdk-go-v2 / smithy-go dependency)
+          - go-version: "1.19"
+            directory: s3
+          - go-version: "1.20"
+            directory: s3
     permissions:
       id-token: write
       contents: read
@@ -90,6 +96,7 @@ jobs:
           audience: https://github.com/hashicorp
 
       - name: Run Go cmd
+        if: matrix.go-version == '1.21'
         run: |
             cd cmd/go-getter
             go run . go.mod tmpdir
@@ -122,6 +129,12 @@ jobs:
           - s3
           - gcs
           - .
+        exclude:
+          # s3 requires Go 1.21+ (aws-sdk-go-v2 / smithy-go dependency)
+          - go-version: "1.19"
+            directory: s3
+          - go-version: "1.20"
+            directory: s3
     permissions:
       id-token: write
       contents: read
@@ -169,6 +182,7 @@ jobs:
           audience: https://github.com/hashicorp
 
       - name: Run Go cmd
+        if: matrix.go-version == '1.21'
         run: |
             cd cmd/go-getter
             go run . go.mod tmpdir
