@@ -232,49 +232,29 @@ func (g *Getter) parseUrl(u *url.URL) (region, bucket, path, version string, cre
 	// any other S3 compliant service. S3 has a predictable
 	// url as others do not
 	if strings.Contains(u.Host, "amazonaws.com") {
-		// Expected host style: s3.amazonaws.com or s3-region.amazonaws.com or bucket.s3.region.amazonaws.com
-		// They can have different formats
+		// Expected host style: s3.amazonaws.com. They always have 3 parts,
+		// although the first may differ if we're accessing a specific region.
 		hostParts := strings.Split(u.Host, ".")
-		
-		// Handle different S3 URL formats
-		if len(hostParts) >= 3 {
-			// Check if it's bucket.s3.region.amazonaws.com (vhost-style)
-			if len(hostParts) == 4 && hostParts[1] == "s3" {
-				region = hostParts[2]
-				bucket = hostParts[0]
-				pathParts := strings.SplitN(u.Path, "/", 2)
-				if len(pathParts) < 2 {
-					err = fmt.Errorf("URL is not a valid S3 URL")
-					return
-				}
-				path = pathParts[1]
-				version = u.Query().Get("version")
-				return
-			}
-			
-			// Handle s3.amazonaws.com or s3-region.amazonaws.com (path-style)
-			if hostParts[0] == "s3" || strings.HasPrefix(hostParts[0], "s3-") {
-				// Parse the region out of the first part of the host
-				region = strings.TrimPrefix(strings.TrimPrefix(hostParts[0], "s3-"), "s3")
-				if region == "" {
-					region = "us-east-1"
-				}
-
-				pathParts := strings.SplitN(u.Path, "/", 3)
-				if len(pathParts) != 3 {
-					err = fmt.Errorf("URL is not a valid S3 URL")
-					return
-				}
-
-				bucket = pathParts[1]
-				path = pathParts[2]
-				version = u.Query().Get("version")
-				return
-			}
+		if len(hostParts) != 3 {
+			err = fmt.Errorf("URL is not a valid S3 URL")
+			return
 		}
-		
-		err = fmt.Errorf("URL is not a valid S3 URL")
-		return
+
+		// Parse the region out of the first part of the host
+		region = strings.TrimPrefix(strings.TrimPrefix(hostParts[0], "s3-"), "s3")
+		if region == "" {
+			region = "us-east-1"
+		}
+
+		pathParts := strings.SplitN(u.Path, "/", 3)
+		if len(pathParts) != 3 {
+			err = fmt.Errorf("URL is not a valid S3 URL")
+			return
+		}
+
+		bucket = pathParts[1]
+		path = pathParts[2]
+		version = u.Query().Get("version")
 	} else {
 		// S3-compatible service (like Minio)
 		pathParts := strings.SplitN(u.Path, "/", 3)
