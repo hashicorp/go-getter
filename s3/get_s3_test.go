@@ -132,8 +132,11 @@ func TestGetter_GetFile_badParams(t *testing.T) {
 	}
 
 	var respErr *awshttp.ResponseError
-	if errors.As(err, &respErr) && respErr.HTTPStatusCode() != 403 {
-		t.Fatalf("expected 403 error, got %v", err)
+	if !errors.As(err, &respErr) {
+		t.Fatalf("expected ResponseError, got %T: %v", err, err)
+	}
+	if respErr.HTTPStatusCode() != 403 {
+		t.Fatalf("expected HTTP 403, got %d: %v", respErr.HTTPStatusCode(), err)
 	}
 }
 

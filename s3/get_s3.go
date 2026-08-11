@@ -89,7 +89,7 @@ func (g *Getter) Get(ctx context.Context, req *getter.Request) error {
 	}
 
 	// Parse URL
-	region, bucket, path, _, creds, err := g.parseUrl(req.URL())
+	region, bucket, path, version, creds, err := g.parseUrl(req.URL())
 	if err != nil {
 		return err
 	}
@@ -145,7 +145,7 @@ func (g *Getter) Get(ctx context.Context, req *getter.Request) error {
 			}
 			objDst = filepath.Join(req.Dst, objDst)
 
-			if err := g.getObject(ctx, client, req, objDst, bucket, objPath, ""); err != nil {
+			if err := g.getObject(ctx, client, req, objDst, bucket, objPath, version); err != nil {
 				return err
 			}
 		}
@@ -188,6 +188,7 @@ func (g *Getter) getObject(ctx context.Context, client *s3.Client, req *getter.R
 	if err != nil {
 		return err
 	}
+	defer resp.Body.Close()
 
 	// Create all the parent directories
 	if err := os.MkdirAll(filepath.Dir(dst), req.Mode(0755)); err != nil {
@@ -259,7 +260,7 @@ func (g *Getter) parseUrl(u *url.URL) (region, bucket, path, version string, cre
 		// S3-compatible service (like Minio)
 		pathParts := strings.SplitN(u.Path, "/", 3)
 		if len(pathParts) != 3 {
-			err = fmt.Errorf("URL is not a valid S3 compliant URL")
+			err = fmt.Errorf("URL is not a valid S3 URL")
 			return
 		}
 		bucket = pathParts[1]
@@ -339,6 +340,7 @@ func (g *Getter) newS3Client(
 		var err error
 		cfg, err = config.LoadDefaultConfig(ctx,
 			config.WithSharedConfigProfile(profile),
+			config.WithRegion(region),
 		)
 		if err != nil {
 			return nil, err
