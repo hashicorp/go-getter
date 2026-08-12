@@ -331,7 +331,7 @@ func TestGetter_Url(t *testing.T) {
 			if version != pt.version {
 				t.Fatalf("expected %s, got %s", pt.version, version)
 			}
-			if &creds == nil {
+			if creds == nil {
 				t.Fatalf("expected to not be nil")
 			}
 		})

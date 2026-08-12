@@ -204,15 +204,15 @@ func (g *Getter) getAWSConfig(ctx context.Context, region string, url *url.URL, 
 	var creds aws.CredentialsProvider
 
 	metadataURLOverride := os.Getenv("AWS_METADATA_URL")
-	if staticCreds == nil && metadataURLOverride != "" {
+	if staticCreds != nil {
+		creds = staticCreds
+	} else if metadataURLOverride != "" {
 		creds = ec2rolecreds.New(func(o *ec2rolecreds.Options) {
 			o.Client = imds.New(imds.Options{
 				Endpoint:          metadataURLOverride,
 				ClientEnableState: imds.ClientEnabled,
 			})
 		})
-	} else if staticCreds != nil {
-		creds = staticCreds
 	}
 
 	if creds != nil {
@@ -336,21 +336,17 @@ func (g *Getter) newS3Client(
 ) (*s3.Client, error) {
 	var cfg aws.Config
 
+	var err error
 	if profile := url.Query().Get("aws_profile"); profile != "" {
-		var err error
 		cfg, err = config.LoadDefaultConfig(ctx,
 			config.WithSharedConfigProfile(profile),
 			config.WithRegion(region),
 		)
-		if err != nil {
-			return nil, err
-		}
 	} else {
-		var err error
 		cfg, err = g.getAWSConfig(ctx, region, url, creds)
-		if err != nil {
-			return nil, err
-		}
+	}
+	if err != nil {
+		return nil, err
 	}
 
 	clientOptions := func(opts *s3.Options) {
