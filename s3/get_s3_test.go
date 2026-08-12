@@ -262,44 +262,49 @@ func TestGetAny_S3_malformed(t *testing.T) {
 
 func TestGetter_Url(t *testing.T) {
 	var s3tests = []struct {
-		name    string
-		url     string
-		region  string
-		bucket  string
-		path    string
-		version string
+		name      string
+		url       string
+		region    string
+		bucket    string
+		path      string
+		version   string
+		wantCreds bool
 	}{
 		{
-			name:    "AWSv1234",
-			url:     "https://s3-eu-west-1.amazonaws.com/bucket/foo/bar.baz?version=1234",
-			region:  "eu-west-1",
-			bucket:  "bucket",
-			path:    "foo/bar.baz",
-			version: "1234",
+			name:      "AWSv1234",
+			url:       "https://s3-eu-west-1.amazonaws.com/bucket/foo/bar.baz?version=1234",
+			region:    "eu-west-1",
+			bucket:    "bucket",
+			path:      "foo/bar.baz",
+			version:   "1234",
+			wantCreds: false, // no credential query params; uses default credential chain
 		},
 		{
-			name:    "localhost-1",
-			url:     "http://127.0.0.1:9000/test-bucket/hello.txt?aws_access_key_id=TESTID&aws_access_key_secret=TestSecret&region=us-east-2&version=1",
-			region:  "us-east-2",
-			bucket:  "test-bucket",
-			path:    "hello.txt",
-			version: "1",
+			name:      "localhost-1",
+			url:       "http://127.0.0.1:9000/test-bucket/hello.txt?aws_access_key_id=TESTID&aws_access_key_secret=TestSecret&region=us-east-2&version=1",
+			region:    "us-east-2",
+			bucket:    "test-bucket",
+			path:      "hello.txt",
+			version:   "1",
+			wantCreds: true,
 		},
 		{
-			name:    "localhost-2",
-			url:     "http://127.0.0.1:9000/test-bucket/hello.txt?aws_access_key_id=TESTID&aws_access_key_secret=TestSecret&version=1",
-			region:  "us-east-1",
-			bucket:  "test-bucket",
-			path:    "hello.txt",
-			version: "1",
+			name:      "localhost-2",
+			url:       "http://127.0.0.1:9000/test-bucket/hello.txt?aws_access_key_id=TESTID&aws_access_key_secret=TestSecret&version=1",
+			region:    "us-east-1",
+			bucket:    "test-bucket",
+			path:      "hello.txt",
+			version:   "1",
+			wantCreds: true,
 		},
 		{
-			name:    "localhost-3",
-			url:     "http://127.0.0.1:9000/test-bucket/hello.txt?aws_access_key_id=TESTID&aws_access_key_secret=TestSecret",
-			region:  "us-east-1",
-			bucket:  "test-bucket",
-			path:    "hello.txt",
-			version: "",
+			name:      "localhost-3",
+			url:       "http://127.0.0.1:9000/test-bucket/hello.txt?aws_access_key_id=TESTID&aws_access_key_secret=TestSecret",
+			region:    "us-east-1",
+			bucket:    "test-bucket",
+			path:      "hello.txt",
+			version:   "",
+			wantCreds: true,
 		},
 	}
 
@@ -331,8 +336,11 @@ func TestGetter_Url(t *testing.T) {
 			if version != pt.version {
 				t.Fatalf("expected %s, got %s", pt.version, version)
 			}
-			if creds == nil {
-				t.Fatalf("expected to not be nil")
+			if pt.wantCreds && creds == nil {
+				t.Fatalf("expected creds to not be nil")
+			}
+			if !pt.wantCreds && creds != nil {
+				t.Fatalf("expected creds to be nil, got %v", creds)
 			}
 		})
 	}
