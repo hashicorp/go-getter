@@ -1,6 +1,6 @@
 module github.com/go-getter/cmd/go-getter/v2
 
-go 1.25
+go 1.25.12
 
 replace (
 	github.com/hashicorp/go-getter/gcs/v2 => ../../gcs
