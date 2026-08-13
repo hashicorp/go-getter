@@ -1,4 +1,4 @@
-// Copyright IBM Corp. 2015, 2025
+// Copyright IBM Corp. 2015, 2026
 // SPDX-License-Identifier: MPL-2.0
 
 package main
@@ -6,19 +6,26 @@ package main
 import (
 	"context"
 	"flag"
+	"fmt"
 	"log"
 	"os"
 	"os/signal"
 	"sync"
 
 	getter "github.com/hashicorp/go-getter"
+	ver "github.com/hashicorp/go-getter/version"
 )
 
 func main() {
 	modeRaw := flag.String("mode", "any", "get mode (any, file, dir)")
 	progress := flag.Bool("progress", false, "display terminal progress")
 	insecure := flag.Bool("insecure", false, "do not verify server's certificate chain (not recommended)")
+	version := flag.Bool("version", false, "display version")
 	flag.Parse()
+	if *version {
+		fmt.Println(ver.FullVersionString())
+		os.Exit(0)
+	}
 	args := flag.Args()
 	if len(args) < 2 {
 		log.Fatalf("Expected two args: URL and dst")
