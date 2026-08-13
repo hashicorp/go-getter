@@ -1,5 +1,8 @@
 name: build
 
+# The release process consumes builds produced by this workflow.
+# Refer to .release/README.md for more information.
+
 # We now default to running this workflow on every push to every branch.
 # This provides fast feedback when build issues occur, so they can be
 # fixed prior to being merged to the main branch.
@@ -66,7 +69,7 @@ jobs:
         with:
           name: metadata.json
           path: ${{ steps.generate-metadata-file.outputs.filepath }}
-  
+
   build-other:
     needs:
       - get-go-version
