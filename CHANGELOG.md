@@ -1,5 +1,8 @@
 ## Unreleased
 
+BUG FIXES:
+
+* s3: Only force path-style addressing for non-AWS custom endpoints, restoring the SDK-default virtual-hosted-style for AWS endpoints. Fixes S3 downloads with `AWS_USE_FIPS_ENDPOINT=true`, whose path-style hostnames do not resolve [[GH-676](https://github.com/hashicorp/go-getter/pull/676)]
 
 
 ## 1.8.8 (August 12, 2026)
