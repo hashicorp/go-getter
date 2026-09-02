@@ -3,10 +3,10 @@
 schema = "2"
 
 project "go-getter" {
-  team = "team-ip-compliance"
+  team = "nomad"
 
   slack {
-    notification_channel = "C09KU972BDH" // ensure this is a PUBLIC slack channel. If it's private, the promotion workflows will fail.
+    notification_channel = "C0BUE4FV1BL" // feed-oss-libs-releases
   }
 
   github {
@@ -16,8 +16,8 @@ project "go-getter" {
   }
 }
 
-event "merge" {
-}
+event "merge" {}
+
 event "build" {
 
   action "build" {
@@ -30,6 +30,7 @@ event "build" {
 
   depends = ["merge"]
 }
+
 event "prepare" {
 
   action "prepare" {
@@ -46,8 +47,9 @@ event "prepare" {
     on = "fail"
   }
 }
-event "trigger-staging" {
-}
+
+event "trigger-staging" {}
+
 event "promote-staging" {
 
   action "promote-staging" {
@@ -64,8 +66,9 @@ event "promote-staging" {
     on = "always"
   }
 }
-event "trigger-production" {
-}
+
+event "trigger-production" {}
+
 event "promote-production" {
 
   action "promote-production" {
@@ -81,5 +84,4 @@ event "promote-production" {
   notification {
     on = "always"
   }
-
 }
