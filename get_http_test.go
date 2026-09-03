@@ -776,7 +776,7 @@ func testHttpServerWithXTerraformGetLoop(t *testing.T) net.Listener {
 		t.Fatalf("err: %s", err)
 	}
 
-	header := fmt.Sprintf("http://%v:%v", ln.Addr().String(), "/loop")
+	header := fmt.Sprintf("http://%v%v", ln.Addr().String(), "/loop")
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/loop", func(w http.ResponseWriter, r *http.Request) {
