@@ -2,7 +2,7 @@
 
 IMPROVEMENTS:
 
-* build: Updated Go to 1.25.8 [[GH-657](https://github.com/hashicorp/go-getter/pull/682)]
+* build: Updated Go to 1.26.8 [[GH-657](https://github.com/hashicorp/go-getter/pull/682)]
 
 
 ## 1.8.8 (August 12, 2026)
