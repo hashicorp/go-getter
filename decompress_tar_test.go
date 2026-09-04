@@ -1,4 +1,4 @@
-// Copyright IBM Corp. 2015, 2025
+// Copyright IBM Corp. 2015, 2026
 // SPDX-License-Identifier: MPL-2.0
 
 package getter
@@ -19,28 +19,28 @@ func TestTar(t *testing.T) {
 	mtime := time.Unix(0, 0)
 	cases := []TestDecompressCase{
 		{
-			"extended_header.tar",
-			true,
-			false,
-			[]string{"directory/", "directory/a", "directory/b"},
-			"",
-			nil,
+			Input:   "extended_header.tar",
+			Dir:     true,
+			Err:     false,
+			DirList: []string{"directory/", "directory/a", "directory/b"},
+			FileMD5: "",
+			Mtime:   nil,
 		},
 		{
-			"implied_dir.tar",
-			true,
-			false,
-			[]string{"directory/", "directory/sub/", "directory/sub/a", "directory/sub/b"},
-			"",
-			nil,
+			Input:   "implied_dir.tar",
+			Dir:     true,
+			Err:     false,
+			DirList: []string{"directory/", "directory/sub/", "directory/sub/a", "directory/sub/b"},
+			FileMD5: "",
+			Mtime:   nil,
 		},
 		{
-			"unix_time_0.tar",
-			true,
-			false,
-			[]string{"directory/", "directory/sub/", "directory/sub/a", "directory/sub/b"},
-			"",
-			&mtime,
+			Input:   "unix_time_0.tar",
+			Dir:     true,
+			Err:     false,
+			DirList: []string{"directory/", "directory/sub/", "directory/sub/a", "directory/sub/b"},
+			FileMD5: "",
+			Mtime:   &mtime,
 		},
 	}
 
@@ -148,7 +148,7 @@ func testDecompressorPermissions(t *testing.T, d Decompressor, input string, exp
 			t.Fatalf("err: %s", err)
 		}
 
-		real := fi.Mode()
+		real := fi.Mode().Perm()
 		if real != os.FileMode(mode) {
 			t.Fatalf("err: %s expected mode %o got %o", name, mode, real)
 		}
@@ -175,7 +175,7 @@ func TestDecompressTarPermissions(t *testing.T) {
 			"directory/public":  0666,
 			"directory/private": 0600,
 			"directory/exec":    0755,
-			"directory/setuid":  040000755,
+			"directory/setuid":  0755,
 		}
 		masked = 0755
 	}
