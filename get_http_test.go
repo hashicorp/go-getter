@@ -206,6 +206,57 @@ func TestHttpGetter_none(t *testing.T) {
 	}
 }
 
+func TestHttpGetter_statusError(t *testing.T) {
+	for _, code := range []int{
+		http.StatusNotFound,
+		http.StatusForbidden,
+		http.StatusServiceUnavailable,
+	} {
+		ln, err := net.Listen("tcp", "127.0.0.1:0")
+		if err != nil {
+			t.Fatalf("err: %s", err)
+		}
+		defer func() { _ = ln.Close() }()
+
+		var server http.Server
+		server.Handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			http.Error(w, "nope", code)
+		})
+		go func() { _ = server.Serve(ln) }()
+
+		g := new(HttpGetter)
+
+		var u url.URL
+		u.Scheme = "http"
+		u.Host = ln.Addr().String()
+		u.Path = "/anything"
+
+		// Both the directory (Get) and single-file (GetFile) paths must
+		// surface the status code as a *HTTPStatusError.
+		gets := map[string]func() error{
+			"Get":     func() error { return g.Get(filepath.Join(t.TempDir(), "target"), &u) },
+			"GetFile": func() error { return g.GetFile(filepath.Join(t.TempDir(), "target"), &u) },
+		}
+		for name, get := range gets {
+			err := get()
+			if err == nil {
+				t.Fatalf("%s with status %d: should error", name, code)
+			}
+			var statusErr *HTTPStatusError
+			if !errors.As(err, &statusErr) {
+				t.Fatalf("%s with status %d: expected *HTTPStatusError, got %T: %s", name, code, err, err)
+			}
+			if statusErr.StatusCode != code {
+				t.Fatalf("%s: expected status code %d, got %d", name, code, statusErr.StatusCode)
+			}
+			expected := fmt.Sprintf("bad response code: %d", code)
+			if err.Error() != expected {
+				t.Fatalf("%s: expected error message %q, got %q", name, expected, err.Error())
+			}
+		}
+	}
+}
+
 func TestHttpGetter_resume(t *testing.T) {
 	load := []byte(testHttpMetaStr)
 	sha := sha256.New()
