@@ -40,7 +40,7 @@ func (c *Client) Configure(opts ...ClientOption) error {
 		c.Detectors = Detectors
 	}
 	if c.Getters == nil {
-		c.Getters = Getters
+		c.Getters = DefaultGetters()
 	}
 
 	// Set the client for each getter, so the top-level client can know
