@@ -1,4 +1,4 @@
-// Copyright IBM Corp. 2015, 2025
+// Copyright IBM Corp. 2015, 2026
 // SPDX-License-Identifier: MPL-2.0
 
 package getter
@@ -369,9 +369,14 @@ func (g *S3Getter) newS3Client(
 	}
 
 	clientOptions := func(opts *s3.Options) {
-		opts.UsePathStyle = true
-		// If it's not an AWS domain, set the custom endpoint
+		// If it's not an AWS domain, set the custom endpoint and use
+		// path-style addressing, which most S3-compatible services expect.
+		// For AWS endpoints, keep the SDK default (virtual-hosted-style);
+		// AWS deprecated path-style addressing and does not publish DNS
+		// for it on some endpoints (e.g. FIPS, used when
+		// AWS_USE_FIPS_ENDPOINT is set).
 		if !isAWSDomain {
+			opts.UsePathStyle = true
 			scheme := url.Scheme
 			if scheme == "" {
 				scheme = "https"

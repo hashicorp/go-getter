@@ -1,4 +1,4 @@
-// Copyright IBM Corp. 2015, 2025
+// Copyright IBM Corp. 2015, 2026
 // SPDX-License-Identifier: MPL-2.0
 
 package getter
@@ -386,4 +386,55 @@ func Test_S3Getter_ParseUrl_Malformed(t *testing.T) {
 		})
 	}
 
+}
+
+func TestS3Getter_newS3Client_addressingStyle(t *testing.T) {
+	tests := []struct {
+		name             string
+		url              string
+		region           string
+		wantPathStyle    bool
+		wantBaseEndpoint string
+	}{
+		{
+			name: "AWS endpoint uses SDK default virtual-hosted style",
+			// Forcing path-style on AWS endpoints breaks FIPS endpoints
+			// (AWS_USE_FIPS_ENDPOINT=true): bucket.s3-fips.<region>.amazonaws.com
+			// resolves, but s3-fips.<region>.amazonaws.com/bucket does not.
+			url:           "https://bucket.s3.us-west-2.amazonaws.com/path/file",
+			region:        "us-west-2",
+			wantPathStyle: false,
+		},
+		{
+			name:             "non-AWS endpoint uses path style and custom endpoint",
+			url:              "http://127.0.0.1:9000/test-bucket/hello.txt",
+			region:           "us-east-1",
+			wantPathStyle:    true,
+			wantBaseEndpoint: "http://127.0.0.1:9000",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := new(S3Getter)
+			u, err := url.Parse(tt.url)
+			if err != nil {
+				t.Fatalf("unexpected error: %s", err)
+			}
+			client, err := g.newS3Client(tt.region, u, nil)
+			if err != nil {
+				t.Fatalf("unexpected error: %s", err)
+			}
+			opts := client.Options()
+			if opts.UsePathStyle != tt.wantPathStyle {
+				t.Fatalf("expected UsePathStyle %t, got %t", tt.wantPathStyle, opts.UsePathStyle)
+			}
+			gotBaseEndpoint := ""
+			if opts.BaseEndpoint != nil {
+				gotBaseEndpoint = *opts.BaseEndpoint
+			}
+			if gotBaseEndpoint != tt.wantBaseEndpoint {
+				t.Fatalf("expected BaseEndpoint %q, got %q", tt.wantBaseEndpoint, gotBaseEndpoint)
+			}
+		})
+	}
 }
