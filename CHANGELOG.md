@@ -1,8 +1,11 @@
 ## Unreleased
 
+## 1.8.9 (September 3, 2026)
+
 IMPROVEMENTS:
 
 * build: Updated Go to 1.26.8 [[GH-657](https://github.com/hashicorp/go-getter/pull/682)]
+* security: Sanitize file permissions when getting ZIP or TAR files.
 
 
 ## 1.8.8 (August 12, 2026)
