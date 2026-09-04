@@ -6,7 +6,7 @@ project "go-getter" {
   team = "nomad"
 
   slack {
-    notification_channel = "C0BUE4FV1BL" // feed-oss-libs-releases
+    notification_channel = "C09LCDZTLGZ" // feed-oss-libs-releases
   }
 
   github {
