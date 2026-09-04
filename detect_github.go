@@ -26,13 +26,17 @@ func (d *GitHubDetector) Detect(src, _ string) (string, bool, error) {
 }
 
 func (d *GitHubDetector) detectHTTP(src string) (string, bool, error) {
-	parts := strings.Split(src, "/")
-	if len(parts) < 3 {
+	parts := strings.Split(src, "?")
+	if len(parts) > 2 {
+		return "", false, fmt.Errorf("there is more than 1 '?' in the URL")
+	}
+	hostAndPath := parts[0]
+	hostAndPathParts := strings.Split(hostAndPath, "/")
+	if len(hostAndPathParts) < 3 {
 		return "", false, fmt.Errorf(
 			"GitHub URLs should be github.com/username/repo")
 	}
-
-	urlStr := fmt.Sprintf("https://%s", strings.Join(parts[:3], "/"))
+	urlStr := fmt.Sprintf("https://%s", strings.Join(hostAndPathParts[:3], "/"))
 	url, err := url.Parse(urlStr)
 	if err != nil {
 		return "", true, fmt.Errorf("error parsing GitHub URL: %w", err)
@@ -42,8 +46,12 @@ func (d *GitHubDetector) detectHTTP(src string) (string, bool, error) {
 		url.Path += ".git"
 	}
 
-	if len(parts) > 3 {
-		url.Path += "//" + strings.Join(parts[3:], "/")
+	if len(hostAndPathParts) > 3 {
+		url.Path += "//" + strings.Join(hostAndPathParts[3:], "/")
+	}
+
+	if len(parts) == 2 {
+		url.RawQuery = parts[1]
 	}
 
 	return "git::" + url.String(), true, nil
