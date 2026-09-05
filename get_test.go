@@ -93,6 +93,45 @@ func TestGet_fileDetect(t *testing.T) {
 	}
 }
 
+// https://github.com/hashicorp/go-getter/issues/607
+func TestGet_fileDetectPercentInPath(t *testing.T) {
+	cases := []struct {
+		name    string
+		srcName string
+	}{
+		{"jinja", "{% if foo %}bar{% endif %}"},
+		{"trailing", "100%"},
+		{"invalid-hex", "foo%zz"},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			tmp := t.TempDir()
+			srcDir := filepath.Join(tmp, tc.srcName)
+			if err := os.MkdirAll(srcDir, 0755); err != nil {
+				t.Fatal(err)
+			}
+			if err := os.WriteFile(filepath.Join(srcDir, "test.txt"), []byte("hello"), 0644); err != nil {
+				t.Fatal(err)
+			}
+
+			dst := filepath.Join(tmp, "output")
+			client := &Client{
+				Src:  tc.srcName,
+				Dst:  dst,
+				Pwd:  tmp,
+				Mode: ClientModeDir,
+			}
+			if err := client.Get(); err != nil {
+				t.Fatalf("Get: %s", err)
+			}
+			if _, err := os.Stat(filepath.Join(dst, "test.txt")); err != nil {
+				t.Fatalf("stat: %s", err)
+			}
+		})
+	}
+}
+
 func TestGet_fileForced(t *testing.T) {
 	dst := filepath.Join(t.TempDir(), "target")
 	u := testModule("basic")

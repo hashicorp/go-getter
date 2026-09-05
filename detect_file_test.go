@@ -21,6 +21,11 @@ var fileTests = []fileTest{
 	{"./foo", "/pwd", "file:///pwd/foo", false},
 	{"./foo?foo=bar", "/pwd", "file:///pwd/foo?foo=bar", false},
 	{"foo", "/pwd", "file:///pwd/foo", false},
+
+	// https://github.com/hashicorp/go-getter/issues/607
+	{"{% if foo %}bar{% endif %}", "/pwd",
+		"file:///pwd/%7B%25%20if%20foo%20%25%7Dbar%7B%25%20endif%20%25%7D", false},
+	{"100%", "/pwd", "file:///pwd/100%25", false},
 }
 
 var unixFileTests = []fileTest{
@@ -29,12 +34,18 @@ var unixFileTests = []fileTest{
 
 	{"/foo", "/pwd", "file:///foo", false},
 	{"/foo?bar=baz", "/pwd", "file:///foo?bar=baz", false},
+
+	// https://github.com/hashicorp/go-getter/issues/607
+	{"/foo%zz?bar=baz", "/pwd", "file:///foo%25zz?bar=baz", false},
 }
 
 var winFileTests = []fileTest{
 	{"/foo", "/pwd", "file:///pwd/foo", false},
 	{`C:\`, `/pwd`, `file://C:/`, false},
 	{`C:\?bar=baz`, `/pwd`, `file://C:/?bar=baz`, false},
+
+	// https://github.com/hashicorp/go-getter/issues/607
+	{`C:\100%`, `/pwd`, `file://C:/100%25`, false},
 }
 
 func TestFileDetector(t *testing.T) {
