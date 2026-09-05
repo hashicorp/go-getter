@@ -60,6 +60,20 @@ func TestDetect(t *testing.T) {
 			false,
 		},
 
+		// https://github.com/hashicorp/go-getter/issues/607
+		{
+			"{% if foo %}bar{% endif %}",
+			"/pwd",
+			"file:///pwd/%7B%25%20if%20foo%20%25%7Dbar%7B%25%20endif%20%25%7D",
+			false,
+		},
+		{
+			"100%",
+			"/pwd",
+			"file:///pwd/100%25",
+			false,
+		},
+
 		// https://github.com/hashicorp/go-getter/pull/124
 		{
 			"git::ssh://git@my.custom.git/dir1/dir2",
