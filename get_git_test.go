@@ -394,6 +394,54 @@ func TestGitGetter_branchUpdate(t *testing.T) {
 	}
 }
 
+// TestGitGetter_updateRemovesDeletedFiles tests that all files
+// deleted in git history are really removed
+func TestGitGetter_updateShouldRemoveDeletedFiles(t *testing.T) {
+	if !testHasGit {
+		t.Skip("git not found, skipping")
+	}
+
+	g := new(GitGetter)
+	dst := filepath.Join(t.TempDir(), "target")
+
+	// state setup
+	repo := testGitRepo(t, "update-should-remove-deleted-files")
+	repo.commitFile("to_keep.txt", "keep this file")
+	repo.commitFile("to_remove.txt", "remove this file")
+	toKeepPath := filepath.Join(dst, "to_keep.txt")
+	toRemovePath := filepath.Join(dst, "to_remove.txt")
+	repo.git("tag", "v1")
+	repo.git("rm", "to_remove.txt")
+	repo.git("commit", "-m", "removing to_remove.txt")
+	repo.git("tag", "v2")
+
+	getForTag := func(tag string) {
+		q := repo.url.Query()
+		q.Set("ref", tag)
+		repo.url.RawQuery = q.Encode()
+		if err := g.Get(dst, repo.url); err != nil {
+			t.Fatalf("err: %s", err)
+		}
+	}
+
+	getForTag("v1")
+	if _, err := os.Stat(toKeepPath); err != nil {
+		t.Fatalf("file to_keep should exists for v1: (err=%s)", err)
+	}
+	if _, err := os.Stat(toRemovePath); err != nil {
+		t.Fatalf("file to_remove should exists for v1: (err=%v)", err)
+	}
+
+	getForTag("v2")
+	if _, err := os.Stat(toKeepPath); err != nil {
+		t.Fatalf("file to_keep should exists for v2: (err=%s)", err)
+	}
+	if _, err := os.Stat(toRemovePath); !os.IsNotExist(err) {
+		t.Fatalf("file to_remove should not exists anymore for v2: (err=%v)", err)
+	}
+
+}
+
 func TestGitGetter_tag(t *testing.T) {
 	if !testHasGit {
 		t.Skip("git not found, skipping")
