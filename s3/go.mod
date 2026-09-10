@@ -1,6 +1,6 @@
 module github.com/hashicorp/go-getter/s3/v2
 
-go 1.25.12
+go 1.26.8
 
 replace github.com/hashicorp/go-getter/v2 => ../
 

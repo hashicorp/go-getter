@@ -15,4 +15,4 @@ require (
 
 require github.com/hashicorp/errwrap v1.0.0 // indirect
 
-go 1.19
+go 1.26.8
