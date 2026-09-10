@@ -857,7 +857,7 @@ func TestGitGetter_BadGitConfig(t *testing.T) {
 
 	_, err = os.Stat(dst)
 	if err != nil && !os.IsNotExist(err) {
-		t.Fatalf(err.Error())
+		t.Fatal(err)
 	}
 
 	if err == nil {
@@ -873,7 +873,7 @@ func TestGitGetter_BadGitConfig(t *testing.T) {
 		}
 		err = g.clone(ctx, testGitToken, 1, req)
 		if err != nil {
-			t.Fatalf(err.Error())
+			t.Fatal(err)
 
 		}
 
@@ -881,7 +881,7 @@ func TestGitGetter_BadGitConfig(t *testing.T) {
 		gitConfigPath := filepath.Join(dst, ".git", "config")
 		err = os.WriteFile(gitConfigPath, []byte("bad config"), 0600)
 		if err != nil {
-			t.Fatalf(err.Error())
+			t.Fatal(err)
 
 		}
 
@@ -891,7 +891,7 @@ func TestGitGetter_BadGitConfig(t *testing.T) {
 
 	}
 	if err != nil {
-		t.Fatalf(err.Error())
+		t.Fatal(err)
 
 	}
 
@@ -899,7 +899,7 @@ func TestGitGetter_BadGitConfig(t *testing.T) {
 	gitConfigPath := filepath.Join(dst, ".git", "config")
 	configBytes, err := os.ReadFile(gitConfigPath)
 	if err != nil {
-		t.Fatalf(err.Error())
+		t.Fatal(err)
 
 	}
 	if strings.Contains(string(configBytes), "bad config") {
@@ -928,13 +928,13 @@ func TestGitGetter_BadGitDirName(t *testing.T) {
 
 	_, err = os.Stat(dst)
 	if err != nil && !os.IsNotExist(err) {
-		t.Fatalf(err.Error())
+		t.Fatal(err)
 	}
 	if err == nil {
 		// Remove all variations of .git directories
 		err = removeCaseInsensitiveGitDirectory(dst)
 		if err != nil {
-			t.Fatalf(err.Error())
+			t.Fatal(err)
 
 		}
 
@@ -946,7 +946,7 @@ func TestGitGetter_BadGitDirName(t *testing.T) {
 		}
 		err = g.clone(ctx, testGitToken, 1, req)
 		if err != nil {
-			t.Fatalf(err.Error())
+			t.Fatal(err)
 
 		}
 
@@ -955,20 +955,20 @@ func TestGitGetter_BadGitDirName(t *testing.T) {
 		newPath := filepath.Join(dst, ".GIT")
 		err = os.Rename(oldPath, newPath)
 		if err != nil {
-			t.Fatalf(err.Error())
+			t.Fatal(err)
 
 		}
 
 		// Remove all variations of .git directories
 		err = removeCaseInsensitiveGitDirectory(dst)
 		if err != nil {
-			t.Fatalf(err.Error())
+			t.Fatal(err)
 
 		}
 
 	}
 	if err != nil {
-		t.Fatalf(err.Error())
+		t.Fatal(err)
 
 	}
 
