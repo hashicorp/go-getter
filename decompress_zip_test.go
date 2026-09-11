@@ -1,3 +1,6 @@
+// Copyright IBM Corp. 2015, 2026
+// SPDX-License-Identifier: MPL-2.0
+
 package getter
 
 import (
@@ -123,7 +126,7 @@ func TestDecompressZipPermissions(t *testing.T) {
 			"directory/public":  0666,
 			"directory/private": 0600,
 			"directory/exec":    0755,
-			"directory/setuid":  040000755,
+			"directory/setuid":  0755,
 		}
 		masked = 0755
 	}

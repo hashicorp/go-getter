@@ -1,6 +1,6 @@
 module github.com/go-getter/cmd/go-getter/v2
 
-go 1.25.12
+go 1.26.8
 
 replace (
 	github.com/hashicorp/go-getter/gcs/v2 => ../../gcs
@@ -61,7 +61,7 @@ require (
 	golang.org/x/net v0.17.0 // indirect
 	golang.org/x/oauth2 v0.13.0 // indirect
 	golang.org/x/sync v0.5.0 // indirect
-	golang.org/x/sys v0.13.0 // indirect
+	golang.org/x/sys v0.35.0 // indirect
 	golang.org/x/text v0.13.0 // indirect
 	golang.org/x/time v0.3.0 // indirect
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2 // indirect

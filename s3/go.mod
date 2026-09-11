@@ -1,6 +1,6 @@
 module github.com/hashicorp/go-getter/s3/v2
 
-go 1.25.12
+go 1.26.8
 
 replace github.com/hashicorp/go-getter/v2 => ../
 
@@ -37,4 +37,5 @@ require (
 	github.com/mitchellh/go-homedir v1.0.0 // indirect
 	github.com/mitchellh/go-testing-interface v1.0.0 // indirect
 	github.com/ulikunitz/xz v0.5.8 // indirect
+	golang.org/x/sys v0.35.0 // indirect
 )

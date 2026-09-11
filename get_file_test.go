@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 	"path/filepath"
+	"runtime"
 	"testing"
 
 	testing_helper "github.com/hashicorp/go-getter/v2/helper/testing"
@@ -29,13 +30,29 @@ func TestFileGetter(t *testing.T) {
 		t.Fatalf("err: %s", err)
 	}
 
-	// Verify the destination folder is a symlink
+	// Verify it's a symlink on Unix or junction point on Windows
 	fi, err := os.Lstat(dst)
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
-	if fi.Mode()&os.ModeSymlink == 0 {
-		t.Fatal("destination is not a symlink")
+
+	if runtime.GOOS == "windows" {
+		isJunction, junctionErr := isWindowsJunctionPoint(dst)
+		if junctionErr != nil {
+			t.Fatalf("failed to check if destination is a junction point: %s", junctionErr)
+		}
+		if !isJunction {
+			t.Fatal("destination is not a junction point")
+		}
+		// Additional verification: should be accessible as a directory
+		if dirInfo, err := os.Stat(dst); err != nil || !dirInfo.IsDir() {
+			t.Fatal("destination junction point is not accessible as a directory")
+		}
+	} else {
+		// On Unix, verify it's a traditional symlink
+		if fi.Mode()&os.ModeSymlink == 0 {
+			t.Fatal("destination is not a symlink")
+		}
 	}
 
 	// Verify the main file exists
