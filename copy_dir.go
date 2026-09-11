@@ -12,10 +12,13 @@ import (
 //
 // If ignoreDot is set to true, then dot-prefixed files/folders are ignored.
 func copyDir(ctx context.Context, dst string, src string, ignoreDot bool, disableSymlinks bool, umask os.FileMode) error {
-	src, err := filepath.EvalSymlinks(src)
+	// We can safely evaluate the symlinks here, even if disabled, because they
+	// will be checked before actual use in walkFn and copyFile
+	resolved, err := resolveSymlinks(src)
 	if err != nil {
 		return err
 	}
+	src = resolved
 
 	walkFn := func(path string, info os.FileInfo, err error) error {
 		if err != nil {

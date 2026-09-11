@@ -13,6 +13,9 @@ require (
 	github.com/ulikunitz/xz v0.5.8
 )
 
-require github.com/hashicorp/errwrap v1.0.0 // indirect
+require (
+	github.com/hashicorp/errwrap v1.0.0 // indirect
+	golang.org/x/sys v0.35.0 // indirect
+)
 
 go 1.26.8
