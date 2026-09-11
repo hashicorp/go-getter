@@ -11,11 +11,9 @@ require (
 	github.com/mitchellh/go-homedir v1.0.0
 	github.com/mitchellh/go-testing-interface v1.0.0
 	github.com/ulikunitz/xz v0.5.8
+	golang.org/x/sys v0.35.0
 )
 
-require (
-	github.com/hashicorp/errwrap v1.0.0 // indirect
-	golang.org/x/sys v0.35.0 // indirect
-)
+require github.com/hashicorp/errwrap v1.0.0 // indirect
 
 go 1.26.8
