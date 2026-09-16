@@ -118,6 +118,9 @@ func (g *Getter) Get(ctx context.Context, req *getter.Request) error {
 			if err != nil {
 				return err
 			}
+			if containsDotDot(objDst) {
+				return fmt.Errorf("key in bucket contains path traversal out of the directory")
+			}
 			objDst = filepath.Join(req.Dst, objDst)
 			// Download the matching object.
 			err = g.getObject(ctx, client, req, objDst, bucket, obj.Name)
@@ -231,3 +234,20 @@ func (g *Getter) Detect(req *getter.Request) (bool, error) {
 func (g *Getter) validScheme(scheme string) bool {
 	return scheme == "gcs"
 }
+
+// containsDotDot checks if the filepath value v contains a ".." entry.
+// This will check filepath components by splitting along / or \. This
+// function is copied directly from the Go net/http implementation.
+func containsDotDot(v string) bool {
+	if !strings.Contains(v, "..") {
+		return false
+	}
+	for _, ent := range strings.FieldsFunc(v, isSlashRune) {
+		if ent == ".." {
+			return true
+		}
+	}
+	return false
+}
+
+func isSlashRune(r rune) bool { return r == '/' || r == '\\' }
