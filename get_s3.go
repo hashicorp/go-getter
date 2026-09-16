@@ -147,6 +147,9 @@ func (g *S3Getter) Get(dst string, u *url.URL) error {
 			if err != nil {
 				return err
 			}
+			if containsDotDot(objDst) {
+				return fmt.Errorf("key in bucket contains path traversal out of the directory")
+			}
 			objDst = filepath.Join(dst, objDst)
 
 			if err := g.getObject(ctx, client, objDst, bucket, objPath, ""); err != nil {
