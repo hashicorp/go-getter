@@ -20,6 +20,23 @@ import (
 	"github.com/hashicorp/go-cleanhttp"
 )
 
+// A HTTPStatusError is returned when an HTTP server responds to a request
+// with a status code the HttpGetter cannot proceed with. It exposes the
+// status code so callers can recognize the kind of failure (for example a
+// 404 versus a 503) with errors.As instead of parsing the error message.
+type HTTPStatusError struct {
+	// StatusCode is the HTTP status code of the response, as defined in the
+	// net/http package (e.g. http.StatusNotFound).
+	StatusCode int
+}
+
+func (err *HTTPStatusError) Error() string {
+	if err == nil {
+		return "<nil>"
+	}
+	return fmt.Sprintf("bad response code: %d", err.StatusCode)
+}
+
 // HttpGetter is a Getter implementation that will download from an HTTP
 // endpoint.
 //
@@ -272,7 +289,7 @@ func (g *HttpGetter) Get(dst string, u *url.URL) error {
 	}
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return fmt.Errorf("bad response code: %d", resp.StatusCode)
+		return &HTTPStatusError{StatusCode: resp.StatusCode}
 	}
 
 	if disabled := xTerraformGetDisabled(ctx); disabled {
@@ -485,7 +502,7 @@ func (g *HttpGetter) GetFile(dst string, src *url.URL) error {
 		// all good
 	default:
 		_ = resp.Body.Close()
-		return fmt.Errorf("bad response code: %d", resp.StatusCode)
+		return &HTTPStatusError{StatusCode: resp.StatusCode}
 	}
 
 	body := resp.Body
