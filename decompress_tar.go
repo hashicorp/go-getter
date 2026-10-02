@@ -26,13 +26,6 @@ func untar(input io.Reader, dst, src string, dir bool, umask os.FileMode, fileSi
 	)
 
 	for {
-		if filesLimit > 0 {
-			filesCount++
-			if filesCount > filesLimit {
-				return fmt.Errorf("tar archive contains too many files: %d > %d", filesCount, filesLimit)
-			}
-		}
-
 		hdr, err := tarR.Next()
 		if err == io.EOF {
 			if !done {
@@ -44,6 +37,13 @@ func untar(input io.Reader, dst, src string, dir bool, umask os.FileMode, fileSi
 		}
 		if err != nil {
 			return err
+		}
+
+		if filesLimit > 0 {
+			filesCount++
+			if filesCount > filesLimit {
+				return fmt.Errorf("tar archive contains too many files: %d > %d", filesCount, filesLimit)
+			}
 		}
 
 		if hdr.Typeflag == tar.TypeXGlobalHeader || hdr.Typeflag == tar.TypeXHeader {
