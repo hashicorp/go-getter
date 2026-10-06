@@ -9,8 +9,8 @@ import (
 )
 
 var (
-	Version           = "1.8.10"
-	VersionPrerelease = ""
+	Version           = "1.8.11"
+	VersionPrerelease = "dev"
 	VersionMetadata   = ""
 	// PluginVersion removed to avoid import cycle
 )
