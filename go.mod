@@ -1,5 +1,7 @@
 module github.com/hashicorp/go-getter
 
+go 1.26.0
+
 require (
 	cloud.google.com/go/storage v1.68.0
 	github.com/aws/aws-sdk-go-v2 v1.47.1
@@ -80,5 +82,3 @@ require (
 	google.golang.org/protobuf v1.36.12 // indirect
 	gopkg.in/cheggaaa/pb.v1 v1.0.27 // indirect
 )
-
-go 1.26.0
