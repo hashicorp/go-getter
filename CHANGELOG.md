@@ -1,4 +1,6 @@
-## Unreleased
+## UNRELEASED
+
+## 1.8.10 (October 6, 2026)
 
 BUG FIXES:
 
@@ -22,4 +24,3 @@ SECURITY:
 IMPROVEMENTS:
 
 * build: Updated Go to 1.26.5 [[GH-657](https://github.com/hashicorp/go-getter/pull/657)]
-
