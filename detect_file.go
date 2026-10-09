@@ -5,9 +5,11 @@ package getter
 
 import (
 	"fmt"
+	"net/url"
 	"os"
 	"path/filepath"
 	"runtime"
+	"strings"
 )
 
 // FileDetector implements Detector to detect file paths.
@@ -59,6 +61,25 @@ func fmtFileURL(path string) string {
 	if runtime.GOOS == "windows" {
 		// Make sure we're using "/" on Windows. URLs are "/"-based.
 		path = filepath.ToSlash(path)
+	}
+
+	// A literal % in a filesystem path is not a URL escape. url.Parse
+	// rejects sequences such as "% i", so Client.Get never reads the
+	// directory. Encode through url.URL so the parsed Path is the
+	// original path and RawPath stays empty. FileGetter stats RawPath
+	// when it is set, and a half-encoded path would miss the directory.
+	// Paths without % keep the previous formatting, including a ?query
+	// carried on the source string.
+	if strings.Contains(path, "%") {
+		rawQuery := ""
+		if i := strings.IndexByte(path, '?'); i >= 0 {
+			rawQuery = path[i+1:]
+			path = path[:i]
+		}
+		return (&url.URL{Scheme: "file", Path: path, RawQuery: rawQuery}).String()
+	}
+
+	if runtime.GOOS == "windows" {
 		return fmt.Sprintf("file://%s", path)
 	}
 

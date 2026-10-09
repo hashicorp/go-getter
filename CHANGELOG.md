@@ -1,5 +1,9 @@
 ## UNRELEASED
 
+BUG FIXES:
+
+* file: Encode literal percent signs in local paths so a directory name containing `%` can be fetched [[GH-607](https://github.com/hashicorp/go-getter/issues/607)]
+
 IMPROVEMENTS:
 
 * http: Return a typed `*HTTPStatusError` for non-2xx response codes [[GH-660](https://github.com/hashicorp/go-getter/pull/660)]
