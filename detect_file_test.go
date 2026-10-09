@@ -5,6 +5,7 @@ package getter
 
 import (
 	"fmt"
+	"net/url"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -92,6 +93,87 @@ var noPwdUnixFileTests = []fileTest{
 var noPwdWinFileTests = []fileTest{
 	{in: "/foo", pwd: "", out: "", err: true},
 	{in: `C:\`, pwd: ``, out: `file://C:/`, err: false},
+}
+
+func TestFileDetector_percentInPath(t *testing.T) {
+	dir := t.TempDir()
+	name := "{% if foo %}bar{% endif %}"
+	src := filepath.Join(dir, name)
+	if err := os.Mkdir(src, 0755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(src, "test.txt"), []byte("hello"), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	got, ok, err := new(FileDetector).Detect(name, dir)
+	if err != nil {
+		t.Fatalf("detect: %s", err)
+	}
+	if !ok {
+		t.Fatal("not ok")
+	}
+
+	u, err := url.Parse(got)
+	if err != nil {
+		t.Fatalf("parse %q: %s", got, err)
+	}
+	// FileGetter stats RawPath when it is set. A non-empty RawPath here
+	// would be the encoded name, not the directory on disk.
+	if u.RawPath != "" {
+		t.Fatalf("RawPath = %q", u.RawPath)
+	}
+	if u.Path != src {
+		t.Fatalf("path\n got: %q\nwant: %q", u.Path, src)
+	}
+
+	dst := filepath.Join(t.TempDir(), "out")
+	client := &Client{
+		Src:  name,
+		Dst:  dst,
+		Pwd:  dir,
+		Mode: ClientModeDir,
+	}
+	if err := client.Get(); err != nil {
+		t.Fatal(err)
+	}
+	body, err := os.ReadFile(filepath.Join(dst, "test.txt"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(body) != "hello" {
+		t.Fatalf("contents: %q", body)
+	}
+
+	// A literal %20 is a filename, not a space.
+	literal := filepath.Join(dir, "pct%20name")
+	if err := os.Mkdir(literal, 0755); err != nil {
+		t.Fatal(err)
+	}
+	got, ok, err = new(FileDetector).Detect("pct%20name", dir)
+	if err != nil || !ok {
+		t.Fatalf("detect literal: ok=%v err=%v", ok, err)
+	}
+	u, err = url.Parse(got)
+	if err != nil {
+		t.Fatalf("parse literal %q: %s", got, err)
+	}
+	if u.RawPath != "" || u.Path != literal {
+		t.Fatalf("literal path\n got: %#v\nwant: %q", u, literal)
+	}
+
+	// A query on the source string stays a query when the path contains %.
+	got, ok, err = new(FileDetector).Detect("pct%20name?foo=bar", dir)
+	if err != nil || !ok {
+		t.Fatalf("detect query: ok=%v err=%v", ok, err)
+	}
+	u, err = url.Parse(got)
+	if err != nil {
+		t.Fatalf("parse query %q: %s", got, err)
+	}
+	if u.Path != literal || u.RawQuery != "foo=bar" || u.RawPath != "" {
+		t.Fatalf("query url: %#v", u)
+	}
 }
 
 func TestFileDetector_noPwd(t *testing.T) {
