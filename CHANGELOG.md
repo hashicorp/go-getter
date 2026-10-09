@@ -2,7 +2,7 @@
 
 BUG FIXES:
 
-* file: Encode literal percent signs in local paths so a directory name containing `%` can be fetched [[GH-607](https://github.com/hashicorp/go-getter/issues/607)]
+* file: Encode literal percent signs in local paths so a directory name containing `%` can be fetched [[GH-702](https://github.com/hashicorp/go-getter/pull/702)]
 
 IMPROVEMENTS:
 
