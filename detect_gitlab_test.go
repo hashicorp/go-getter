@@ -17,7 +17,7 @@ func TestGitLabDetector(t *testing.T) {
 		{"gitlab.com/hashicorp/foo.git", "git::https://gitlab.com/hashicorp/foo.git"},
 		{
 			"gitlab.com/hashicorp/foo/bar",
-			"git::https://gitlab.com/hashicorp/foo.git//bar",
+			"git::https://gitlab.com/hashicorp/foo/bar.git",
 		},
 		{
 			"gitlab.com/hashicorp/foo?foo=bar",
@@ -26,6 +26,26 @@ func TestGitLabDetector(t *testing.T) {
 		{
 			"gitlab.com/hashicorp/foo.git?foo=bar",
 			"git::https://gitlab.com/hashicorp/foo.git?foo=bar",
+		},
+		{
+			"gitlab.com/hashicorp/foo/bar",
+			"git::https://gitlab.com/hashicorp/foo/bar.git",
+		},
+		{
+			"gitlab.com/hashicorp/foo/bar.git",
+			"git::https://gitlab.com/hashicorp/foo/bar.git",
+		},
+		{
+			"gitlab.com/hashicorp/foo/bar.git//baz",
+			"git::https://gitlab.com/hashicorp/foo/bar.git//baz",
+		},
+		{
+			"gitlab.com/hashicorp/foo/bar//baz",
+			"git::https://gitlab.com/hashicorp/foo/bar.git//baz",
+		},
+		{
+			"gitlab.com/hashicorp/foo/bar.git//baz?foo=bar",
+			"git::https://gitlab.com/hashicorp/foo/bar.git//baz?foo=bar",
 		},
 	}
 
