@@ -7,13 +7,13 @@ require (
 	github.com/hashicorp/go-multierror v1.1.0
 	github.com/hashicorp/go-safetemp v1.0.0
 	github.com/hashicorp/go-version v1.1.0
-	github.com/klauspost/compress v1.11.2
+	github.com/klauspost/compress v1.18.7
 	github.com/mitchellh/go-homedir v1.0.0
 	github.com/mitchellh/go-testing-interface v1.0.0
-	github.com/ulikunitz/xz v0.5.8
+	github.com/ulikunitz/xz v0.5.15
 	golang.org/x/sys v0.35.0
 )
 
 require github.com/hashicorp/errwrap v1.0.0 // indirect
 
-go 1.26.8
+go 1.26.10
