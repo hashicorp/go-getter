@@ -1,9 +1,6 @@
 # go-getter
 
-[![GitHub Actions](https://github.com/hashicorp/go-getter/actions/workflows/go-getter.yml/badge.svg?branch=main)][github-actions]
-[![Go Documentation](http://img.shields.io/badge/go-documentation-blue.svg?style=flat-square)][godocs]
-
-[godocs]: http://godoc.org/github.com/hashicorp/go-getter
+[Documentation](https://pkg.go.dev/github.com/hashicorp/go-getter)
 
 go-getter is a library for Go (golang) for downloading files or directories
 from various sources using a URL as the primary form of input.
@@ -17,14 +14,17 @@ The concept of a _detector_ automatically turns invalid URLs into proper
 URLs. For example: "github.com/hashicorp/go-getter" would turn into a
 Git URL. Or "./foo" would turn into a file URL. These are extensible.
 
-This library is used by [Terraform](https://terraform.io) for
-downloading modules and [Nomad](https://nomadproject.io) for downloading
-binaries.
+This library is used by [Terraform](https://developer.hashicorp.com/terraform) for
+downloading modules, in [Nomad](https://developer.hashicorp.com/nomad) for downloading
+binaries, and in [Packer](https://developer.hashicorp.com/packer).
 
 ## Installation and Usage
 
-Package documentation can be found on
-[GoDoc](http://godoc.org/github.com/hashicorp/go-getter).
+Package documentation for v1 can be found at
+[pkg.go.dev](https://pkg.go.dev/github.com/hashicorp/go-getter). v2 of the
+library is used only in Packer, and package documentation for this version can
+also be found at [pkg.go.dev
+(v2)](https://pkg.go.dev/github.com/hashicorp/go-getter/v2).
 
 Installation can be done with a normal `go get`:
 
@@ -42,22 +42,29 @@ $ go-getter github.com/foo/bar ./foo
 ...
 ```
 
-The command is useful for verifying URL structures.
+The command is useful for verifying URL structures. As of 1.8.10, go-getter is
+no longer shipped as prebuilt binaries.
 
 ## Security
-Fetching resources from user-supplied URLs is an inherently dangerous operation and may
-leave your application vulnerable to [server side request forgery](https://owasp.org/www-community/attacks/Server_Side_Request_Forgery),
-[path traversal](https://owasp.org/www-community/attacks/Path_Traversal), [denial of service](https://owasp.org/www-community/attacks/Denial_of_Service)
+
+Fetching resources from user-supplied URLs is an inherently dangerous operation
+and may leave your application vulnerable to [server side request
+forgery](https://owasp.org/www-community/attacks/Server_Side_Request_Forgery),
+[path traversal](https://owasp.org/www-community/attacks/Path_Traversal),
+[denial of service](https://owasp.org/www-community/attacks/Denial_of_Service)
 or other security flaws.
 
-go-getter contains mitigations for some of these security issues, but should still be used with
-caution in security-critical contexts. See the available [security options](#Security-Options) that
-can be configured to mitigate some of these risks.
+go-getter contains mitigations for some of these security issues, but should
+still be used with caution in security-critical contexts. See the available
+[security options](#Security-Options) that can be configured to mitigate some of
+these risks.
 
-go-getter may return values that contain caller-provided query parameters that can contain sensitive data.
-Context around what parameters are and are not sensitive is known only by the caller of go-getter, and specific to each use case.
-We recommend the caller ensure that go-getter's return values (e.g., error messages) are properly handled and sanitized to ensure
-sensitive data is not persisted to logs.
+go-getter may return values that contain caller-provided query parameters that
+can contain sensitive data. Context around what parameters are and are not
+sensitive is known only by the caller of go-getter, and specific to each use
+case.  We recommend the caller ensure that go-getter's return values (e.g.,
+error messages) are properly handled and sanitized to ensure sensitive data is
+not persisted to logs.
 ## URL Format
 
 go-getter uses a single string URL as input to download from a variety of
@@ -93,7 +100,7 @@ is built-in by default:
     file URLs.
   * GitHub URLs, such as "github.com/mitchellh/vagrant" are automatically
     changed to Git protocol over HTTP.
-  * GitLab URLs, such as "gitlab.com/inkscape/inkscape" are automatically 
+  * GitLab URLs, such as "gitlab.com/inkscape/inkscape" are automatically
     changed to Git protocol over HTTP.
   * BitBucket URLs, such as "bitbucket.org/mitchellh/vagrant" are automatically
     changed to a Git or mercurial protocol using the BitBucket API.
@@ -188,7 +195,7 @@ checksum string. Examples:
 ```
 ./foo.txt?checksum=file:./foo.txt.sha256sum
 ```
- 
+
 When checksumming from a file - ex: with `checksum=file:url` - go-getter will
 get the file linked in the URL after `file:` using the same configuration. For
 example, in `file:http://releases.ubuntu.com/cosmic/MD5SUMS` go-getter will
@@ -289,7 +296,7 @@ None
     from a private key file on disk, you would run `base64 -w0 <file>`.
 
     **Note**: Git 2.3+ is required to use this feature.
-  
+
   * `depth` - The Git clone depth. The provided number specifies the last `n`
     revisions to clone from the repository.
 
@@ -421,7 +428,7 @@ Configuration for the `HttpGetter`:
 var httpGetter = &getter.HttpGetter{
     // Disable pre-fetch HEAD requests
     DoNotCheckHeadFirst: true,
-    
+
     // As an alternative to the above setting, you can
     // set a reasonable timeout for HEAD requests
     // HeadFirstTimeout: 10 * time.Second,
