@@ -55,6 +55,32 @@ func TestFileGetter(t *testing.T) {
 	}
 }
 
+func TestFileGetterCopy(t *testing.T) {
+	g := new(FileGetter)
+	g.Copy = true
+	dst := tempDir(t)
+
+	// With a dir that doesn't exist
+	if err := g.Get(dst, testModuleURL("basic")); err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	// Verify the destination folder is a symlink
+	fi, err := os.Lstat(dst)
+	if err != nil {
+		t.Fatalf("err: %s", err)
+	}
+	if fi.Mode()&os.ModeSymlink != 0 {
+		t.Fatal("destination is a symlink")
+	}
+
+	// Verify the main file exists
+	mainPath := filepath.Join(dst, "main.tf")
+	if _, err := os.Stat(mainPath); err != nil {
+		t.Fatalf("err: %s", err)
+	}
+}
+
 func TestFileGetter_sourceFile(t *testing.T) {
 	g := new(FileGetter)
 	dst := filepath.Join(t.TempDir(), "target")
