@@ -208,10 +208,16 @@ func resolveCheckoutRef(ctx context.Context, dst, ref string) (string, error) {
 		// cmd.Output leaves git's stderr in ExitError.Stderr when cmd.Stderr is
 		// nil; --quiet suppresses "unknown revision" noise, so anything left is
 		// a real underlying cause worth reporting.
+		// Errors that are not an ExitError (git missing from PATH, a cancelled
+		// context) are reported as they are.
+		var msg string
 		if exitErr, ok := err.(*exec.ExitError); ok {
-			if msg := strings.TrimSpace(string(exitErr.Stderr)); msg != "" && !slices.Contains(gitErrs, msg) {
-				gitErrs = append(gitErrs, msg)
-			}
+			msg = strings.TrimSpace(string(exitErr.Stderr))
+		} else {
+			msg = err.Error()
+		}
+		if msg != "" && !slices.Contains(gitErrs, msg) {
+			gitErrs = append(gitErrs, msg)
 		}
 	}
 
