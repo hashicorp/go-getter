@@ -14,6 +14,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"runtime"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -191,6 +192,11 @@ func resolveCheckoutRef(ctx context.Context, dst, ref string) (string, error) {
 		"refs/tags/" + ref,
 	}
 
+	// Collect the underlying git error(s) so that a failure caused by the
+	// environment (e.g. a safe.directory ownership check, a permission error,
+	// or a missing repository) is surfaced instead of being masked by a generic
+	// "invalid ref" message. See #649.
+	var gitErrs []string
 	for _, candidate := range candidates {
 		cmd := exec.CommandContext(ctx, "git", "rev-parse", "--verify", "--quiet", "--end-of-options", candidate+"^{commit}")
 		cmd.Dir = dst
@@ -199,8 +205,25 @@ func resolveCheckoutRef(ctx context.Context, dst, ref string) (string, error) {
 		if err == nil {
 			return strings.TrimSpace(string(resolvedRef)), nil
 		}
+		// cmd.Output leaves git's stderr in ExitError.Stderr when cmd.Stderr is
+		// nil; --quiet suppresses "unknown revision" noise, so anything left is
+		// a real underlying cause worth reporting.
+		// Errors that are not an ExitError (git missing from PATH, a cancelled
+		// context) are reported as they are.
+		var msg string
+		if exitErr, ok := err.(*exec.ExitError); ok {
+			msg = strings.TrimSpace(string(exitErr.Stderr))
+		} else {
+			msg = err.Error()
+		}
+		if msg != "" && !slices.Contains(gitErrs, msg) {
+			gitErrs = append(gitErrs, msg)
+		}
 	}
 
+	if len(gitErrs) > 0 {
+		return "", fmt.Errorf("invalid ref: %q: %s", ref, strings.Join(gitErrs, "; "))
+	}
 	return "", fmt.Errorf("invalid ref: %q", ref)
 }
 
